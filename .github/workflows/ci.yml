@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build backend
+        run: dotnet build DailyNagger.sln --configuration Release
+
+      - name: Test backend
+        run: dotnet test DailyNagger.sln --configuration Release --no-build
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: src/DailyNagger.Client/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: src/DailyNagger.Client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: src/DailyNagger.Client
+        run: npm run build
+
+      - name: Build API image
+        run: docker build -f src/DailyNagger.Api/Dockerfile -t dailynagger-api:ci .
+
+      - name: Build client image
+        run: docker build -f src/DailyNagger.Client/Dockerfile -t dailynagger-client:ci .

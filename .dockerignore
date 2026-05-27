@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/*.tsbuildinfo
+.git/
+.env
+.env.*
+!.env.example
+.npm-cache/
+**/appsettings.Local.json

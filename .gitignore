@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# Node / Vite
+node_modules/
+dist/
+*.tsbuildinfo
+.npm-cache/
+
+# Local environment
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+
+# IDE
+.vs/
+.vscode/
