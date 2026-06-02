@@ -2,6 +2,7 @@ using System.Text.Json;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
+using DailyNagger.Server.Tests;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace DailyNagger.Server.Tests.Operations;
 
+[Collection(SqlServerTestCollection.Name)]
 public sealed class DataDbReadTests
 {
     [Fact]

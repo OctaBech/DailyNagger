@@ -46,19 +46,11 @@ public sealed class TaskSeriesApiTests
     [Fact]
     public async Task Get_task_series_returns_not_found_when_community_does_not_exist()
     {
-        try
-        {
-            using var client = CreateServerClient();
+        using var client = CreateServerClient();
 
-            var response = await client.GetAsync($"/api/task-series?communityId={Guid.NewGuid()}");
+        var response = await client.GetAsync($"/api/task-series?communityId={Guid.NewGuid()}");
 
-            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("ConnectionStrings__DailyNaggerControl", null);
-            Environment.SetEnvironmentVariable("DailyNaggerData__Password", null);
-        }
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     private static async Task<RoutedTaskSeriesTestData> CreateRoutedTaskSeriesAsync()
@@ -117,8 +109,6 @@ public sealed class TaskSeriesApiTests
             .Where(community => community.Id == testData.CommunityId)
             .ExecuteDeleteAsync();
 
-        Environment.SetEnvironmentVariable("ConnectionStrings__DailyNaggerControl", null);
-        Environment.SetEnvironmentVariable("DailyNaggerData__Password", null);
     }
 
     private static DailyNaggerControlDbContext CreateControlDbContext()

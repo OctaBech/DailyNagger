@@ -10,9 +10,13 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 builder.Services.AddOpenApi();
 builder.Services.AddMemoryCache();
 builder.Services.AddDbContext<DailyNaggerDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DailyNaggerData")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DailyNaggerData"),
+        sqlServer => sqlServer.EnableRetryOnFailure()));
 builder.Services.AddDbContext<DailyNaggerControlDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DailyNaggerControl")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DailyNaggerControl"),
+        sqlServer => sqlServer.EnableRetryOnFailure()));
 builder.Services.AddScoped<ControlDbRead>();
 builder.Services.AddScoped<GetDataDbConnection>();
 builder.Services.AddScoped<DataDbRead>();
