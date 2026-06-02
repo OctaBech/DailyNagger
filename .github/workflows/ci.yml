@@ -10,6 +10,24 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: DailyNagger_Ci_12345
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P DailyNagger_Ci_12345 -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      ConnectionStrings__DailyNaggerData: Server=localhost,1433;Database=DailyNaggerData;User Id=sa;Password=DailyNagger_Ci_12345;TrustServerCertificate=True
+      ConnectionStrings__DailyNaggerControl: Server=localhost,1433;Database=DailyNaggerControl;User Id=sa;Password=DailyNagger_Ci_12345;TrustServerCertificate=True
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,6 +39,15 @@ jobs:
 
       - name: Build backend
         run: dotnet build DailyNagger.sln --configuration Release
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Apply control database migrations
+        run: dotnet tool run dotnet-ef database update --project src/DailyNagger.Server --context DailyNaggerControlDbContext
+
+      - name: Apply data database migrations
+        run: dotnet tool run dotnet-ef database update --project src/DailyNagger.Server --context DailyNaggerDbContext
 
       - name: Test backend
         run: dotnet test DailyNagger.sln --configuration Release --no-build
@@ -40,8 +67,8 @@ jobs:
         working-directory: src/DailyNagger.Client
         run: npm run build
 
-      - name: Build API image
-        run: docker build -f src/DailyNagger.Api/Dockerfile -t dailynagger-api:ci .
+      - name: Build server image
+        run: docker build -f src/DailyNagger.Server/Dockerfile -t dailynagger-server:ci .
 
       - name: Build client image
         run: docker build -f src/DailyNagger.Client/Dockerfile -t dailynagger-client:ci .

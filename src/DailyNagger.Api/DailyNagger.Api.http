@@ -1,6 +1,0 @@
-@DailyNagger.Api_HostAddress = http://localhost:5007
-
-GET {{DailyNagger.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

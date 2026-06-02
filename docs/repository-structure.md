@@ -4,14 +4,14 @@ This repository keeps project source code under `src`.
 
 ```text
 src/
-  DailyNagger.Api/
+  DailyNagger.Server/
   DailyNagger.Client/
 docs/
 compose.yaml
 .env.example
 ```
 
-## `src/DailyNagger.Api`
+## `src/DailyNagger.Server`
 
 Used by the .NET SDK.
 
@@ -21,7 +21,7 @@ This folder belongs in Git.
 
 Alternative: place backend projects at the repository root. Keeping them under `src` scales better when the repository gains more projects.
 
-> "The backend is a .NET project under `src/DailyNagger.Api`, identified by its `.csproj` file."
+> "The backend is a .NET project under `src/DailyNagger.Server`, identified by its `.csproj` file."
 
 ## `src/DailyNagger.Client`
 
@@ -59,7 +59,7 @@ Alternative: install services manually. Docker Compose is more reproducible.
 
 > "`compose.yaml` is the shared recipe for local development services."
 
-## `src/DailyNagger.Api/Dockerfile`
+## `src/DailyNagger.Server/Dockerfile`
 
 Used by Docker.
 
@@ -119,7 +119,7 @@ Alternative: put values directly in `compose.yaml`. That would commit local secr
 
 > "`.env` contains private local values and must stay out of Git."
 
-## `src/DailyNagger.Api/appsettings.Local.json`
+## `src/DailyNagger.Server/appsettings.Local.json`
 
 Used by the ASP.NET Core API during local development.
 

@@ -53,7 +53,7 @@ See [docs/product-spec.md](docs/product-spec.md), [docs/data-model.md](docs/data
 This repository starts with a minimal learning scaffold:
 
 - `DailyNagger.sln`
-- `src/DailyNagger.Api`: ASP.NET Core Web API targeting `.NET 10` / `C# 14`.
+- `src/DailyNagger.Server`: ASP.NET Core Web API targeting `.NET 10` / `C# 14`.
 - `src/DailyNagger.Client`: React 19 + TypeScript + Vite client with a placeholder screen.
 
 The .NET support abbreviation is `LTS`, meaning Long Term Support. The current scaffold uses `.NET 10 LTS`; C# 14 is the matching latest C# language version for that SDK.

@@ -21,17 +21,19 @@ services:
       until /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\"; do
         sleep 2;
       done;
-      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"IF DB_ID('DailyNagger') IS NULL CREATE DATABASE DailyNagger\";
+      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"IF DB_ID('DailyNaggerData') IS NULL CREATE DATABASE DailyNaggerData\";
+      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"IF DB_ID('DailyNaggerControl') IS NULL CREATE DATABASE DailyNaggerControl\";
       "
 
-  api:
+  server:
     build:
       context: .
-      dockerfile: src/DailyNagger.Api/Dockerfile
+      dockerfile: src/DailyNagger.Server/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       DOTNET_SYSTEM_NET_DISABLEIPV6: "1"
-      ConnectionStrings__DailyNagger: "Server=host.docker.internal,1433;Database=DailyNagger;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DailyNaggerData: "Server=host.docker.internal,1433;Database=DailyNaggerData;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+      ConnectionStrings__DailyNaggerControl: "Server=host.docker.internal,1433;Database=DailyNaggerControl;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True"
     ports:
       - "5007:8080"
     depends_on:
@@ -45,7 +47,7 @@ services:
     ports:
       - "5173:5173"
     depends_on:
-      - api
+      - server
 
 volumes:
   sqlserver-data:

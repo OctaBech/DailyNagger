@@ -1,7 +1,7 @@
-using DailyNagger.Api.Domain;
+using DailyNagger.Server.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace DailyNagger.Api.Data;
+namespace DailyNagger.Server.Data;
 
 public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> options)
     : DbContext(options)

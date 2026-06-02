@@ -1,4 +1,4 @@
-namespace DailyNagger.Api.Domain;
+namespace DailyNagger.Server.Domain;
 
 public sealed class TaskSeries
 {
