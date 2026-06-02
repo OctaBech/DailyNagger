@@ -5,12 +5,14 @@ using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
+using DailyNagger.Server.Tests;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace DailyNagger.Server.Tests.Api;
 
+[Collection(SqlServerTestCollection.Name)]
 public sealed class TaskSeriesApiTests
 {
     [Fact]

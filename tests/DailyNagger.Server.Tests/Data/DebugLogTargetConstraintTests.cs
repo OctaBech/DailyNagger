@@ -1,11 +1,13 @@
 using System.Text.Json;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Operations;
+using DailyNagger.Server.Tests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace DailyNagger.Server.Tests.Data;
 
+[Collection(SqlServerTestCollection.Name)]
 public sealed class DebugLogTargetConstraintTests
 {
     [Fact]
