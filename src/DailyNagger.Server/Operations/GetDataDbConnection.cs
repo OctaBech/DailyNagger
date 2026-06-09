@@ -1,12 +1,14 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace DailyNagger.Server.Operations;
 
 public sealed class GetDataDbConnection(
     ControlDbRead controlDbRead,
     IConfiguration configuration,
+    IOptionsMonitor<DataDbConnectionOptions> optionsMonitor,
     IMemoryCache cache)
 {
     public async Task<SqlConnection> CreateAsync(
@@ -70,7 +72,7 @@ public sealed class GetDataDbConnection(
 
     private TimeSpan GetConnectionStringCacheLifetime()
     {
-        var cacheMinutes = configuration.GetValue<int>("DataDbConnection:CacheMinutes");
+        var cacheMinutes = optionsMonitor.CurrentValue.CacheMinutes;
 
         if (cacheMinutes <= 0)
         {

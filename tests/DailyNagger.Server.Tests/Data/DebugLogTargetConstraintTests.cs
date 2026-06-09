@@ -8,7 +8,8 @@ using Microsoft.Extensions.Logging;
 namespace DailyNagger.Server.Tests.Data;
 
 [Collection(SqlServerTestCollection.Name)]
-public sealed class DebugLogTargetConstraintTests
+public sealed class DebugLogTargetConstraintTests(SqlServerTestFixture fixture)
+    : SqlServerTestBase(fixture)
 {
     [Fact]
     public async Task SaveChanges_accepts_debug_log_target_with_app_instance()

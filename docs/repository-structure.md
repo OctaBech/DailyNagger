@@ -11,6 +11,8 @@ compose.yaml
 .env.example
 ```
 
+Backend architecture decisions are documented in `docs/backend-architecture.md`.
+
 ## `src/DailyNagger.Server`
 
 Used by the .NET SDK.
@@ -22,6 +24,26 @@ This folder belongs in Git.
 Alternative: place backend projects at the repository root. Keeping them under `src` scales better when the repository gains more projects.
 
 > "The backend is a .NET project under `src/DailyNagger.Server`, identified by its `.csproj` file."
+
+### `src/DailyNagger.Server/Api`
+
+Used by ASP.NET Core endpoint mapping.
+
+This folder contains the HTTP API route definitions, such as nag routes. `Program.cs` should call mapping methods from this folder instead of growing into a large route file.
+
+This folder belongs in Git.
+
+> "The `Api` folder defines the backend HTTP surface. `Program.cs` wires it in."
+
+### Future `src/DailyNagger.Worker`
+
+Used by .NET if DailyNagger gets real background processing.
+
+This project does not exist yet. Add it later if scheduled work becomes real, such as creating future recurring tasks or sending reminders.
+
+This folder would belong in Git once created.
+
+> "The API answers requests. A worker performs background work."
 
 ## `src/DailyNagger.Client`
 
@@ -124,6 +146,16 @@ Alternative: put values directly in `compose.yaml`. That would commit local secr
 Used by the ASP.NET Core API during local development.
 
 This file contains local machine values, such as the local database connection string.
+
+The API adds this file explicitly in `Program.cs`:
+
+```csharp
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+```
+
+`optional: true` means the API still starts when the file does not exist.
+
+`reloadOnChange: true` means the ASP.NET Core configuration system reloads values when the file changes. Runtime code still has to read current configuration through a reload-aware access pattern, such as `IOptionsMonitor<T>`, if changes must take effect without restart.
 
 This file does not belong in Git and must not be copied into Docker images.
 

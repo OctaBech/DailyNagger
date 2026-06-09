@@ -6,6 +6,31 @@ Build a mobile todo app that helps users remember recurring real-life tasks by c
 
 ## Core Concepts
 
+### Nag Category
+
+A nag category groups related nags and can carry reusable rules/defaults.
+
+Examples:
+
+- Gym
+- Shopping
+- Birthday
+
+Category rules can control shared behavior for nags in that category.
+
+Examples:
+
+- Category color or visual style.
+- Show nags a number of days before their latest/due date.
+- Hide nags as soon as the required latest data has been submitted.
+
+Birthday example:
+
+- Category: Birthday.
+- Color: birthday color.
+- Show birthday nags 5 days before the latest date.
+- Hide the birthday nag once the latest required data has been submitted.
+
 ### Task
 
 A task is the main item the user wants to remember.
@@ -19,7 +44,7 @@ Examples:
 
 A task can have subtasks.
 
-A top-level task belongs to a task series. The series owns meta behavior such as recurrence, reminders, nag rules, and home-surface behavior. Child tasks inherit that series behavior and should not redefine it independently.
+A top-level task belongs to a nag. The nag owns meta behavior such as recurrence, reminders, nag rules, and home-surface behavior. Child tasks inherit that nag behavior and should not redefine it independently.
 
 Tasks can optionally have an icon to make them easier to identify at a glance. Icons are especially useful for pinned home buttons, nearby tasks, and recurring routines.
 
@@ -68,7 +93,7 @@ Suggestion behavior:
 
 ### Recurrence
 
-Each task series can have one recurrence rule:
+Each nag can have one recurrence rule:
 
 - None
 - Weekly
@@ -120,7 +145,7 @@ Each generated step should copy from the previous instance of that same step whe
 
 ### Reminder
 
-A reminder decides when the user is notified. Reminder behavior belongs to the task series.
+A reminder decides when the user is notified. Reminder behavior belongs to the nag.
 
 Common reminder modes:
 
@@ -182,7 +207,7 @@ A task can have multiple grouping tags. Completion fields can also have tags whe
 
 ### Surface
 
-Not all reminders should appear the same way. Each task series should have a surface mode that controls how prominently it appears in the app.
+Not all reminders should appear the same way. Each nag should have a surface mode that controls how prominently it appears in the app.
 
 Surface modes:
 
@@ -211,7 +236,7 @@ Examples:
 
 ### Nag Rule
 
-A nag rule is the context-aware part of the app. It decides whether a reminder should be escalated, repeated, delayed, or triggered. Top-level nag behavior belongs to the task series.
+A nag rule is the context-aware part of the app. It decides whether a reminder should be escalated, repeated, delayed, or triggered. Top-level nag behavior belongs to the nag.
 
 Useful first nag rules:
 
@@ -276,7 +301,7 @@ The lower-right plus button adds a new top-level task from this screen.
 Bottom actions:
 
 - Lower-left chart button: opens chart setup and saved charts.
-- Center history button: opens series/history browsing for the current context.
+- Center history button: opens nag/history browsing for the current context.
 - Lower-right plus button: opens the contextual add setup sheet.
 
 ### Lists
@@ -351,7 +376,7 @@ Completion location should be optional. The user should be able to disable it gl
 
 ### Series History
 
-Repeated tasks form a series. The user should be able to browse that series history by swiping left and right through the repeated copies.
+Repeated tasks form a nag history. The user should be able to browse that history by swiping left and right through the repeated copies.
 
 Examples:
 
@@ -371,7 +396,7 @@ The history view should show:
 
 For rotating routines, each step should have its own history. For example, browsing Pull day history should move through Pull days, not Push or Legs days.
 
-The center-bottom history button opens the history view for the current context. On a repeated task, it opens that task series. On a grouping tag or chart context, it can open the relevant filtered history.
+The center-bottom history button opens the history view for the current context. On a repeated task, it opens that nag. On a grouping tag or chart context, it can open the relevant filtered history.
 
 History should be a mode, not the default list layout. The normal task list should stay stable and full width for everyday use. When history opens, the active history page can shrink to about 90% width with previous and next pages peeking at the left and right edges. This makes swipe navigation visible without making the main task UI feel like a carousel all the time.
 
@@ -390,7 +415,7 @@ Useful first charts:
 - Calories by day.
 - Count of flags over time, such as gluten days per month.
 
-The lower-left chart button opens a chart setup menu. The menu should open in context to the currently selected task, task series, or grouping tag so the user does not need to build every chart from scratch.
+The lower-left chart button opens a chart setup menu. The menu should open in context to the currently selected task, nag, or grouping tag so the user does not need to build every chart from scratch.
 
 Examples:
 
@@ -404,7 +429,7 @@ Users should be able to save chart setups and return to them later.
 Saved chart setup options:
 
 - Name.
-- Source: task, copied task series, grouping tag, or completion field.
+- Source: task, copied nag, grouping tag, or completion field.
 - Metric field.
 - Aggregation, such as latest, sum, average, min, max, or count.
 - Time grouping, such as day, week, month, or raw entries.

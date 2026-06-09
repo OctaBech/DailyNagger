@@ -32,15 +32,18 @@ Recommended backend:
 - SQL Server.
 - Code-first migrations.
 - OpenAPI enabled for API documentation and typed client generation.
+- IMemoryCache for small server-side lookup caches, such as resolved community Data DB connection strings.
 
 The backend owns:
 
-- Task series.
+- Nag.
 - Task trees.
 - Repeat-copy generation.
 - Completion fields and completion history.
 - Suggestions.
 - Saved charts later.
+
+Backend architecture details, including the `Api` folder, future worker project, multi-tenant routing, cached connection strings, and retry behavior, are documented in `docs/backend-architecture.md`.
 
 ## Client
 
@@ -97,17 +100,23 @@ Reasoning:
 
 ## Database Naming
 
-Use conventional table names for job-hunt readability.
+Use entity-matching table names.
 
-Recommended names:
+Rules:
 
-- `task_series`
-- `tasks`
-- `series_recurrence_rules`
-- `series_reminder_rules`
-- `series_nag_rules`
-- `completion_fields`
-- `completion_entries`
-- `completion_values`
+- C# entity names are singular PascalCase.
+- Database table names are singular snake_case.
+- Do not pluralize table names.
+- Database column names use snake_case.
+- C# properties keep idiomatic PascalCase.
 
-This is less optimized for IntelliSense browsing than `series_rules_xxx`, but it is more likely to feel familiar to reviewers.
+Examples:
+
+```text
+Nag         -> nag
+NagTime     -> nag_time
+NagLocation -> nag_location
+NagLog      -> nag_log
+NagNode     -> nag_node
+NagInput    -> nag_input
+```

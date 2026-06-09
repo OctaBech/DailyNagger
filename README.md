@@ -1,76 +1,279 @@
 # DailyNagger
 
-DailyNagger is a mobile todo app concept built around structured recurring tasks and context-aware reminders.
+DailyNagger is a to-do app that stays on the user's back until a task has been done or has become lapsed.
 
-The core idea is a todo list that can contain nested checklists, reuse previous items while typing, and nag the user based on time, place, movement, and other phone context.
+For each task the user wants to be reminded about, they create a `Nag`.
 
-## Product Shape
+A `Nag` can have rules for where, when, and how often the task should be done.
 
-- Tasks can contain subtasks.
-- A parent task can behave like a project, routine, shopping list, workout, or errand.
-- Important repeating routines can be pinned as large home-screen buttons.
-- Date-based reminders can appear as countdown buttons that move up as they become urgent.
-- Subtasks can be reused from previous entries through typeahead suggestions.
-- Tasks can repeat weekly, monthly, yearly, on a specific date, or on a custom interval.
-- Reminders can be scheduled before, at, or after the target time.
-- Tasks can define completion fields, such as kg, reps, morning weight, calories, or flags like "ate gluten".
-- Nagging can be driven by phone context such as location, motion/activity, time of day, and device state.
+Tasks are not all shaped the same. Some are simple reminders. Others need a checklist, measurements, notes, or repeated structured input. That working form lives in a `NagLog`.
 
-## Recommended Stack
+A `NagLog` is the user's current form for doing the task. It can contain a list or tree of nodes and inputs that the user fills in while working through the task.
 
-For a first implementation:
+When a `Nag` passes its deadline, the current `NagLog` is closed and archived. DailyNagger then creates a copy of that log for the next time the nag should be done.
 
-- ASP.NET Core backend in C#.
-- Entity Framework Core code-first model.
-- Microsoft SQL Server database.
-- React/TypeScript client with a generated typed API client.
-- Android support targeting Galaxy S10 Lite.
-- Browser support for desktop/mobile web.
-- SignalR reserved for realtime updates and push-style events, not the primary CRUD API.
+As the user learns more about the task, they can change the shape of the log: add or remove nodes, change what data should be entered, and adapt the workflow.
 
-## First MVP
+When the deadline passes, DailyNagger copies the newest structure of the log. Entered values are copied forward as previous values, so the user can easily see what they entered last time.
 
-1. ASP.NET Core + EF Core + SQL Server backend.
-2. React/TypeScript client with generated API types.
-3. Task series table for recurrence/reminder/nag/surface behavior.
-4. Task table for concrete task/list rows with parent-child relationships.
-5. Home screen with pinned, countdown, and normal sections.
-6. Contextual add setup sheet.
-7. Completion fields and completion history.
-8. Simple repeat-by-copy behavior.
-9. Basic history view.
+## Product Examples
 
-See [docs/mvp-scope.md](docs/mvp-scope.md) for the exact first implementation target.
+- A gym nag can contain exercises such as squats and bench press.
+- A grocery nag can contain a changing shopping list.
+- A birthday nag can later belong to a category that reminds the user early enough to buy a gift.
+- A weight or food nag can collect structured values over time.
+- A location-related nag can later become relevant when the user is near a saved place.
 
-## Important Platform Constraint
+## Domain Model
 
-Phones do not allow apps to freely run all sensors in the background forever. iOS and Android restrict background location, motion, battery, and notification behavior. The app should model nagging as rules that use allowed platform events, not as a constantly running background process.
+DailyNagger uses DDD-style aggregate roots.
 
-See [docs/product-spec.md](docs/product-spec.md), [docs/data-model.md](docs/data-model.md), [docs/ux-flow.md](docs/ux-flow.md), [docs/tech-stack.md](docs/tech-stack.md), and [docs/mvp-scope.md](docs/mvp-scope.md) for the initial design.
+It does not use `Task`, `TaskSeries`, or a task-table model.
 
-## Scaffold
+```text
+Nag
+|- 0..n NagTime
 
-This repository starts with a minimal learning scaffold:
+Nag 1:n NagLog
 
-- `DailyNagger.sln`
-- `src/DailyNagger.Server`: ASP.NET Core Web API targeting `.NET 10` / `C# 14`.
-- `src/DailyNagger.Client`: React 19 + TypeScript + Vite client with a placeholder screen.
+NagLog
+|- 1..n NagNode
+   |- 0..n NagNode
+   |- 0..n NagInput
+```
 
-The .NET support abbreviation is `LTS`, meaning Long Term Support. The current scaffold uses `.NET 10 LTS`; C# 14 is the matching latest C# language version for that SDK.
+### Nag
 
-Development should follow [docs/working-style.md](docs/working-style.md): tiny steps, practical explanations, best-practice context, and clear alternatives without large jumps ahead.
+`Nag` is the plan/root for something the user wants to be nagged about.
 
-Terminology notes live in [docs/terminology.md](docs/terminology.md).
+It owns:
 
-Development environment notes live in [docs/development-environment.md](docs/development-environment.md).
+- `title`
+- `nagTimes`
+- `activeLogDueOn`
+- `expiresOn`
+- `isDeactivated`
+- `version`
 
-Repository structure notes live in [docs/repository-structure.md](docs/repository-structure.md).
+`Nag.activeLogDueOn` is the finish-by date for the active open `NagLog`.
 
-Useful commands:
+`Nag.activeLogDueOn = DateOnly.MaxValue` means the nag is open-ended because it has no `NagTime` rules.
+
+`Nag.activeLogDueOn = null` means the schedule chain has a problem and the user should fix the nag or deactivate it.
+
+### NagTime
+
+`NagTime` is one time rule for a `Nag`.
+
+One rule is stored per record.
+
+Current rule types:
+
+- `Weekly`
+- `MonthlyDay`
+- `YearlyDate`
+
+The scheduler uses `NagTime` records to calculate the next `activeLogDueOn`.
+
+### NagLog
+
+`NagLog` is one concrete run/copy of a `Nag`.
+
+It owns the tree the user works in:
+
+- `NagNode`
+- `NagInput`
+
+`NagLog.closedOn = null` means the log is open.
+
+`NagLog.closedOn != null` means the log is historical.
+
+`NagLog` does not own its own deadline. The deadline belongs to `Nag.activeLogDueOn`.
+
+### NagNode
+
+`NagNode` is a node in the log tree.
+
+A node can be:
+
+- a list item
+- a grouping node
+- a parent for child nodes
+- a holder for inputs
+
+A node may have child nodes, inputs, both, or neither.
+
+### NagInput
+
+`NagInput` is structured data attached to a `NagNode`.
+
+Current value types:
+
+- `Text`
+- `Integer`
+- `Decimal`
+- `Boolean`
+
+`NagInput.unit` is nullable free text, not an enum.
+
+Examples:
+
+- `kg`
+- `reps`
+- `kcal`
+- `cm`
+- `kr`
+
+`NagInput.value` is the current value for this log.
+
+`NagInput.previousValue` is copied from the previous log and shown as reference. It is not a submitted value until the user saves it as the current value.
+
+## JSON Shape And DX
+
+The API shape should be pleasant to work with in the client.
+
+`NagLog` JSON is nested like the UI tree. It is not returned as a flat list that the client has to stitch together before rendering.
+
+Example shape:
+
+```json
+{
+  "id": "nag-log-id",
+  "nagId": "nag-id",
+  "nagNodes": [
+    {
+      "id": "node-id",
+      "name": "Squats",
+      "nagInputs": [
+        {
+          "id": "input-id",
+          "label": "Weight",
+          "valueType": "Decimal",
+          "unit": "kg",
+          "value": "80",
+          "previousValue": "77.5"
+        }
+      ],
+      "nagNodes": []
+    }
+  ]
+}
+```
+
+The nested JSON is the source of truth for placement in API payloads. Ownership IDs such as `nagLogId` and `parentNagNodeId` are still included as consistency assertions.
+
+## Reads
+
+The client should fetch the day's full plan at once.
+
+```text
+GET /api/nag-plan?communityId={id}&userId={id}&date={date}
+```
+
+`NagPlan` is a read model, not an aggregate root.
+
+It returns the active nags and their open logs for the requested day.
+
+Normal client flow:
+
+- Fetch the full `NagPlan`.
+- Treat that tree as local truth for the day.
+- Send writes through aggregate endpoints.
+- Refetch a fresh `NagPlan` when recovering from conflict, corruption, or a later server-side day change.
+
+## Writes
+
+The client creates IDs before sending aggregate data to the server.
+
+Whole-aggregate writes:
+
+```text
+PUT /api/nags/{id}
+PUT /api/nag-logs/{id}
+```
+
+Rules:
+
+- A `Nag` write saves the root and its `NagTime` rules atomically.
+- A `NagLog` write saves the whole node/input tree atomically.
+- The server accepts the whole aggregate or rejects the whole aggregate.
+- Root aggregate writes use `expectedVersion`.
+- Successful writes increment the root `version`.
+
+When the `NagLog` structure changes, the client sends the whole structure to the server. This keeps the backend from having to splice partial tree branches together.
+
+The only narrow update path is for `NagInput.value`:
+
+```text
+PATCH /api/nag-logs/{id}/nag-inputs
+```
+
+This endpoint may update values only. It must validate that every input belongs to the route `NagLog`. It is rejected if the `NagLog` is already closed.
+
+## Copy Forward
+
+There are no separate templates.
+
+The latest open `NagLog` is the source for the next copy.
+
+When a nag is lapsed:
+
+1. The worker finds a `Nag` where `activeLogDueOn < today`.
+2. The worker requires an open `NagLog`.
+3. The worker waits until `NagLog.updatedAt + copyGracePeriod < now`.
+4. The worker locks the `Nag` row and verifies the expected `activeLogDueOn`.
+5. The old `NagLog` is closed.
+6. The next `activeLogDueOn` is calculated from `NagTime`.
+7. A new `NagLog` is created when a future date exists.
+8. The `NagNode` and `NagInput` tree is copied with new IDs.
+9. Old input `value` is moved into new input `previousValue`.
+10. New input `value` starts as `null`.
+
+This means the user can change the log structure over time, and the newest structure is what rolls forward.
+
+## Future Concepts
+
+`NagCategory` is planned as a future grouping concept.
+
+Example: a birthday category may later define a shared rule such as surfacing birthday nags 7 days before the date, so the user has time to buy a gift.
+
+`NagLocation` is planned for location-based nagging.
+
+Existing product thoughts include saved places, arrival/departure matching, app-open location refresh, manual refresh, platform geofence events, and avoiding constant GPS polling.
+
+## Technical Shape
+
+- Backend: ASP.NET Core / C#.
+- Database: SQL Server.
+- Data access: EF Core migrations plus direct SQL for selected aggregate/worker operations.
+- API documentation: OpenAPI.
+- Client: React / TypeScript / Vite.
+- Background work: hosted service for lapsed `NagLog` copy flow.
+
+## Build And Test
+
+Build backend and tests:
 
 ```powershell
 dotnet build DailyNagger.sln
+```
+
+Run backend tests:
+
+```powershell
+dotnet test DailyNagger.sln
+```
+
+Build client:
+
+```powershell
 cd src\DailyNagger.Client
 npm.cmd install
 npm.cmd run build
+```
+
+Start SQL Server for local development:
+
+```powershell
+docker compose up -d sqlserver
 ```

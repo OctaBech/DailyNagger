@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 namespace DailyNagger.Server.Tests.Operations;
 
 [Collection(SqlServerTestCollection.Name)]
-public sealed class GetDataDbConnectionTests
+public sealed class GetDataDbConnectionTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
     [Fact]
     public async Task CreateAsync_returns_connection_with_password_from_configuration()
@@ -39,7 +39,11 @@ public sealed class GetDataDbConnectionTests
             .Build();
 
         using var cache = new MemoryCache(new MemoryCacheOptions());
-        var getConnection = new GetDataDbConnection(new ControlDbRead(db), configuration, cache);
+        var getConnection = new GetDataDbConnection(
+            new ControlDbRead(db),
+            configuration,
+            CreateDataDbConnectionOptions(),
+            cache);
 
         await using var connection = await getConnection.CreateAsync(communityId);
         var builder = new SqlConnectionStringBuilder(connection.ConnectionString);
@@ -79,7 +83,11 @@ public sealed class GetDataDbConnectionTests
             .Build();
 
         using var cache = new MemoryCache(new MemoryCacheOptions());
-        var getConnection = new GetDataDbConnection(new ControlDbRead(db), configuration, cache);
+        var getConnection = new GetDataDbConnection(
+            new ControlDbRead(db),
+            configuration,
+            CreateDataDbConnectionOptions(),
+            cache);
 
         await using var firstConnection = await getConnection.CreateAsync(communityId);
 
@@ -125,7 +133,11 @@ public sealed class GetDataDbConnectionTests
             .Build();
 
         using var cache = new MemoryCache(new MemoryCacheOptions());
-        var getConnection = new GetDataDbConnection(new ControlDbRead(db), configuration, cache);
+        var getConnection = new GetDataDbConnection(
+            new ControlDbRead(db),
+            configuration,
+            CreateDataDbConnectionOptions(),
+            cache);
 
         await using var cachedBadConnection = await getConnection.CreateAsync(communityId);
         var cachedBadBuilder = new SqlConnectionStringBuilder(cachedBadConnection.ConnectionString);
@@ -140,7 +152,7 @@ public sealed class GetDataDbConnectionTests
         var refreshedBuilder = new SqlConnectionStringBuilder(refreshedConnection.ConnectionString);
 
         Assert.NotEqual("invalid-host", refreshedBuilder.DataSource);
-        Assert.Equal("DailyNaggerData", refreshedBuilder.InitialCatalog);
+        Assert.Equal(GetDataDatabaseName(), refreshedBuilder.InitialCatalog);
 
         await transaction.RollbackAsync();
     }
@@ -154,6 +166,12 @@ public sealed class GetDataDbConnectionTests
 
         return new DailyNaggerControlDbContext(options);
     }
+
+    private static TestOptionsMonitor<DataDbConnectionOptions> CreateDataDbConnectionOptions() =>
+        new(new DataDbConnectionOptions
+        {
+            CacheMinutes = 60
+        });
 
     private static string GetDataConnectionStringTemplate()
     {
@@ -170,6 +188,13 @@ public sealed class GetDataDbConnectionTests
         var builder = new SqlConnectionStringBuilder(GetDataConnectionString());
 
         return builder.Password;
+    }
+
+    private static string GetDataDatabaseName()
+    {
+        var builder = new SqlConnectionStringBuilder(GetDataConnectionString());
+
+        return builder.InitialCatalog;
     }
 
     private static string GetDataConnectionString()

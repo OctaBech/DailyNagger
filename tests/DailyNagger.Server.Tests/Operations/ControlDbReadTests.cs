@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DailyNagger.Server.Tests.Operations;
 
 [Collection(SqlServerTestCollection.Name)]
-public sealed class ControlDbReadTests
+public sealed class ControlDbReadTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
     [Fact]
     public async Task GetCommunityDbConnectionSettingsAsync_returns_connection_template_and_secret_name()
@@ -74,6 +74,45 @@ public sealed class ControlDbReadTests
             () => controlDbRead.GetCommunityDbConnectionSettingsAsync(communityId));
 
         Assert.Contains("ConnectionStringTemplate is empty", exception.Message);
+
+        await transaction.RollbackAsync();
+    }
+
+    [Fact]
+    public async Task GetActiveNagCommunityIdsAsync_returns_only_not_deactivated_communities()
+    {
+        await using var db = CreateDbContext();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+
+        var activeCommunityId = Guid.NewGuid();
+        var deactivatedCommunityId = Guid.NewGuid();
+
+        db.NagCommunities.AddRange(
+            new NagCommunity
+            {
+                Id = activeCommunityId,
+                Name = "Active route",
+                ConnectionStringTemplate = "Server=localhost;Database=DailyNaggerData;User Id=sa",
+                PasswordSecretName = null,
+                IsDeactivated = false
+            },
+            new NagCommunity
+            {
+                Id = deactivatedCommunityId,
+                Name = "Deactivated route",
+                ConnectionStringTemplate = "Server=localhost;Database=DailyNaggerData;User Id=sa",
+                PasswordSecretName = null,
+                IsDeactivated = true
+            });
+
+        await db.SaveChangesAsync();
+
+        var controlDbRead = new ControlDbRead(db);
+
+        var communityIds = await controlDbRead.GetActiveNagCommunityIdsAsync();
+
+        Assert.Contains(activeCommunityId, communityIds);
+        Assert.DoesNotContain(deactivatedCommunityId, communityIds);
 
         await transaction.RollbackAsync();
     }

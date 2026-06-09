@@ -5,6 +5,14 @@ namespace DailyNagger.Server.Operations;
 
 public sealed class ControlDbRead(DailyNaggerControlDbContext db)
 {
+    public async Task<IReadOnlyList<Guid>> GetActiveNagCommunityIdsAsync(
+        CancellationToken cancellationToken = default) =>
+        await db.NagCommunities
+            .Where(community => !community.IsDeactivated)
+            .OrderBy(community => community.Id)
+            .Select(community => community.Id)
+            .ToListAsync(cancellationToken);
+
     public async Task<CommunityDbConnectionSettings> GetCommunityDbConnectionSettingsAsync(
         Guid communityId,
         CancellationToken cancellationToken = default)

@@ -9,4 +9,6 @@ public sealed class NagCommunity
     public required string ConnectionStringTemplate { get; set; }
 
     public string? PasswordSecretName { get; set; }
+
+    public bool IsDeactivated { get; set; }
 }

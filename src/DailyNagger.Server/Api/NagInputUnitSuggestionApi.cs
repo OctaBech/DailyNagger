@@ -1,27 +1,26 @@
-using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Operations;
 
 namespace DailyNagger.Server.Api;
 
-public static class TaskSeriesApi
+public static class NagInputUnitSuggestionApi
 {
-    public static IEndpointRouteBuilder MapTaskSeriesApi(this IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapNagInputUnitSuggestionApi(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/task-series", async (
+        app.MapGet("/api/nag-input-unit-suggestions", async (
             Guid communityId,
+            Guid userId,
             DataDbRead dataDbRead,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
             try
             {
-                var taskSeries = await dataDbRead.GetTaskSeriesAsync(
+                var units = await dataDbRead.GetNagInputUnitSuggestionsAsync(
                     communityId,
+                    userId,
                     cancellationToken);
 
-                return Results.Ok(taskSeries
-                    .Select(series => new TaskSeriesDto(series.Id))
-                    .ToArray());
+                return Results.Ok(units);
             }
             catch (NagCommunityNotFoundException exception)
             {
@@ -35,7 +34,7 @@ public static class TaskSeriesApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("Task Series");
+        }).WithTags("NagInputUnitSuggestions");
 
         return app;
     }

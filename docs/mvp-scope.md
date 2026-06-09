@@ -14,9 +14,9 @@ This document is the implementation target for the first build.
 
 ## MVP Features
 
-### Task Series
+### Nag
 
-Implement `task_series` as the owner of high-level behavior:
+Implement `nag` as the owner of high-level behavior:
 
 - Title.
 - Icon.
@@ -30,7 +30,7 @@ Implement `task_series` as the owner of high-level behavior:
 
 Implement `tasks` as concrete rows:
 
-- `seriesId`.
+- `nagId`.
 - `parentId`.
 - `copiedFromTaskId`.
 - Title.
@@ -44,7 +44,7 @@ A task can act as a list when other tasks reference it as `parentId`.
 
 For MVP, the UI should support two visible levels:
 
-- Top-level series/task.
+- Top-level nag/task.
 - Child checklist items.
 
 Keep the database flexible enough for deeper nesting, but do not build infinite-depth UI yet.
@@ -67,7 +67,7 @@ Implement the lower-right plus button:
 
 - Opens floating setup sheet.
 - Uses current context.
-- Home creates top-level task/series.
+- Home creates top-level task/nag.
 - Inside a task creates a child task.
 - Swipe/dismiss behavior can be basic at first.
 
@@ -100,7 +100,7 @@ Defer location stamping until core completion works.
 Implement simple repeat-by-copy:
 
 - When a repeated task is completed, create the next task by copying the previous task tree.
-- Keep `seriesId`.
+- Keep `nagId`.
 - Set `copiedFromTaskId`.
 - Copy child tasks.
 - Show previous completion values as reference/defaults later.
@@ -134,7 +134,7 @@ Do not build these in the first pass:
 The MVP is useful when a user can:
 
 1. Open the app in a browser.
-2. Create a pinned `Gym` series.
+2. Create a pinned `Gym` nag.
 3. Add `Squats` and `Bench press` as child tasks.
 4. Configure kg/reps completion fields.
 5. Complete the gym task.

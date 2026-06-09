@@ -162,7 +162,7 @@ For copy-forward behavior, each rotating step should copy from the previous inst
 
 ## Series History Browsing
 
-Repeated tasks should have a history view where the user can swipe left and right through the series.
+Repeated tasks should have a history view where the user can swipe left and right through the nag history.
 
 Examples:
 
