@@ -2,7 +2,6 @@ using System.Text.Json;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
-using DailyNagger.Server.Scheduling;
 using DailyNagger.Server.Tests;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -16,22 +15,22 @@ namespace DailyNagger.Server.Tests.Operations;
 public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
     [Fact]
-    public async Task NagLog_updated_at_must_not_be_default_value()
+    public async Task TaskLog_updated_at_must_not_be_default_value()
     {
         await using var dataDb = CreateDataDbContext();
 
         var nagId = Guid.NewGuid();
 
-        dataDb.Nags.Add(new Nag
+        dataDb.Nags.Add(new Nagger
         {
             Id = nagId,
             Title = "Default updatedAt test",
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
             ActiveLogDueOn = new DateOnly(2026, 6, 1),
-            IsDeactivated = false
+            IsDeactivated = false,
+            UpdatedAt = new DateTimeOffset(2026, 6, 1, 8, 0, 0, TimeSpan.Zero)
         });
 
-        dataDb.NagLogs.Add(new NagLog
+        dataDb.TaskLogs.Add(new TaskLog
         {
             Id = Guid.NewGuid(),
             NagId = nagId,
@@ -42,85 +41,60 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
     }
 
     [Fact]
-    public async Task CopyLapsedNagLogAsync_copies_open_log_tree_with_new_ids_and_updates_active_due_date()
+    public async Task SaveTaskLogAsync_applies_late_closed_log_update_without_recreating_copied_log()
     {
         await using var controlDb = CreateControlDbContext();
         await using var dataDb = CreateDataDbContext();
 
         var communityId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
         var nagId = Guid.NewGuid();
-        var oldNagLogId = Guid.NewGuid();
-        var rootNodeId = Guid.NewGuid();
-        var childNodeId = Guid.NewGuid();
-        var inputId = Guid.NewGuid();
-        var expectedActiveLogDueOn = new DateOnly(2026, 6, 1);
-        var today = new DateOnly(2026, 6, 2);
+        var oldTaskLogId = Guid.NewGuid();
+        var copiedTaskLogId = Guid.NewGuid();
         var closedOn = new DateTimeOffset(2026, 6, 2, 10, 30, 0, TimeSpan.Zero);
-        var oldUpdatedAt = new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero);
 
         controlDb.NagCommunities.Add(new NagCommunity
         {
             Id = communityId,
-            Name = "Copy lapsed nag log test",
+            Name = "Late closed log update leaves copied log",
             ConnectionStringTemplate = GetDataConnectionStringTemplate(),
             PasswordSecretName = null
         });
 
-        dataDb.Nags.Add(new Nag
+        dataDb.Nags.Add(new Nagger
         {
             Id = nagId,
-            Title = "Gym - Push day",
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
-            ActiveLogDueOn = expectedActiveLogDueOn,
+            Title = "Late update nag",
+            ActiveLogDueOn = new DateOnly(2026, 6, 8),
             IsDeactivated = false,
-            NagTimes =
-            [
-                new NagTime
-                {
-                    Id = Guid.NewGuid(),
-                    NagId = nagId,
-                    TimeType = NagTimeType.Weekly,
-                    DayOfWeek = DayOfWeek.Monday
-                }
-            ]
+            UpdatedAt = closedOn
         });
 
-        dataDb.NagLogs.Add(new NagLog
-        {
-            Id = oldNagLogId,
-            NagId = nagId,
-            ClosedOn = null,
-            UpdatedAt = oldUpdatedAt
-        });
-
-        dataDb.NagNodes.AddRange(
-            new NagNode
+        dataDb.TaskLogs.AddRange(
+            new TaskLog
             {
-                Id = rootNodeId,
-                NagLogId = oldNagLogId,
-                ParentNagNodeId = null,
-                Name = "Bench press",
-                SortOrder = 0
+                Id = oldTaskLogId,
+                NagId = nagId,
+                ClosedOn = closedOn,
+                UpdatedAt = closedOn,
+                Version = 3
             },
-            new NagNode
+            new TaskLog
             {
-                Id = childNodeId,
-                NagLogId = oldNagLogId,
-                ParentNagNodeId = rootNodeId,
-                Name = "Set 1",
-                SortOrder = 0
+                Id = copiedTaskLogId,
+                NagId = nagId,
+                CopiedFromTaskLogId = oldTaskLogId,
+                ClosedOn = null,
+                UpdatedAt = closedOn,
+                Version = 0
             });
 
-        dataDb.NagInputs.Add(new NagInput
+        dataDb.TaskItems.Add(new TaskItem
         {
-            Id = inputId,
-            NagLogId = oldNagLogId,
-            ParentNagNodeId = childNodeId,
-            Label = "Weight",
-            Description = "Working set",
-            ValueType = NagInputValueType.Decimal,
-            Unit = "kg",
-            Value = "80.5",
+            Id = Guid.NewGuid(),
+            TaskLogId = copiedTaskLogId,
+            ParentTaskItemId = null,
+            Name = "Old copied task",
             SortOrder = 0
         });
 
@@ -128,484 +102,167 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         await dataDb.SaveChangesAsync();
 
         var dataDbWrite = CreateDataDbWrite(controlDb);
+        var clientUpdatedAt = closedOn.AddMinutes(5);
+        var updatedTaskItem = new TaskItem
+        {
+            Id = Guid.NewGuid(),
+            TaskLogId = oldTaskLogId,
+            ParentTaskItemId = null,
+            Name = "Late task update",
+            IsDone = true,
+            SortOrder = 0
+        };
 
-        var result = await dataDbWrite.CopyLapsedNagLogAsync(
+        var savedTaskLog = await dataDbWrite.SaveTaskLogAsync(
             communityId,
+            userId,
+            oldTaskLogId,
             nagId,
-            expectedActiveLogDueOn,
-            today,
-            closedOn);
+            copiedFromTaskLogId: null,
+            closedOn: null,
+            tag: null,
+            updatedAt: clientUpdatedAt,
+            clientIdentity: null,
+            descendantTaskItemCount: 1,
+            doneDescendantTaskItemCount: 1,
+            baseVersion: 3,
+            nextVersion: 4,
+            taskItems: [updatedTaskItem]);
 
-        Assert.Equal(CopyLapsedNagLogStatus.Copied, result.Status);
-        Assert.Equal(nagId, result.NagId);
-        Assert.Equal(oldNagLogId, result.OldNagLogId);
-        Assert.NotNull(result.NewNagLogId);
-        Assert.Equal(new DateOnly(2026, 6, 8), result.ActiveLogDueOn);
+        Assert.Equal(4, savedTaskLog.Version);
+        Assert.Equal(closedOn, savedTaskLog.ClosedOn);
 
         dataDb.ChangeTracker.Clear();
 
-        var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
-        Assert.Equal(new DateOnly(2026, 6, 8), storedNag.ActiveLogDueOn);
-        Assert.Equal(1, storedNag.Version);
+        var storedOldTaskLog = await dataDb.TaskLogs.SingleAsync(taskLog => taskLog.Id == oldTaskLogId);
+        Assert.Equal(closedOn, storedOldTaskLog.ClosedOn);
+        Assert.Equal(clientUpdatedAt, storedOldTaskLog.UpdatedAt);
+        Assert.Equal(4, storedOldTaskLog.Version);
+        Assert.Equal(1, storedOldTaskLog.DescendantTaskItemCount);
+        Assert.Equal(1, storedOldTaskLog.DoneDescendantTaskItemCount);
 
-        var oldNagLog = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == oldNagLogId);
-        Assert.Equal(closedOn, oldNagLog.ClosedOn);
-        Assert.Equal(closedOn, oldNagLog.UpdatedAt);
+        var storedOldTaskItem = await dataDb.TaskItems.SingleAsync(taskItem => taskItem.TaskLogId == oldTaskLogId);
+        Assert.Equal("Late task update", storedOldTaskItem.Name);
+        Assert.True(storedOldTaskItem.IsDone);
 
-        var newNagLog = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == result.NewNagLogId);
-        Assert.Equal(nagId, newNagLog.NagId);
-        Assert.Equal(oldNagLogId, newNagLog.CopiedFromNagLogId);
-        Assert.Null(newNagLog.ClosedOn);
-        Assert.Equal(closedOn, newNagLog.UpdatedAt);
+        var storedCopiedTaskLog = await dataDb.TaskLogs.SingleAsync(taskLog => taskLog.Id == copiedTaskLogId);
+        Assert.Null(storedCopiedTaskLog.ClosedOn);
+        Assert.Equal(0, storedCopiedTaskLog.Version);
+        Assert.Equal(0, storedCopiedTaskLog.DescendantTaskItemCount);
+        Assert.Equal(0, storedCopiedTaskLog.DoneDescendantTaskItemCount);
 
-        var newNodes = await dataDb.NagNodes
-            .Where(node => node.NagLogId == newNagLog.Id)
-            .ToListAsync();
-
-        Assert.Equal(2, newNodes.Count);
-        Assert.DoesNotContain(newNodes, node => node.Id == rootNodeId);
-        Assert.DoesNotContain(newNodes, node => node.Id == childNodeId);
-
-        var newRoot = Assert.Single(newNodes, node => node.Name == "Bench press");
-        var newChild = Assert.Single(newNodes, node => node.Name == "Set 1");
-
-        Assert.Null(newRoot.ParentNagNodeId);
-        Assert.Equal(newRoot.Id, newChild.ParentNagNodeId);
-
-        var newInput = await dataDb.NagInputs.SingleAsync(input => input.NagLogId == newNagLog.Id);
-
-        Assert.NotEqual(inputId, newInput.Id);
-        Assert.Equal(newNagLog.Id, newInput.NagLogId);
-        Assert.Equal(newChild.Id, newInput.ParentNagNodeId);
-        Assert.Equal("Weight", newInput.Label);
-        Assert.Equal("Working set", newInput.Description);
-        Assert.Equal(NagInputValueType.Decimal, newInput.ValueType);
-        Assert.Equal("kg", newInput.Unit);
-        Assert.Null(newInput.Value);
-        Assert.Equal("80.5", newInput.PreviousValue);
+        var storedCopiedTaskItem = await dataDb.TaskItems.SingleAsync(taskItem => taskItem.TaskLogId == copiedTaskLogId);
+        Assert.Equal("Old copied task", storedCopiedTaskItem.Name);
+        Assert.False(storedCopiedTaskItem.IsDone);
+        Assert.NotEqual(updatedTaskItem.Id, storedCopiedTaskItem.Id);
     }
 
     [Fact]
-    public async Task NagCopyDelegator_does_not_copy_lapsed_log_until_copy_grace_has_expired()
+    public async Task SaveTaskLogAsync_applies_late_closed_log_update_without_recreating_used_copied_log()
     {
         await using var controlDb = CreateControlDbContext();
         await using var dataDb = CreateDataDbContext();
 
         var communityId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
         var nagId = Guid.NewGuid();
-        var oldNagLogId = Guid.NewGuid();
-        var activeLogDueOn = new DateOnly(2026, 6, 1);
-        var today = new DateOnly(2026, 6, 2);
-        var now = new DateTimeOffset(2026, 6, 2, 10, 0, 0, TimeSpan.Zero);
-        var copyGracePeriod = TimeSpan.FromMinutes(10);
-        var updatedAtInsideGrace = now.AddMinutes(-9);
-        var afterGrace = now.AddMinutes(2);
-
-        controlDb.NagCommunities.Add(new NagCommunity
-        {
-            Id = communityId,
-            Name = "Copy grace integration test",
-            ConnectionStringTemplate = GetDataConnectionStringTemplate(),
-            PasswordSecretName = null
-        });
-
-        dataDb.Nags.Add(new Nag
-        {
-            Id = nagId,
-            Title = "Gym - Push day",
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
-            ActiveLogDueOn = activeLogDueOn,
-            IsDeactivated = false,
-            NagTimes =
-            [
-                new NagTime
-                {
-                    Id = Guid.NewGuid(),
-                    NagId = nagId,
-                    TimeType = NagTimeType.Weekly,
-                    DayOfWeek = DayOfWeek.Monday
-                }
-            ]
-        });
-
-        dataDb.NagLogs.Add(new NagLog
-        {
-            Id = oldNagLogId,
-            NagId = nagId,
-            ClosedOn = null,
-            UpdatedAt = updatedAtInsideGrace
-        });
-
-        await controlDb.SaveChangesAsync();
-        await dataDb.SaveChangesAsync();
-
-        var dataDbRead = CreateDataDbRead(controlDb);
-        var dataDbWrite = CreateDataDbWrite(controlDb);
-        var worker = new NagCopyWorker(
-            dataDbWrite,
-            NullLogger<NagCopyWorker>.Instance);
-        var delegator = new NagCopyDelegator(
-            (readToday, readNow, readGracePeriod, cancellationToken) =>
-                dataDbRead.GetLapsedNagAsync(
-                    communityId,
-                    readToday,
-                    readNow,
-                    readGracePeriod,
-                    cancellationToken),
-            worker.RunAsync,
-            new NagCopyDelegatorOptions(MaxParallelCopyWorkers: 1));
-
-        var beforeGraceResult = await delegator.RunOnceAsync(
-            communityId,
-            today,
-            now,
-            copyGracePeriod);
-
-        Assert.Equal(0, beforeGraceResult.CopiedCount);
-        Assert.Equal(1, await dataDb.NagLogs.CountAsync(nagLog => nagLog.NagId == nagId));
-
-        dataDb.ChangeTracker.Clear();
-
-        var oldNagLogBeforeGrace = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == oldNagLogId);
-
-        Assert.Null(oldNagLogBeforeGrace.ClosedOn);
-        Assert.Equal(updatedAtInsideGrace, oldNagLogBeforeGrace.UpdatedAt);
-
-        var afterGraceResult = await delegator.RunOnceAsync(
-            communityId,
-            today,
-            afterGrace,
-            copyGracePeriod);
-
-        Assert.Equal(1, afterGraceResult.CopiedCount);
-
-        dataDb.ChangeTracker.Clear();
-
-        var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
-        var oldNagLogAfterGrace = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == oldNagLogId);
-        var newNagLog = await dataDb.NagLogs.SingleAsync(nagLog =>
-            nagLog.NagId == nagId
-            && nagLog.Id != oldNagLogId);
-
-        Assert.Equal(new DateOnly(2026, 6, 8), storedNag.ActiveLogDueOn);
-        Assert.Equal(afterGrace, oldNagLogAfterGrace.ClosedOn);
-        Assert.Equal(afterGrace, oldNagLogAfterGrace.UpdatedAt);
-        Assert.Equal(oldNagLogId, newNagLog.CopiedFromNagLogId);
-        Assert.Null(newNagLog.ClosedOn);
-        Assert.Equal(afterGrace, newNagLog.UpdatedAt);
-        Assert.Equal(2, await dataDb.NagLogs.CountAsync(nagLog => nagLog.NagId == nagId));
-    }
-
-    [Fact]
-    public async Task NagCopyDelegator_does_not_copy_deactivated_lapsed_nag()
-    {
-        await using var controlDb = CreateControlDbContext();
-        await using var dataDb = CreateDataDbContext();
-
-        var communityId = Guid.NewGuid();
-        var activeNagId = Guid.NewGuid();
-        var deactivatedNagId = Guid.NewGuid();
-        var activeNagLogId = Guid.NewGuid();
-        var deactivatedNagLogId = Guid.NewGuid();
-        var activeLogDueOn = new DateOnly(2026, 6, 1);
-        var today = new DateOnly(2026, 6, 2);
-        var now = new DateTimeOffset(2026, 6, 2, 10, 0, 0, TimeSpan.Zero);
-        var copyGracePeriod = TimeSpan.FromMinutes(10);
-        var oldUpdatedAt = now.AddMinutes(-11);
-
-        controlDb.NagCommunities.Add(new NagCommunity
-        {
-            Id = communityId,
-            Name = "Deactivated copy integration test",
-            ConnectionStringTemplate = GetDataConnectionStringTemplate(),
-            PasswordSecretName = null
-        });
-
-        dataDb.Nags.AddRange(
-            CreateLapsedWeeklyNag(activeNagId, "Active lapsed nag", activeLogDueOn, isDeactivated: false),
-            CreateLapsedWeeklyNag(deactivatedNagId, "Deactivated lapsed nag", activeLogDueOn, isDeactivated: true));
-
-        dataDb.NagLogs.AddRange(
-            new NagLog
-            {
-                Id = activeNagLogId,
-                NagId = activeNagId,
-                UpdatedAt = oldUpdatedAt
-            },
-            new NagLog
-            {
-                Id = deactivatedNagLogId,
-                NagId = deactivatedNagId,
-                UpdatedAt = oldUpdatedAt
-            });
-
-        await controlDb.SaveChangesAsync();
-        await dataDb.SaveChangesAsync();
-
-        var dataDbRead = CreateDataDbRead(controlDb);
-        var dataDbWrite = CreateDataDbWrite(controlDb);
-        var worker = new NagCopyWorker(
-            dataDbWrite,
-            NullLogger<NagCopyWorker>.Instance);
-        var delegator = new NagCopyDelegator(
-            (readToday, readNow, readGracePeriod, cancellationToken) =>
-                dataDbRead.GetLapsedNagAsync(
-                    communityId,
-                    readToday,
-                    readNow,
-                    readGracePeriod,
-                    cancellationToken),
-            worker.RunAsync,
-            new NagCopyDelegatorOptions(MaxParallelCopyWorkers: 1));
-
-        var result = await delegator.RunOnceAsync(
-            communityId,
-            today,
-            now,
-            copyGracePeriod);
-
-        Assert.Equal(1, result.CopiedCount);
-
-        dataDb.ChangeTracker.Clear();
-
-        var activeNag = await dataDb.Nags.SingleAsync(nag => nag.Id == activeNagId);
-        var deactivatedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == deactivatedNagId);
-        var activeOldLog = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == activeNagLogId);
-        var deactivatedLog = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == deactivatedNagLogId);
-
-        Assert.Equal(new DateOnly(2026, 6, 8), activeNag.ActiveLogDueOn);
-        Assert.Equal(now, activeOldLog.ClosedOn);
-        Assert.Equal(activeLogDueOn, deactivatedNag.ActiveLogDueOn);
-        Assert.Null(deactivatedLog.ClosedOn);
-        Assert.Equal(oldUpdatedAt, deactivatedLog.UpdatedAt);
-        Assert.Equal(2, await dataDb.NagLogs.CountAsync(nagLog => nagLog.NagId == activeNagId));
-        Assert.Equal(1, await dataDb.NagLogs.CountAsync(nagLog => nagLog.NagId == deactivatedNagId));
-    }
-
-    [Fact]
-    public async Task CopyLapsedNagLogAsync_noops_when_expected_due_date_is_stale()
-    {
-        await using var controlDb = CreateControlDbContext();
-        await using var dataDb = CreateDataDbContext();
-
-        var communityId = Guid.NewGuid();
-        var nagId = Guid.NewGuid();
-        var oldNagLogId = Guid.NewGuid();
-        var activeLogDueOn = new DateOnly(2026, 6, 1);
-        var oldUpdatedAt = new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero);
-
-        controlDb.NagCommunities.Add(new NagCommunity
-        {
-            Id = communityId,
-            Name = "Stale copy lapsed nag log test",
-            ConnectionStringTemplate = GetDataConnectionStringTemplate(),
-            PasswordSecretName = null
-        });
-
-        dataDb.Nags.Add(new Nag
-        {
-            Id = nagId,
-            Title = "Gym - Push day",
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
-            ActiveLogDueOn = activeLogDueOn,
-            IsDeactivated = false,
-            NagTimes =
-            [
-                new NagTime
-                {
-                    Id = Guid.NewGuid(),
-                    NagId = nagId,
-                    TimeType = NagTimeType.Weekly,
-                    DayOfWeek = DayOfWeek.Monday
-                }
-            ]
-        });
-
-        dataDb.NagLogs.Add(new NagLog
-        {
-            Id = oldNagLogId,
-            NagId = nagId,
-            ClosedOn = null,
-            UpdatedAt = oldUpdatedAt
-        });
-
-        await controlDb.SaveChangesAsync();
-        await dataDb.SaveChangesAsync();
-
-        var dataDbWrite = CreateDataDbWrite(controlDb);
-
-        var result = await dataDbWrite.CopyLapsedNagLogAsync(
-            communityId,
-            nagId,
-            activeLogDueOn.AddDays(-1),
-            new DateOnly(2026, 6, 2),
-            DateTimeOffset.UtcNow);
-
-        Assert.Equal(CopyLapsedNagLogStatus.Stale, result.Status);
-        Assert.Equal(nagId, result.NagId);
-        Assert.Null(result.OldNagLogId);
-        Assert.Null(result.NewNagLogId);
-        Assert.Null(result.ActiveLogDueOn);
-
-        dataDb.ChangeTracker.Clear();
-
-        var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
-        var storedNagLog = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == oldNagLogId);
-
-        Assert.Equal(activeLogDueOn, storedNag.ActiveLogDueOn);
-        Assert.Null(storedNagLog.ClosedOn);
-        Assert.Equal(1, await dataDb.NagLogs.CountAsync(nagLog => nagLog.NagId == nagId));
-    }
-
-    [Fact]
-    public async Task CopyLapsedNagLogAsync_closes_open_log_without_new_copy_when_no_future_occurrence_exists()
-    {
-        await using var controlDb = CreateControlDbContext();
-        await using var dataDb = CreateDataDbContext();
-
-        var communityId = Guid.NewGuid();
-        var nagId = Guid.NewGuid();
-        var oldNagLogId = Guid.NewGuid();
-        var activeLogDueOn = new DateOnly(2026, 6, 1);
+        var oldTaskLogId = Guid.NewGuid();
+        var copiedTaskLogId = Guid.NewGuid();
+        var copiedTaskItemId = Guid.NewGuid();
         var closedOn = new DateTimeOffset(2026, 6, 2, 10, 30, 0, TimeSpan.Zero);
-        var oldUpdatedAt = new DateTimeOffset(2026, 6, 1, 9, 0, 0, TimeSpan.Zero);
 
         controlDb.NagCommunities.Add(new NagCommunity
         {
             Id = communityId,
-            Name = "No future occurrence copy test",
+            Name = "Late closed log update leaves used copy",
             ConnectionStringTemplate = GetDataConnectionStringTemplate(),
             PasswordSecretName = null
         });
 
-        dataDb.Nags.Add(new Nag
+        dataDb.Nags.Add(new Nagger
         {
             Id = nagId,
-            Title = "Expired gym nag",
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
-            ActiveLogDueOn = activeLogDueOn,
-            ExpiresOn = new DateOnly(2026, 6, 1),
+            Title = "Late update used copy nag",
+            ActiveLogDueOn = new DateOnly(2026, 6, 8),
             IsDeactivated = false,
-            NagTimes =
-            [
-                new NagTime
-                {
-                    Id = Guid.NewGuid(),
-                    NagId = nagId,
-                    TimeType = NagTimeType.Weekly,
-                    DayOfWeek = DayOfWeek.Monday
-                }
-            ]
-        });
-
-        dataDb.NagLogs.Add(new NagLog
-        {
-            Id = oldNagLogId,
-            NagId = nagId,
-            ClosedOn = null,
-            UpdatedAt = oldUpdatedAt
-        });
-
-        await controlDb.SaveChangesAsync();
-        await dataDb.SaveChangesAsync();
-
-        var dataDbWrite = CreateDataDbWrite(controlDb);
-
-        var result = await dataDbWrite.CopyLapsedNagLogAsync(
-            communityId,
-            nagId,
-            activeLogDueOn,
-            new DateOnly(2026, 6, 2),
-            closedOn);
-
-        Assert.Equal(CopyLapsedNagLogStatus.NoFutureOccurrence, result.Status);
-        Assert.Equal(nagId, result.NagId);
-        Assert.Equal(oldNagLogId, result.OldNagLogId);
-        Assert.Null(result.NewNagLogId);
-        Assert.Null(result.ActiveLogDueOn);
-
-        dataDb.ChangeTracker.Clear();
-
-        var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
-        var storedNagLog = await dataDb.NagLogs.SingleAsync(nagLog => nagLog.Id == oldNagLogId);
-
-        Assert.Null(storedNag.ActiveLogDueOn);
-        Assert.Equal(closedOn, storedNagLog.ClosedOn);
-        Assert.Equal(closedOn, storedNagLog.UpdatedAt);
-        Assert.Equal(1, await dataDb.NagLogs.CountAsync(nagLog => nagLog.NagId == nagId));
-    }
-
-    [Fact]
-    public async Task CopyLapsedNagLogAsync_returns_no_open_log_when_lapsed_nag_has_no_open_log()
-    {
-        await using var controlDb = CreateControlDbContext();
-        await using var dataDb = CreateDataDbContext();
-
-        var communityId = Guid.NewGuid();
-        var nagId = Guid.NewGuid();
-        var closedNagLogId = Guid.NewGuid();
-        var activeLogDueOn = new DateOnly(2026, 6, 1);
-        var closedOn = new DateTimeOffset(2026, 6, 1, 10, 30, 0, TimeSpan.Zero);
-
-        controlDb.NagCommunities.Add(new NagCommunity
-        {
-            Id = communityId,
-            Name = "No open log copy test",
-            ConnectionStringTemplate = GetDataConnectionStringTemplate(),
-            PasswordSecretName = null
-        });
-
-        dataDb.Nags.Add(new Nag
-        {
-            Id = nagId,
-            Title = "Broken gym nag",
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
-            ActiveLogDueOn = activeLogDueOn,
-            IsDeactivated = false,
-            NagTimes =
-            [
-                new NagTime
-                {
-                    Id = Guid.NewGuid(),
-                    NagId = nagId,
-                    TimeType = NagTimeType.Weekly,
-                    DayOfWeek = DayOfWeek.Monday
-                }
-            ]
-        });
-
-        dataDb.NagLogs.Add(new NagLog
-        {
-            Id = closedNagLogId,
-            NagId = nagId,
-            ClosedOn = closedOn,
             UpdatedAt = closedOn
         });
 
+        dataDb.TaskLogs.AddRange(
+            new TaskLog
+            {
+                Id = oldTaskLogId,
+                NagId = nagId,
+                ClosedOn = closedOn,
+                UpdatedAt = closedOn,
+                Version = 3
+            },
+            new TaskLog
+            {
+                Id = copiedTaskLogId,
+                NagId = nagId,
+                CopiedFromTaskLogId = oldTaskLogId,
+                ClosedOn = null,
+                UpdatedAt = closedOn,
+                Version = 0
+            });
+
+        dataDb.TaskItems.Add(new TaskItem
+        {
+            Id = copiedTaskItemId,
+            TaskLogId = copiedTaskLogId,
+            ParentTaskItemId = null,
+            Name = "Used copied task",
+            SortOrder = 0
+        });
+
         await controlDb.SaveChangesAsync();
         await dataDb.SaveChangesAsync();
 
         var dataDbWrite = CreateDataDbWrite(controlDb);
+        var clientUpdatedAt = closedOn.AddMinutes(5);
 
-        var result = await dataDbWrite.CopyLapsedNagLogAsync(
+        await dataDbWrite.SaveTaskLogAsync(
             communityId,
+            userId,
+            oldTaskLogId,
             nagId,
-            activeLogDueOn,
-            new DateOnly(2026, 6, 2),
-            DateTimeOffset.UtcNow);
-
-        Assert.Equal(CopyLapsedNagLogStatus.NoOpenLog, result.Status);
-        Assert.Equal(nagId, result.NagId);
-        Assert.Null(result.OldNagLogId);
-        Assert.Null(result.NewNagLogId);
-        Assert.Null(result.ActiveLogDueOn);
+            copiedFromTaskLogId: null,
+            closedOn: null,
+            tag: null,
+            updatedAt: clientUpdatedAt,
+            clientIdentity: null,
+            descendantTaskItemCount: 1,
+            doneDescendantTaskItemCount: 1,
+            baseVersion: 3,
+            nextVersion: 4,
+            taskItems:
+            [
+                new TaskItem
+                {
+                    Id = Guid.NewGuid(),
+                    TaskLogId = oldTaskLogId,
+                    ParentTaskItemId = null,
+                    Name = "Late task update",
+                    IsDone = true,
+                    SortOrder = 0
+                }
+            ]);
 
         dataDb.ChangeTracker.Clear();
 
-        var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
+        var storedOldTaskLog = await dataDb.TaskLogs.SingleAsync(taskLog => taskLog.Id == oldTaskLogId);
+        Assert.Equal(closedOn, storedOldTaskLog.ClosedOn);
+        Assert.Equal(clientUpdatedAt, storedOldTaskLog.UpdatedAt);
+        Assert.Equal(4, storedOldTaskLog.Version);
 
-        Assert.Equal(activeLogDueOn, storedNag.ActiveLogDueOn);
-        Assert.Equal(1, await dataDb.NagLogs.CountAsync(nagLog => nagLog.NagId == nagId));
+        var storedCopiedTaskLog = await dataDb.TaskLogs.SingleAsync(taskLog => taskLog.Id == copiedTaskLogId);
+        Assert.Null(storedCopiedTaskLog.ClosedOn);
+        Assert.Equal(0, storedCopiedTaskLog.Version);
+
+        var storedCopiedTaskItem = await dataDb.TaskItems.SingleAsync(taskItem => taskItem.TaskLogId == copiedTaskLogId);
+        Assert.Equal(copiedTaskItemId, storedCopiedTaskItem.Id);
+        Assert.Equal("Used copied task", storedCopiedTaskItem.Name);
     }
 
     private static DailyNaggerControlDbContext CreateControlDbContext()
@@ -644,8 +301,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
                 {
                     CacheMinutes = 60
                 }),
-                new MemoryCache(new MemoryCacheOptions())),
-            new NagOccurrenceCalculator());
+                new MemoryCache(new MemoryCacheOptions())));
     }
 
     private static DataDbRead CreateDataDbRead(DailyNaggerControlDbContext controlDb)
@@ -667,30 +323,6 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
             }),
             new MemoryCache(new MemoryCacheOptions())));
     }
-
-    private static Nag CreateLapsedWeeklyNag(
-        Guid nagId,
-        string title,
-        DateOnly activeLogDueOn,
-        bool isDeactivated) =>
-        new()
-        {
-            Id = nagId,
-            Title = title,
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
-            ActiveLogDueOn = activeLogDueOn,
-            IsDeactivated = isDeactivated,
-            NagTimes =
-            [
-                new NagTime
-                {
-                    Id = Guid.NewGuid(),
-                    NagId = nagId,
-                    TimeType = NagTimeType.Weekly,
-                    DayOfWeek = DayOfWeek.Monday
-                }
-            ]
-        };
 
     private static string GetControlConnectionString() =>
         GetConnectionString("DailyNaggerControl");

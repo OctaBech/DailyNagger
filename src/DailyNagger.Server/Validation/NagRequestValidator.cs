@@ -11,19 +11,17 @@ public sealed class NagRequestValidator
             throw new NagValidationException("Id is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.Title))
-        {
-            throw new NagValidationException("Title is required.");
-        }
-
-        foreach (var rule in request.NagTimes)
+        foreach (var rule in request.ScheduleRules)
         {
             ValidateRule(rule);
         }
 
+        ValidateUpdatedAt(request.UpdatedAt);
+        ValidateClientIdentity(request.ClientIdentity);
+        ValidateVersionTransition(request.BaseVersion, request.NextVersion);
     }
 
-    public void Validate(SaveNagLogRequest request)
+    public void Validate(SaveTaskLogRequest request)
     {
         if (request.Id == Guid.Empty)
         {
@@ -43,179 +41,265 @@ public sealed class NagRequestValidator
         var nodeIds = new HashSet<Guid>();
         var inputIds = new HashSet<Guid>();
 
-        foreach (var node in request.NagNodes)
+        ValidateUpdatedAt(request.UpdatedAt);
+        ValidateClientIdentity(request.ClientIdentity);
+        ValidateVersionTransition(request.BaseVersion, request.NextVersion);
+
+        foreach (var node in request.TaskItems)
         {
-            ValidateNagNode(request.Id, null, node, nodeIds, inputIds);
+            ValidateTaskItem(request.Id, null, node, nodeIds, inputIds);
         }
     }
 
-    public void Validate(UpdateNagInputValuesRequest request)
+    public void Validate(UpdateTaskEntryValuesRequest request)
     {
         if (request.UserId == Guid.Empty)
         {
             throw new NagValidationException("UserId is required.");
         }
 
-        if (request.NagInputs.Length == 0)
+        if (request.Payload.Length == 0)
         {
-            throw new NagValidationException("At least one NagInput update is required.");
+            throw new NagValidationException("At least one TaskEntry update is required.");
         }
+
+        ValidateUpdatedAt(request.UpdatedAt);
+        ValidateClientIdentity(request.ClientIdentity);
+        ValidateVersionTransition(request.BaseVersion, request.NextVersion);
 
         var inputIds = new HashSet<Guid>();
 
-        foreach (var input in request.NagInputs)
+        foreach (var input in request.Payload)
         {
             if (input.Id == Guid.Empty)
             {
-                throw new NagValidationException("NagInput Id is required.");
+                throw new NagValidationException("TaskEntry Id is required.");
             }
 
             if (!inputIds.Add(input.Id))
             {
-                throw new NagValidationException("NagInput Id values must be unique.");
+                throw new NagValidationException("TaskEntry Id values must be unique.");
             }
         }
     }
 
-    public static void ValidateNagInputValue(
-        NagInputValueTypeDto valueType,
-        string? value)
+    public void Validate(SaveTagRequest request)
     {
-        if (value is null)
+        if (request.UserId == Guid.Empty)
+        {
+            throw new NagValidationException("UserId is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.TagType))
+        {
+            throw new NagValidationException("TagType is required.");
+        }
+
+        if (request.TagType.Trim().Length > 100)
+        {
+            throw new NagValidationException("TagType cannot be longer than 100 characters.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            throw new NagValidationException("Tag name is required.");
+        }
+
+        if (request.Name.Trim().Length > 50)
+        {
+            throw new NagValidationException("Tag name cannot be longer than 50 characters.");
+        }
+
+        if (request.Description is { Length: > 1000 })
+        {
+            throw new NagValidationException("Tag description cannot be longer than 1000 characters.");
+        }
+    }
+
+    public void Validate(SaveUserMoodRequest request)
+    {
+        if (request.UserId == Guid.Empty)
+        {
+            throw new NagValidationException("UserId is required.");
+        }
+
+        if (request.Payload.Id == Guid.Empty)
+        {
+            throw new NagValidationException("UserMood Id is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Payload.Mood))
+        {
+            throw new NagValidationException("Mood is required.");
+        }
+
+        if (request.Payload.Mood.Trim().Length > 50)
+        {
+            throw new NagValidationException("Mood cannot be longer than 50 characters.");
+        }
+
+        if (request.Payload.RecordedAt == default)
+        {
+            throw new NagValidationException("RecordedAt is required.");
+        }
+
+        if (request.Payload.TimeZone is { Length: > 100 })
+        {
+            throw new NagValidationException("TimeZone cannot be longer than 100 characters.");
+        }
+
+        if (request.Payload.Locale is { Length: > 50 })
+        {
+            throw new NagValidationException("Locale cannot be longer than 50 characters.");
+        }
+
+        ValidateClientIdentity(request.ClientIdentity);
+    }
+
+    public static void ValidatePayloadVersion(
+        int payloadVersion,
+        int baseVersion,
+        int nextVersion)
+    {
+        Require(
+            payloadVersion >= baseVersion && payloadVersion < nextVersion,
+            "Payload Version must be between BaseVersion and before NextVersion.");
+    }
+
+    private static void ValidateRule(ScheduleRuleDto rule)
+    {
+        if (rule.Id == Guid.Empty)
+        {
+            throw new NagValidationException("ScheduleRule Id is required.");
+        }
+
+        switch (rule.RuleType)
+        {
+            case ScheduleRuleTypeDto.Monday:
+            case ScheduleRuleTypeDto.Tuesday:
+            case ScheduleRuleTypeDto.Wednesday:
+            case ScheduleRuleTypeDto.Thursday:
+            case ScheduleRuleTypeDto.Friday:
+            case ScheduleRuleTypeDto.Saturday:
+            case ScheduleRuleTypeDto.Sunday:
+                break;
+
+            case ScheduleRuleTypeDto.MonthlyDay:
+                Require(rule.Day is not null, "MonthlyDay schedule rules require Day.");
+                break;
+
+            case ScheduleRuleTypeDto.Date:
+                Require(rule.Day is not null, "Date schedule rules require Day.");
+                Require(rule.Month is not null, "Date schedule rules require Month.");
+                break;
+
+            default:
+                throw new NagValidationException($"Unknown schedule rule type: {rule.RuleType}.");
+        }
+
+        if (rule.Day is < 1 or > 31)
+        {
+            throw new NagValidationException("ScheduleRule Day must be between 1 and 31.");
+        }
+
+        if (rule.Month is < 1 or > 12)
+        {
+            throw new NagValidationException("ScheduleRule Month must be between 1 and 12.");
+        }
+    }
+
+    private static void ValidateUpdatedAt(DateTimeOffset updatedAt)
+    {
+        if (updatedAt == default)
+        {
+            throw new NagValidationException("UpdatedAt is required.");
+        }
+    }
+
+    private static void ValidateClientIdentity(ClientIdentityDto? clientIdentity)
+    {
+        if (clientIdentity is null)
         {
             return;
         }
 
-        switch (valueType)
-        {
-            case NagInputValueTypeDto.Text:
-                return;
-
-            case NagInputValueTypeDto.Integer:
-                Require(
-                    int.TryParse(value, out _),
-                    "NagInput value must be a valid Integer.");
-                return;
-
-            case NagInputValueTypeDto.Decimal:
-                Require(
-                    decimal.TryParse(value, out _),
-                    "NagInput value must be a valid Decimal.");
-                return;
-
-            case NagInputValueTypeDto.Boolean:
-                Require(
-                    bool.TryParse(value, out _),
-                    "NagInput value must be a valid Boolean.");
-                return;
-
-            default:
-                throw new NagValidationException($"Unknown NagInput value type: {valueType}.");
-        }
+        Require(!string.IsNullOrWhiteSpace(clientIdentity.ClientId), "ClientIdentity ClientId is required.");
+        Require(clientIdentity.ClientId.Length <= 100, "ClientIdentity ClientId cannot be longer than 100 characters.");
+        Require(!string.IsNullOrWhiteSpace(clientIdentity.DeviceName), "ClientIdentity DeviceName is required.");
+        Require(clientIdentity.DeviceName.Length <= 200, "ClientIdentity DeviceName cannot be longer than 200 characters.");
+        Require(!string.IsNullOrWhiteSpace(clientIdentity.DeviceModel), "ClientIdentity DeviceModel is required.");
+        Require(clientIdentity.DeviceModel.Length <= 200, "ClientIdentity DeviceModel cannot be longer than 200 characters.");
     }
 
-    private static void ValidateRule(NagTimeDto rule)
-    {
-        if (rule.Id == Guid.Empty)
-        {
-            throw new NagValidationException("NagTime Id is required.");
-        }
-
-        switch (rule.TimeType)
-        {
-            case NagTimeTypeDto.Weekly:
-                Require(rule.DayOfWeek is not null, "Weekly schedule rules require DayOfWeek.");
-                break;
-
-            case NagTimeTypeDto.MonthlyDay:
-                Require(rule.DayOfMonth is not null, "MonthlyDay schedule rules require DayOfMonth.");
-                break;
-
-            case NagTimeTypeDto.YearlyDate:
-                Require(rule.DayOfMonth is not null, "YearlyDate schedule rules require DayOfMonth.");
-                Require(rule.MonthOfYear is not null, "YearlyDate schedule rules require MonthOfYear.");
-                break;
-
-            default:
-                throw new NagValidationException($"Unknown schedule rule type: {rule.TimeType}.");
-        }
-    }
-
-    private static void ValidateNagNode(
-        Guid nagLogId,
-        Guid? expectedParentNagNodeId,
-        NagNodeDto node,
+    private static void ValidateTaskItem(
+        Guid taskLogId,
+        Guid? expectedParentTaskItemId,
+        TaskItemDto node,
         HashSet<Guid> nodeIds,
         HashSet<Guid> inputIds)
     {
         if (node.Id == Guid.Empty)
         {
-            throw new NagValidationException("NagNode Id is required.");
+            throw new NagValidationException("TaskItem Id is required.");
         }
 
-        if (node.NagLogId != nagLogId)
+        if (node.TaskLogId != taskLogId)
         {
-            throw new NagValidationException("NagNode NagLogId must match the requested NagLog.");
+            throw new NagValidationException("TaskItem TaskLogId must match the requested TaskLog.");
         }
 
-        if (node.ParentNagNodeId != expectedParentNagNodeId)
+        if (node.ParentTaskItemId != expectedParentTaskItemId)
         {
-            throw new NagValidationException("NagNode ParentNagNodeId must match its nested position.");
+            throw new NagValidationException("TaskItem ParentTaskItemId must match its nested position.");
         }
 
         if (!nodeIds.Add(node.Id))
         {
-            throw new NagValidationException("NagNode Id values must be unique.");
+            throw new NagValidationException("TaskItem Id values must be unique.");
         }
 
         if (string.IsNullOrWhiteSpace(node.Name))
         {
-            throw new NagValidationException("NagNode Name is required.");
+            throw new NagValidationException("TaskItem Name is required.");
         }
 
-        foreach (var input in node.NagInputs)
+        foreach (var input in node.TaskEntries)
         {
-            ValidateNagInput(nagLogId, node.Id, input, inputIds);
+            ValidateTaskEntry(taskLogId, node.Id, input, inputIds);
         }
 
-        foreach (var child in node.NagNodes)
+        foreach (var child in node.TaskItems)
         {
-            ValidateNagNode(nagLogId, node.Id, child, nodeIds, inputIds);
+            ValidateTaskItem(taskLogId, node.Id, child, nodeIds, inputIds);
         }
     }
 
-    private static void ValidateNagInput(
-        Guid nagLogId,
-        Guid expectedParentNagNodeId,
-        NagInputDto input,
+    private static void ValidateTaskEntry(
+        Guid taskLogId,
+        Guid expectedParentTaskItemId,
+        TaskEntryDto input,
         HashSet<Guid> inputIds)
     {
         if (input.Id == Guid.Empty)
         {
-            throw new NagValidationException("NagInput Id is required.");
+            throw new NagValidationException("TaskEntry Id is required.");
         }
 
-        if (input.NagLogId != nagLogId)
+        if (input.TaskLogId != taskLogId)
         {
-            throw new NagValidationException("NagInput NagLogId must match the requested NagLog.");
+            throw new NagValidationException("TaskEntry TaskLogId must match the requested TaskLog.");
         }
 
-        if (input.ParentNagNodeId != expectedParentNagNodeId)
+        if (input.ParentTaskItemId != expectedParentTaskItemId)
         {
-            throw new NagValidationException("NagInput ParentNagNodeId must match its parent NagNode.");
+            throw new NagValidationException("TaskEntry ParentTaskItemId must match its parent TaskItem.");
         }
 
         if (!inputIds.Add(input.Id))
         {
-            throw new NagValidationException("NagInput Id values must be unique.");
+            throw new NagValidationException("TaskEntry Id values must be unique.");
         }
 
-        if (string.IsNullOrWhiteSpace(input.Label))
-        {
-            throw new NagValidationException("NagInput Label is required.");
-        }
-
-        ValidateNagInputValue(input.ValueType, input.Value);
     }
 
     private static void Require(bool condition, string message)
@@ -224,6 +308,13 @@ public sealed class NagRequestValidator
         {
             throw new NagValidationException(message);
         }
+    }
+
+    private static void ValidateVersionTransition(
+        int baseVersion,
+        int nextVersion)
+    {
+        Require(nextVersion > baseVersion, "NextVersion must be greater than BaseVersion.");
     }
 }
 

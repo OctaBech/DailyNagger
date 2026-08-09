@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DailyNagger.Server.Data.Migrations.Data
 {
     [DbContext(typeof(DailyNaggerDbContext))]
-    [Migration("20260605193815_InitialDataSchema")]
-    partial class InitialDataSchema
+    [Migration("20260715175838_MakeUserTagNameCaseSensitive")]
+    partial class MakeUserTagNameCaseSensitive
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,237 +24,6 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("DailyNagger.Server.Domain.Nagger", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<DateOnly?>("ActiveLogDueOn")
-                        .HasColumnType("date")
-                        .HasColumnName("active_log_due_on");
-
-                    b.Property<DateOnly?>("ExpiresOn")
-                        .HasColumnType("date")
-                        .HasColumnName("expires_on");
-
-                    b.Property<bool>("IsDeactivated")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_deactivated");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("title");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("datetimeoffset")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedByClientId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("updated_by_client_id");
-
-                    b.Property<string>("UpdatedByDeviceModel")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("updated_by_device_model");
-
-                    b.Property<string>("UpdatedByDeviceName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("updated_by_device_name");
-
-                    b.Property<int>("Version")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0)
-                        .HasColumnName("version");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsDeactivated", "ActiveLogDueOn")
-                        .HasDatabaseName("IX_nag_is_deactivated_active_log_due_on");
-
-                    b.ToTable("nag");
-                });
-
-            modelBuilder.Entity("DailyNagger.Server.Domain.TaskEntry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("label");
-
-                    b.Property<Guid>("TaskLogId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("task_log_id");
-
-                    b.Property<Guid>("ParentTaskItemId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("parent_task_item_id");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.Property<string>("Unit")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("unit");
-
-                    b.Property<string>("Value")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)")
-                        .HasColumnName("value");
-
-                    b.Property<string>("LastTaskRunReferenceValue")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)")
-                        .HasColumnName("last_task_run_reference_value");
-
-                    b.Property<string>("ValueType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("value_type");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TaskLogId");
-
-                    b.HasIndex("ParentTaskItemId");
-
-                    b.ToTable("task_entry", (string)null);
-                });
-
-            modelBuilder.Entity("DailyNagger.Server.Domain.TaskEntryUnitSuggestion", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
-                    b.Property<string>("Unit")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)")
-                        .HasColumnName("unit");
-
-                    b.HasKey("UserId", "Unit");
-
-                    b.ToTable("task_entry_unit_suggestion", (string)null);
-                });
-
-            modelBuilder.Entity("DailyNagger.Server.Domain.TaskLog", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<DateTimeOffset?>("ClosedOn")
-                        .HasColumnType("datetimeoffset")
-                        .HasColumnName("closed_on");
-
-                    b.Property<Guid?>("CopiedFromTaskLogId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("copied_from_task_log_id");
-
-                    b.Property<Guid>("NagId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("nag_id");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("datetimeoffset")
-                        .HasColumnName("updated_at");
-
-                    b.Property<string>("UpdatedByClientId")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)")
-                        .HasColumnName("updated_by_client_id");
-
-                    b.Property<string>("UpdatedByDeviceModel")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("updated_by_device_model");
-
-                    b.Property<string>("UpdatedByDeviceName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("updated_by_device_name");
-
-                    b.Property<int>("Version")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("version")
-                        .HasDefaultValue(0);
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CopiedFromTaskLogId");
-
-                    b.HasIndex("NagId");
-
-                    b.HasIndex("NagId", "ClosedOn", "UpdatedAt")
-                        .HasDatabaseName("IX_task_log_nag_id_closed_on_updated_at");
-
-                    b.ToTable("task_log", t =>
-                        {
-                            t.HasCheckConstraint(
-                                "ck_task_log_updated_at_not_default",
-                                "updated_at > '0001-01-01T00:00:00+00:00'");
-                        });
-                });
-
-            modelBuilder.Entity("DailyNagger.Server.Domain.TaskItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("TaskLogId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("task_log_id");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)")
-                        .HasColumnName("name");
-
-                    b.Property<Guid?>("ParentTaskItemId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("parent_task_item_id");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int")
-                        .HasColumnName("sort_order");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TaskLogId");
-
-                    b.HasIndex("ParentTaskItemId");
-
-                    b.ToTable("task_item", (string)null);
-                });
 
             modelBuilder.Entity("DailyNagger.Server.Domain.ScheduleRule", b =>
                 {
@@ -292,42 +61,244 @@ namespace DailyNagger.Server.Data.Migrations.Data
                     b.ToTable("schedule_rule", (string)null);
                 });
 
-            modelBuilder.Entity("DailyNagger.Server.Domain.TaskEntry", b =>
+            modelBuilder.Entity("DailyNagger.Server.Domain.Nagger", b =>
                 {
-                    b.HasOne("DailyNagger.Server.Domain.TaskLog", null)
-                        .WithMany()
-                        .HasForeignKey("TaskLogId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
-                    b.HasOne("DailyNagger.Server.Domain.TaskItem", null)
-                        .WithMany("TaskEntries")
-                        .HasForeignKey("ParentTaskItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<DateOnly?>("ActiveLogDueOn")
+                        .HasColumnType("date")
+                        .HasColumnName("active_log_due_on");
+
+                    b.Property<DateOnly?>("ExpiresOn")
+                        .HasColumnType("date")
+                        .HasColumnName("expires_on");
+
+                    b.Property<bool>("IsDeactivated")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deactivated");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("Version")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsDeactivated", "ActiveLogDueOn")
+                        .HasDatabaseName("IX_nag_is_deactivated_active_log_due_on");
+
+                    b.ToTable("nag", (string)null);
                 });
 
-            modelBuilder.Entity("DailyNagger.Server.Domain.TaskLog", b =>
+            modelBuilder.Entity("DailyNagger.Server.Domain.TaskEntry", b =>
                 {
-                    b.HasOne("DailyNagger.Server.Domain.Nagger", null)
-                        .WithMany()
-                        .HasForeignKey("NagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("label");
+
+                    b.Property<string>("LastTaskRunReferenceValue")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)")
+                        .HasColumnName("last_task_run_reference_value");
+
+                    b.Property<Guid>("ParentTaskItemId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("parent_task_item_id");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.Property<Guid>("TaskLogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("task_log_id");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("unit");
+
+                    b.Property<string>("Value")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)")
+                        .HasColumnName("value");
+
+                    b.Property<string>("ValueType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("value_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentTaskItemId");
+
+                    b.HasIndex("TaskLogId");
+
+                    b.ToTable("task_entry", (string)null);
                 });
 
             modelBuilder.Entity("DailyNagger.Server.Domain.TaskItem", b =>
                 {
-                    b.HasOne("DailyNagger.Server.Domain.TaskLog", null)
-                        .WithMany("TaskItems")
-                        .HasForeignKey("TaskLogId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
-                    b.HasOne("DailyNagger.Server.Domain.TaskItem", null)
-                        .WithMany()
-                        .HasForeignKey("ParentTaskItemId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                    b.Property<int>("DescendantTaskItemCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("descendant_task_item_count");
+
+                    b.Property<int>("DoneDescendantTaskItemCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("done_descendant_task_item_count");
+
+                    b.Property<bool>("IsDone")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_done");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("name");
+
+                    b.Property<Guid?>("ParentTaskItemId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("parent_task_item_id");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.Property<Guid>("TaskLogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("task_log_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentTaskItemId");
+
+                    b.HasIndex("TaskLogId");
+
+                    b.ToTable("task_item", (string)null);
+                });
+
+            modelBuilder.Entity("DailyNagger.Server.Domain.TaskLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ClosedOn")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("closed_on");
+
+                    b.Property<Guid?>("CopiedFromTaskLogId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("copied_from_task_log_id");
+
+                    b.Property<int>("DescendantTaskItemCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("descendant_task_item_count");
+
+                    b.Property<int>("DoneDescendantTaskItemCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("done_descendant_task_item_count");
+
+                    b.Property<Guid>("NagId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("nag_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("Version")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("version");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CopiedFromTaskLogId");
+
+                    b.HasIndex("NagId");
+
+                    b.HasIndex("NagId", "ClosedOn", "UpdatedAt")
+                        .HasDatabaseName("IX_task_log_nag_id_closed_on_updated_at");
+
+                    b.ToTable("task_log", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_task_log_updated_at_not_default", "updated_at > '0001-01-01T00:00:00+00:00'");
+                        });
+                });
+
+            modelBuilder.Entity("DailyNagger.Server.Domain.UserTag", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("TagType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("tag_type");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("name")
+                        .UseCollation("Latin1_General_100_CS_AS");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset?>("LastUsedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("last_used_at");
+
+                    b.HasKey("UserId", "TagType", "Name");
+
+                    b.ToTable("user_tag", (string)null);
                 });
 
             modelBuilder.Entity("DailyNagger.Server.Domain.ScheduleRule", b =>
@@ -339,19 +310,57 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("DailyNagger.Server.Domain.TaskEntry", b =>
+                {
+                    b.HasOne("DailyNagger.Server.Domain.TaskItem", null)
+                        .WithMany("TaskEntries")
+                        .HasForeignKey("ParentTaskItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DailyNagger.Server.Domain.TaskLog", null)
+                        .WithMany()
+                        .HasForeignKey("TaskLogId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DailyNagger.Server.Domain.TaskItem", b =>
+                {
+                    b.HasOne("DailyNagger.Server.Domain.TaskItem", null)
+                        .WithMany()
+                        .HasForeignKey("ParentTaskItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DailyNagger.Server.Domain.TaskLog", null)
+                        .WithMany("TaskItems")
+                        .HasForeignKey("TaskLogId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DailyNagger.Server.Domain.TaskLog", b =>
+                {
+                    b.HasOne("DailyNagger.Server.Domain.Nagger", null)
+                        .WithMany()
+                        .HasForeignKey("NagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DailyNagger.Server.Domain.Nagger", b =>
                 {
                     b.Navigation("ScheduleRules");
                 });
 
-            modelBuilder.Entity("DailyNagger.Server.Domain.TaskLog", b =>
-                {
-                    b.Navigation("TaskItems");
-                });
-
             modelBuilder.Entity("DailyNagger.Server.Domain.TaskItem", b =>
                 {
                     b.Navigation("TaskEntries");
+                });
+
+            modelBuilder.Entity("DailyNagger.Server.Domain.TaskLog", b =>
+                {
+                    b.Navigation("TaskItems");
                 });
 #pragma warning restore 612, 618
         }

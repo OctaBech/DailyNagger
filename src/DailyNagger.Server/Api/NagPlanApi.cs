@@ -56,90 +56,142 @@ public static class NagPlanApi
                 .Select(ToDto)
                 .ToArray());
 
-    private static NagPlanNagDto ToDto(NagPlanNag item) =>
+    private static NagPlanNaggerDto ToDto(NagPlanNagger item) =>
         new(
-            item.Nag.Id,
-            item.Nag.Title,
-            item.Nag.ScheduleUpdatedAt,
-            item.Nag.ActiveLogDueOn,
-            item.Nag.ExpiresOn,
-            item.Nag.IsDeactivated,
-            item.Nag.NagTimes
+            item.Nagger.Id,
+            item.Nagger.Title,
+            item.Nagger.ActiveLogDueOn,
+            item.Nagger.ExpiresOn,
+            item.Nagger.TargetTime,
+            item.Nagger.IsDeactivated,
+            ToDto(item.Nagger.PinnedBy),
+            item.Nagger.UpdatedAt,
+            item.Nagger.UpdatedByClientId,
+            item.Nagger.UpdatedByDeviceName,
+            item.Nagger.UpdatedByDeviceModel,
+            item.Nagger.ScheduleRules
                 .Select(ToDto)
                 .ToArray(),
-            ToDto(item.NagLog),
-            item.Nag.Version);
+            ToDto(item.TaskLog),
+            item.Nagger.Version);
 
-    private static NagLogDto ToDto(NagLog nagLog) =>
+    private static NaggerPinnedByDto ToDto(NaggerPinnedBy pinnedBy) =>
+        pinnedBy switch
+        {
+            NaggerPinnedBy.None => NaggerPinnedByDto.None,
+            NaggerPinnedBy.User => NaggerPinnedByDto.User,
+            NaggerPinnedBy.Llm => NaggerPinnedByDto.Llm,
+            NaggerPinnedBy.Community => NaggerPinnedByDto.Community,
+            _ => throw new ArgumentOutOfRangeException(nameof(pinnedBy), pinnedBy, null)
+        };
+
+    private static TaskLogDto ToDto(TaskLog taskLog) =>
         new(
-            nagLog.Id,
-            nagLog.NagId,
-            nagLog.CopiedFromNagLogId,
-            nagLog.ClosedOn,
-            nagLog.UpdatedAt,
-            nagLog.Version,
-            nagLog.NagNodes
-                .Where(node => node.ParentNagNodeId is null)
+            taskLog.Id,
+            taskLog.NagId,
+            taskLog.CopiedFromTaskLogId,
+            taskLog.ClosedOn,
+            taskLog.Tag,
+            taskLog.UpdatedAt,
+            taskLog.UpdatedByClientId,
+            taskLog.UpdatedByDeviceName,
+            taskLog.UpdatedByDeviceModel,
+            taskLog.Version,
+            taskLog.TaskItems
+                .Where(node => node.ParentTaskItemId is null)
                 .OrderBy(node => node.SortOrder)
-                .Select(node => ToDto(node, nagLog.NagNodes))
-                .ToArray());
+                .Select(node => ToDto(node, taskLog.TaskItems))
+                .ToArray(),
+            taskLog.DescendantTaskItemCount,
+            taskLog.DoneDescendantTaskItemCount);
 
-    private static NagNodeDto ToDto(
-        NagNode node,
-        IReadOnlyList<NagNode> allNodes) =>
+    private static TaskItemDto ToDto(
+        TaskItem node,
+        IReadOnlyList<TaskItem> allNodes) =>
         new(
             node.Id,
-            node.NagLogId,
-            node.ParentNagNodeId,
+            node.TaskLogId,
+            node.ParentTaskItemId,
             node.Name,
-            node.SortOrder,
-            node.NagInputs
+            node.Tag,
+            node.TaskEntries
                 .OrderBy(input => input.SortOrder)
                 .Select(ToDto)
                 .ToArray(),
             allNodes
-                .Where(child => child.ParentNagNodeId == node.Id)
+                .Where(child => child.ParentTaskItemId == node.Id)
                 .OrderBy(child => child.SortOrder)
                 .Select(child => ToDto(child, allNodes))
-                .ToArray());
+                .ToArray(),
+            node.IsDone,
+            ToDto(node.RolloverBehavior),
+            node.InteractionAt,
+            node.InteractionTimeZone,
+            node.InteractionLocale,
+            node.InteractionMood,
+            node.InteractionMoodAt,
+            node.DescendantTaskItemCount,
+            node.DoneDescendantTaskItemCount);
 
-    private static NagInputDto ToDto(NagInput input) =>
+    private static TaskEntryDto ToDto(TaskEntry input) =>
         new(
             input.Id,
-            input.NagLogId,
-            input.ParentNagNodeId,
+            input.TaskLogId,
+            input.ParentTaskItemId,
             input.Label,
             input.Description,
             ToDto(input.ValueType),
-            input.Unit,
+            input.Tag,
             input.Value,
-            input.SortOrder,
-            input.PreviousValue);
+            input.LastTaskRunReferenceValue,
+            ToDto(input.RolloverBehavior),
+            input.InteractionAt,
+            input.InteractionTimeZone,
+            input.InteractionLocale,
+            input.InteractionMood,
+            input.InteractionMoodAt);
 
-    private static NagTimeDto ToDto(NagTime rule) =>
+    private static ScheduleRuleDto ToDto(ScheduleRule rule) =>
         new(
             rule.Id,
-            ToDto(rule.TimeType),
-            rule.DayOfWeek,
-            rule.DayOfMonth,
-            rule.MonthOfYear);
+            ToDto(rule.RuleType),
+            rule.Day,
+            rule.Month,
+            rule.Year);
 
-    private static NagTimeTypeDto ToDto(NagTimeType timeType) =>
-        timeType switch
+    private static ScheduleRuleTypeDto ToDto(ScheduleRuleType ruleType) =>
+        ruleType switch
         {
-            NagTimeType.Weekly => NagTimeTypeDto.Weekly,
-            NagTimeType.MonthlyDay => NagTimeTypeDto.MonthlyDay,
-            NagTimeType.YearlyDate => NagTimeTypeDto.YearlyDate,
-            _ => throw new ArgumentOutOfRangeException(nameof(timeType), timeType, null)
+            ScheduleRuleType.Monday => ScheduleRuleTypeDto.Monday,
+            ScheduleRuleType.Tuesday => ScheduleRuleTypeDto.Tuesday,
+            ScheduleRuleType.Wednesday => ScheduleRuleTypeDto.Wednesday,
+            ScheduleRuleType.Thursday => ScheduleRuleTypeDto.Thursday,
+            ScheduleRuleType.Friday => ScheduleRuleTypeDto.Friday,
+            ScheduleRuleType.Saturday => ScheduleRuleTypeDto.Saturday,
+            ScheduleRuleType.Sunday => ScheduleRuleTypeDto.Sunday,
+            ScheduleRuleType.MonthlyDay => ScheduleRuleTypeDto.MonthlyDay,
+            ScheduleRuleType.Date => ScheduleRuleTypeDto.Date,
+            _ => throw new ArgumentOutOfRangeException(nameof(ruleType), ruleType, null)
         };
 
-    private static NagInputValueTypeDto ToDto(NagInputValueType valueType) =>
+    private static TaskEntryValueTypeDto ToDto(TaskEntryValueType valueType) =>
         valueType switch
         {
-            NagInputValueType.Text => NagInputValueTypeDto.Text,
-            NagInputValueType.Integer => NagInputValueTypeDto.Integer,
-            NagInputValueType.Decimal => NagInputValueTypeDto.Decimal,
-            NagInputValueType.Boolean => NagInputValueTypeDto.Boolean,
+            TaskEntryValueType.Text => TaskEntryValueTypeDto.Text,
+            TaskEntryValueType.Integer => TaskEntryValueTypeDto.Integer,
+            TaskEntryValueType.Decimal => TaskEntryValueTypeDto.Decimal,
+            TaskEntryValueType.Boolean => TaskEntryValueTypeDto.Boolean,
             _ => throw new ArgumentOutOfRangeException(nameof(valueType), valueType, null)
+        };
+
+    private static RolloverBehaviorDto ToDto(RolloverBehavior rolloverBehavior) =>
+        rolloverBehavior switch
+        {
+            RolloverBehavior.Keep => RolloverBehaviorDto.Keep,
+            RolloverBehavior.Remove => RolloverBehaviorDto.Remove,
+            RolloverBehavior.RemoveWhenDone => RolloverBehaviorDto.RemoveWhenDone,
+            RolloverBehavior.MoveValueToHistory => RolloverBehaviorDto.MoveValueToHistory,
+            RolloverBehavior.CarryOverValue => RolloverBehaviorDto.CarryOverValue,
+            _ => throw new ArgumentOutOfRangeException(nameof(rolloverBehavior), rolloverBehavior, null)
         };
 }

@@ -1,3 +1,4 @@
+using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Domain;
 using Microsoft.Data.SqlClient;
 
@@ -5,55 +6,6 @@ namespace DailyNagger.Server.Operations;
 
 public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
 {
-    public async Task<IReadOnlyList<LapsedNag>> GetLapsedNagAsync(
-        Guid communityId,
-        DateOnly today,
-        DateTimeOffset now,
-        TimeSpan copyGracePeriod,
-        CancellationToken cancellationToken = default)
-    {
-        if (copyGracePeriod < TimeSpan.Zero)
-        {
-            throw new InvalidOperationException("Nag copy grace period must be 0 or greater.");
-        }
-
-        await using var connection = await getDataDbConnection.OpenAsync(
-            communityId,
-            cancellationToken);
-
-        await using var command = new SqlCommand(
-            """
-            select
-                nag.id,
-                nag.active_log_due_on
-            from nag
-            inner join nag_log on nag_log.nag_id = nag.id
-            where nag.is_deactivated = 0
-                and nag.active_log_due_on is not null
-                and nag.active_log_due_on < @today
-                and nag_log.closed_on is null
-                and nag_log.updated_at < @updatedBefore
-            order by nag.active_log_due_on, nag.id
-            """,
-            connection);
-
-        command.Parameters.AddWithValue("@today", today);
-        command.Parameters.AddWithValue("@updatedBefore", now - copyGracePeriod);
-
-        var lapsedNag = new List<LapsedNag>();
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            lapsedNag.Add(new LapsedNag(
-                reader.GetGuid(0),
-                DateOnly.FromDateTime(reader.GetDateTime(1))));
-        }
-
-        return lapsedNag;
-    }
-
     public async Task<NagPlan> GetNagPlanAsync(
         Guid communityId,
         Guid userId,
@@ -74,20 +26,52 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
             select
                 nag.id,
                 nag.title,
-                nag.schedule_updated_at,
-                nag.active_log_due_on,
+                case
+                    when task_log.closed_on is null then nag.active_log_due_on
+                    else cast(task_log.closed_on as date)
+                end,
                 nag.expires_on,
+                nag.target_time,
                 nag.is_deactivated,
+                nag.pinned_by,
+                nag.updated_at,
+                nag.updated_by_client_id,
+                nag.updated_by_device_name,
+                nag.updated_by_device_model,
                 nag.version,
-                nag_log.id,
-                nag_log.copied_from_nag_log_id,
-                nag_log.closed_on,
-                nag_log.updated_at,
-                nag_log.version
+                task_log.id,
+                task_log.copied_from_task_log_id,
+                task_log.closed_on,
+                task_log.tag,
+                task_log.updated_at,
+                task_log.updated_by_client_id,
+                task_log.updated_by_device_name,
+                task_log.updated_by_device_model,
+                task_log.version,
+                task_log.descendant_task_item_count,
+                task_log.done_descendant_task_item_count
             from nag
-            inner join nag_log on nag_log.nag_id = nag.id
+            cross apply (
+                select top 1
+                    task_log.id,
+                    task_log.copied_from_task_log_id,
+                    task_log.closed_on,
+                    task_log.tag,
+                    task_log.updated_at,
+                    task_log.updated_by_client_id,
+                    task_log.updated_by_device_name,
+                    task_log.updated_by_device_model,
+                    task_log.version,
+                    task_log.descendant_task_item_count,
+                    task_log.done_descendant_task_item_count
+                from task_log
+                where task_log.nag_id = nag.id
+                order by
+                    case when task_log.closed_on is null then 0 else 1 end,
+                    task_log.closed_on desc,
+                    task_log.id desc
+            ) task_log
             where nag.is_deactivated = 0
-                and nag_log.closed_on is null
             order by nag.id
             """,
             connection);
@@ -96,30 +80,43 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
         {
             while (await reader.ReadAsync(cancellationToken))
             {
-                plan.Nags.Add(new NagPlanNag
+                plan.Nags.Add(new NagPlanNagger
                 {
-                    Nag = new Nag
+                    Nagger = new Nagger
                     {
                         Id = reader.GetGuid(0),
                         Title = reader.GetString(1),
-                        ScheduleUpdatedAt = reader.GetDateTimeOffset(2),
-                        ActiveLogDueOn = reader.IsDBNull(3)
+                        ActiveLogDueOn = reader.IsDBNull(2)
+                            ? null
+                            : DateOnly.FromDateTime(reader.GetDateTime(2)),
+                        ExpiresOn = reader.IsDBNull(3)
                             ? null
                             : DateOnly.FromDateTime(reader.GetDateTime(3)),
-                        ExpiresOn = reader.IsDBNull(4)
+                        TargetTime = reader.IsDBNull(4)
                             ? null
-                            : DateOnly.FromDateTime(reader.GetDateTime(4)),
+                            : TimeOnly.FromTimeSpan(reader.GetTimeSpan(4)),
                         IsDeactivated = reader.GetBoolean(5),
-                        Version = reader.GetInt32(6)
-                    },
-                    NagLog = new NagLog
-                    {
-                        Id = reader.GetGuid(7),
-                        NagId = reader.GetGuid(0),
-                        CopiedFromNagLogId = reader.IsDBNull(8) ? null : reader.GetGuid(8),
-                        ClosedOn = reader.IsDBNull(9) ? null : reader.GetDateTimeOffset(9),
-                        UpdatedAt = reader.GetDateTimeOffset(10),
+                        PinnedBy = Enum.Parse<NaggerPinnedBy>(reader.GetString(6)),
+                        UpdatedAt = reader.GetDateTimeOffset(7),
+                        UpdatedByClientId = reader.IsDBNull(8) ? null : reader.GetString(8),
+                        UpdatedByDeviceName = reader.IsDBNull(9) ? null : reader.GetString(9),
+                        UpdatedByDeviceModel = reader.IsDBNull(10) ? null : reader.GetString(10),
                         Version = reader.GetInt32(11)
+                    },
+                    TaskLog = new TaskLog
+                    {
+                        Id = reader.GetGuid(12),
+                        NagId = reader.GetGuid(0),
+                        CopiedFromTaskLogId = reader.IsDBNull(13) ? null : reader.GetGuid(13),
+                        ClosedOn = reader.IsDBNull(14) ? null : reader.GetDateTimeOffset(14),
+                        Tag = reader.IsDBNull(15) ? null : reader.GetString(15),
+                        UpdatedAt = reader.GetDateTimeOffset(16),
+                        UpdatedByClientId = reader.IsDBNull(17) ? null : reader.GetString(17),
+                        UpdatedByDeviceName = reader.IsDBNull(18) ? null : reader.GetString(18),
+                        UpdatedByDeviceModel = reader.IsDBNull(19) ? null : reader.GetString(19),
+                        Version = reader.GetInt32(20),
+                        DescendantTaskItemCount = reader.GetInt32(21),
+                        DoneDescendantTaskItemCount = reader.GetInt32(22)
                     }
                 });
             }
@@ -127,21 +124,57 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
 
         foreach (var item in plan.Nags)
         {
-            item.Nag.NagTimes.AddRange(await GetNagTimesAsync(
+            item.Nagger.ScheduleRules.AddRange(await GetScheduleRulesAsync(
                 connection,
-                item.Nag.Id,
+                item.Nagger.Id,
                 cancellationToken));
 
-            item.NagLog.NagNodes.AddRange(await GetNagNodesAsync(
+            item.TaskLog.TaskItems.AddRange(await GetTaskItemsAsync(
                 connection,
-                item.NagLog.Id,
+                item.TaskLog.Id,
                 cancellationToken));
         }
 
         return plan;
     }
 
-    public async Task<IReadOnlyList<Nag>> GetNagAsync(
+    public async Task<IReadOnlyList<TaskStepNameSuggestionDto>> GetTaskStepNameSuggestionsAsync(
+        Guid communityId,
+        Guid userId,
+        Guid naggerId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = await getDataDbConnection.OpenAsync(
+            communityId,
+            cancellationToken);
+
+        await using var command = new SqlCommand(
+            """
+            select distinct
+                task_item.name
+            from task_item
+            inner join task_log on task_log.id = task_item.task_log_id
+            where task_log.nag_id = @naggerId
+              and task_item.name <> ''
+            order by task_item.name
+            """,
+            connection);
+
+        command.Parameters.AddWithValue("@naggerId", naggerId);
+
+        var suggestions = new List<TaskStepNameSuggestionDto>();
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            suggestions.Add(new TaskStepNameSuggestionDto(reader.GetString(0)));
+        }
+
+        return suggestions;
+    }
+
+    public async Task<IReadOnlyList<Nagger>> GetNagAsync(
         Guid communityId,
         CancellationToken cancellationToken = default)
     {
@@ -154,42 +187,54 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
             select
                 nag.id,
                 nag.title,
-                nag.schedule_updated_at,
                 nag.active_log_due_on,
                 nag.expires_on,
+                nag.target_time,
                 nag.is_deactivated,
+                nag.pinned_by,
+                nag.updated_at,
+                nag.updated_by_client_id,
+                nag.updated_by_device_name,
+                nag.updated_by_device_model,
                 nag.version
             from nag
             order by nag.id
             """,
             connection);
 
-        var nag = new List<Nag>();
+        var nag = new List<Nagger>();
 
         await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
         {
             while (await reader.ReadAsync(cancellationToken))
             {
-                nag.Add(new Nag
+                nag.Add(new Nagger
                 {
                     Id = reader.GetGuid(0),
                     Title = reader.GetString(1),
-                    ScheduleUpdatedAt = reader.GetDateTimeOffset(2),
-                    ActiveLogDueOn = reader.IsDBNull(3)
+                    ActiveLogDueOn = reader.IsDBNull(2)
+                        ? null
+                        : DateOnly.FromDateTime(reader.GetDateTime(2)),
+                    ExpiresOn = reader.IsDBNull(3)
                         ? null
                         : DateOnly.FromDateTime(reader.GetDateTime(3)),
-                    ExpiresOn = reader.IsDBNull(4)
+                    TargetTime = reader.IsDBNull(4)
                         ? null
-                        : DateOnly.FromDateTime(reader.GetDateTime(4)),
+                        : TimeOnly.FromTimeSpan(reader.GetTimeSpan(4)),
                     IsDeactivated = reader.GetBoolean(5),
-                    Version = reader.GetInt32(6)
+                    PinnedBy = Enum.Parse<NaggerPinnedBy>(reader.GetString(6)),
+                    UpdatedAt = reader.GetDateTimeOffset(7),
+                    UpdatedByClientId = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    UpdatedByDeviceName = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    UpdatedByDeviceModel = reader.IsDBNull(10) ? null : reader.GetString(10),
+                    Version = reader.GetInt32(11)
                 });
             }
         }
 
         foreach (var item in nag)
         {
-            item.NagTimes.AddRange(await GetNagTimesAsync(
+            item.ScheduleRules.AddRange(await GetScheduleRulesAsync(
                 connection,
                 item.Id,
                 cancellationToken));
@@ -198,9 +243,54 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
         return nag;
     }
 
-    public async Task<IReadOnlyList<string>> GetNagInputUnitSuggestionsAsync(
+    public async Task<IReadOnlyList<TagDto>> GetTagsAsync(
         Guid communityId,
         Guid userId,
+        string tagType,
+        CancellationToken cancellationToken = default)
+    {
+        tagType = tagType.Trim();
+
+        await using var connection = await getDataDbConnection.OpenAsync(
+            communityId,
+            cancellationToken);
+
+        await using var command = new SqlCommand(
+            """
+            select
+                name,
+                description,
+                last_used_at
+            from user_tag
+            where user_id = @userId
+                and tag_type = @tagType
+            """,
+            connection);
+
+        command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@tagType", tagType);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        var tags = new List<TagDto>();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            tags.Add(new TagDto(
+                reader.GetString(0),
+                reader.IsDBNull(1) ? null : reader.GetString(1),
+                reader.IsDBNull(2) ? null : reader.GetDateTimeOffset(2)));
+        }
+
+        return tags;
+    }
+
+    public async Task<IReadOnlyList<UserMoodDto>> GetUserMoodsAsync(
+        Guid communityId,
+        Guid userId,
+        DateTimeOffset? from,
+        DateTimeOffset? to,
+        int take,
         CancellationToken cancellationToken = default)
     {
         await using var connection = await getDataDbConnection.OpenAsync(
@@ -209,65 +299,114 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
 
         await using var command = new SqlCommand(
             """
-            select unit
-            from nag_input_unit_suggestion
+            select top (@take)
+                id,
+                user_id,
+                mood,
+                recorded_at,
+                time_zone,
+                locale,
+                created_at,
+                created_by_client_id,
+                created_by_device_name,
+                created_by_device_model
+            from user_mood
             where user_id = @userId
-            order by unit
+                and (@from is null or recorded_at >= @from)
+                and (@to is null or recorded_at <= @to)
+            order by recorded_at desc, created_at desc, id
             """,
             connection);
 
         command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@from", (object?)from ?? DBNull.Value);
+        command.Parameters.AddWithValue("@to", (object?)to ?? DBNull.Value);
+        command.Parameters.AddWithValue("@take", take);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-        var units = new List<string>();
+        var moods = new List<UserMoodDto>();
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            units.Add(reader.GetString(0));
+            moods.Add(new UserMoodDto(
+                reader.GetGuid(0),
+                reader.GetGuid(1),
+                reader.GetString(2),
+                reader.GetDateTimeOffset(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                reader.IsDBNull(5) ? null : reader.GetString(5),
+                reader.GetDateTimeOffset(6),
+                reader.IsDBNull(7) ? null : reader.GetString(7),
+                reader.IsDBNull(8) ? null : reader.GetString(8),
+                reader.IsDBNull(9) ? null : reader.GetString(9)));
         }
 
-        return units;
+        return moods;
     }
 
-    private static async Task<IReadOnlyList<NagNode>> GetNagNodesAsync(
+    private static async Task<IReadOnlyList<TaskItem>> GetTaskItemsAsync(
         SqlConnection connection,
-        Guid nagLogId,
+        Guid taskLogId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             """
-            select id, parent_nag_node_id, name, sort_order
-            from nag_node
-            where nag_log_id = @nagLogId
+            select
+                id,
+                parent_task_item_id,
+                name,
+                tag,
+                is_done,
+                interaction_at,
+                interaction_time_zone,
+                interaction_locale,
+                interaction_mood,
+                interaction_mood_at,
+                rollover_behavior,
+                descendant_task_item_count,
+                done_descendant_task_item_count,
+                sort_order
+            from task_item
+            where task_log_id = @taskLogId
             order by sort_order, id
             """,
             connection);
 
-        command.Parameters.AddWithValue("@nagLogId", nagLogId);
+        command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
-        var nodes = new List<NagNode>();
+        var nodes = new List<TaskItem>();
 
         await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
         {
             while (await reader.ReadAsync(cancellationToken))
             {
-                nodes.Add(new NagNode
+                nodes.Add(new TaskItem
                 {
                     Id = reader.GetGuid(0),
-                    NagLogId = nagLogId,
-                    ParentNagNodeId = reader.IsDBNull(1) ? null : reader.GetGuid(1),
+                    TaskLogId = taskLogId,
+                    ParentTaskItemId = reader.IsDBNull(1) ? null : reader.GetGuid(1),
                     Name = reader.GetString(2),
-                    SortOrder = reader.GetInt32(3)
+                    Tag = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    IsDone = reader.GetBoolean(4),
+                    InteractionAt = reader.IsDBNull(5) ? null : reader.GetDateTimeOffset(5),
+                    InteractionTimeZone = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    InteractionLocale = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    InteractionMood = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    InteractionMoodAt = reader.IsDBNull(9) ? null : reader.GetDateTimeOffset(9),
+                    RolloverBehavior = Enum.Parse<RolloverBehavior>(reader.GetString(10)),
+                    DescendantTaskItemCount = reader.GetInt32(11),
+                    DoneDescendantTaskItemCount = reader.GetInt32(12),
+                    SortOrder = reader.GetInt32(13)
                 });
             }
         }
 
         foreach (var node in nodes)
         {
-            node.NagInputs.AddRange(await GetNagInputsAsync(
+            node.TaskEntries.AddRange(await GetTaskEntriesAsync(
                 connection,
-                nagLogId,
+                taskLogId,
                 node.Id,
                 cancellationToken));
         }
@@ -275,58 +414,78 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
         return nodes;
     }
 
-    private static async Task<IReadOnlyList<NagInput>> GetNagInputsAsync(
+    private static async Task<IReadOnlyList<TaskEntry>> GetTaskEntriesAsync(
         SqlConnection connection,
-        Guid nagLogId,
-        Guid parentNagNodeId,
+        Guid taskLogId,
+        Guid parentTaskItemId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             """
-            select id, label, description, value_type, unit, value, previous_value, sort_order
-            from nag_input
-            where nag_log_id = @nagLogId
-                and parent_nag_node_id = @parentNagNodeId
+            select
+                id,
+                label,
+                description,
+                value_type,
+                tag,
+                value,
+                last_task_run_reference_value,
+                rollover_behavior,
+                interaction_at,
+                interaction_time_zone,
+                interaction_locale,
+                interaction_mood,
+                interaction_mood_at,
+                sort_order
+            from task_entry
+            where task_log_id = @taskLogId
+                and parent_task_item_id = @parentTaskItemId
             order by sort_order, id
             """,
             connection);
 
-        command.Parameters.AddWithValue("@nagLogId", nagLogId);
-        command.Parameters.AddWithValue("@parentNagNodeId", parentNagNodeId);
+        command.Parameters.AddWithValue("@taskLogId", taskLogId);
+        command.Parameters.AddWithValue("@parentTaskItemId", parentTaskItemId);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-        var inputs = new List<NagInput>();
+        var inputs = new List<TaskEntry>();
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            inputs.Add(new NagInput
+            inputs.Add(new TaskEntry
             {
                 Id = reader.GetGuid(0),
-                NagLogId = nagLogId,
-                ParentNagNodeId = parentNagNodeId,
+                TaskLogId = taskLogId,
+                ParentTaskItemId = parentTaskItemId,
                 Label = reader.GetString(1),
                 Description = reader.IsDBNull(2) ? null : reader.GetString(2),
-                ValueType = Enum.Parse<NagInputValueType>(reader.GetString(3)),
-                Unit = reader.IsDBNull(4) ? null : reader.GetString(4),
+                ValueType = Enum.Parse<TaskEntryValueType>(reader.GetString(3)),
+                Tag = reader.IsDBNull(4) ? null : reader.GetString(4),
                 Value = reader.IsDBNull(5) ? null : reader.GetString(5),
-                PreviousValue = reader.IsDBNull(6) ? null : reader.GetString(6),
-                SortOrder = reader.GetInt32(7)
+                LastTaskRunReferenceValue = reader.IsDBNull(6) ? null : reader.GetString(6),
+                RolloverBehavior = Enum.Parse<RolloverBehavior>(reader.GetString(7)),
+                InteractionAt = reader.IsDBNull(8) ? null : reader.GetDateTimeOffset(8),
+                InteractionTimeZone = reader.IsDBNull(9) ? null : reader.GetString(9),
+                InteractionLocale = reader.IsDBNull(10) ? null : reader.GetString(10),
+                InteractionMood = reader.IsDBNull(11) ? null : reader.GetString(11),
+                InteractionMoodAt = reader.IsDBNull(12) ? null : reader.GetDateTimeOffset(12),
+                SortOrder = reader.GetInt32(13)
             });
         }
 
         return inputs;
     }
 
-    private static async Task<IReadOnlyList<NagTime>> GetNagTimesAsync(
+    private static async Task<IReadOnlyList<ScheduleRule>> GetScheduleRulesAsync(
         SqlConnection connection,
         Guid nagId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             """
-            select id, time_type, day_of_week, day_of_month, month_of_year
-            from nag_time
+            select id, rule_type, day, month, year
+            from schedule_rule
             where nag_id = @nagId
             order by id
             """,
@@ -336,20 +495,20 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-        var rules = new List<NagTime>();
+        var rules = new List<ScheduleRule>();
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            rules.Add(new NagTime
+            var storedRuleType = reader.GetString(1);
+
+            rules.Add(new ScheduleRule
             {
                 Id = reader.GetGuid(0),
                 NagId = nagId,
-                TimeType = Enum.Parse<NagTimeType>(reader.GetString(1)),
-                DayOfWeek = reader.IsDBNull(2)
-                    ? null
-                    : Enum.Parse<DayOfWeek>(reader.GetString(2)),
-                DayOfMonth = reader.IsDBNull(3) ? null : reader.GetInt32(3),
-                MonthOfYear = reader.IsDBNull(4) ? null : reader.GetInt32(4)
+                RuleType = Enum.Parse<ScheduleRuleType>(storedRuleType),
+                Day = reader.IsDBNull(2) ? null : reader.GetInt32(2),
+                Month = reader.IsDBNull(3) ? null : reader.GetInt32(3),
+                Year = reader.IsDBNull(4) ? null : reader.GetInt32(4)
             });
         }
 

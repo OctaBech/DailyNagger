@@ -39,7 +39,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 response.StatusCode == HttpStatusCode.OK,
                 responseBody);
 
-            var items = await response.Content.ReadFromJsonAsync<NagDto[]>(JsonOptions);
+            var items = await response.Content.ReadFromJsonAsync<NaggerDto[]>(JsonOptions);
 
             Assert.NotNull(items);
             Assert.Contains(
@@ -48,9 +48,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                     && item.Title == testData.Title
                     && item.ActiveLogDueOn == new DateOnly(2026, 6, 1)
                     && !item.IsDeactivated
-                    && item.NagTimes.Any(rule =>
-                        rule.TimeType == NagTimeTypeDto.Weekly
-                        && rule.DayOfWeek == DayOfWeek.Wednesday));
+                    && item.ScheduleRules.Any(rule =>
+                        rule.RuleType == ScheduleRuleTypeDto.Wednesday));
         }
         finally
         {
@@ -90,10 +89,10 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         var secondNagId = Guid.NewGuid();
         var inactiveNagId = Guid.NewGuid();
         var closedNagId = Guid.NewGuid();
-        var firstNagLogId = Guid.NewGuid();
-        var secondNagLogId = Guid.NewGuid();
-        var inactiveNagLogId = Guid.NewGuid();
-        var closedNagLogId = Guid.NewGuid();
+        var firstTaskLogId = Guid.NewGuid();
+        var secondTaskLogId = Guid.NewGuid();
+        var inactiveTaskLogId = Guid.NewGuid();
+        var closedTaskLogId = Guid.NewGuid();
         var exerciseNodeId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
@@ -107,56 +106,57 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             await SaveNagForPlanAsync(client, testData.CommunityId, inactiveNagId, "Inactive nag", true, DayOfWeek.Wednesday);
             await SaveNagForPlanAsync(client, testData.CommunityId, closedNagId, "Closed nag", false, DayOfWeek.Thursday);
 
-            var firstLogRequest = new SaveNagLogRequest(
+            var firstLogRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                firstNagLogId,
+                firstTaskLogId,
                 firstNagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         exerciseNodeId,
-                        firstNagLogId,
+                        firstTaskLogId,
                         null,
                         "Bench press",
-                        0,
                         [],
                         [
-                            new NagNodeDto(
+                            new TaskItemDto(
                                 setNodeId,
-                                firstNagLogId,
+                                firstTaskLogId,
                                 exerciseNodeId,
                                 "Set 1",
-                                0,
                                 [
-                                    new NagInputDto(
+                                    new TaskEntryDto(
                                         repsInputId,
-                                        firstNagLogId,
+                                        firstTaskLogId,
                                         setNodeId,
                                         "Reps",
                                         null,
-                                        NagInputValueTypeDto.Integer,
+                                        TaskEntryValueTypeDto.Integer,
                                         null,
                                         "10",
-                                        0,
                                         "9")
+
                                 ],
                                 [])
                         ])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var firstLogResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{firstNagLogId}",
+                $"/api/task-logs/{firstTaskLogId}",
                 firstLogRequest,
                 JsonOptions);
             var firstLogBody = await firstLogResponse.Content.ReadAsStringAsync();
 
             Assert.True(firstLogResponse.StatusCode == HttpStatusCode.OK, firstLogBody);
 
-            await SaveEmptyNagLogForPlanAsync(client, testData.CommunityId, userId, secondNagLogId, secondNagId, null);
-            await SaveEmptyNagLogForPlanAsync(client, testData.CommunityId, userId, inactiveNagLogId, inactiveNagId, null);
-            await SaveEmptyNagLogForPlanAsync(client, testData.CommunityId, userId, closedNagLogId, closedNagId, DateTimeOffset.UtcNow);
+            await SaveEmptyTaskLogForPlanAsync(client, testData.CommunityId, userId, secondTaskLogId, secondNagId, null);
+            await SaveEmptyTaskLogForPlanAsync(client, testData.CommunityId, userId, inactiveTaskLogId, inactiveNagId, null);
+            await SaveEmptyTaskLogForPlanAsync(client, testData.CommunityId, userId, closedTaskLogId, closedNagId, DateTimeOffset.UtcNow);
 
             var response = await client.GetAsync(
                 $"/api/todays-nag-plan?communityId={testData.CommunityId}&userId={userId}&date=2026-06-05");
@@ -173,21 +173,24 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.NotNull(plan);
             Assert.Equal(new DateOnly(2026, 6, 5), plan.Date);
             Assert.Equal(2, plan.Nags.Length);
-            Assert.Contains(plan.Nags, nag => nag.Id == firstNagId && nag.NagLog.Id == firstNagLogId);
-            Assert.Contains(plan.Nags, nag => nag.Id == secondNagId && nag.NagLog.Id == secondNagLogId);
+            Assert.Contains(plan.Nags, nag => nag.Id == firstNagId && nag.TaskLog.Id == firstTaskLogId);
+            Assert.Contains(plan.Nags, nag => nag.Id == secondNagId && nag.TaskLog.Id == secondTaskLogId);
             Assert.DoesNotContain(plan.Nags, nag => nag.Id == inactiveNagId);
             Assert.DoesNotContain(plan.Nags, nag => nag.Id == closedNagId);
 
             var firstNag = Assert.Single(plan.Nags, nag => nag.Id == firstNagId);
-            var rootNode = Assert.Single(firstNag.NagLog.NagNodes);
-            var childNode = Assert.Single(rootNode.NagNodes);
-            var input = Assert.Single(childNode.NagInputs);
+            var secondNag = Assert.Single(plan.Nags, nag => nag.Id == secondNagId);
+            var rootNode = Assert.Single(firstNag.TaskLog.TaskItems);
+            var childNode = Assert.Single(rootNode.TaskItems);
+            var input = Assert.Single(childNode.TaskEntries);
 
             Assert.Equal("Gym - Push day", firstNag.Title);
             Assert.False(firstNag.IsDeactivated);
-            Assert.Contains(firstNag.NagTimes, nagTime => nagTime.DayOfWeek == DayOfWeek.Monday);
+            Assert.Equal(1, firstNag.TaskLog.Version);
+            Assert.Equal(1, secondNag.TaskLog.Version);
+            Assert.Contains(firstNag.ScheduleRules, rule => rule.RuleType == ScheduleRuleTypeDto.Monday);
             Assert.Equal("Bench press", rootNode.Name);
-            Assert.Equal(exerciseNodeId, childNode.ParentNagNodeId);
+            Assert.Equal(exerciseNodeId, childNode.ParentTaskItemId);
             Assert.Equal(repsInputId, input.Id);
             Assert.Equal("10", input.Value);
         }
@@ -216,16 +219,17 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Created from API test",
+                new DateOnly(2026, 6, 1),
                 null,
                 false,
                 [
-                    new NagTimeDto(
+                    new ScheduleRuleDto(
                         nagTimeId,
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Monday,
-                        null,
-                        null)
-                ]);
+                        ScheduleRuleTypeDto.Monday, null, null, null)
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var response = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -238,34 +242,32 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 responseBody);
 
             using var responseJson = JsonDocument.Parse(responseBody);
-            Assert.True(responseJson.RootElement.TryGetProperty("nagTimes", out _));
+            Assert.True(responseJson.RootElement.TryGetProperty("scheduleRules", out _));
             Assert.False(responseJson.RootElement.TryGetProperty("times", out _));
 
-            var created = await response.Content.ReadFromJsonAsync<NagDto>(JsonOptions);
+            var created = await response.Content.ReadFromJsonAsync<NaggerDto>(JsonOptions);
             Assert.NotNull(created);
             Assert.Equal(nagId, created.Id);
             Assert.Equal("Created from API test", created.Title);
-            Assert.Equal(DayOfWeek.Monday, created.ActiveLogDueOn?.DayOfWeek);
+            Assert.Equal(new DateOnly(2026, 6, 1), created.ActiveLogDueOn);
             Assert.False(created.IsDeactivated);
-            Assert.Equal(0, created.Version);
+            Assert.Equal(request.UpdatedAt, created.UpdatedAt);
+            Assert.Equal(1, created.Version);
             Assert.Contains(
-                created.NagTimes,
+                created.ScheduleRules,
                 rule => rule.Id == nagTimeId
-                    && rule.TimeType == NagTimeTypeDto.Weekly
-                    && rule.DayOfWeek == DayOfWeek.Monday);
+                    && rule.RuleType == ScheduleRuleTypeDto.Monday);
 
             await using var dataDb = CreateDataDbContext();
-            var exists = await dataDb.Nags.AnyAsync(
-                nag => nag.Id == nagId
-                    && nag.Title == "Created from API test");
+            var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
 
-            Assert.True(exists);
+            Assert.Equal("Created from API test", storedNag.Title);
+            Assert.Equal(request.UpdatedAt, storedNag.UpdatedAt);
 
-            var nagTimeExists = await dataDb.NagTimes.AnyAsync(
+            var nagTimeExists = await dataDb.ScheduleRules.AnyAsync(
                 nagTime => nagTime.Id == nagTimeId
                     && nagTime.NagId == nagId
-                    && nagTime.TimeType == NagTimeType.Weekly
-                    && nagTime.DayOfWeek == DayOfWeek.Monday);
+                    && nagTime.RuleType == ScheduleRuleType.Monday);
 
             Assert.True(nagTimeExists);
 
@@ -273,6 +275,84 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             {
                 NagId = nagId
             };
+        }
+        finally
+        {
+            await DeleteRoutedNagAsync(testData);
+        }
+    }
+
+    [Fact]
+    public async Task User_moods_are_saved_idempotently_and_returned_as_history()
+    {
+        var testData = await CreateRoutedCommunityAsync();
+        var userId = Guid.NewGuid();
+        var moodId = Guid.NewGuid();
+        var recordedAt = new DateTimeOffset(2026, 7, 21, 20, 15, 0, TimeSpan.Zero);
+
+        try
+        {
+            using var client = CreateServerClient();
+            var request = new SaveUserMoodRequest(
+                testData.CommunityId,
+                userId,
+                moodId,
+                "upset",
+                recordedAt,
+                "Europe/Copenhagen",
+                "da-DK",
+                new ClientIdentityDto(
+                    "client-123",
+                    "Pixel Test",
+                    "Pixel 9"));
+
+            var firstResponse = await client.PostAsJsonAsync(
+                "/api/user-moods",
+                request,
+                JsonOptions);
+            var firstBody = await firstResponse.Content.ReadAsStringAsync();
+
+            Assert.True(firstResponse.StatusCode == HttpStatusCode.OK, firstBody);
+
+            var saved = await firstResponse.Content.ReadFromJsonAsync<UserMoodDto>(JsonOptions);
+
+            Assert.NotNull(saved);
+            Assert.Equal(moodId, saved.Id);
+            Assert.Equal(userId, saved.UserId);
+            Assert.Equal("upset", saved.Mood);
+            Assert.Equal(recordedAt, saved.RecordedAt);
+            Assert.Equal("Europe/Copenhagen", saved.TimeZone);
+            Assert.Equal("da-DK", saved.Locale);
+            Assert.Equal("client-123", saved.CreatedByClientId);
+            Assert.Equal("Pixel Test", saved.CreatedByDeviceName);
+            Assert.Equal("Pixel 9", saved.CreatedByDeviceModel);
+
+            var secondResponse = await client.PostAsJsonAsync(
+                "/api/user-moods",
+                request with
+                {
+                    Payload = request.Payload with
+                    {
+                        Mood = "happy"
+                    }
+                },
+                JsonOptions);
+            var secondBody = await secondResponse.Content.ReadAsStringAsync();
+
+            Assert.True(secondResponse.StatusCode == HttpStatusCode.OK, secondBody);
+
+            var historyResponse = await client.GetAsync(
+                $"/api/user-moods?communityId={testData.CommunityId}&userId={userId}&take=10");
+            var historyBody = await historyResponse.Content.ReadAsStringAsync();
+
+            Assert.True(historyResponse.StatusCode == HttpStatusCode.OK, historyBody);
+
+            var history = await historyResponse.Content.ReadFromJsonAsync<UserMoodDto[]>(JsonOptions);
+
+            Assert.NotNull(history);
+            var item = Assert.Single(history);
+            Assert.Equal(moodId, item.Id);
+            Assert.Equal("upset", item.Mood);
         }
         finally
         {
@@ -294,8 +374,12 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 nagId,
                 "Persistent shopping list",
                 null,
+                null,
                 false,
-                []);
+                [],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var response = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -305,20 +389,22 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             Assert.True(response.StatusCode == HttpStatusCode.OK, responseBody);
 
-            var created = await response.Content.ReadFromJsonAsync<NagDto>(JsonOptions);
+            var created = await response.Content.ReadFromJsonAsync<NaggerDto>(JsonOptions);
 
             Assert.NotNull(created);
-            Assert.Equal(DateOnly.MaxValue, created.ActiveLogDueOn);
-            Assert.Empty(created.NagTimes);
-            Assert.Equal(0, created.Version);
+            Assert.Null(created.ActiveLogDueOn);
+            Assert.Empty(created.ScheduleRules);
+            Assert.Equal(request.UpdatedAt, created.UpdatedAt);
+            Assert.Equal(1, created.Version);
 
             await using var dataDb = CreateDataDbContext();
             var storedNag = await dataDb.Nags
-                .Include(nag => nag.NagTimes)
+                .Include(nag => nag.ScheduleRules)
                 .SingleAsync(nag => nag.Id == nagId);
 
-            Assert.Equal(DateOnly.MaxValue, storedNag.ActiveLogDueOn);
-            Assert.Empty(storedNag.NagTimes);
+            Assert.Null(storedNag.ActiveLogDueOn);
+            Assert.Equal(request.UpdatedAt, storedNag.UpdatedAt);
+            Assert.Empty(storedNag.ScheduleRules);
 
             testData = testData with
             {
@@ -336,9 +422,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     {
         var testData = await CreateRoutedCommunityAsync();
         var nagId = Guid.NewGuid();
-        var oldNagTimeId = Guid.NewGuid();
-        var newTuesdayNagTimeId = Guid.NewGuid();
-        var newThursdayNagTimeId = Guid.NewGuid();
+        var oldScheduleRuleId = Guid.NewGuid();
+        var newTuesdayScheduleRuleId = Guid.NewGuid();
+        var newThursdayScheduleRuleId = Guid.NewGuid();
 
         try
         {
@@ -347,16 +433,17 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Gym - Push day",
+                new DateOnly(2026, 6, 1),
                 null,
                 false,
                 [
-                    new NagTimeDto(
-                        oldNagTimeId,
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Monday,
-                        null,
-                        null)
-                ]);
+                    new ScheduleRuleDto(
+                        oldScheduleRuleId,
+                        ScheduleRuleTypeDto.Monday, null, null, null)
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -366,7 +453,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var created = await createResponse.Content.ReadFromJsonAsync<NagDto>(JsonOptions);
+            var created = await createResponse.Content.ReadFromJsonAsync<NaggerDto>(JsonOptions);
 
             Assert.NotNull(created);
 
@@ -376,23 +463,21 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Gym - Push day updated",
+                new DateOnly(2026, 6, 10),
                 null,
                 false,
                 [
-                    new NagTimeDto(
-                        newTuesdayNagTimeId,
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Tuesday,
-                        null,
-                        null),
-                    new NagTimeDto(
-                        newThursdayNagTimeId,
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Thursday,
-                        null,
-                        null)
+                    new ScheduleRuleDto(
+                        newTuesdayScheduleRuleId,
+                        ScheduleRuleTypeDto.Tuesday, null, null, null),
+                    new ScheduleRuleDto(
+                        newThursdayScheduleRuleId,
+                        ScheduleRuleTypeDto.Thursday, null, null, null)
+
                 ],
-                created.Version);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: created.Version,
+                NextVersion: created.Version + 1);
 
             var updateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -402,32 +487,30 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             Assert.True(updateResponse.StatusCode == HttpStatusCode.OK, updateBody);
 
-            var updated = await updateResponse.Content.ReadFromJsonAsync<NagDto>(JsonOptions);
+            var updated = await updateResponse.Content.ReadFromJsonAsync<NaggerDto>(JsonOptions);
 
             Assert.NotNull(updated);
             Assert.Equal(nagId, updated.Id);
             Assert.Equal("Gym - Push day updated", updated.Title);
-            Assert.Equal(1, updated.Version);
-            Assert.True(updated.ScheduleUpdatedAt > created.ScheduleUpdatedAt);
-            Assert.True(
-                updated.ActiveLogDueOn is not null
-                    && new[] { DayOfWeek.Tuesday, DayOfWeek.Thursday }
-                        .Contains(updated.ActiveLogDueOn.Value.DayOfWeek));
-            Assert.DoesNotContain(updated.NagTimes, nagTime => nagTime.Id == oldNagTimeId);
-            Assert.Contains(updated.NagTimes, nagTime => nagTime.Id == newTuesdayNagTimeId);
-            Assert.Contains(updated.NagTimes, nagTime => nagTime.Id == newThursdayNagTimeId);
+            Assert.Equal(2, updated.Version);
+            Assert.Equal(updateRequest.UpdatedAt, updated.UpdatedAt);
+            Assert.Equal(new DateOnly(2026, 6, 10), updated.ActiveLogDueOn);
+            Assert.DoesNotContain(updated.ScheduleRules, nagTime => nagTime.Id == oldScheduleRuleId);
+            Assert.Contains(updated.ScheduleRules, nagTime => nagTime.Id == newTuesdayScheduleRuleId);
+            Assert.Contains(updated.ScheduleRules, nagTime => nagTime.Id == newThursdayScheduleRuleId);
 
             await using var dataDb = CreateDataDbContext();
             var storedNag = await dataDb.Nags
-                .Include(nag => nag.NagTimes)
+                .Include(nag => nag.ScheduleRules)
                 .SingleAsync(nag => nag.Id == nagId);
 
             Assert.Equal("Gym - Push day updated", storedNag.Title);
-            Assert.Equal(1, storedNag.Version);
-            Assert.Equal(2, storedNag.NagTimes.Count);
-            Assert.DoesNotContain(storedNag.NagTimes, nagTime => nagTime.Id == oldNagTimeId);
-            Assert.Contains(storedNag.NagTimes, nagTime => nagTime.Id == newTuesdayNagTimeId);
-            Assert.Contains(storedNag.NagTimes, nagTime => nagTime.Id == newThursdayNagTimeId);
+            Assert.Equal(2, storedNag.Version);
+            Assert.Equal(updateRequest.UpdatedAt, storedNag.UpdatedAt);
+            Assert.Equal(2, storedNag.ScheduleRules.Count);
+            Assert.DoesNotContain(storedNag.ScheduleRules, nagTime => nagTime.Id == oldScheduleRuleId);
+            Assert.Contains(storedNag.ScheduleRules, nagTime => nagTime.Id == newTuesdayScheduleRuleId);
+            Assert.Contains(storedNag.ScheduleRules, nagTime => nagTime.Id == newThursdayScheduleRuleId);
 
             testData = testData with
             {
@@ -445,8 +528,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     {
         var testData = await CreateRoutedCommunityAsync();
         var nagId = Guid.NewGuid();
-        var oldNagTimeId = Guid.NewGuid();
-        var duplicateNagTimeId = Guid.NewGuid();
+        var oldScheduleRuleId = Guid.NewGuid();
+        var duplicateScheduleRuleId = Guid.NewGuid();
 
         try
         {
@@ -455,16 +538,17 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Original title",
+                new DateOnly(2026, 6, 1),
                 null,
                 false,
                 [
-                    new NagTimeDto(
-                        oldNagTimeId,
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Monday,
-                        null,
-                        null)
-                ]);
+                    new ScheduleRuleDto(
+                        oldScheduleRuleId,
+                        ScheduleRuleTypeDto.Monday, null, null, null)
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -474,7 +558,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var created = await createResponse.Content.ReadFromJsonAsync<NagDto>(JsonOptions);
+            var created = await createResponse.Content.ReadFromJsonAsync<NaggerDto>(JsonOptions);
 
             Assert.NotNull(created);
 
@@ -482,23 +566,21 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Should roll back",
+                new DateOnly(2026, 6, 3),
                 null,
                 false,
                 [
-                    new NagTimeDto(
-                        duplicateNagTimeId,
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Tuesday,
-                        null,
-                        null),
-                    new NagTimeDto(
-                        duplicateNagTimeId,
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Thursday,
-                        null,
-                        null)
+                    new ScheduleRuleDto(
+                        duplicateScheduleRuleId,
+                        ScheduleRuleTypeDto.Tuesday, null, null, null),
+                    new ScheduleRuleDto(
+                        duplicateScheduleRuleId,
+                        ScheduleRuleTypeDto.Thursday, null, null, null)
+
                 ],
-                created.Version);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: created.Version,
+                NextVersion: created.Version + 1);
 
             var updateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -509,13 +591,13 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             await using var dataDb = CreateDataDbContext();
             var storedNag = await dataDb.Nags
-                .Include(nag => nag.NagTimes)
+                .Include(nag => nag.ScheduleRules)
                 .SingleAsync(nag => nag.Id == nagId);
 
             Assert.Equal("Original title", storedNag.Title);
-            Assert.Equal(0, storedNag.Version);
-            Assert.Single(storedNag.NagTimes);
-            Assert.Contains(storedNag.NagTimes, nagTime => nagTime.Id == oldNagTimeId);
+            Assert.Equal(1, storedNag.Version);
+            Assert.Single(storedNag.ScheduleRules);
+            Assert.Contains(storedNag.ScheduleRules, nagTime => nagTime.Id == oldScheduleRuleId);
 
             testData = testData with
             {
@@ -541,16 +623,17 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Versioned nag",
+                new DateOnly(2026, 6, 1),
                 null,
                 false,
                 [
-                    new NagTimeDto(
+                    new ScheduleRuleDto(
                         Guid.NewGuid(),
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Monday,
-                        null,
-                        null)
-                ]);
+                        ScheduleRuleTypeDto.Monday, null, null, null)
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -564,17 +647,18 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Versioned nag first update",
+                new DateOnly(2026, 6, 2),
                 null,
                 false,
                 [
-                    new NagTimeDto(
+                    new ScheduleRuleDto(
                         Guid.NewGuid(),
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Tuesday,
-                        null,
-                        null)
+                        ScheduleRuleTypeDto.Tuesday, null, null, null)
+
                 ],
-                0);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 1,
+                NextVersion: 2);
 
             var firstUpdateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -588,17 +672,18 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 nagId,
                 "Versioned nag stale update",
+                new DateOnly(2026, 6, 3),
                 null,
                 false,
                 [
-                    new NagTimeDto(
+                    new ScheduleRuleDto(
                         Guid.NewGuid(),
-                        NagTimeTypeDto.Weekly,
-                        DayOfWeek.Wednesday,
-                        null,
-                        null)
+                        ScheduleRuleTypeDto.Wednesday, null, null, null)
+
                 ],
-                0);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var staleUpdateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -611,7 +696,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
 
             Assert.Equal("Versioned nag first update", storedNag.Title);
-            Assert.Equal(1, storedNag.Version);
+            Assert.Equal(2, storedNag.Version);
 
             testData = testData with
             {
@@ -625,7 +710,58 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nags_returns_bad_request_when_weekly_time_has_no_day_of_week()
+    public async Task Put_nags_returns_bad_request_when_wrapped_payload_version_is_outside_version_span()
+    {
+        var testData = await CreateRoutedCommunityAsync();
+        var nagId = Guid.NewGuid();
+
+        try
+        {
+            using var client = CreateServerClient();
+            var request = new
+            {
+                testData.CommunityId,
+                UserId = Guid.NewGuid(),
+                Payload = new NaggerDto(
+                    nagId,
+                    "Wrapped stale payload",
+                    new DateOnly(2026, 6, 1),
+                    null,
+                    false,
+                    DateTimeOffset.UtcNow,
+                    null,
+                    null,
+                    null,
+                    [
+                        new ScheduleRuleDto(
+                            Guid.NewGuid(),
+                            ScheduleRuleTypeDto.Monday,
+                            null,
+                            null,
+                            null)
+                    ],
+                    Version: 5),
+                BaseVersion = 0,
+                NextVersion = 1
+            };
+
+            var response = await client.PutAsJsonAsync(
+                $"/api/nags/{nagId}",
+                request,
+                JsonOptions);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("Payload Version must be between BaseVersion and before NextVersion.", responseBody);
+        }
+        finally
+        {
+            await DeleteRoutedNagAsync(testData);
+        }
+    }
+
+    [Fact]
+    public async Task Put_nags_returns_bad_request_when_date_rule_has_no_month()
     {
         var testData = await CreateRoutedCommunityAsync();
         var nagId = Guid.NewGuid();
@@ -636,17 +772,21 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             var request = new SaveNagRequest(
                 testData.CommunityId,
                 nagId,
-                "Invalid weekly rule",
+                "Invalid date rule",
+                new DateOnly(2026, 6, 1),
                 null,
                 false,
                 [
-                    new NagTimeDto(
+                    new ScheduleRuleDto(
                         Guid.NewGuid(),
-                        NagTimeTypeDto.Weekly,
-                        null,
+                        ScheduleRuleTypeDto.Date,
+                        15,
                         null,
                         null)
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var response = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
@@ -655,7 +795,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Contains("Weekly schedule rules require DayOfWeek.", responseBody);
+            Assert.Contains("Date schedule rules require Month.", responseBody);
 
             await using var dataDb = CreateDataDbContext();
             var exists = await dataDb.Nags.AnyAsync(
@@ -670,79 +810,83 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_creates_record_with_client_created_ids_and_nag_nodes()
+    public async Task Put_task_logs_creates_record_with_client_created_ids_and_task_items()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
+        var otherTaskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
+        var otherSetNodeId = Guid.NewGuid();
         var benchNodeId = Guid.NewGuid();
         var tricepsNodeId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var request = new SaveNagLogRequest(
+            var request = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         benchNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Bench press",
-                        0,
                         [],
                         []),
-                    new NagNodeDto(
+                    new TaskItemDto(
                         tricepsNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Triceps",
-                        1,
                         [],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
-            var beforeCreate = DateTimeOffset.UtcNow;
             var response = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 request,
                 JsonOptions);
-            var afterCreate = DateTimeOffset.UtcNow;
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.True(response.StatusCode == HttpStatusCode.OK, responseBody);
 
             using var responseJson = JsonDocument.Parse(responseBody);
-            Assert.True(responseJson.RootElement.TryGetProperty("nagNodes", out _));
+            Assert.True(responseJson.RootElement.TryGetProperty("taskItems", out _));
             Assert.False(responseJson.RootElement.TryGetProperty("nodes", out _));
 
-            var created = await response.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var created = await response.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(created);
-            Assert.Equal(nagLogId, created.Id);
+            Assert.Equal(taskLogId, created.Id);
             Assert.Equal(testData.NagId, created.NagId);
             Assert.Null(created.ClosedOn);
-            Assert.InRange(created.UpdatedAt, beforeCreate, afterCreate);
-            Assert.Contains(created.NagNodes, node => node.Id == benchNodeId && node.Name == "Bench press");
-            Assert.Contains(created.NagNodes, node => node.Id == tricepsNodeId && node.Name == "Triceps");
+            Assert.Equal(request.UpdatedAt, created.UpdatedAt);
+            Assert.Contains(created.TaskItems, node => node.Id == benchNodeId && node.Name == "Bench press");
+            Assert.Contains(created.TaskItems, node => node.Id == tricepsNodeId && node.Name == "Triceps");
 
             await using var dataDb = CreateDataDbContext();
-            var storedNagLog = await dataDb.NagLogs
-                .Include(nagLog => nagLog.NagNodes)
-                .SingleAsync(nagLog => nagLog.Id == nagLogId);
+            var storedTaskLog = await dataDb.TaskLogs
+                .Include(taskLog => taskLog.TaskItems)
+                .SingleAsync(taskLog => taskLog.Id == taskLogId);
 
-            Assert.Equal(testData.NagId, storedNagLog.NagId);
-            Assert.Null(storedNagLog.ClosedOn);
-            Assert.Equal(created.UpdatedAt, storedNagLog.UpdatedAt);
-            Assert.Equal(2, storedNagLog.NagNodes.Count);
-            Assert.Contains(storedNagLog.NagNodes, node => node.Id == benchNodeId);
-            Assert.Contains(storedNagLog.NagNodes, node => node.Id == tricepsNodeId);
+            Assert.Equal(testData.NagId, storedTaskLog.NagId);
+            Assert.Null(storedTaskLog.ClosedOn);
+            Assert.Equal(created.UpdatedAt, storedTaskLog.UpdatedAt);
+            Assert.Equal(2, storedTaskLog.TaskItems.Count);
+            Assert.Contains(storedTaskLog.TaskItems, node => node.Id == benchNodeId);
+            Assert.Contains(storedTaskLog.TaskItems, node => node.Id == tricepsNodeId);
+            Assert.Equal(0, storedTaskLog.TaskItems.Single(node => node.Id == benchNodeId).SortOrder);
+            Assert.Equal(1, storedTaskLog.TaskItems.Single(node => node.Id == tricepsNodeId).SortOrder);
         }
         finally
         {
@@ -751,11 +895,11 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_accepts_nested_nag_nodes_and_persists_parent_assertions()
+    public async Task Put_task_logs_accepts_nested_task_items_and_persists_parent_assertions()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var exerciseNodeId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
@@ -763,84 +907,84 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         try
         {
             using var client = CreateServerClient();
-            var request = new SaveNagLogRequest(
+            var request = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         exerciseNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Bench press",
-                        0,
                         [],
                         [
-                            new NagNodeDto(
+                            new TaskItemDto(
                                 setNodeId,
-                                nagLogId,
+                                taskLogId,
                                 exerciseNodeId,
                                 "Set 1",
-                                0,
                                 [
-                                    new NagInputDto(
+                                    new TaskEntryDto(
                                         repsInputId,
-                                        nagLogId,
+                                        taskLogId,
                                         setNodeId,
                                         "Reps",
                                         null,
-                                        NagInputValueTypeDto.Integer,
+                                        TaskEntryValueTypeDto.Integer,
                                         null,
-                                        "10",
-                                        0)
+                                        "10")
                                 ],
                                 [])
                         ])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var response = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 request,
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.True(response.StatusCode == HttpStatusCode.OK, responseBody);
 
-            var created = await response.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var created = await response.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(created);
-            var rootNode = Assert.Single(created.NagNodes);
-            var childNode = Assert.Single(rootNode.NagNodes);
-            var input = Assert.Single(childNode.NagInputs);
+            var rootNode = Assert.Single(created.TaskItems);
+            var childNode = Assert.Single(rootNode.TaskItems);
+            var input = Assert.Single(childNode.TaskEntries);
 
             Assert.Equal(exerciseNodeId, rootNode.Id);
-            Assert.Null(rootNode.ParentNagNodeId);
+            Assert.Null(rootNode.ParentTaskItemId);
             Assert.Equal(setNodeId, childNode.Id);
-            Assert.Equal(exerciseNodeId, childNode.ParentNagNodeId);
-            Assert.Equal(nagLogId, childNode.NagLogId);
+            Assert.Equal(exerciseNodeId, childNode.ParentTaskItemId);
+            Assert.Equal(taskLogId, childNode.TaskLogId);
             Assert.Equal(repsInputId, input.Id);
-            Assert.Equal(nagLogId, input.NagLogId);
-            Assert.Equal(setNodeId, input.ParentNagNodeId);
-            Assert.Null(input.PreviousValue);
+            Assert.Equal(taskLogId, input.TaskLogId);
+            Assert.Equal(setNodeId, input.ParentTaskItemId);
+            Assert.Null(input.LastTaskRunReferenceValue);
 
             await using var dataDb = CreateDataDbContext();
-            var storedNagLog = await dataDb.NagLogs
-                .Include(nagLog => nagLog.NagNodes)
-                    .ThenInclude(nagNode => nagNode.NagInputs)
-                .SingleAsync(nagLog => nagLog.Id == nagLogId);
+            var storedTaskLog = await dataDb.TaskLogs
+                .Include(taskLog => taskLog.TaskItems)
+                    .ThenInclude(taskItem => taskItem.TaskEntries)
+                .SingleAsync(taskLog => taskLog.Id == taskLogId);
 
-            Assert.Equal(2, storedNagLog.NagNodes.Count);
-            Assert.Contains(storedNagLog.NagNodes, node => node.Id == exerciseNodeId && node.ParentNagNodeId is null);
-            Assert.Contains(storedNagLog.NagNodes, node => node.Id == setNodeId && node.ParentNagNodeId == exerciseNodeId);
+            Assert.Equal(2, storedTaskLog.TaskItems.Count);
+            Assert.Contains(storedTaskLog.TaskItems, node => node.Id == exerciseNodeId && node.ParentTaskItemId is null);
+            Assert.Contains(storedTaskLog.TaskItems, node => node.Id == setNodeId && node.ParentTaskItemId == exerciseNodeId);
             Assert.Contains(
-                storedNagLog.NagNodes.SelectMany(node => node.NagInputs),
+                storedTaskLog.TaskItems.SelectMany(node => node.TaskEntries),
                 input => input.Id == repsInputId
-                    && input.NagLogId == nagLogId
-                    && input.ParentNagNodeId == setNodeId
-                    && input.PreviousValue == null);
+                    && input.TaskLogId == taskLogId
+                    && input.ParentTaskItemId == setNodeId
+                    && input.LastTaskRunReferenceValue == null);
         }
         finally
         {
@@ -849,55 +993,56 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_returns_bad_request_when_nested_parent_assertion_does_not_match()
+    public async Task Put_task_logs_returns_bad_request_when_nested_parent_assertion_does_not_match()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var exerciseNodeId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var request = new SaveNagLogRequest(
+            var request = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         exerciseNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Bench press",
-                        0,
                         [],
                         [
-                            new NagNodeDto(
+                            new TaskItemDto(
                                 setNodeId,
-                                nagLogId,
+                                taskLogId,
                                 null,
                                 "Set 1",
-                                0,
                                 [],
                                 [])
                         ])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var response = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 request,
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Contains("ParentNagNodeId", responseBody);
+            Assert.Contains("ParentTaskItemId", responseBody);
 
             await using var dataDb = CreateDataDbContext();
-            var exists = await dataDb.NagLogs.AnyAsync(nagLog => nagLog.Id == nagLogId);
+            var exists = await dataDb.TaskLogs.AnyAsync(taskLog => taskLog.Id == taskLogId);
 
             Assert.False(exists);
         }
@@ -908,11 +1053,11 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_updates_record_atomically_and_replaces_nag_nodes()
+    public async Task Put_task_logs_updates_record_atomically_and_replaces_task_items()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var oldBenchNodeId = Guid.NewGuid();
         var newBenchNodeId = Guid.NewGuid();
         var newTricepsNodeId = Guid.NewGuid();
@@ -920,95 +1065,95 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         oldBenchNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Bench press",
-                        0,
                         [],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var created = await createResponse.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var created = await createResponse.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(created);
 
-            var updateRequest = new SaveNagLogRequest(
+            var updateRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         newBenchNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Bench press updated",
-                        0,
                         [],
                         []),
-                    new NagNodeDto(
+                    new TaskItemDto(
                         newTricepsNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Triceps",
-                        1,
                         [],
                         [])
-                ],
-                ExpectedVersion: created.Version);
 
-            var beforeUpdate = DateTimeOffset.UtcNow;
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: created.Version,
+                NextVersion: created.Version + 1);
+
             var updateResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 updateRequest,
                 JsonOptions);
-            var afterUpdate = DateTimeOffset.UtcNow;
             var updateBody = await updateResponse.Content.ReadAsStringAsync();
 
             Assert.True(updateResponse.StatusCode == HttpStatusCode.OK, updateBody);
 
-            var updated = await updateResponse.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var updated = await updateResponse.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(updated);
-            Assert.Equal(nagLogId, updated.Id);
-            Assert.Equal(1, updated.Version);
-            Assert.True(updated.UpdatedAt >= created.UpdatedAt);
-            Assert.InRange(updated.UpdatedAt, beforeUpdate, afterUpdate);
-            Assert.DoesNotContain(updated.NagNodes, node => node.Id == oldBenchNodeId);
-            Assert.Contains(updated.NagNodes, node => node.Id == newBenchNodeId && node.Name == "Bench press updated");
-            Assert.Contains(updated.NagNodes, node => node.Id == newTricepsNodeId && node.Name == "Triceps");
+            Assert.Equal(taskLogId, updated.Id);
+            Assert.Equal(2, updated.Version);
+            Assert.Equal(updateRequest.UpdatedAt, updated.UpdatedAt);
+            Assert.DoesNotContain(updated.TaskItems, node => node.Id == oldBenchNodeId);
+            Assert.Contains(updated.TaskItems, node => node.Id == newBenchNodeId && node.Name == "Bench press updated");
+            Assert.Contains(updated.TaskItems, node => node.Id == newTricepsNodeId && node.Name == "Triceps");
 
             await using var dataDb = CreateDataDbContext();
-            var storedNagLog = await dataDb.NagLogs
-                .Include(nagLog => nagLog.NagNodes)
-                .SingleAsync(nagLog => nagLog.Id == nagLogId);
+            var storedTaskLog = await dataDb.TaskLogs
+                .Include(taskLog => taskLog.TaskItems)
+                .SingleAsync(taskLog => taskLog.Id == taskLogId);
 
-            Assert.Equal(2, storedNagLog.NagNodes.Count);
-            Assert.Equal(1, storedNagLog.Version);
-            Assert.Equal(updated.UpdatedAt, storedNagLog.UpdatedAt);
-            Assert.DoesNotContain(storedNagLog.NagNodes, node => node.Id == oldBenchNodeId);
-            Assert.Contains(storedNagLog.NagNodes, node => node.Id == newBenchNodeId);
-            Assert.Contains(storedNagLog.NagNodes, node => node.Id == newTricepsNodeId);
+            Assert.Equal(2, storedTaskLog.TaskItems.Count);
+            Assert.Equal(2, storedTaskLog.Version);
+            Assert.Equal(updated.UpdatedAt, storedTaskLog.UpdatedAt);
+            Assert.DoesNotContain(storedTaskLog.TaskItems, node => node.Id == oldBenchNodeId);
+            Assert.Contains(storedTaskLog.TaskItems, node => node.Id == newBenchNodeId);
+            Assert.Contains(storedTaskLog.TaskItems, node => node.Id == newTricepsNodeId);
         }
         finally
         {
@@ -1017,62 +1162,110 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_returns_conflict_when_expected_version_is_stale()
+    public async Task Put_task_logs_returns_bad_request_when_wrapped_payload_version_is_outside_version_span()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
+
+        try
+        {
+            using var client = CreateServerClient();
+            var request = new
+            {
+                testData.CommunityId,
+                UserId = userId,
+                Payload = new TaskLogDto(
+                    taskLogId,
+                    testData.NagId,
+                    null,
+                    null,
+                    DateTimeOffset.UtcNow,
+                    null,
+                    null,
+                    null,
+                    Version: 5,
+                    TaskItems: []),
+                BaseVersion = 0,
+                NextVersion = 1
+            };
+
+            var response = await client.PutAsJsonAsync(
+                $"/api/task-logs/{taskLogId}",
+                request,
+                JsonOptions);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Contains("Payload Version must be between BaseVersion and before NextVersion.", responseBody);
+        }
+        finally
+        {
+            await DeleteRoutedNagAsync(testData);
+        }
+    }
+
+    [Fact]
+    public async Task Put_task_logs_returns_conflict_when_expected_version_is_stale()
+    {
+        var testData = await CreateRoutedNagAsync();
+        var userId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var nodeId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         nodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
 
-            var staleUpdateRequest = new SaveNagLogRequest(
+            var staleUpdateRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         Guid.NewGuid(),
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1 stale",
-                        0,
                         [],
                         [])
+
                 ],
-                ExpectedVersion: 99);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 99,
+                NextVersion: 100);
 
             var staleUpdateResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 staleUpdateRequest,
                 JsonOptions);
 
@@ -1085,12 +1278,15 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_creates_and_replaces_nag_inputs_with_valid_value_types()
+    public async Task Put_task_logs_creates_and_replaces_task_entries_with_valid_value_types()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
+        var otherTaskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
+        var otherSetNodeId = Guid.NewGuid();
         var noteInputId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
         var weightInputId = Guid.NewGuid();
@@ -1099,129 +1295,129 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 noteInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Kort notat",
                                 "Hvordan gik sættet?",
-                                NagInputValueTypeDto.Text,
+                                TaskEntryValueTypeDto.Text,
                                 null,
-                                "Mistede fokus",
-                                0),
-                            new NagInputDto(
+                                "Mistede fokus"),
+                            new TaskEntryDto(
                                 repsInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Reps",
                                 null,
-                                NagInputValueTypeDto.Integer,
+                                TaskEntryValueTypeDto.Integer,
                                 null,
-                                "10",
-                                1)
+                                "10")
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var created = await createResponse.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var created = await createResponse.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(created);
-            var createdNode = Assert.Single(created.NagNodes);
-            Assert.Contains(createdNode.NagInputs, input => input.Id == noteInputId && input.ValueType == NagInputValueTypeDto.Text);
-            Assert.Contains(createdNode.NagInputs, input => input.Id == repsInputId && input.ValueType == NagInputValueTypeDto.Integer);
+            var createdNode = Assert.Single(created.TaskItems);
+            Assert.Contains(createdNode.TaskEntries, input => input.Id == noteInputId && input.ValueType == TaskEntryValueTypeDto.Text);
+            Assert.Contains(createdNode.TaskEntries, input => input.Id == repsInputId && input.ValueType == TaskEntryValueTypeDto.Integer);
 
-            var updateRequest = new SaveNagLogRequest(
+            var updateRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 weightInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Vægt",
                                 "Løftet vægt",
-                                NagInputValueTypeDto.Decimal,
+                                TaskEntryValueTypeDto.Decimal,
                                 "kg",
-                                "80",
-                                0),
-                            new NagInputDto(
+                                "80"),
+                            new TaskEntryDto(
                                 focusInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Fokus",
                                 null,
-                                NagInputValueTypeDto.Boolean,
+                                TaskEntryValueTypeDto.Boolean,
                                 null,
-                                "true",
-                                1)
+                                "true")
                         ],
                         [])
+
                 ],
-                ExpectedVersion: created.Version);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: created.Version,
+                NextVersion: created.Version + 1);
 
             var updateResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 updateRequest,
                 JsonOptions);
             var updateBody = await updateResponse.Content.ReadAsStringAsync();
 
             Assert.True(updateResponse.StatusCode == HttpStatusCode.OK, updateBody);
 
-            var updated = await updateResponse.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var updated = await updateResponse.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(updated);
-            var updatedNode = Assert.Single(updated.NagNodes);
-            Assert.DoesNotContain(updatedNode.NagInputs, input => input.Id == noteInputId);
-            Assert.DoesNotContain(updatedNode.NagInputs, input => input.Id == repsInputId);
-            Assert.Contains(updatedNode.NagInputs, input => input.Id == weightInputId && input.ValueType == NagInputValueTypeDto.Decimal && input.Unit == "kg");
-            Assert.Contains(updatedNode.NagInputs, input => input.Id == focusInputId && input.ValueType == NagInputValueTypeDto.Boolean);
+            var updatedNode = Assert.Single(updated.TaskItems);
+            Assert.DoesNotContain(updatedNode.TaskEntries, input => input.Id == noteInputId);
+            Assert.DoesNotContain(updatedNode.TaskEntries, input => input.Id == repsInputId);
+            Assert.Contains(updatedNode.TaskEntries, input => input.Id == weightInputId && input.ValueType == TaskEntryValueTypeDto.Decimal && input.Tag == "kg");
+            Assert.Contains(updatedNode.TaskEntries, input => input.Id == focusInputId && input.ValueType == TaskEntryValueTypeDto.Boolean);
 
             await using var dataDb = CreateDataDbContext();
-            var storedNagLog = await dataDb.NagLogs
-                .Include(nagLog => nagLog.NagNodes)
-                    .ThenInclude(nagNode => nagNode.NagInputs)
-                .SingleAsync(nagLog => nagLog.Id == nagLogId);
-            var storedNode = Assert.Single(storedNagLog.NagNodes);
+            var storedTaskLog = await dataDb.TaskLogs
+                .Include(taskLog => taskLog.TaskItems)
+                    .ThenInclude(taskItem => taskItem.TaskEntries)
+                .SingleAsync(taskLog => taskLog.Id == taskLogId);
+            var storedNode = Assert.Single(storedTaskLog.TaskItems);
 
-            Assert.Equal(2, storedNode.NagInputs.Count);
-            Assert.DoesNotContain(storedNode.NagInputs, input => input.Id == noteInputId);
-            Assert.DoesNotContain(storedNode.NagInputs, input => input.Id == repsInputId);
-            Assert.Contains(storedNode.NagInputs, input => input.Id == weightInputId && input.ValueType == NagInputValueType.Decimal && input.Unit == "kg");
-            Assert.Contains(storedNode.NagInputs, input => input.Id == focusInputId && input.ValueType == NagInputValueType.Boolean);
+            Assert.Equal(2, storedNode.TaskEntries.Count);
+            Assert.DoesNotContain(storedNode.TaskEntries, input => input.Id == noteInputId);
+            Assert.DoesNotContain(storedNode.TaskEntries, input => input.Id == repsInputId);
+            Assert.Contains(storedNode.TaskEntries, input => input.Id == weightInputId && input.ValueType == TaskEntryValueType.Decimal && input.Tag == "kg");
+            Assert.Contains(storedNode.TaskEntries, input => input.Id == focusInputId && input.ValueType == TaskEntryValueType.Boolean);
         }
         finally
         {
@@ -1230,11 +1426,11 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Patch_nag_log_inputs_updates_values_without_replacing_tree()
+    public async Task Patch_task_log_inputs_updates_values_without_replacing_tree()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var weightInputId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
@@ -1242,96 +1438,96 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 weightInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Weight",
                                 null,
-                                NagInputValueTypeDto.Decimal,
+                                TaskEntryValueTypeDto.Decimal,
                                 "kg",
-                                null,
-                                0),
-                            new NagInputDto(
+                                null),
+                            new TaskEntryDto(
                                 repsInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Reps",
                                 null,
-                                NagInputValueTypeDto.Integer,
+                                TaskEntryValueTypeDto.Integer,
                                 null,
-                                null,
-                                1)
+                                null)
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var created = await createResponse.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var created = await createResponse.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(created);
 
-            var patchRequest = new UpdateNagInputValuesRequest(
+            var patchRequest = new UpdateTaskEntryValuesRequest(
                 testData.CommunityId,
                 userId,
                 [
-                    new NagInputValueUpdateDto(weightInputId, "80"),
-                    new NagInputValueUpdateDto(repsInputId, "10")
-                ],
-                created.Version);
+                    new TaskEntryValueUpdateDto(weightInputId, "80"),
+                    new TaskEntryValueUpdateDto(repsInputId, "10")
 
-            var beforePatch = DateTimeOffset.UtcNow;
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: created.Version,
+                NextVersion: created.Version + 1);
+
             var patchResponse = await client.PatchAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}/nag-inputs",
+                $"/api/task-logs/{taskLogId}/task-entries",
                 patchRequest,
                 JsonOptions);
-            var afterPatch = DateTimeOffset.UtcNow;
             var patchBody = await patchResponse.Content.ReadAsStringAsync();
 
             Assert.True(patchResponse.StatusCode == HttpStatusCode.OK, patchBody);
 
-            var patchResult = await patchResponse.Content.ReadFromJsonAsync<NagLogVersionDto>(JsonOptions);
+            var patchResult = await patchResponse.Content.ReadFromJsonAsync<TaskLogVersionDto>(JsonOptions);
 
             Assert.NotNull(patchResult);
-            Assert.Equal(1, patchResult.Version);
-            Assert.True(patchResult.UpdatedAt >= created.UpdatedAt);
-            Assert.InRange(patchResult.UpdatedAt, beforePatch, afterPatch);
+            Assert.Equal(2, patchResult.Version);
+            Assert.Equal(patchRequest.UpdatedAt, patchResult.UpdatedAt);
 
             await using var dataDb = CreateDataDbContext();
-            var storedNagLog = await dataDb.NagLogs
-                .Include(nagLog => nagLog.NagNodes)
-                    .ThenInclude(nagNode => nagNode.NagInputs)
-                .SingleAsync(nagLog => nagLog.Id == nagLogId);
-            var storedNode = Assert.Single(storedNagLog.NagNodes);
+            var storedTaskLog = await dataDb.TaskLogs
+                .Include(taskLog => taskLog.TaskItems)
+                    .ThenInclude(taskItem => taskItem.TaskEntries)
+                .SingleAsync(taskLog => taskLog.Id == taskLogId);
+            var storedNode = Assert.Single(storedTaskLog.TaskItems);
 
             Assert.Equal(setNodeId, storedNode.Id);
-            Assert.Equal(1, storedNagLog.Version);
-            Assert.Equal(patchResult.UpdatedAt, storedNagLog.UpdatedAt);
-            Assert.Equal(2, storedNode.NagInputs.Count);
-            Assert.Contains(storedNode.NagInputs, input => input.Id == weightInputId && input.Value == "80");
-            Assert.Contains(storedNode.NagInputs, input => input.Id == repsInputId && input.Value == "10");
+            Assert.Equal(2, storedTaskLog.Version);
+            Assert.Equal(patchResult.UpdatedAt, storedTaskLog.UpdatedAt);
+            Assert.Equal(2, storedNode.TaskEntries.Count);
+            Assert.Contains(storedNode.TaskEntries, input => input.Id == weightInputId && input.Value == "80");
+            Assert.Contains(storedNode.TaskEntries, input => input.Id == repsInputId && input.Value == "10");
         }
         finally
         {
@@ -1340,63 +1536,67 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Patch_nag_log_inputs_returns_conflict_when_expected_version_is_stale()
+    public async Task Patch_task_log_inputs_returns_conflict_when_expected_version_is_stale()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 repsInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Reps",
                                 null,
-                                NagInputValueTypeDto.Integer,
+                                TaskEntryValueTypeDto.Integer,
                                 null,
-                                null,
-                                0)
+                                null)
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
 
-            var patchRequest = new UpdateNagInputValuesRequest(
+            var patchRequest = new UpdateTaskEntryValuesRequest(
                 testData.CommunityId,
                 userId,
                 [
-                    new NagInputValueUpdateDto(repsInputId, "10")
+                    new TaskEntryValueUpdateDto(repsInputId, "10")
+
                 ],
-                ExpectedVersion: 99);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 99,
+                NextVersion: 100);
 
             var patchResponse = await client.PatchAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}/nag-inputs",
+                $"/api/task-logs/{taskLogId}/task-entries",
                 patchRequest,
                 JsonOptions);
 
@@ -1409,11 +1609,11 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Patch_nag_log_inputs_returns_conflict_when_nag_log_is_closed()
+    public async Task Patch_task_log_inputs_returns_conflict_when_task_log_is_closed()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
         var closedOn = new DateTimeOffset(2026, 6, 8, 8, 0, 0, TimeSpan.Zero);
@@ -1421,81 +1621,85 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 repsInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Reps",
                                 null,
-                                NagInputValueTypeDto.Integer,
+                                TaskEntryValueTypeDto.Integer,
                                 null,
-                                "8",
-                                0)
+                                "8")
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var created = await createResponse.Content.ReadFromJsonAsync<NagLogDto>(JsonOptions);
+            var created = await createResponse.Content.ReadFromJsonAsync<TaskLogDto>(JsonOptions);
 
             Assert.NotNull(created);
 
             await using (var dataDb = CreateDataDbContext())
             {
-                await dataDb.NagLogs
-                    .Where(nagLog => nagLog.Id == nagLogId)
+                await dataDb.TaskLogs
+                    .Where(taskLog => taskLog.Id == taskLogId)
                     .ExecuteUpdateAsync(updates => updates
-                        .SetProperty(nagLog => nagLog.ClosedOn, closedOn)
-                        .SetProperty(nagLog => nagLog.UpdatedAt, closedOn));
+                        .SetProperty(taskLog => taskLog.ClosedOn, closedOn)
+                        .SetProperty(taskLog => taskLog.UpdatedAt, closedOn));
             }
 
-            var patchRequest = new UpdateNagInputValuesRequest(
+            var patchRequest = new UpdateTaskEntryValuesRequest(
                 testData.CommunityId,
                 userId,
                 [
-                    new NagInputValueUpdateDto(repsInputId, "10")
+                    new TaskEntryValueUpdateDto(repsInputId, "10")
+
                 ],
-                created.Version);
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: created.Version,
+                NextVersion: created.Version + 1);
 
             var patchResponse = await client.PatchAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}/nag-inputs",
+                $"/api/task-logs/{taskLogId}/task-entries",
                 patchRequest,
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.Conflict, patchResponse.StatusCode);
 
             await using var verifyDb = CreateDataDbContext();
-            var storedInput = await verifyDb.NagInputs.SingleAsync(
+            var storedInput = await verifyDb.TaskEntries.SingleAsync(
                 input => input.Id == repsInputId);
-            var closedNagLog = await verifyDb.NagLogs.SingleAsync(
-                nagLog => nagLog.Id == nagLogId);
+            var closedTaskLog = await verifyDb.TaskLogs.SingleAsync(
+                taskLog => taskLog.Id == taskLogId);
 
             Assert.Equal("8", storedInput.Value);
-            Assert.Equal(0, closedNagLog.Version);
-            Assert.Equal(closedOn, closedNagLog.ClosedOn);
-            Assert.Equal(closedOn, closedNagLog.UpdatedAt);
+            Assert.Equal(1, closedTaskLog.Version);
+            Assert.Equal(closedOn, closedTaskLog.ClosedOn);
+            Assert.Equal(closedOn, closedTaskLog.UpdatedAt);
         }
         finally
         {
@@ -1504,57 +1708,62 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Patch_nag_log_inputs_returns_bad_request_when_input_is_not_in_nag_log()
+    public async Task Patch_task_log_inputs_returns_bad_request_when_input_is_not_in_task_log()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var patchRequest = new UpdateNagInputValuesRequest(
+            var patchRequest = new UpdateTaskEntryValuesRequest(
                 testData.CommunityId,
                 userId,
                 [
-                    new NagInputValueUpdateDto(Guid.NewGuid(), "80")
-                ]);
+                    new TaskEntryValueUpdateDto(Guid.NewGuid(), "80")
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var patchResponse = await client.PatchAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}/nag-inputs",
+                $"/api/task-logs/{taskLogId}/task-entries",
                 patchRequest,
                 JsonOptions);
             var patchBody = await patchResponse.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.BadRequest, patchResponse.StatusCode);
-            Assert.Contains("NagInput", patchBody);
+            Assert.Contains("TaskEntry", patchBody);
         }
         finally
         {
@@ -1563,47 +1772,48 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_returns_bad_request_when_nag_input_value_does_not_match_value_type()
+    public async Task Put_task_logs_returns_bad_request_when_task_entry_value_does_not_match_value_type()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var request = new SaveNagLogRequest(
+            var request = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Reps",
                                 null,
-                                NagInputValueTypeDto.Integer,
+                                TaskEntryValueTypeDto.Integer,
                                 null,
-                                "not an integer",
-                                0)
+                                "not an integer")
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var response = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 request,
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
@@ -1612,7 +1822,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.Contains("Integer", responseBody);
 
             await using var dataDb = CreateDataDbContext();
-            var exists = await dataDb.NagLogs.AnyAsync(nagLog => nagLog.Id == nagLogId);
+            var exists = await dataDb.TaskLogs.AnyAsync(taskLog => taskLog.Id == taskLogId);
 
             Assert.False(exists);
         }
@@ -1623,55 +1833,56 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Theory]
-    [InlineData(NagInputValueTypeDto.Integer, "10")]
-    [InlineData(NagInputValueTypeDto.Decimal, "80.5")]
-    [InlineData(NagInputValueTypeDto.Boolean, "true")]
-    [InlineData(NagInputValueTypeDto.Boolean, "false")]
-    [InlineData(NagInputValueTypeDto.Text, "any text")]
-    [InlineData(NagInputValueTypeDto.Text, "")]
-    public async Task Put_nag_logs_accepts_values_that_match_value_type(
-        NagInputValueTypeDto valueType,
+    [InlineData(TaskEntryValueTypeDto.Integer, "10")]
+    [InlineData(TaskEntryValueTypeDto.Decimal, "80.5")]
+    [InlineData(TaskEntryValueTypeDto.Boolean, "true")]
+    [InlineData(TaskEntryValueTypeDto.Boolean, "false")]
+    [InlineData(TaskEntryValueTypeDto.Text, "any text")]
+    [InlineData(TaskEntryValueTypeDto.Text, "")]
+    public async Task Put_task_logs_accepts_values_that_match_value_type(
+        TaskEntryValueTypeDto valueType,
         string value)
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var request = new SaveNagLogRequest(
+            var request = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Input",
                                 null,
                                 valueType,
                                 null,
-                                value,
-                                0)
+                                value)
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var response = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 request,
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
@@ -1685,63 +1896,67 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Patch_nag_log_inputs_returns_bad_request_when_value_does_not_match_existing_value_type()
+    public async Task Patch_task_log_inputs_returns_bad_request_when_value_does_not_match_existing_value_type()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
 
         try
         {
             using var client = CreateServerClient();
-            var createRequest = new SaveNagLogRequest(
+            var createRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 repsInputId,
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Reps",
                                 null,
-                                NagInputValueTypeDto.Integer,
+                                TaskEntryValueTypeDto.Integer,
                                 null,
-                                null,
-                                0)
+                                null)
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var createResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 createRequest,
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
             Assert.True(createResponse.StatusCode == HttpStatusCode.OK, createBody);
 
-            var patchRequest = new UpdateNagInputValuesRequest(
+            var patchRequest = new UpdateTaskEntryValuesRequest(
                 testData.CommunityId,
                 userId,
                 [
-                    new NagInputValueUpdateDto(repsInputId, "not an integer")
-                ]);
+                    new TaskEntryValueUpdateDto(repsInputId, "not an integer")
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var patchResponse = await client.PatchAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}/nag-inputs",
+                $"/api/task-logs/{taskLogId}/task-entries",
                 patchRequest,
                 JsonOptions);
             var patchBody = await patchResponse.Content.ReadAsStringAsync();
@@ -1750,7 +1965,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.Contains("Integer", patchBody);
 
             await using var dataDb = CreateDataDbContext();
-            var storedInput = await dataDb.NagInputs.SingleAsync(input => input.Id == repsInputId);
+            var storedInput = await dataDb.TaskEntries.SingleAsync(input => input.Id == repsInputId);
 
             Assert.Null(storedInput.Value);
         }
@@ -1761,11 +1976,11 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Put_nag_logs_returns_bad_request_when_nag_input_value_type_is_invalid()
+    public async Task Put_task_logs_returns_bad_request_when_task_entry_value_type_is_invalid()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
         var nodeId = Guid.NewGuid();
         var inputId = Guid.NewGuid();
 
@@ -1776,38 +1991,36 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             {
               "communityId": "{{testData.CommunityId}}",
               "userId": "{{userId}}",
-              "id": "{{nagLogId}}",
+              "id": "{{taskLogId}}",
               "nagId": "{{testData.NagId}}",
-              "copiedFromNagLogId": null,
+              "copiedFromTaskLogId": null,
               "closedOn": null,
-              "nagNodes": [
+              "taskItems": [
                 {
                   "id": "{{nodeId}}",
-                  "nagLogId": "{{nagLogId}}",
-                  "parentNagNodeId": null,
+                  "taskLogId": "{{taskLogId}}",
+                  "parentTaskItemId": null,
                   "name": "Set 1",
-                  "sortOrder": 0,
-                  "nagInputs": [
+                  "taskEntries": [
                     {
                       "id": "{{inputId}}",
-                      "nagLogId": "{{nagLogId}}",
-                      "parentNagNodeId": "{{nodeId}}",
+                      "taskLogId": "{{taskLogId}}",
+                      "parentTaskItemId": "{{nodeId}}",
                       "label": "Bad input",
                       "description": null,
                       "valueType": "Currency",
                       "unit": null,
-                      "value": "12",
-                      "sortOrder": 0
+                      "value": "12"
                     }
                   ],
-                  "nagNodes": []
+                  "taskItems": []
                 }
               ]
             }
             """;
 
             var response = await client.PutAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 new StringContent(requestJson, Encoding.UTF8, "application/json"));
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -1815,7 +2028,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.Contains("valueType", responseBody, StringComparison.OrdinalIgnoreCase);
 
             await using var dataDb = CreateDataDbContext();
-            var exists = await dataDb.NagLogs.AnyAsync(nagLog => nagLog.Id == nagLogId);
+            var exists = await dataDb.TaskLogs.AnyAsync(taskLog => taskLog.Id == taskLogId);
 
             Assert.False(exists);
         }
@@ -1826,13 +2039,13 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
-    public async Task Get_nag_input_unit_suggestions_returns_units_saved_from_nag_log_for_user()
+    public async Task Save_task_log_does_not_create_tags()
     {
         var testData = await CreateRoutedNagAsync();
         var userId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        var nagLogId = Guid.NewGuid();
-        var otherNagLogId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
+        var otherTaskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var otherSetNodeId = Guid.NewGuid();
 
@@ -1840,114 +2053,112 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         {
             using var client = CreateServerClient();
 
-            var request = new SaveNagLogRequest(
+            var request = new SaveTaskLogRequest(
                 testData.CommunityId,
                 userId,
-                nagLogId,
+                taskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         setNodeId,
-                        nagLogId,
+                        taskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Vægt",
                                 "Løftet vægt",
-                                NagInputValueTypeDto.Decimal,
+                                TaskEntryValueTypeDto.Decimal,
                                 "kg",
-                                "80",
-                                0),
-                            new NagInputDto(
+                                "80"),
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Afstand",
                                 null,
-                                NagInputValueTypeDto.Decimal,
+                                TaskEntryValueTypeDto.Decimal,
                                 "km",
-                                "3.2",
-                                1),
-                            new NagInputDto(
+                                "3.2"),
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Vægt igen",
                                 null,
-                                NagInputValueTypeDto.Decimal,
+                                TaskEntryValueTypeDto.Decimal,
                                 "kg",
-                                "82.5",
-                                2),
-                            new NagInputDto(
+                                "82.5"),
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                nagLogId,
+                                taskLogId,
                                 setNodeId,
                                 "Notat",
                                 null,
-                                NagInputValueTypeDto.Text,
+                                TaskEntryValueTypeDto.Text,
                                 null,
-                                "Ok",
-                                3)
+                                "Ok")
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var saveResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{nagLogId}",
+                $"/api/task-logs/{taskLogId}",
                 request,
                 JsonOptions);
             var saveBody = await saveResponse.Content.ReadAsStringAsync();
 
             Assert.True(saveResponse.StatusCode == HttpStatusCode.OK, saveBody);
 
-            var otherUserRequest = new SaveNagLogRequest(
+            var otherUserRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 otherUserId,
-                otherNagLogId,
+                otherTaskLogId,
                 testData.NagId,
                 null,
                 null,
                 [
-                    new NagNodeDto(
+                    new TaskItemDto(
                         otherSetNodeId,
-                        otherNagLogId,
+                        otherTaskLogId,
                         null,
                         "Set 1",
-                        0,
                         [
-                            new NagInputDto(
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                otherNagLogId,
+                                otherTaskLogId,
                                 otherSetNodeId,
                                 "Vægt",
                                 "Løftet vægt",
-                                NagInputValueTypeDto.Decimal,
+                                TaskEntryValueTypeDto.Decimal,
                                 "kg",
-                                "80",
-                                0),
-                            new NagInputDto(
+                                "80"),
+                            new TaskEntryDto(
                                 Guid.NewGuid(),
-                                otherNagLogId,
+                                otherTaskLogId,
                                 otherSetNodeId,
                                 "Afstand",
                                 null,
-                                NagInputValueTypeDto.Decimal,
+                                TaskEntryValueTypeDto.Decimal,
                                 "km",
-                                "3.2",
-                                1)
+                                "3.2")
                         ],
                         [])
-                ]);
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
             var otherSaveResponse = await client.PutAsJsonAsync(
-                $"/api/nag-logs/{otherNagLogId}",
+                $"/api/task-logs/{otherTaskLogId}",
                 otherUserRequest,
                 JsonOptions);
             var otherSaveBody = await otherSaveResponse.Content.ReadAsStringAsync();
@@ -1955,15 +2166,53 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.True(otherSaveResponse.StatusCode == HttpStatusCode.OK, otherSaveBody);
 
             var response = await client.GetAsync(
-                $"/api/nag-input-unit-suggestions?communityId={testData.CommunityId}&userId={userId}");
+                $"/api/tags?communityId={testData.CommunityId}&userId={userId}&tagType=task-entry-unit");
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.True(response.StatusCode == HttpStatusCode.OK, responseBody);
 
-            var suggestions = await response.Content.ReadFromJsonAsync<string[]>(JsonOptions);
+            var tags = await response.Content.ReadFromJsonAsync<TagDto[]>(JsonOptions);
 
-            Assert.NotNull(suggestions);
-            Assert.Equal(["kg", "km"], suggestions);
+            Assert.NotNull(tags);
+            Assert.Empty(tags);
+        }
+        finally
+        {
+            await DeleteRoutedNagAsync(testData);
+        }
+    }
+
+    [Fact]
+    public async Task Save_tag_stores_description()
+    {
+        var testData = await CreateRoutedNagAsync();
+
+        try
+        {
+            using var client = CreateServerClient();
+            var userId = Guid.NewGuid();
+
+            var request = new SaveTagRequest(
+                testData.CommunityId,
+                userId,
+                "task-entry-unit",
+                "kg",
+                "Kilogram used for strength training entries.");
+
+            var saveResponse = await client.PutAsJsonAsync(
+                "/api/tags",
+                request,
+                JsonOptions);
+            var saveBody = await saveResponse.Content.ReadAsStringAsync();
+
+            Assert.True(saveResponse.StatusCode == HttpStatusCode.OK, saveBody);
+
+            var saved = await saveResponse.Content.ReadFromJsonAsync<TagDto>(JsonOptions);
+
+            Assert.NotNull(saved);
+            Assert.Equal("kg", saved.Name);
+            Assert.Equal("Kilogram used for strength training entries.", saved.Description);
+            Assert.NotNull(saved.LastUsedAt);
         }
         finally
         {
@@ -1989,19 +2238,18 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             PasswordSecretName = null
         });
 
-        dataDb.Nags.Add(new Nag
+        dataDb.Nags.Add(new Nagger
         {
             Id = testData.NagId,
             Title = testData.Title,
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
             ActiveLogDueOn = new DateOnly(2026, 6, 1),
             IsDeactivated = false,
-            NagTimes =
+            UpdatedAt = new DateTimeOffset(2026, 6, 1, 8, 0, 0, TimeSpan.Zero),
+            ScheduleRules =
             [
-                new NagTime
+                new ScheduleRule
                 {
-                    TimeType = NagTimeType.Weekly,
-                    DayOfWeek = DayOfWeek.Wednesday
+                    RuleType = ScheduleRuleType.Wednesday
                 }
             ]
         });
@@ -2024,16 +2272,20 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             communityId,
             nagId,
             title,
+            NextDayOfWeek(new DateOnly(2026, 6, 1), dayOfWeek),
             null,
             isDeactivated,
             [
-                new NagTimeDto(
+                new ScheduleRuleDto(
                     Guid.NewGuid(),
-                    NagTimeTypeDto.Weekly,
-                    dayOfWeek,
+                    ToScheduleRuleType(dayOfWeek),
+                    null,
                     null,
                     null)
-            ]);
+            ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
         var response = await client.PutAsJsonAsync(
             $"/api/nags/{nagId}",
@@ -2044,25 +2296,47 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         Assert.True(response.StatusCode == HttpStatusCode.OK, body);
     }
 
-    private static async Task SaveEmptyNagLogForPlanAsync(
+    private static ScheduleRuleTypeDto ToScheduleRuleType(DayOfWeek dayOfWeek) =>
+        dayOfWeek switch
+        {
+            DayOfWeek.Monday => ScheduleRuleTypeDto.Monday,
+            DayOfWeek.Tuesday => ScheduleRuleTypeDto.Tuesday,
+            DayOfWeek.Wednesday => ScheduleRuleTypeDto.Wednesday,
+            DayOfWeek.Thursday => ScheduleRuleTypeDto.Thursday,
+            DayOfWeek.Friday => ScheduleRuleTypeDto.Friday,
+            DayOfWeek.Saturday => ScheduleRuleTypeDto.Saturday,
+            DayOfWeek.Sunday => ScheduleRuleTypeDto.Sunday,
+            _ => throw new ArgumentOutOfRangeException(nameof(dayOfWeek), dayOfWeek, null)
+        };
+
+    private static DateOnly NextDayOfWeek(DateOnly fromDate, DayOfWeek dayOfWeek)
+    {
+        var daysUntilMatch = ((int)dayOfWeek - (int)fromDate.DayOfWeek + 7) % 7;
+        return fromDate.AddDays(daysUntilMatch);
+    }
+
+    private static async Task SaveEmptyTaskLogForPlanAsync(
         HttpClient client,
         Guid communityId,
         Guid userId,
-        Guid nagLogId,
+        Guid taskLogId,
         Guid nagId,
         DateTimeOffset? closedOn)
     {
-        var request = new SaveNagLogRequest(
+        var request = new SaveTaskLogRequest(
             communityId,
             userId,
-            nagLogId,
+            taskLogId,
             nagId,
             null,
             closedOn,
-            []);
+            [],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
 
         var response = await client.PutAsJsonAsync(
-            $"/api/nag-logs/{nagLogId}",
+            $"/api/task-logs/{taskLogId}",
             request,
             JsonOptions);
         var body = await response.Content.ReadAsStringAsync();
@@ -2100,9 +2374,6 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         Environment.SetEnvironmentVariable(
             "DailyNaggerData__Password",
             GetDataPassword());
-        Environment.SetEnvironmentVariable(
-            "NagCopyWorker__IsHostedServiceEnabled",
-            "false");
 
         var factory = new WebApplicationFactory<Program>();
 

@@ -1,7 +1,6 @@
 using DailyNagger.Server.Api;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Operations;
-using DailyNagger.Server.Scheduling;
 using DailyNagger.Server.Validation;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -19,8 +18,6 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddMemoryCache();
 builder.Services.Configure<DataDbConnectionOptions>(
     builder.Configuration.GetSection("DataDbConnection"));
-builder.Services.Configure<NagCopyWorkerOptions>(
-    builder.Configuration.GetSection("NagCopyWorker"));
 builder.Services.AddDbContext<DailyNaggerDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DailyNaggerData"),
@@ -33,27 +30,15 @@ builder.Services.AddScoped<ControlDbRead>();
 builder.Services.AddScoped<GetDataDbConnection>();
 builder.Services.AddScoped<DataDbRead>();
 builder.Services.AddScoped<DataDbWrite>();
-builder.Services.AddScoped<INagLogCopyDelegatorStatusWriter, NagLogCopyDelegatorStatusWriter>();
-builder.Services.AddScoped<ICopyLapsedNagLogCommandHandler>(services =>
-    services.GetRequiredService<DataDbWrite>());
-builder.Services.AddScoped<NagOccurrenceCalculator>();
 builder.Services.AddScoped<NagRequestValidator>();
-builder.Services.AddSingleton<CommunityLapsedNagLogReconcilerFactory>();
-builder.Services.AddHostedService(services => new NagCopyHostedService(
-    cancellationToken =>
-    {
-        var factory = services.GetRequiredService<CommunityLapsedNagLogReconcilerFactory>();
-
-        return factory.Create(cancellationToken).RunUntilCancelledAsync(cancellationToken);
-    },
-    services.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<NagCopyWorkerOptions>>(),
-    services.GetRequiredService<ILogger<NagCopyHostedService>>()));
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("client", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5173")
+            .SetIsOriginAllowed(origin =>
+                Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                && (uri.Host == "localhost" || uri.Host == "127.0.0.1"))
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -71,12 +56,15 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
     app.UseHttpsRedirection();
 }
 app.UseCors("client");
+app.UseMiddleware<ApiTokenMiddleware>();
 
 app.MapSystemApi();
 app.MapNagApi();
 app.MapNagPlanApi();
-app.MapNagLogApi();
-app.MapNagInputUnitSuggestionApi();
+app.MapTaskLogApi();
+app.MapTagApi();
+app.MapTaskStepSuggestionApi();
+app.MapUserMoodApi();
 
 app.Run();
 

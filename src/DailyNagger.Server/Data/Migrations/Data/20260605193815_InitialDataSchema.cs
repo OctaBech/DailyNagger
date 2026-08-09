@@ -17,10 +17,13 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    schedule_updated_at = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     active_log_due_on = table.Column<DateOnly>(type: "date", nullable: true),
                     expires_on = table.Column<DateOnly>(type: "date", nullable: true),
                     is_deactivated = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    updated_at = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    updated_by_client_id = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    updated_by_device_name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    updated_by_device_model = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     version = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
                 },
                 constraints: table =>
@@ -29,7 +32,7 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 });
 
             migrationBuilder.CreateTable(
-                name: "nag_input_unit_suggestion",
+                name: "task_entry_unit_suggestion",
                 columns: table => new
                 {
                     user_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -37,28 +40,31 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_nag_input_unit_suggestion", x => new { x.user_id, x.unit });
+                    table.PrimaryKey("PK_task_entry_unit_suggestion", x => new { x.user_id, x.unit });
                 });
 
             migrationBuilder.CreateTable(
-                name: "nag_log",
+                name: "task_log",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     nag_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    copied_from_nag_log_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    copied_from_task_log_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     closed_on = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     updated_at = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    updated_by_client_id = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    updated_by_device_name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    updated_by_device_model = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     version = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_nag_log", x => x.id);
+                    table.PrimaryKey("PK_task_log", x => x.id);
                     table.CheckConstraint(
-                        "ck_nag_log_updated_at_not_default",
+                        "ck_task_log_updated_at_not_default",
                         "updated_at > '0001-01-01T00:00:00+00:00'");
                     table.ForeignKey(
-                        name: "FK_nag_log_nag_nag_id",
+                        name: "FK_task_log_nag_nag_id",
                         column: x => x.nag_id,
                         principalTable: "nag",
                         principalColumn: "id",
@@ -66,21 +72,21 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 });
 
             migrationBuilder.CreateTable(
-                name: "nag_time",
+                name: "schedule_rule",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     nag_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    time_type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    day_of_week = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    day_of_month = table.Column<int>(type: "int", nullable: true),
-                    month_of_year = table.Column<int>(type: "int", nullable: true)
+                    rule_type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    day = table.Column<int>(type: "int", nullable: true),
+                    month = table.Column<int>(type: "int", nullable: true),
+                    year = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_nag_time", x => x.id);
+                    table.PrimaryKey("PK_schedule_rule", x => x.id);
                     table.ForeignKey(
-                        name: "FK_nag_time_nag_nag_id",
+                        name: "FK_schedule_rule_nag_nag_id",
                         column: x => x.nag_id,
                         principalTable: "nag",
                         principalColumn: "id",
@@ -88,73 +94,73 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 });
 
             migrationBuilder.CreateTable(
-                name: "nag_node",
+                name: "task_item",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    nag_log_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    parent_nag_node_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    task_log_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    parent_task_item_id = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     sort_order = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_nag_node", x => x.id);
+                    table.PrimaryKey("PK_task_item", x => x.id);
                     table.ForeignKey(
-                        name: "FK_nag_node_nag_log_nag_log_id",
-                        column: x => x.nag_log_id,
-                        principalTable: "nag_log",
+                        name: "FK_task_item_task_log_task_log_id",
+                        column: x => x.task_log_id,
+                        principalTable: "task_log",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_nag_node_nag_node_parent_nag_node_id",
-                        column: x => x.parent_nag_node_id,
-                        principalTable: "nag_node",
+                        name: "FK_task_item_task_item_parent_task_item_id",
+                        column: x => x.parent_task_item_id,
+                        principalTable: "task_item",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "nag_input",
+                name: "task_entry",
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    nag_log_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    parent_nag_node_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    task_log_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    parent_task_item_id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     label = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     value_type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     unit = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     value = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
-                    previous_value = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    last_task_run_reference_value = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
                     sort_order = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_nag_input", x => x.id);
+                    table.PrimaryKey("PK_task_entry", x => x.id);
                     table.ForeignKey(
-                        name: "FK_nag_input_nag_log_nag_log_id",
-                        column: x => x.nag_log_id,
-                        principalTable: "nag_log",
+                        name: "FK_task_entry_task_log_task_log_id",
+                        column: x => x.task_log_id,
+                        principalTable: "task_log",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_nag_input_nag_node_parent_nag_node_id",
-                        column: x => x.parent_nag_node_id,
-                        principalTable: "nag_node",
+                        name: "FK_task_entry_task_item_parent_task_item_id",
+                        column: x => x.parent_task_item_id,
+                        principalTable: "task_item",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_input_nag_log_id",
-                table: "nag_input",
-                column: "nag_log_id");
+                name: "IX_task_entry_task_log_id",
+                table: "task_entry",
+                column: "task_log_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_input_parent_nag_node_id",
-                table: "nag_input",
-                column: "parent_nag_node_id");
+                name: "IX_task_entry_parent_task_item_id",
+                table: "task_entry",
+                column: "parent_task_item_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_nag_is_deactivated_active_log_due_on",
@@ -162,33 +168,33 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 columns: new[] { "is_deactivated", "active_log_due_on" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_log_copied_from_nag_log_id",
-                table: "nag_log",
-                column: "copied_from_nag_log_id");
+                name: "IX_task_log_copied_from_task_log_id",
+                table: "task_log",
+                column: "copied_from_task_log_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_log_nag_id_closed_on_updated_at",
-                table: "nag_log",
+                name: "IX_task_log_nag_id_closed_on_updated_at",
+                table: "task_log",
                 columns: new[] { "nag_id", "closed_on", "updated_at" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_log_nag_id",
-                table: "nag_log",
+                name: "IX_task_log_nag_id",
+                table: "task_log",
                 column: "nag_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_node_nag_log_id",
-                table: "nag_node",
-                column: "nag_log_id");
+                name: "IX_task_item_task_log_id",
+                table: "task_item",
+                column: "task_log_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_node_parent_nag_node_id",
-                table: "nag_node",
-                column: "parent_nag_node_id");
+                name: "IX_task_item_parent_task_item_id",
+                table: "task_item",
+                column: "parent_task_item_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_nag_time_nag_id",
-                table: "nag_time",
+                name: "IX_schedule_rule_nag_id",
+                table: "schedule_rule",
                 column: "nag_id");
         }
 
@@ -196,19 +202,19 @@ namespace DailyNagger.Server.Data.Migrations.Data
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "nag_input");
+                name: "task_entry");
 
             migrationBuilder.DropTable(
-                name: "nag_input_unit_suggestion");
+                name: "task_entry_unit_suggestion");
 
             migrationBuilder.DropTable(
-                name: "nag_time");
+                name: "schedule_rule");
 
             migrationBuilder.DropTable(
-                name: "nag_node");
+                name: "task_item");
 
             migrationBuilder.DropTable(
-                name: "nag_log");
+                name: "task_log");
 
             migrationBuilder.DropTable(
                 name: "nag");

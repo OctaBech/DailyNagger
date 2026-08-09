@@ -30,120 +30,8 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
             ["nag_id", "closed_on", "updated_at"],
             await GetIndexColumnsAsync(
                 connection,
-                "nag_log",
-                "IX_nag_log_nag_id_closed_on_updated_at"));
-    }
-
-    [Fact]
-    public async Task GetLapsedNagAsync_returns_only_active_nags_with_due_date_before_today()
-    {
-        await using var controlDb = CreateControlDbContext();
-        await using var dataDb = CreateDataDbContext();
-
-        var communityId = Guid.NewGuid();
-        var yesterdayNagId = Guid.NewGuid();
-        var todayNagId = Guid.NewGuid();
-        var tomorrowNagId = Guid.NewGuid();
-        var noDueDateNagId = Guid.NewGuid();
-        var deactivatedNagId = Guid.NewGuid();
-        var today = new DateOnly(2026, 6, 6);
-        var now = new DateTimeOffset(2026, 6, 6, 10, 0, 0, TimeSpan.Zero);
-        var copyGracePeriod = TimeSpan.FromMinutes(10);
-        var oldUpdatedAt = now.AddMinutes(-11);
-
-        controlDb.NagCommunities.Add(new NagCommunity
-        {
-            Id = communityId,
-            Name = "Lapsed nag read test",
-            ConnectionStringTemplate = GetDataConnectionStringTemplate(),
-            PasswordSecretName = null
-        });
-
-        dataDb.Nags.AddRange(
-            CreateNag(yesterdayNagId, "Yesterday", today.AddDays(-1), isDeactivated: false),
-            CreateNag(todayNagId, "Today", today, isDeactivated: false),
-            CreateNag(tomorrowNagId, "Tomorrow", today.AddDays(1), isDeactivated: false),
-            CreateNag(noDueDateNagId, "No due date", null, isDeactivated: false),
-            CreateNag(deactivatedNagId, "Deactivated", today.AddDays(-1), isDeactivated: true));
-
-        dataDb.NagLogs.AddRange(
-            CreateOpenNagLog(yesterdayNagId, oldUpdatedAt),
-            CreateOpenNagLog(todayNagId, oldUpdatedAt),
-            CreateOpenNagLog(tomorrowNagId, oldUpdatedAt),
-            CreateOpenNagLog(noDueDateNagId, oldUpdatedAt),
-            CreateOpenNagLog(deactivatedNagId, oldUpdatedAt));
-
-        await controlDb.SaveChangesAsync();
-        await dataDb.SaveChangesAsync();
-
-        var dataDbRead = CreateDataDbRead(controlDb);
-
-        var lapsedNag = await dataDbRead.GetLapsedNagAsync(
-            communityId,
-            today,
-            now,
-            copyGracePeriod);
-
-        var item = Assert.Single(lapsedNag);
-        Assert.Equal(yesterdayNagId, item.NagId);
-        Assert.Equal(today.AddDays(-1), item.ActiveLogDueOn);
-    }
-
-    [Fact]
-    public async Task GetLapsedNagAsync_returns_only_open_logs_older_than_copy_grace_period()
-    {
-        await using var controlDb = CreateControlDbContext();
-        await using var dataDb = CreateDataDbContext();
-
-        var communityId = Guid.NewGuid();
-        var readyNagId = Guid.NewGuid();
-        var recentNagId = Guid.NewGuid();
-        var closedNagId = Guid.NewGuid();
-        var noOpenLogNagId = Guid.NewGuid();
-        var today = new DateOnly(2026, 6, 6);
-        var dueDate = today.AddDays(-1);
-        var now = new DateTimeOffset(2026, 6, 6, 10, 0, 0, TimeSpan.Zero);
-        var copyGracePeriod = TimeSpan.FromMinutes(10);
-
-        controlDb.NagCommunities.Add(new NagCommunity
-        {
-            Id = communityId,
-            Name = "Lapsed nag grace read test",
-            ConnectionStringTemplate = GetDataConnectionStringTemplate(),
-            PasswordSecretName = null
-        });
-
-        dataDb.Nags.AddRange(
-            CreateNag(readyNagId, "Ready", dueDate, isDeactivated: false),
-            CreateNag(recentNagId, "Recent", dueDate, isDeactivated: false),
-            CreateNag(closedNagId, "Closed", dueDate, isDeactivated: false),
-            CreateNag(noOpenLogNagId, "No open log", dueDate, isDeactivated: false));
-
-        dataDb.NagLogs.AddRange(
-            CreateOpenNagLog(readyNagId, now.AddMinutes(-11)),
-            CreateOpenNagLog(recentNagId, now.AddMinutes(-9)),
-            new NagLog
-            {
-                Id = Guid.NewGuid(),
-                NagId = closedNagId,
-                ClosedOn = now.AddMinutes(-1),
-                UpdatedAt = now.AddMinutes(-11)
-            });
-
-        await controlDb.SaveChangesAsync();
-        await dataDb.SaveChangesAsync();
-
-        var dataDbRead = CreateDataDbRead(controlDb);
-
-        var lapsedNag = await dataDbRead.GetLapsedNagAsync(
-            communityId,
-            today,
-            now,
-            copyGracePeriod);
-
-        var item = Assert.Single(lapsedNag);
-        Assert.Equal(readyNagId, item.NagId);
-        Assert.Equal(dueDate, item.ActiveLogDueOn);
+                "task_log",
+                "IX_task_log_nag_id_closed_on_updated_at"));
     }
 
     [Fact]
@@ -166,19 +54,19 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                 PasswordSecretName = null
             });
 
-            dataDb.Nags.Add(new Nag
+            dataDb.Nags.Add(new Nagger
             {
                 Id = nagId,
                 Title = "Data read test nag",
-                ScheduleUpdatedAt = DateTimeOffset.UtcNow,
                 ActiveLogDueOn = new DateOnly(2026, 6, 1),
                 IsDeactivated = false,
-                NagTimes =
+                UpdatedAt = new DateTimeOffset(2026, 6, 1, 8, 0, 0, TimeSpan.Zero),
+                ScheduleRules =
                 [
-                    new NagTime
+                    new ScheduleRule
                     {
-                        TimeType = NagTimeType.MonthlyDay,
-                        DayOfMonth = 1
+                        RuleType = ScheduleRuleType.MonthlyDay,
+                        Day = 1
                     }
                 ]
             });
@@ -203,9 +91,9 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                 nag => nag.Id == nagId
                     && nag.Title == "Data read test nag"
                     && nag.ActiveLogDueOn == new DateOnly(2026, 6, 1)
-                    && nag.NagTimes.Any(rule =>
-                        rule.TimeType == NagTimeType.MonthlyDay
-                        && rule.DayOfMonth == 1));
+                    && nag.ScheduleRules.Any(rule =>
+                        rule.RuleType == ScheduleRuleType.MonthlyDay
+                        && rule.Day == 1));
         }
         finally
         {
@@ -255,7 +143,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
             new MemoryCache(new MemoryCacheOptions())));
     }
 
-    private static Nag CreateNag(
+    private static Nagger CreateNag(
         Guid id,
         string title,
         DateOnly? activeLogDueOn,
@@ -264,12 +152,11 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
         {
             Id = id,
             Title = title,
-            ScheduleUpdatedAt = DateTimeOffset.UtcNow,
             ActiveLogDueOn = activeLogDueOn,
             IsDeactivated = isDeactivated
         };
 
-    private static NagLog CreateOpenNagLog(
+    private static TaskLog CreateOpenTaskLog(
         Guid nagId,
         DateTimeOffset updatedAt) =>
         new()

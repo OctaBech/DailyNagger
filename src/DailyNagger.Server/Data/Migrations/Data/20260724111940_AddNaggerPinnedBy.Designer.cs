@@ -4,6 +4,7 @@ using DailyNagger.Server.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DailyNagger.Server.Data.Migrations.Data
 {
     [DbContext(typeof(DailyNaggerDbContext))]
-    partial class DailyNaggerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260724111940_AddNaggerPinnedBy")]
+    partial class AddNaggerPinnedBy
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,10 +54,6 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasDefaultValue("None")
                         .HasColumnName("pinned_by");
 
-                    b.Property<TimeOnly?>("TargetTime")
-                        .HasColumnType("time")
-                        .HasColumnName("target_time");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -91,7 +90,7 @@ namespace DailyNagger.Server.Data.Migrations.Data
                     b.HasIndex("IsDeactivated", "ActiveLogDueOn")
                         .HasDatabaseName("IX_nag_is_deactivated_active_log_due_on");
 
-                    b.ToTable("nag", (string)null);
+                    b.ToTable("nag");
                 });
 
             modelBuilder.Entity("DailyNagger.Server.Domain.ScheduleRule", b =>
@@ -179,14 +178,6 @@ namespace DailyNagger.Server.Data.Migrations.Data
                     b.Property<Guid>("ParentTaskItemId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("parent_task_item_id");
-
-                    b.Property<string>("RolloverBehavior")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Keep")
-                        .HasColumnName("rollover_behavior");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int")
@@ -278,14 +269,6 @@ namespace DailyNagger.Server.Data.Migrations.Data
                     b.Property<Guid?>("ParentTaskItemId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("parent_task_item_id");
-
-                    b.Property<string>("RolloverBehavior")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Keep")
-                        .HasColumnName("rollover_behavior");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("int")

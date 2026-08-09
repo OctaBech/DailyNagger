@@ -1,184 +1,232 @@
 using System.Text;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Domain;
-using DailyNagger.Server.Scheduling;
 using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
 namespace DailyNagger.Server.Operations;
 
-public sealed record NagLogWriteResult(
+public sealed record TaskLogWriteResult(
     int Version,
     DateTimeOffset UpdatedAt);
 
-public sealed class DataDbWrite(
-    GetDataDbConnection getDataDbConnection,
-    NagOccurrenceCalculator occurrenceCalculator)
-    : ICopyLapsedNagLogCommandHandler
+public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
 {
-    public async Task<CopyLapsedNagLogResult> CopyLapsedNagLogAsync(
+    private sealed record TaskLogHeader(
+        Guid Id,
+        DateTimeOffset? ClosedOn,
+        int Version);
+
+    public async Task<TagDto> SaveTagAsync(
         Guid communityId,
-        Guid nagId,
-        DateOnly expectedActiveLogDueOn,
-        DateOnly today,
-        DateTimeOffset closedOn,
+        Guid userId,
+        string tagType,
+        string name,
+        string? description,
         CancellationToken cancellationToken = default)
     {
+        tagType = tagType.Trim();
+        name = name.Trim();
+        description = string.IsNullOrWhiteSpace(description)
+            ? null
+            : description.Trim();
+        var lastUsedAt = DateTimeOffset.UtcNow;
+
         await using var connection = await getDataDbConnection.OpenAsync(
             communityId,
             cancellationToken);
 
-        await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        await using var command = new SqlCommand(
+            """
+            update user_tag
+            set
+                description = @description,
+                last_used_at = @lastUsedAt
+            where user_id = @userId
+                and tag_type = @tagType
+                and name = @name
 
-        var nag = await GetLapsedNagForUpdateAsync(
-            connection,
-            transaction,
-            nagId,
-            expectedActiveLogDueOn,
-            today,
-            cancellationToken);
+            if @@ROWCOUNT = 0
+            begin
+                insert into user_tag (
+                    user_id,
+                    tag_type,
+                    name,
+                    description,
+                    last_used_at
+                )
+                values (
+                    @userId,
+                    @tagType,
+                    @name,
+                    @description,
+                    @lastUsedAt
+                )
+            end
 
-        if (nag is null)
+            select
+                name,
+                description,
+                last_used_at
+            from user_tag
+            where user_id = @userId
+                and tag_type = @tagType
+                and name = @name
+            """,
+            connection);
+
+        command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@tagType", tagType);
+        command.Parameters.AddWithValue("@name", name);
+        command.Parameters.AddWithValue("@description", (object?)description ?? DBNull.Value);
+        command.Parameters.AddWithValue("@lastUsedAt", lastUsedAt);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (!await reader.ReadAsync(cancellationToken))
         {
-            await transaction.RollbackAsync(cancellationToken);
-
-            return new CopyLapsedNagLogResult(
-                CopyLapsedNagLogStatus.Stale,
-                nagId,
-                null,
-                null,
-                null);
+            throw new InvalidOperationException("Saved tag could not be read back.");
         }
 
-        nag.NagTimes.AddRange(await GetNagTimesAsync(
-            connection,
-            transaction,
-            nag.Id,
-            cancellationToken));
-
-        var nextActiveLogDueOn = occurrenceCalculator.GetNextOccurrence(
-            nag,
-            expectedActiveLogDueOn.AddDays(1));
-
-        var oldNagLog = await GetOpenNagLogForUpdateAsync(
-            connection,
-            transaction,
-            nag.Id,
-            cancellationToken);
-
-        if (oldNagLog is null)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-
-            return new CopyLapsedNagLogResult(
-                CopyLapsedNagLogStatus.NoOpenLog,
-                nag.Id,
-                null,
-                null,
-                null);
-        }
-
-        oldNagLog.NagNodes.AddRange(await GetNagNodesAsync(
-            connection,
-            transaction,
-            oldNagLog.Id,
-            cancellationToken));
-
-        await CloseNagLogAsync(
-            connection,
-            transaction,
-            oldNagLog.Id,
-            closedOn,
-            cancellationToken);
-
-        if (nextActiveLogDueOn is null)
-        {
-            await UpdateNagActiveLogDueOnAsync(
-                connection,
-                transaction,
-                nag.Id,
-                expectedActiveLogDueOn,
-                null,
-                cancellationToken);
-
-            await transaction.CommitAsync(cancellationToken);
-
-            return new CopyLapsedNagLogResult(
-                CopyLapsedNagLogStatus.NoFutureOccurrence,
-                nag.Id,
-                oldNagLog.Id,
-                null,
-                null);
-        }
-
-        var newNagLog = CopyNagLog(
-            oldNagLog,
-            Guid.NewGuid(),
-            closedOn);
-
-        await InsertNagLogAsync(
-            connection,
-            transaction,
-            newNagLog,
-            cancellationToken);
-
-        await InsertNagLogTreeAsync(
-            connection,
-            transaction,
-            newNagLog,
-            cancellationToken);
-
-        await UpdateNagActiveLogDueOnAsync(
-            connection,
-            transaction,
-            nag.Id,
-            expectedActiveLogDueOn,
-            nextActiveLogDueOn,
-            cancellationToken);
-
-        await transaction.CommitAsync(cancellationToken);
-
-        return new CopyLapsedNagLogResult(
-            CopyLapsedNagLogStatus.Copied,
-            nag.Id,
-            oldNagLog.Id,
-            newNagLog.Id,
-            nextActiveLogDueOn);
+        return new TagDto(
+            reader.GetString(0),
+            reader.IsDBNull(1) ? null : reader.GetString(1),
+            reader.IsDBNull(2) ? null : reader.GetDateTimeOffset(2));
     }
 
-    public async Task<Nag> SaveNagAsync(
+    public async Task<UserMoodDto> SaveUserMoodAsync(
+        Guid communityId,
+        Guid userId,
+        Guid id,
+        string mood,
+        DateTimeOffset recordedAt,
+        string? timeZone,
+        string? locale,
+        ClientIdentityDto? clientIdentity,
+        CancellationToken cancellationToken = default)
+    {
+        mood = mood.Trim();
+        timeZone = string.IsNullOrWhiteSpace(timeZone)
+            ? null
+            : timeZone.Trim();
+        locale = string.IsNullOrWhiteSpace(locale)
+            ? null
+            : locale.Trim();
+        var createdAt = DateTimeOffset.UtcNow;
+
+        await using var connection = await getDataDbConnection.OpenAsync(
+            communityId,
+            cancellationToken);
+
+        await using var command = new SqlCommand(
+            """
+            if not exists (
+                select 1
+                from user_mood
+                where id = @id
+            )
+            begin
+                insert into user_mood (
+                    id,
+                    user_id,
+                    mood,
+                    recorded_at,
+                    time_zone,
+                    locale,
+                    created_at,
+                    created_by_client_id,
+                    created_by_device_name,
+                    created_by_device_model
+                )
+                values (
+                    @id,
+                    @userId,
+                    @mood,
+                    @recordedAt,
+                    @timeZone,
+                    @locale,
+                    @createdAt,
+                    @createdByClientId,
+                    @createdByDeviceName,
+                    @createdByDeviceModel
+                )
+            end
+
+            select
+                id,
+                user_id,
+                mood,
+                recorded_at,
+                time_zone,
+                locale,
+                created_at,
+                created_by_client_id,
+                created_by_device_name,
+                created_by_device_model
+            from user_mood
+            where id = @id
+                and user_id = @userId
+            """,
+            connection);
+
+        command.Parameters.AddWithValue("@id", id);
+        command.Parameters.AddWithValue("@userId", userId);
+        command.Parameters.AddWithValue("@mood", mood);
+        command.Parameters.AddWithValue("@recordedAt", recordedAt);
+        command.Parameters.AddWithValue("@timeZone", (object?)timeZone ?? DBNull.Value);
+        command.Parameters.AddWithValue("@locale", (object?)locale ?? DBNull.Value);
+        command.Parameters.AddWithValue("@createdAt", createdAt);
+        command.Parameters.AddWithValue("@createdByClientId", (object?)clientIdentity?.ClientId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@createdByDeviceName", (object?)clientIdentity?.DeviceName ?? DBNull.Value);
+        command.Parameters.AddWithValue("@createdByDeviceModel", (object?)clientIdentity?.DeviceModel ?? DBNull.Value);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            throw new InvalidOperationException("Saved user mood could not be read back.");
+        }
+
+        return new UserMoodDto(
+            reader.GetGuid(0),
+            reader.GetGuid(1),
+            reader.GetString(2),
+            reader.GetDateTimeOffset(3),
+            reader.IsDBNull(4) ? null : reader.GetString(4),
+            reader.IsDBNull(5) ? null : reader.GetString(5),
+            reader.GetDateTimeOffset(6),
+            reader.IsDBNull(7) ? null : reader.GetString(7),
+            reader.IsDBNull(8) ? null : reader.GetString(8),
+            reader.IsDBNull(9) ? null : reader.GetString(9));
+    }
+
+    public async Task<Nagger> SaveNagAsync(
         Guid communityId,
         Guid nagId,
         string title,
+        DateOnly? activeLogDueOn,
         DateOnly? expiresOn,
+        TimeOnly? targetTime,
         bool isDeactivated,
-        IReadOnlyList<NagTime> nagTimes,
-        int? expectedVersion,
+        NaggerPinnedBy pinnedBy,
+        DateTimeOffset updatedAt,
+        ClientIdentityDto? clientIdentity,
+        IReadOnlyList<ScheduleRule> scheduleRules,
+        int baseVersion,
+        int nextVersion,
         CancellationToken cancellationToken = default)
     {
-        var scheduleUpdatedAt = DateTimeOffset.UtcNow;
-        var copiedNagTimes = nagTimes
-            .Select(rule => new NagTime
+        var copiedScheduleRules = scheduleRules
+            .Select(rule => new ScheduleRule
             {
                 Id = rule.Id,
                 NagId = nagId,
-                TimeType = rule.TimeType,
-                DayOfWeek = rule.DayOfWeek,
-                DayOfMonth = rule.DayOfMonth,
-                MonthOfYear = rule.MonthOfYear
+                RuleType = rule.RuleType,
+                Day = rule.Day,
+                Month = rule.Month,
+                Year = rule.Year
             })
             .ToList();
-        var activeLogDueOn = occurrenceCalculator.GetNextOccurrence(
-            new Nag
-            {
-                Id = nagId,
-                Title = title,
-                ScheduleUpdatedAt = scheduleUpdatedAt,
-                ExpiresOn = expiresOn,
-                IsDeactivated = isDeactivated,
-                NagTimes = copiedNagTimes
-            },
-            DateOnly.FromDateTime(scheduleUpdatedAt.UtcDateTime));
 
         await using var connection = await getDataDbConnection.OpenAsync(
             communityId,
@@ -192,30 +240,31 @@ public sealed class DataDbWrite(
             nagId,
             cancellationToken);
 
-        var version = currentVersion is null
-            ? 0
-            : expectedVersion.GetValueOrDefault() + 1;
-
-        var nag = new Nag
+        var nag = new Nagger
         {
             Id = nagId,
             Title = title,
-            ScheduleUpdatedAt = scheduleUpdatedAt,
             ActiveLogDueOn = activeLogDueOn,
             ExpiresOn = expiresOn,
+            TargetTime = targetTime,
             IsDeactivated = isDeactivated,
-            Version = version,
-            NagTimes = copiedNagTimes
+            PinnedBy = pinnedBy,
+            UpdatedAt = updatedAt,
+            UpdatedByClientId = clientIdentity?.ClientId,
+            UpdatedByDeviceName = clientIdentity?.DeviceName,
+            UpdatedByDeviceModel = clientIdentity?.DeviceModel,
+            Version = nextVersion,
+            ScheduleRules = copiedScheduleRules
         };
 
-        if (currentVersion is null && expectedVersion is not null)
+        if (nextVersion <= baseVersion)
         {
-            throw new ConcurrencyConflictException("Nag version conflict.");
+            throw new NagValidationException("NextVersion must be greater than BaseVersion.");
         }
 
-        if (currentVersion is not null && expectedVersion is null)
+        if (currentVersion is null && baseVersion != 0)
         {
-            throw new ConcurrencyConflictException("Nag update requires expectedVersion.");
+            throw new ConcurrencyConflictException("New Nagger requires baseVersion 0.");
         }
 
         await using var command = new SqlCommand(
@@ -224,67 +273,102 @@ public sealed class DataDbWrite(
                   update nag
                   set
                       title = @title,
-                      schedule_updated_at = @scheduleUpdatedAt,
                       active_log_due_on = @activeLogDueOn,
                       expires_on = @expiresOn,
+                      target_time = @targetTime,
                       is_deactivated = @isDeactivated,
+                      pinned_by = @pinnedBy,
+                      updated_at = @updatedAt,
+                      updated_by_client_id = @updatedByClientId,
+                      updated_by_device_name = @updatedByDeviceName,
+                      updated_by_device_model = @updatedByDeviceModel,
                       version = @version
                   where id = @id
-                      and version = @expectedVersion
+                      and version = @baseVersion
                   """
                 : """
-                  insert into nag (id, title, schedule_updated_at, active_log_due_on, expires_on, is_deactivated, version)
-                  values (@id, @title, @scheduleUpdatedAt, @activeLogDueOn, @expiresOn, @isDeactivated, @version)
+                  insert into nag (
+                      id,
+                      title,
+                      active_log_due_on,
+                      expires_on,
+                      target_time,
+                      is_deactivated,
+                      pinned_by,
+                      updated_at,
+                      updated_by_client_id,
+                      updated_by_device_name,
+                      updated_by_device_model,
+                      version)
+                  values (
+                      @id,
+                      @title,
+                      @activeLogDueOn,
+                      @expiresOn,
+                      @targetTime,
+                      @isDeactivated,
+                      @pinnedBy,
+                      @updatedAt,
+                      @updatedByClientId,
+                      @updatedByDeviceName,
+                      @updatedByDeviceModel,
+                      @version)
                   """,
             connection,
             transaction);
 
         command.Parameters.AddWithValue("@id", nag.Id);
         command.Parameters.AddWithValue("@title", nag.Title);
-        command.Parameters.AddWithValue("@scheduleUpdatedAt", nag.ScheduleUpdatedAt);
         command.Parameters.AddWithValue("@activeLogDueOn", (object?)nag.ActiveLogDueOn ?? DBNull.Value);
         command.Parameters.AddWithValue("@expiresOn", (object?)nag.ExpiresOn ?? DBNull.Value);
+        command.Parameters.AddWithValue("@targetTime", (object?)nag.TargetTime?.ToTimeSpan() ?? DBNull.Value);
         command.Parameters.AddWithValue("@isDeactivated", nag.IsDeactivated);
+        command.Parameters.AddWithValue("@pinnedBy", nag.PinnedBy.ToString());
+        command.Parameters.AddWithValue("@updatedAt", nag.UpdatedAt);
+        command.Parameters.AddWithValue("@updatedByClientId", (object?)nag.UpdatedByClientId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedByDeviceName", (object?)nag.UpdatedByDeviceName ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedByDeviceModel", (object?)nag.UpdatedByDeviceModel ?? DBNull.Value);
         command.Parameters.AddWithValue("@version", nag.Version);
-        command.Parameters.AddWithValue("@expectedVersion", (object?)expectedVersion ?? DBNull.Value);
+        command.Parameters.AddWithValue("@baseVersion", baseVersion);
 
         var changedRows = await command.ExecuteNonQueryAsync(cancellationToken);
         if (changedRows == 0)
         {
-            throw new ConcurrencyConflictException("Nag version conflict.");
+            throw new ConcurrencyConflictException(
+                "Nagger version conflict.",
+                currentVersion);
         }
 
-        await using var deleteNagTimesCommand = new SqlCommand(
+        await using var deleteScheduleRulesCommand = new SqlCommand(
             """
-            delete from nag_time
+            delete from schedule_rule
             where nag_id = @nagId
             """,
             connection,
             transaction);
 
-        deleteNagTimesCommand.Parameters.AddWithValue("@nagId", nag.Id);
+        deleteScheduleRulesCommand.Parameters.AddWithValue("@nagId", nag.Id);
 
-        await deleteNagTimesCommand.ExecuteNonQueryAsync(cancellationToken);
+        await deleteScheduleRulesCommand.ExecuteNonQueryAsync(cancellationToken);
 
-        foreach (var rule in nag.NagTimes)
+        foreach (var rule in nag.ScheduleRules)
         {
             await using var ruleCommand = new SqlCommand(
                 """
-                insert into nag_time
-                    (id, nag_id, time_type, day_of_week, day_of_month, month_of_year)
+                insert into schedule_rule
+                    (id, nag_id, rule_type, day, month, year)
                 values
-                    (@id, @nagId, @timeType, @dayOfWeek, @dayOfMonth, @monthOfYear)
+                    (@id, @nagId, @ruleType, @day, @month, @year)
                 """,
                 connection,
                 transaction);
 
             ruleCommand.Parameters.AddWithValue("@id", rule.Id);
             ruleCommand.Parameters.AddWithValue("@nagId", nag.Id);
-            ruleCommand.Parameters.AddWithValue("@timeType", rule.TimeType.ToString());
-            ruleCommand.Parameters.AddWithValue("@dayOfWeek", (object?)rule.DayOfWeek?.ToString() ?? DBNull.Value);
-            ruleCommand.Parameters.AddWithValue("@dayOfMonth", (object?)rule.DayOfMonth ?? DBNull.Value);
-            ruleCommand.Parameters.AddWithValue("@monthOfYear", (object?)rule.MonthOfYear ?? DBNull.Value);
-
+            ruleCommand.Parameters.AddWithValue("@ruleType", rule.RuleType.ToString());
+            ruleCommand.Parameters.AddWithValue("@day", (object?)rule.Day ?? DBNull.Value);
+            ruleCommand.Parameters.AddWithValue("@month", (object?)rule.Month ?? DBNull.Value);
+            ruleCommand.Parameters.AddWithValue("@year", (object?)rule.Year ?? DBNull.Value);
             await ruleCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -293,52 +377,79 @@ public sealed class DataDbWrite(
         return nag;
     }
 
-    public async Task<NagLog> SaveNagLogAsync(
+    public async Task<TaskLog> SaveTaskLogAsync(
         Guid communityId,
         Guid userId,
-        Guid nagLogId,
+        Guid taskLogId,
         Guid nagId,
-        Guid? copiedFromNagLogId,
+        Guid? copiedFromTaskLogId,
         DateTimeOffset? closedOn,
-        int? expectedVersion,
-        IReadOnlyList<NagNode> nagNodes,
+        string? tag,
+        DateTimeOffset updatedAt,
+        ClientIdentityDto? clientIdentity,
+        int descendantTaskItemCount,
+        int doneDescendantTaskItemCount,
+        int baseVersion,
+        int nextVersion,
+        IReadOnlyList<TaskItem> taskItems,
         CancellationToken cancellationToken = default)
     {
-        var copiedNagNodes = nagNodes
-            .Select(node => new NagNode
+        var copiedTaskItems = taskItems
+            .Select(node => new TaskItem
             {
                 Id = node.Id,
-                NagLogId = nagLogId,
-                ParentNagNodeId = node.ParentNagNodeId,
+                TaskLogId = taskLogId,
+                ParentTaskItemId = node.ParentTaskItemId,
                 Name = node.Name,
+                Tag = node.Tag,
+                IsDone = node.IsDone,
+                RolloverBehavior = node.RolloverBehavior,
+                InteractionAt = node.InteractionAt,
+                InteractionTimeZone = node.InteractionTimeZone,
+                InteractionLocale = node.InteractionLocale,
+                InteractionMood = node.InteractionMood,
+                InteractionMoodAt = node.InteractionMoodAt,
+                DescendantTaskItemCount = node.DescendantTaskItemCount,
+                DoneDescendantTaskItemCount = node.DoneDescendantTaskItemCount,
                 SortOrder = node.SortOrder,
-                NagInputs = node.NagInputs
-                    .Select(input => new NagInput
+                TaskEntries = node.TaskEntries
+                    .Select(input => new TaskEntry
                     {
                         Id = input.Id,
-                        NagLogId = nagLogId,
-                        ParentNagNodeId = node.Id,
+                        TaskLogId = taskLogId,
+                        ParentTaskItemId = node.Id,
                         Label = input.Label,
                         Description = input.Description,
                         ValueType = input.ValueType,
-                        Unit = input.Unit,
+                        Tag = input.Tag,
                         Value = input.Value,
-                        PreviousValue = null,
+                        LastTaskRunReferenceValue = input.LastTaskRunReferenceValue,
+                        RolloverBehavior = input.RolloverBehavior,
+                        InteractionAt = input.InteractionAt,
+                        InteractionTimeZone = input.InteractionTimeZone,
+                        InteractionLocale = input.InteractionLocale,
+                        InteractionMood = input.InteractionMood,
+                        InteractionMoodAt = input.InteractionMoodAt,
                         SortOrder = input.SortOrder
                     })
                     .ToList()
             })
             .ToList();
 
-        var updatedAt = DateTimeOffset.UtcNow;
-        var nagLog = new NagLog
+        var taskLog = new TaskLog
         {
-            Id = nagLogId,
+            Id = taskLogId,
             NagId = nagId,
-            CopiedFromNagLogId = copiedFromNagLogId,
+            CopiedFromTaskLogId = copiedFromTaskLogId,
             ClosedOn = closedOn,
+            Tag = tag,
             UpdatedAt = updatedAt,
-            NagNodes = copiedNagNodes
+            UpdatedByClientId = clientIdentity?.ClientId,
+            UpdatedByDeviceName = clientIdentity?.DeviceName,
+            UpdatedByDeviceModel = clientIdentity?.DeviceModel,
+            DescendantTaskItemCount = descendantTaskItemCount,
+            DoneDescendantTaskItemCount = doneDescendantTaskItemCount,
+            TaskItems = copiedTaskItems
         };
 
         await using var connection = await getDataDbConnection.OpenAsync(
@@ -347,139 +458,144 @@ public sealed class DataDbWrite(
 
         await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
-        if (!await NagExistsAsync(connection, transaction, nagLog.NagId, cancellationToken))
+        if (!await NagExistsAsync(connection, transaction, taskLog.NagId, cancellationToken))
         {
-            throw new NagValidationException("Nag does not exist.");
+            throw new NagValidationException("Nagger does not exist.");
         }
 
-        var currentVersion = await GetNagLogVersionAsync(
+        var currentTaskLogHeader = await GetTaskLogHeaderAsync(
             connection,
             transaction,
-            nagLog.Id,
+            taskLog.Id,
             cancellationToken);
 
-        var exists = currentVersion is not null;
+        var exists = currentTaskLogHeader is not null;
+        var isLateClosedTaskLogUpdate = currentTaskLogHeader?.ClosedOn is not null;
 
-        if (exists && expectedVersion is null)
+        if (nextVersion <= baseVersion)
         {
-            throw new NagValidationException("ExpectedVersion is required when updating an existing NagLog.");
+            throw new NagValidationException("NextVersion must be greater than BaseVersion.");
         }
 
-        if (!exists && expectedVersion is not null)
+        if (!exists && baseVersion != 0)
         {
-            throw new NagValidationException("ExpectedVersion must be null when creating a new NagLog.");
+            throw new NagValidationException("BaseVersion must be 0 when creating a new TaskLog.");
         }
 
-        var newVersion = exists
-            ? expectedVersion!.Value + 1
-            : 0;
-
-        nagLog = new NagLog
+        taskLog = new TaskLog
         {
-            Id = nagLog.Id,
-            NagId = nagLog.NagId,
-            CopiedFromNagLogId = nagLog.CopiedFromNagLogId,
-            ClosedOn = nagLog.ClosedOn,
+            Id = taskLog.Id,
+            NagId = taskLog.NagId,
+            CopiedFromTaskLogId = taskLog.CopiedFromTaskLogId,
+            ClosedOn = currentTaskLogHeader?.ClosedOn ?? taskLog.ClosedOn,
+            Tag = taskLog.Tag,
             UpdatedAt = updatedAt,
-            Version = newVersion,
-            NagNodes = nagLog.NagNodes
+            UpdatedByClientId = clientIdentity?.ClientId,
+            UpdatedByDeviceName = clientIdentity?.DeviceName,
+            UpdatedByDeviceModel = clientIdentity?.DeviceModel,
+            Version = nextVersion,
+            DescendantTaskItemCount = taskLog.DescendantTaskItemCount,
+            DoneDescendantTaskItemCount = taskLog.DoneDescendantTaskItemCount,
+            TaskItems = taskLog.TaskItems
         };
 
-        await UpsertNagLogAsync(
+        await UpsertTaskLogAsync(
             connection,
             transaction,
-            nagLog,
+            taskLog,
             exists,
-            expectedVersion,
+            baseVersion,
+            currentTaskLogHeader?.Version,
+            allowClosedUpdate: isLateClosedTaskLogUpdate,
             cancellationToken);
 
-        await DeleteNagInputsAsync(
+        await DeleteTaskEntriesAsync(
             connection,
             transaction,
-            nagLog.Id,
+            taskLog.Id,
             cancellationToken);
 
-        await DeleteNagNodesAsync(
+        await DeleteTaskItemsAsync(
             connection,
             transaction,
-            nagLog.Id,
+            taskLog.Id,
             cancellationToken);
 
-        await InsertNagLogTreeAsync(
+        await InsertTaskLogTreeAsync(
             connection,
             transaction,
-            nagLog,
-            cancellationToken);
-
-        await UpsertNagInputUnitSuggestionsAsync(
-            connection,
-            transaction,
-            userId,
-            nagLog.NagNodes
-                .SelectMany(node => node.NagInputs)
-                .Select(input => input.Unit),
+            taskLog,
             cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 
-        return nagLog;
+        return taskLog;
     }
 
-    public async Task<NagLogWriteResult> UpdateNagInputValuesAsync(
+    public async Task<TaskLogWriteResult> UpdateTaskEntryValuesAsync(
         Guid communityId,
-        Guid nagLogId,
-        int expectedVersion,
-        IReadOnlyList<NagInputValueUpdateDto> nagInputs,
+        Guid taskLogId,
+        DateTimeOffset updatedAt,
+        ClientIdentityDto? clientIdentity,
+        int baseVersion,
+        int nextVersion,
+        IReadOnlyList<TaskEntryValueUpdateDto> taskEntries,
         CancellationToken cancellationToken = default)
     {
+        if (nextVersion <= baseVersion)
+        {
+            throw new NagValidationException("NextVersion must be greater than BaseVersion.");
+        }
+
         await using var connection = await getDataDbConnection.OpenAsync(
             communityId,
             cancellationToken);
 
         await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
-        var nagLogIsOpen = await NagLogIsOpenAsync(
+        var taskLogIsOpen = await TaskLogIsOpenAsync(
             connection,
             transaction,
-            nagLogId,
+            taskLogId,
             cancellationToken);
 
-        if (!nagLogIsOpen)
+        if (!taskLogIsOpen)
         {
-            throw new ConcurrencyConflictException("NagLog is closed and cannot accept input updates.");
+            var currentVersion = await GetTaskLogVersionAsync(
+                connection,
+                transaction,
+                taskLogId,
+                cancellationToken);
+
+            throw new ConcurrencyConflictException(
+                "TaskLog is closed and cannot accept input updates.",
+                currentVersion);
         }
 
-        var matchingInputCount = await CountNagInputsInNagLogAsync(
+        var matchingInputCount = await CountTaskEntriesInTaskLogAsync(
             connection,
             transaction,
-            nagLogId,
-            nagInputs.Select(input => input.Id).ToArray(),
+            taskLogId,
+            taskEntries.Select(input => input.Id).ToArray(),
             cancellationToken);
 
-        if (matchingInputCount != nagInputs.Count)
+        if (matchingInputCount != taskEntries.Count)
         {
-            throw new NagValidationException("All NagInput updates must belong to the requested NagLog.");
+            throw new NagValidationException("All TaskEntry updates must belong to the requested TaskLog.");
         }
 
-        var valueTypes = await GetNagInputValueTypesAsync(
-            connection,
-            transaction,
-            nagInputs.Select(input => input.Id).ToArray(),
-            cancellationToken);
-
-        foreach (var input in nagInputs)
-        {
-            NagRequestValidator.ValidateNagInputValue(
-                ToDto(valueTypes[input.Id]),
-                input.Value);
-        }
-
-        foreach (var input in nagInputs)
+        foreach (var input in taskEntries)
         {
             await using var command = new SqlCommand(
                 """
-                update nag_input
-                set value = @value
+                update task_entry
+                set
+                    value = @value,
+                    interaction_at = @interactionAt,
+                    interaction_time_zone = @interactionTimeZone,
+                    interaction_locale = @interactionLocale,
+                    interaction_mood = @interactionMood,
+                    interaction_mood_at = @interactionMoodAt
                 where id = @id
                 """,
                 connection,
@@ -487,386 +603,208 @@ public sealed class DataDbWrite(
 
             command.Parameters.AddWithValue("@id", input.Id);
             command.Parameters.AddWithValue("@value", (object?)input.Value ?? DBNull.Value);
+            command.Parameters.AddWithValue("@interactionAt", (object?)input.InteractionAt ?? DBNull.Value);
+            command.Parameters.AddWithValue("@interactionTimeZone", (object?)input.InteractionTimeZone ?? DBNull.Value);
+            command.Parameters.AddWithValue("@interactionLocale", (object?)input.InteractionLocale ?? DBNull.Value);
+            command.Parameters.AddWithValue("@interactionMood", (object?)input.InteractionMood ?? DBNull.Value);
+            command.Parameters.AddWithValue("@interactionMoodAt", (object?)input.InteractionMoodAt ?? DBNull.Value);
 
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        var updatedAt = DateTimeOffset.UtcNow;
-        var newVersion = await IncrementNagLogVersionAsync(
+        var storedVersion = await UpdateTaskLogVersionAsync(
             connection,
             transaction,
-            nagLogId,
-            expectedVersion,
+            taskLogId,
+            baseVersion,
+            nextVersion,
             updatedAt,
+            clientIdentity,
             cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 
-        return new NagLogWriteResult(
-            newVersion,
+        return new TaskLogWriteResult(
+            storedVersion,
             updatedAt);
     }
 
-    private static async Task<bool> NagLogIsOpenAsync(
+    private static async Task<bool> TaskLogIsOpenAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        Guid nagLogId,
+        Guid taskLogId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             """
             select count(*)
-            from nag_log
-            where id = @nagLogId
+            from task_log
+            where id = @taskLogId
                 and closed_on is null
             """,
             connection,
             transaction);
 
-        command.Parameters.AddWithValue("@nagLogId", nagLogId);
+        command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
         return (int)await command.ExecuteScalarAsync(cancellationToken) == 1;
     }
 
-    private static async Task<Nag?> GetLapsedNagForUpdateAsync(
+    private static async Task UpsertTaskLogAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        Guid nagId,
-        DateOnly expectedActiveLogDueOn,
-        DateOnly today,
-        CancellationToken cancellationToken)
-    {
-        await using var command = new SqlCommand(
-            """
-            select
-                id,
-                title,
-                schedule_updated_at,
-                expires_on
-            from nag with (updlock, rowlock)
-            where id = @nagId
-                and is_deactivated = 0
-                and active_log_due_on = @expectedActiveLogDueOn
-                and active_log_due_on < @today
-            """,
-            connection,
-            transaction);
-
-        command.Parameters.AddWithValue("@nagId", nagId);
-        command.Parameters.AddWithValue("@expectedActiveLogDueOn", expectedActiveLogDueOn);
-        command.Parameters.AddWithValue("@today", today);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            return null;
-        }
-
-        return new Nag
-        {
-            Id = reader.GetGuid(0),
-            Title = reader.GetString(1),
-            ScheduleUpdatedAt = reader.GetDateTimeOffset(2),
-            ActiveLogDueOn = expectedActiveLogDueOn,
-            ExpiresOn = reader.IsDBNull(3)
-                ? null
-                : DateOnly.FromDateTime(reader.GetDateTime(3)),
-            IsDeactivated = false
-        };
-    }
-
-    private static async Task<NagLog?> GetOpenNagLogForUpdateAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        Guid nagId,
-        CancellationToken cancellationToken)
-    {
-        await using var command = new SqlCommand(
-            """
-            select top (1)
-                id,
-                copied_from_nag_log_id,
-                updated_at
-            from nag_log with (updlock, rowlock)
-            where nag_id = @nagId
-                and closed_on is null
-            order by id
-            """,
-            connection,
-            transaction);
-
-        command.Parameters.AddWithValue("@nagId", nagId);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            return null;
-        }
-
-        return new NagLog
-        {
-            Id = reader.GetGuid(0),
-            NagId = nagId,
-            CopiedFromNagLogId = reader.IsDBNull(1) ? null : reader.GetGuid(1),
-            UpdatedAt = reader.GetDateTimeOffset(2)
-        };
-    }
-
-    private static async Task<IReadOnlyList<NagTime>> GetNagTimesAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        Guid nagId,
-        CancellationToken cancellationToken)
-    {
-        await using var command = new SqlCommand(
-            """
-            select id, time_type, day_of_week, day_of_month, month_of_year
-            from nag_time
-            where nag_id = @nagId
-            order by id
-            """,
-            connection,
-            transaction);
-
-        command.Parameters.AddWithValue("@nagId", nagId);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        var nagTimes = new List<NagTime>();
-
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            nagTimes.Add(new NagTime
-            {
-                Id = reader.GetGuid(0),
-                NagId = nagId,
-                TimeType = Enum.Parse<NagTimeType>(reader.GetString(1)),
-                DayOfWeek = reader.IsDBNull(2)
-                    ? null
-                    : Enum.Parse<DayOfWeek>(reader.GetString(2)),
-                DayOfMonth = reader.IsDBNull(3) ? null : reader.GetInt32(3),
-                MonthOfYear = reader.IsDBNull(4) ? null : reader.GetInt32(4)
-            });
-        }
-
-        return nagTimes;
-    }
-
-    private static async Task<IReadOnlyList<NagNode>> GetNagNodesAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        Guid nagLogId,
-        CancellationToken cancellationToken)
-    {
-        await using var nodeCommand = new SqlCommand(
-            """
-            select id, parent_nag_node_id, name, sort_order
-            from nag_node
-            where nag_log_id = @nagLogId
-            order by sort_order, id
-            """,
-            connection,
-            transaction);
-
-        nodeCommand.Parameters.AddWithValue("@nagLogId", nagLogId);
-
-        var nodes = new List<NagNode>();
-
-        await using (var reader = await nodeCommand.ExecuteReaderAsync(cancellationToken))
-        {
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                nodes.Add(new NagNode
-                {
-                    Id = reader.GetGuid(0),
-                    NagLogId = nagLogId,
-                    ParentNagNodeId = reader.IsDBNull(1) ? null : reader.GetGuid(1),
-                    Name = reader.GetString(2),
-                    SortOrder = reader.GetInt32(3)
-                });
-            }
-        }
-
-        await using var inputCommand = new SqlCommand(
-            """
-            select id, parent_nag_node_id, label, description, value_type, unit, value, previous_value, sort_order
-            from nag_input
-            where nag_log_id = @nagLogId
-            order by sort_order, id
-            """,
-            connection,
-            transaction);
-
-        inputCommand.Parameters.AddWithValue("@nagLogId", nagLogId);
-
-        await using (var reader = await inputCommand.ExecuteReaderAsync(cancellationToken))
-        {
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var parentNagNodeId = reader.GetGuid(1);
-                var parent = nodes.Single(node => node.Id == parentNagNodeId);
-
-                parent.NagInputs.Add(new NagInput
-                {
-                    Id = reader.GetGuid(0),
-                    NagLogId = nagLogId,
-                    ParentNagNodeId = parentNagNodeId,
-                    Label = reader.GetString(2),
-                    Description = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    ValueType = Enum.Parse<NagInputValueType>(reader.GetString(4)),
-                    Unit = reader.IsDBNull(5) ? null : reader.GetString(5),
-                    Value = reader.IsDBNull(6) ? null : reader.GetString(6),
-                    PreviousValue = reader.IsDBNull(7) ? null : reader.GetString(7),
-                    SortOrder = reader.GetInt32(8)
-                });
-            }
-        }
-
-        return nodes;
-    }
-
-    private static NagLog CopyNagLog(
-        NagLog source,
-        Guid newNagLogId,
-        DateTimeOffset updatedAt)
-    {
-        var nodeIdMap = source.NagNodes.ToDictionary(
-            node => node.Id,
-            _ => Guid.NewGuid());
-
-        return new NagLog
-        {
-            Id = newNagLogId,
-            NagId = source.NagId,
-            CopiedFromNagLogId = source.Id,
-            ClosedOn = null,
-            UpdatedAt = updatedAt,
-            NagNodes = source.NagNodes
-                .Select(node => new NagNode
-                {
-                    Id = nodeIdMap[node.Id],
-                    NagLogId = newNagLogId,
-                    ParentNagNodeId = node.ParentNagNodeId is null
-                        ? null
-                        : nodeIdMap[node.ParentNagNodeId.Value],
-                    Name = node.Name,
-                    SortOrder = node.SortOrder,
-                    NagInputs = node.NagInputs
-                        .Select(input => new NagInput
-                        {
-                            Id = Guid.NewGuid(),
-                            NagLogId = newNagLogId,
-                            ParentNagNodeId = nodeIdMap[input.ParentNagNodeId],
-                            Label = input.Label,
-                            Description = input.Description,
-                            ValueType = input.ValueType,
-                            Unit = input.Unit,
-                            Value = null,
-                            PreviousValue = input.Value,
-                            SortOrder = input.SortOrder
-                        })
-                        .ToList()
-                })
-                .ToList()
-        };
-    }
-
-    private static async Task UpsertNagLogAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        NagLog nagLog,
+        TaskLog taskLog,
         bool exists,
-        int? expectedVersion,
+        int baseVersion,
+        int? currentVersion,
+        bool allowClosedUpdate,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             exists
-                ? """
-                  update nag_log
-                  set
-                      nag_id = @nagId,
-                      copied_from_nag_log_id = @copiedFromNagLogId,
-                      closed_on = @closedOn,
-                      updated_at = @updatedAt,
-                      version = @version
-                  where id = @id
-                      and version = @expectedVersion
-                  """
+                ? allowClosedUpdate
+                    ? """
+                      update task_log
+                      set
+                          nag_id = @nagId,
+                          copied_from_task_log_id = @copiedFromTaskLogId,
+                          closed_on = @closedOn,
+                          tag = @tag,
+                          updated_at = @updatedAt,
+                          updated_by_client_id = @updatedByClientId,
+                          updated_by_device_name = @updatedByDeviceName,
+                          updated_by_device_model = @updatedByDeviceModel,
+                          version = @version,
+                          descendant_task_item_count = @descendantTaskItemCount,
+                          done_descendant_task_item_count = @doneDescendantTaskItemCount
+                      where id = @id
+                          and version = @baseVersion
+                      """
+                    : """
+                      update task_log
+                      set
+                          nag_id = @nagId,
+                          copied_from_task_log_id = @copiedFromTaskLogId,
+                          closed_on = @closedOn,
+                          tag = @tag,
+                          updated_at = @updatedAt,
+                          updated_by_client_id = @updatedByClientId,
+                          updated_by_device_name = @updatedByDeviceName,
+                          updated_by_device_model = @updatedByDeviceModel,
+                          version = @version,
+                          descendant_task_item_count = @descendantTaskItemCount,
+                          done_descendant_task_item_count = @doneDescendantTaskItemCount
+                      where id = @id
+                          and version = @baseVersion
+                          and closed_on is null
+                      """
                 : """
-                  insert into nag_log (id, nag_id, copied_from_nag_log_id, closed_on, updated_at, version)
-                  values (@id, @nagId, @copiedFromNagLogId, @closedOn, @updatedAt, @version)
+                  insert into task_log (
+                      id,
+                      nag_id,
+                      copied_from_task_log_id,
+                      closed_on,
+                      tag,
+                      updated_at,
+                      updated_by_client_id,
+                      updated_by_device_name,
+                      updated_by_device_model,
+                      version,
+                      descendant_task_item_count,
+                      done_descendant_task_item_count)
+                  values (
+                      @id,
+                      @nagId,
+                      @copiedFromTaskLogId,
+                      @closedOn,
+                      @tag,
+                      @updatedAt,
+                      @updatedByClientId,
+                      @updatedByDeviceName,
+                      @updatedByDeviceModel,
+                      @version,
+                      @descendantTaskItemCount,
+                      @doneDescendantTaskItemCount)
                   """,
             connection,
             transaction);
 
-        command.Parameters.AddWithValue("@id", nagLog.Id);
-        command.Parameters.AddWithValue("@nagId", nagLog.NagId);
-        command.Parameters.AddWithValue("@copiedFromNagLogId", (object?)nagLog.CopiedFromNagLogId ?? DBNull.Value);
-        command.Parameters.AddWithValue("@closedOn", (object?)nagLog.ClosedOn ?? DBNull.Value);
-        command.Parameters.AddWithValue("@updatedAt", nagLog.UpdatedAt);
-        command.Parameters.AddWithValue("@version", nagLog.Version);
+        command.Parameters.AddWithValue("@id", taskLog.Id);
+        command.Parameters.AddWithValue("@nagId", taskLog.NagId);
+        command.Parameters.AddWithValue("@copiedFromTaskLogId", (object?)taskLog.CopiedFromTaskLogId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@closedOn", (object?)taskLog.ClosedOn ?? DBNull.Value);
+        command.Parameters.AddWithValue("@tag", (object?)taskLog.Tag ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedAt", taskLog.UpdatedAt);
+        command.Parameters.AddWithValue("@updatedByClientId", (object?)taskLog.UpdatedByClientId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedByDeviceName", (object?)taskLog.UpdatedByDeviceName ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedByDeviceModel", (object?)taskLog.UpdatedByDeviceModel ?? DBNull.Value);
+        command.Parameters.AddWithValue("@version", taskLog.Version);
+        command.Parameters.AddWithValue("@descendantTaskItemCount", taskLog.DescendantTaskItemCount);
+        command.Parameters.AddWithValue("@doneDescendantTaskItemCount", taskLog.DoneDescendantTaskItemCount);
 
         if (exists)
         {
-            command.Parameters.AddWithValue("@expectedVersion", expectedVersion);
+            command.Parameters.AddWithValue("@baseVersion", baseVersion);
         }
 
         var affectedRows = await command.ExecuteNonQueryAsync(cancellationToken);
 
         if (affectedRows == 0)
         {
-            throw new ConcurrencyConflictException("NagLog version conflict.");
+            throw new ConcurrencyConflictException(
+                "TaskLog version conflict.",
+                currentVersion);
         }
     }
 
-    private static Task InsertNagLogAsync(
+    private static async Task InsertTaskLogTreeAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        NagLog nagLog,
-        CancellationToken cancellationToken) =>
-        UpsertNagLogAsync(
-            connection,
-            transaction,
-            nagLog,
-            exists: false,
-            expectedVersion: null,
-            cancellationToken);
-
-    private static async Task InsertNagLogTreeAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        NagLog nagLog,
+        TaskLog taskLog,
         CancellationToken cancellationToken)
     {
-        await InsertNagNodesAsync(
+        await InsertTaskItemsAsync(
             connection,
             transaction,
-            nagLog.NagNodes,
+            taskLog.TaskItems,
             cancellationToken);
 
-        await InsertNagInputsAsync(
+        await InsertTaskEntriesAsync(
             connection,
             transaction,
-            nagLog.NagNodes.SelectMany(node => node.NagInputs).ToArray(),
+            taskLog.TaskItems.SelectMany(node => node.TaskEntries).ToArray(),
             cancellationToken);
     }
 
-    private static async Task InsertNagNodesAsync(
+    private static async Task InsertTaskItemsAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        IReadOnlyList<NagNode> nagNodes,
+        IReadOnlyList<TaskItem> taskItems,
         CancellationToken cancellationToken)
     {
-        if (nagNodes.Count == 0)
+        if (taskItems.Count == 0)
         {
             return;
         }
 
         var sql = new StringBuilder("""
-            insert into nag_node
-                (id, nag_log_id, parent_nag_node_id, name, sort_order)
+            insert into task_item
+                (
+                    id,
+                    task_log_id,
+                    parent_task_item_id,
+                    name,
+                    tag,
+                    is_done,
+                    rollover_behavior,
+                    interaction_at,
+                    interaction_time_zone,
+                    interaction_locale,
+                    interaction_mood,
+                    interaction_mood_at,
+                    descendant_task_item_count,
+                    done_descendant_task_item_count,
+                    sort_order)
             values
             """);
 
@@ -876,20 +814,47 @@ public sealed class DataDbWrite(
             Transaction = transaction
         };
 
-        for (var i = 0; i < nagNodes.Count; i++)
+        for (var i = 0; i < taskItems.Count; i++)
         {
             if (i > 0)
             {
                 sql.AppendLine(",");
             }
 
-            sql.Append($"(@nodeId{i}, @nodeNagLogId{i}, @nodeParentNagNodeId{i}, @nodeName{i}, @nodeSortOrder{i})");
+            sql.Append($"""
+                (
+                    @nodeId{i},
+                    @nodeTaskLogId{i},
+                    @nodeParentTaskItemId{i},
+                    @nodeName{i},
+                    @nodeTag{i},
+                    @nodeIsDone{i},
+                    @nodeRolloverBehavior{i},
+                    @nodeInteractionAt{i},
+                    @nodeInteractionTimeZone{i},
+                    @nodeInteractionLocale{i},
+                    @nodeInteractionMood{i},
+                    @nodeInteractionMoodAt{i},
+                    @nodeDescendantTaskItemCount{i},
+                    @nodeDoneDescendantTaskItemCount{i},
+                    @nodeSortOrder{i})
+                """);
 
-            command.Parameters.AddWithValue($"@nodeId{i}", nagNodes[i].Id);
-            command.Parameters.AddWithValue($"@nodeNagLogId{i}", nagNodes[i].NagLogId);
-            command.Parameters.AddWithValue($"@nodeParentNagNodeId{i}", (object?)nagNodes[i].ParentNagNodeId ?? DBNull.Value);
-            command.Parameters.AddWithValue($"@nodeName{i}", nagNodes[i].Name);
-            command.Parameters.AddWithValue($"@nodeSortOrder{i}", nagNodes[i].SortOrder);
+            command.Parameters.AddWithValue($"@nodeId{i}", taskItems[i].Id);
+            command.Parameters.AddWithValue($"@nodeTaskLogId{i}", taskItems[i].TaskLogId);
+            command.Parameters.AddWithValue($"@nodeParentTaskItemId{i}", (object?)taskItems[i].ParentTaskItemId ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@nodeName{i}", taskItems[i].Name);
+            command.Parameters.AddWithValue($"@nodeTag{i}", (object?)taskItems[i].Tag ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@nodeIsDone{i}", taskItems[i].IsDone);
+            command.Parameters.AddWithValue($"@nodeRolloverBehavior{i}", taskItems[i].RolloverBehavior.ToString());
+            command.Parameters.AddWithValue($"@nodeInteractionAt{i}", (object?)taskItems[i].InteractionAt ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@nodeInteractionTimeZone{i}", (object?)taskItems[i].InteractionTimeZone ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@nodeInteractionLocale{i}", (object?)taskItems[i].InteractionLocale ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@nodeInteractionMood{i}", (object?)taskItems[i].InteractionMood ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@nodeInteractionMoodAt{i}", (object?)taskItems[i].InteractionMoodAt ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@nodeDescendantTaskItemCount{i}", taskItems[i].DescendantTaskItemCount);
+            command.Parameters.AddWithValue($"@nodeDoneDescendantTaskItemCount{i}", taskItems[i].DoneDescendantTaskItemCount);
+            command.Parameters.AddWithValue($"@nodeSortOrder{i}", taskItems[i].SortOrder);
         }
 
         command.CommandText = sql.ToString();
@@ -897,20 +862,36 @@ public sealed class DataDbWrite(
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static async Task InsertNagInputsAsync(
+    private static async Task InsertTaskEntriesAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        IReadOnlyList<NagInput> nagInputs,
+        IReadOnlyList<TaskEntry> taskEntries,
         CancellationToken cancellationToken)
     {
-        if (nagInputs.Count == 0)
+        if (taskEntries.Count == 0)
         {
             return;
         }
 
         var sql = new StringBuilder("""
-            insert into nag_input
-                (id, nag_log_id, parent_nag_node_id, label, description, value_type, unit, value, previous_value, sort_order)
+            insert into task_entry
+                (
+                    id,
+                    task_log_id,
+                    parent_task_item_id,
+                    label,
+                    description,
+                    value_type,
+                    tag,
+                    value,
+                    last_task_run_reference_value,
+                    rollover_behavior,
+                    interaction_at,
+                    interaction_time_zone,
+                    interaction_locale,
+                    interaction_mood,
+                    interaction_mood_at,
+                    sort_order)
             values
             """);
 
@@ -920,26 +901,49 @@ public sealed class DataDbWrite(
             Transaction = transaction
         };
 
-        for (var i = 0; i < nagInputs.Count; i++)
+        for (var i = 0; i < taskEntries.Count; i++)
         {
             if (i > 0)
             {
                 sql.AppendLine(",");
             }
 
-            sql.Append(
-                $"(@inputId{i}, @inputNagLogId{i}, @inputParentNagNodeId{i}, @inputLabel{i}, @inputDescription{i}, @inputValueType{i}, @inputUnit{i}, @inputValue{i}, @inputPreviousValue{i}, @inputSortOrder{i})");
+            sql.Append($"""
+                (
+                    @inputId{i},
+                    @inputTaskLogId{i},
+                    @inputParentTaskItemId{i},
+                    @inputLabel{i},
+                    @inputDescription{i},
+                    @inputValueType{i},
+                    @inputTag{i},
+                    @inputValue{i},
+                    @inputLastTaskRunReferenceValue{i},
+                    @inputRolloverBehavior{i},
+                    @inputInteractionAt{i},
+                    @inputInteractionTimeZone{i},
+                    @inputInteractionLocale{i},
+                    @inputInteractionMood{i},
+                    @inputInteractionMoodAt{i},
+                    @inputSortOrder{i})
+                """);
 
-            command.Parameters.AddWithValue($"@inputId{i}", nagInputs[i].Id);
-            command.Parameters.AddWithValue($"@inputNagLogId{i}", nagInputs[i].NagLogId);
-            command.Parameters.AddWithValue($"@inputParentNagNodeId{i}", nagInputs[i].ParentNagNodeId);
-            command.Parameters.AddWithValue($"@inputLabel{i}", nagInputs[i].Label);
-            command.Parameters.AddWithValue($"@inputDescription{i}", (object?)nagInputs[i].Description ?? DBNull.Value);
-            command.Parameters.AddWithValue($"@inputValueType{i}", nagInputs[i].ValueType.ToString());
-            command.Parameters.AddWithValue($"@inputUnit{i}", (object?)nagInputs[i].Unit ?? DBNull.Value);
-            command.Parameters.AddWithValue($"@inputValue{i}", (object?)nagInputs[i].Value ?? DBNull.Value);
-            command.Parameters.AddWithValue($"@inputPreviousValue{i}", (object?)nagInputs[i].PreviousValue ?? DBNull.Value);
-            command.Parameters.AddWithValue($"@inputSortOrder{i}", nagInputs[i].SortOrder);
+            command.Parameters.AddWithValue($"@inputId{i}", taskEntries[i].Id);
+            command.Parameters.AddWithValue($"@inputTaskLogId{i}", taskEntries[i].TaskLogId);
+            command.Parameters.AddWithValue($"@inputParentTaskItemId{i}", taskEntries[i].ParentTaskItemId);
+            command.Parameters.AddWithValue($"@inputLabel{i}", taskEntries[i].Label);
+            command.Parameters.AddWithValue($"@inputDescription{i}", (object?)taskEntries[i].Description ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputValueType{i}", taskEntries[i].ValueType.ToString());
+            command.Parameters.AddWithValue($"@inputTag{i}", (object?)taskEntries[i].Tag ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputValue{i}", (object?)taskEntries[i].Value ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputLastTaskRunReferenceValue{i}", (object?)taskEntries[i].LastTaskRunReferenceValue ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputRolloverBehavior{i}", taskEntries[i].RolloverBehavior.ToString());
+            command.Parameters.AddWithValue($"@inputInteractionAt{i}", (object?)taskEntries[i].InteractionAt ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputInteractionTimeZone{i}", (object?)taskEntries[i].InteractionTimeZone ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputInteractionLocale{i}", (object?)taskEntries[i].InteractionLocale ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputInteractionMood{i}", (object?)taskEntries[i].InteractionMood ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputInteractionMoodAt{i}", (object?)taskEntries[i].InteractionMoodAt ?? DBNull.Value);
+            command.Parameters.AddWithValue($"@inputSortOrder{i}", taskEntries[i].SortOrder);
         }
 
         command.CommandText = sql.ToString();
@@ -947,212 +951,79 @@ public sealed class DataDbWrite(
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static async Task CloseNagLogAsync(
+    private static async Task<int> CountTaskEntriesInTaskLogAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        Guid nagLogId,
-        DateTimeOffset closedOn,
+        Guid taskLogId,
+        IReadOnlyList<Guid> taskEntryIds,
         CancellationToken cancellationToken)
     {
-        await using var command = new SqlCommand(
-            """
-            update nag_log
-            set
-                closed_on = @closedOn,
-                updated_at = @closedOn
-            where id = @nagLogId
-                and closed_on is null
-            """,
-            connection,
-            transaction);
-
-        command.Parameters.AddWithValue("@nagLogId", nagLogId);
-        command.Parameters.AddWithValue("@closedOn", closedOn);
-
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task UpdateNagActiveLogDueOnAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        Guid nagId,
-        DateOnly expectedActiveLogDueOn,
-        DateOnly? newActiveLogDueOn,
-        CancellationToken cancellationToken)
-    {
-        await using var command = new SqlCommand(
-            """
-            update nag
-            set
-                active_log_due_on = @newActiveLogDueOn,
-                version = version + 1
-            where id = @nagId
-                and active_log_due_on = @expectedActiveLogDueOn
-            """,
-            connection,
-            transaction);
-
-        command.Parameters.AddWithValue("@nagId", nagId);
-        command.Parameters.AddWithValue("@expectedActiveLogDueOn", expectedActiveLogDueOn);
-        command.Parameters.AddWithValue("@newActiveLogDueOn", (object?)newActiveLogDueOn ?? DBNull.Value);
-
-        await command.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static async Task<int> CountNagInputsInNagLogAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        Guid nagLogId,
-        IReadOnlyList<Guid> nagInputIds,
-        CancellationToken cancellationToken)
-    {
-        var parameterNames = nagInputIds
+        var parameterNames = taskEntryIds
             .Select((_, index) => $"@inputId{index}")
             .ToArray();
 
         await using var command = new SqlCommand(
             $"""
             select count(*)
-            from nag_input
-            where nag_input.nag_log_id = @nagLogId
-                and nag_input.id in ({string.Join(", ", parameterNames)})
+            from task_entry
+            where task_entry.task_log_id = @taskLogId
+                and task_entry.id in ({string.Join(", ", parameterNames)})
             """,
             connection,
             transaction);
 
-        command.Parameters.AddWithValue("@nagLogId", nagLogId);
+        command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
-        for (var i = 0; i < nagInputIds.Count; i++)
+        for (var i = 0; i < taskEntryIds.Count; i++)
         {
-            command.Parameters.AddWithValue(parameterNames[i], nagInputIds[i]);
+            command.Parameters.AddWithValue(parameterNames[i], taskEntryIds[i]);
         }
 
         return (int)await command.ExecuteScalarAsync(cancellationToken);
     }
 
-    private static async Task<Dictionary<Guid, NagInputValueType>> GetNagInputValueTypesAsync(
+    private static async Task DeleteTaskEntriesAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        IReadOnlyList<Guid> nagInputIds,
-        CancellationToken cancellationToken)
-    {
-        var parameterNames = nagInputIds
-            .Select((_, index) => $"@inputId{index}")
-            .ToArray();
-
-        await using var command = new SqlCommand(
-            $"""
-            select id, value_type
-            from nag_input
-            where id in ({string.Join(", ", parameterNames)})
-            """,
-            connection,
-            transaction);
-
-        for (var i = 0; i < nagInputIds.Count; i++)
-        {
-            command.Parameters.AddWithValue(parameterNames[i], nagInputIds[i]);
-        }
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        var valueTypes = new Dictionary<Guid, NagInputValueType>();
-
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            valueTypes.Add(
-                reader.GetGuid(0),
-                Enum.Parse<NagInputValueType>(reader.GetString(1)));
-        }
-
-        return valueTypes;
-    }
-
-    private static NagInputValueTypeDto ToDto(NagInputValueType valueType) =>
-        valueType switch
-        {
-            NagInputValueType.Text => NagInputValueTypeDto.Text,
-            NagInputValueType.Integer => NagInputValueTypeDto.Integer,
-            NagInputValueType.Decimal => NagInputValueTypeDto.Decimal,
-            NagInputValueType.Boolean => NagInputValueTypeDto.Boolean,
-            _ => throw new ArgumentOutOfRangeException(nameof(valueType), valueType, null)
-        };
-
-    private static async Task UpsertNagInputUnitSuggestionsAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        Guid userId,
-        IEnumerable<string?> units,
-        CancellationToken cancellationToken)
-    {
-        foreach (var unit in units
-            .Where(unit => !string.IsNullOrWhiteSpace(unit))
-            .Select(unit => unit!.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            await using var command = new SqlCommand(
-                """
-                insert into nag_input_unit_suggestion (user_id, unit)
-                select @userId, @unit
-                where not exists (
-                    select 1
-                    from nag_input_unit_suggestion
-                    where user_id = @userId
-                        and unit = @unit
-                )
-                """,
-                connection,
-                transaction);
-
-            command.Parameters.AddWithValue("@userId", userId);
-            command.Parameters.AddWithValue("@unit", unit);
-
-            await command.ExecuteNonQueryAsync(cancellationToken);
-        }
-    }
-
-    private static async Task DeleteNagInputsAsync(
-        SqlConnection connection,
-        SqlTransaction transaction,
-        Guid nagLogId,
+        Guid taskLogId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             """
-            delete nag_input
-            from nag_input
-            where nag_input.nag_log_id = @nagLogId
+            delete task_entry
+            from task_entry
+            where task_entry.task_log_id = @taskLogId
             """,
             connection,
             transaction);
 
-        command.Parameters.AddWithValue("@nagLogId", nagLogId);
+        command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static async Task DeleteNagNodesAsync(
+    private static async Task DeleteTaskItemsAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        Guid nagLogId,
+        Guid taskLogId,
         CancellationToken cancellationToken)
     {
         while (true)
         {
             await using var command = new SqlCommand(
                 """
-                delete from nag_node
-                where nag_log_id = @nagLogId
+                delete from task_item
+                where task_log_id = @taskLogId
                     and not exists (
                         select 1
-                        from nag_node child
-                        where child.parent_nag_node_id = nag_node.id
+                        from task_item child
+                        where child.parent_task_item_id = task_item.id
                     )
                 """,
                 connection,
                 transaction);
 
-            command.Parameters.AddWithValue("@nagLogId", nagLogId);
+            command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
             var affectedRows = await command.ExecuteNonQueryAsync(cancellationToken);
 
@@ -1202,61 +1073,111 @@ public sealed class DataDbWrite(
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
 
-        return result is null ? null : (int)result;
+        return result is null or DBNull ? null : (int)result;
     }
 
-    private static async Task<int?> GetNagLogVersionAsync(
+    private static async Task<int?> GetTaskLogVersionAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        Guid nagLogId,
+        Guid taskLogId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             """
             select version
-            from nag_log
+            from task_log
             where id = @id
             """,
             connection,
             transaction);
 
-        command.Parameters.AddWithValue("@id", nagLogId);
+        command.Parameters.AddWithValue("@id", taskLogId);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
 
         return result is null ? null : (int)result;
     }
 
-    private static async Task<int> IncrementNagLogVersionAsync(
+    private static async Task<TaskLogHeader?> GetTaskLogHeaderAsync(
         SqlConnection connection,
         SqlTransaction transaction,
-        Guid nagLogId,
-        int expectedVersion,
-        DateTimeOffset updatedAt,
+        Guid taskLogId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
             """
-            update nag_log
-            set
-                version = version + 1,
-                updated_at = @updatedAt
-            output inserted.version
+            select
+                id,
+                closed_on,
+                version
+            from task_log
             where id = @id
-                and version = @expectedVersion
             """,
             connection,
             transaction);
 
-        command.Parameters.AddWithValue("@id", nagLogId);
-        command.Parameters.AddWithValue("@expectedVersion", expectedVersion);
+        command.Parameters.AddWithValue("@id", taskLogId);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return new TaskLogHeader(
+            reader.GetGuid(0),
+            reader.IsDBNull(1) ? null : reader.GetDateTimeOffset(1),
+            reader.GetInt32(2));
+    }
+
+    private static async Task<int> UpdateTaskLogVersionAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        Guid taskLogId,
+        int baseVersion,
+        int nextVersion,
+        DateTimeOffset updatedAt,
+        ClientIdentityDto? clientIdentity,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new SqlCommand(
+            """
+            update task_log
+            set
+                version = @nextVersion,
+                updated_at = @updatedAt,
+                updated_by_client_id = @updatedByClientId,
+                updated_by_device_name = @updatedByDeviceName,
+                updated_by_device_model = @updatedByDeviceModel
+            output inserted.version
+            where id = @id
+                and version = @baseVersion
+            """,
+            connection,
+            transaction);
+
+        command.Parameters.AddWithValue("@id", taskLogId);
+        command.Parameters.AddWithValue("@baseVersion", baseVersion);
+        command.Parameters.AddWithValue("@nextVersion", nextVersion);
         command.Parameters.AddWithValue("@updatedAt", updatedAt);
+        command.Parameters.AddWithValue("@updatedByClientId", (object?)clientIdentity?.ClientId ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedByDeviceName", (object?)clientIdentity?.DeviceName ?? DBNull.Value);
+        command.Parameters.AddWithValue("@updatedByDeviceModel", (object?)clientIdentity?.DeviceModel ?? DBNull.Value);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
 
         if (result is null)
         {
-            throw new ConcurrencyConflictException("NagLog version conflict.");
+            var currentVersion = await GetTaskLogVersionAsync(
+                connection,
+                transaction,
+                taskLogId,
+                cancellationToken);
+
+            throw new ConcurrencyConflictException(
+                "TaskLog version conflict.",
+                currentVersion);
         }
 
         return (int)result;
