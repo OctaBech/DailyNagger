@@ -1,0 +1,93 @@
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { checkmarkGlyph } from "./checkmarkGlyph";
+
+type TaskItemCheckmarkProps = {
+  readonly checked: boolean;
+  readonly onPress?: () => void;
+  readonly isMuted?: boolean;
+  readonly shape?: "circle" | "square";
+};
+
+export const TaskItemCheckmark = ({
+  checked,
+  isMuted = false,
+  onPress,
+  shape = "square",
+}: TaskItemCheckmarkProps) => {
+  const shapeStyle = shape === "circle" ? styles.circleBox : styles.squareBox;
+
+  if (onPress !== undefined) {
+    return (
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.box,
+          shapeStyle,
+          isMuted && styles.readonlyBox,
+          checked && styles.checkedBox,
+          checked && isMuted && styles.readonlyCheckedBox,
+          pressed && styles.pressedBox,
+        ]}
+      >
+        {checked && <Text style={styles.checkedMark}>{checkmarkGlyph}</Text>}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        styles.box,
+        shapeStyle,
+        styles.readonlyBox,
+        checked && styles.readonlyCheckedBox,
+      ]}
+    >
+      {checked && <Text style={styles.checkedMark}>{checkmarkGlyph}</Text>}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  box: {
+    alignItems: "center",
+    backgroundColor: "#fffaf3",
+    borderColor: "#1d2428",
+    borderWidth: 3,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
+  },
+  circleBox: {
+    borderRadius: 12,
+  },
+  squareBox: {
+    borderRadius: 5,
+  },
+  checkedBox: {
+    borderColor: "#1d2428",
+  },
+  readonlyBox: {
+    borderColor: "#55636a",
+    opacity: 0.62,
+  },
+  readonlyCheckedBox: {
+    borderColor: "#55636a",
+  },
+  pressedBox: {
+    opacity: 0.7,
+  },
+  checkedMark: {
+    color: "#1d2428",
+    fontSize: 22,
+    fontWeight: "900",
+    height: 30,
+    left: 2,
+    lineHeight: 30,
+    position: "absolute",
+    textAlign: "center",
+    textAlignVertical: "center",
+    top: -2,
+    width: 30,
+  },
+});

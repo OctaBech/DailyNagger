@@ -1,0 +1,30 @@
+import type { ExpoConfig } from "expo/config";
+
+const config: ExpoConfig = {
+  name: "DailyNagger",
+  slug: "dailynagger-mobile",
+  scheme: "dailynagger",
+  version: "0.1.0",
+  orientation: "portrait",
+  icon: "./assets/icon.png",
+  userInterfaceStyle: "light",
+  ios: {
+    supportsTablet: true,
+  },
+  android: {
+    package: "com.dailynagger.mobile",
+    adaptiveIcon: {
+      backgroundColor: "#E6F4FE",
+      foregroundImage: "./assets/android-icon-foreground.png",
+      backgroundImage: "./assets/android-icon-background.png",
+      monochromeImage: "./assets/android-icon-monochrome.png",
+    },
+    predictiveBackGestureEnabled: false,
+  },
+  web: {
+    favicon: "./assets/favicon.png",
+  },
+  plugins: ["expo-localization"],
+};
+
+export default config;
