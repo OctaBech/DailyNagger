@@ -18,6 +18,12 @@ The current product direction is captured in
 
 From the repository root.
 
+Restore a fresh checkout:
+
+```powershell
+.\scripts\bootstrap-dev.ps1
+```
+
 Start local dependencies and server:
 
 ```powershell

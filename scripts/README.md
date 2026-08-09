@@ -5,6 +5,9 @@ over keeping deployment or build steps only in chat history.
 
 ## Local Development
 
+- `bootstrap-dev.ps1` restores a fresh checkout into a usable development state.
+  It checks required tools, restores .NET packages, installs mobile npm packages,
+  and can optionally start Docker and run verification.
 - `reset-local-db.ps1` drops, recreates, migrates, and seeds the local SQL Server
   databases. This is destructive for local database data.
 - `start-local-api.ps1` starts the local API project.
