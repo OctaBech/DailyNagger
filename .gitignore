@@ -10,6 +10,13 @@ dist/
 *.tsbuildinfo
 .npm-cache/
 
+# Generated artifacts
+artifacts/
+*.tar.gz
+
+# Local documentation archive
+docs/archive/
+
 # Local environment
 .env
 .env.*
