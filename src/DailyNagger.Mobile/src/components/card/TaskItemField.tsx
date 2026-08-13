@@ -64,16 +64,13 @@ export const TaskItemField = ({
           onCommit={(name) => onNameCommit?.(name)}
           onFocus={onNameFocus}
           onTouchStart={onFocus}
-          style={[
-            cardRowLayout.textInput,
-            styles.titleInput,
-            showComponentOutlines && styles.outlinedComponent,
-          ]}
+          showEditFrame={showComponentOutlines}
+          style={[cardRowLayout.textInput, styles.titleControl, styles.titleInput]}
         />
       ) : (
         <Pressable
           onPress={() => focusAndRun(onExpandPress)}
-          style={[cardRowLayout.textSlot, styles.titlePressable]}
+          style={[cardRowLayout.textSlot, styles.titleControl]}
         >
           <Text selectable={false} style={[cardRowLayout.text, styles.title]}>
             {taskItem.name}
@@ -126,21 +123,19 @@ const styles = StyleSheet.create({
   pressedArea: {
     backgroundColor: nagPlanTheme.taskItem.pressedBackground,
   },
-  titlePressable: {
-    paddingHorizontal: nagPlanTheme.cardDensity.fieldPaddingHorizontal,
-    paddingVertical: nagPlanTheme.cardDensity.fieldPaddingVertical,
+  titleControl: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
   },
   title: {
     color: nagPlanTheme.taskItem.titleText,
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: nagPlanTheme.typography.taskItemTitleSize,
+    fontWeight: nagPlanTheme.typography.taskItemTitleWeight,
   },
   titleInput: {
     color: nagPlanTheme.taskItem.titleText,
-    fontSize: 17,
-    fontWeight: "700",
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+    fontSize: nagPlanTheme.typography.taskItemTitleSize,
+    fontWeight: nagPlanTheme.typography.taskItemTitleWeight,
   },
   expandArea: {
     alignItems: "center",
@@ -151,13 +146,5 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     minWidth: 48,
     paddingHorizontal: nagPlanTheme.cardDensity.fieldPaddingHorizontal,
-  },
-  outlinedComponent: {
-    borderColor: "#9fb7c3",
-    borderRadius: 10,
-    borderStyle: "dashed",
-    borderWidth: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
   },
 });

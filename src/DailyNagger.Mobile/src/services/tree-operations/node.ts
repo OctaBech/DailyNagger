@@ -8,6 +8,9 @@ export const node = {
   createRolledOverTaskLog,
   isTaskLogClosed,
   setTaskEntryValue,
+  setTaskEntryRolloverBehavior,
+  setTaskEntryValueType,
+  tryPrefillCarryOverTaskEntryValueFromHistory,
   setTaskItemDone,
 } as const;
 
@@ -23,6 +26,41 @@ function setTaskEntryValue(taskEntry: TaskEntry, value: string | null): TaskEntr
   return {
     ...taskEntry,
     value,
+  };
+}
+
+function setTaskEntryValueType(
+  taskEntry: TaskEntry,
+  valueType: TaskEntry["valueType"],
+): TaskEntry {
+  if (taskEntry.valueType === valueType) return taskEntry;
+
+  return {
+    ...taskEntry,
+    valueType,
+  };
+}
+
+function setTaskEntryRolloverBehavior(
+  taskEntry: TaskEntry,
+  rolloverBehavior: TaskEntry["rolloverBehavior"],
+): TaskEntry {
+  if (taskEntry.rolloverBehavior === rolloverBehavior) return taskEntry;
+
+  return {
+    ...taskEntry,
+    rolloverBehavior,
+  };
+}
+
+function tryPrefillCarryOverTaskEntryValueFromHistory(taskEntry: TaskEntry): TaskEntry {
+  if (taskEntry.rolloverBehavior !== "CarryOverValue") return taskEntry;
+  if (taskEntry.value !== null) return taskEntry;
+  if (taskEntry.lastTaskRunReferenceValue === null) return taskEntry;
+
+  return {
+    ...taskEntry,
+    value: taskEntry.lastTaskRunReferenceValue,
   };
 }
 
@@ -115,14 +153,15 @@ function rollOverTaskEntry(
   newTaskLogId: Guid,
   getNewTaskItemId: (oldId: Guid) => Guid,
 ): TaskEntry {
+  const isCarryOver = taskEntry.rolloverBehavior === "CarryOverValue";
+
   return {
     ...taskEntry,
     id: newGuid(),
     taskLogId: newTaskLogId,
     parentTaskItemId: getNewTaskItemId(taskEntry.parentTaskItemId),
-    value: taskEntry.rolloverBehavior === "CarryOverValue" ? taskEntry.value : null,
-    lastTaskRunReferenceValue:
-      taskEntry.rolloverBehavior === "Remove" ? null : taskEntry.value,
+    value: isCarryOver ? taskEntry.value : null,
+    lastTaskRunReferenceValue: taskEntry.value,
     ...emptyInteractionStamp,
   };
 }
@@ -138,5 +177,5 @@ function keepRolloverTaskItems<TTaskItem extends TaskItem>(
 function keepRolloverTaskEntries<TTaskEntry extends TaskEntry>(
   taskEntries: readonly TTaskEntry[],
 ): readonly TTaskEntry[] {
-  return taskEntries.filter((taskEntry) => taskEntry.rolloverBehavior !== "Remove");
+  return taskEntries;
 }

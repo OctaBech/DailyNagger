@@ -1,5 +1,5 @@
 import { Activity, memo } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Card } from "@/components";
 import { type TaskItem } from "@/models";
 import { usePlanScreenCommands } from "@/services";
@@ -9,9 +9,10 @@ import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
 type TaskItemCardProps = {
   taskItem: TaskItem;
+  readonly railTone: "active" | "completed";
 };
 
-const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
+const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
   const { setDoneAndSetFocus, setExpanded, setFocused } = usePlanScreenCommands().taskItem;
   useDebugRenderFrameCounter("PlanTaskItemCard", taskItem.id);
 
@@ -19,6 +20,7 @@ const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
   const isExpanded = taskItem.clientProps.isExpanded && hasChildren;
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
+  const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
   const toggleExpanded = () => {
     setExpanded(taskItem, !isExpanded && hasChildren);
   };
@@ -31,7 +33,15 @@ const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
         taskItem.rolloverBehavior === "RemoveWhenDone" && styles.removedOnRolloverCard,
       ]}
     >
-      {hasFocus ? <Card.FocusFrame radius={nagPlanTheme.radius.card} /> : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select task item"
+        onPress={() => setFocused(taskItem)}
+        style={[
+          styles.railLane,
+          { backgroundColor: hasActiveRail ? getRailColor(railTone) : nagPlanTheme.rail.neutral },
+        ]}
+      />
       <Card.TaskItemFrame>
         <Card.TaskItemField
           taskItem={taskItem}
@@ -50,10 +60,10 @@ const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
         <Activity mode={isExpanded ? "visible" : "hidden"}>
           <View style={styles.children}>
             {taskItem.taskEntries.map((taskEntry) => (
-              <TaskEntryCard key={taskEntry.id} taskEntry={taskEntry} />
+              <TaskEntryCard key={taskEntry.id} taskEntry={taskEntry} railTone={railTone} />
             ))}
             {taskItem.taskItems.map((childTaskItem) => (
-              <TaskItemCard key={childTaskItem.id} taskItem={childTaskItem} />
+              <TaskItemCard key={childTaskItem.id} taskItem={childTaskItem} railTone={railTone} />
             ))}
           </View>
         </Activity>
@@ -64,37 +74,28 @@ const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
 
 export const TaskItemCard = memo(TaskItemCardComponent);
 
-const taskItemChrome = Card.createStableCardChromeStyleObjects({
-  background: nagPlanTheme.taskItem.background,
-  border: nagPlanTheme.taskItem.border,
-  chrome: nagPlanTheme.cardChrome,
-  radius: nagPlanTheme.radius.card,
-  selectedBackground: nagPlanTheme.taskItem.selectedBackground,
-  selectedBorder: nagPlanTheme.selection.border,
-});
+function getRailColor(railTone: TaskItemCardProps["railTone"]): string {
+  return railTone === "completed" ? nagPlanTheme.rail.completed : nagPlanTheme.rail.active;
+}
 
 const styles = StyleSheet.create({
-  ...taskItemChrome,
   card: {
-    ...taskItemChrome.card,
+    flexDirection: "row",
+    gap: nagPlanTheme.rail.contentGap,
+    overflow: "hidden",
     position: "relative",
   },
   children: {
     gap: nagPlanTheme.cardDensity.fieldGap,
-    paddingTop: nagPlanTheme.cardDensity.padding,
+    paddingTop: nagPlanTheme.cardDensity.childTopPadding,
   },
   removedOnRolloverCard: {
     backgroundColor: nagPlanTheme.taskItem.removedOnRolloverBackground,
-    borderBottomColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
-    borderLeftColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
-    borderRightColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
-    borderTopColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
   },
   selectedCard: {
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,
-    borderBottomColor: nagPlanTheme.selection.border,
-    borderLeftColor: nagPlanTheme.taskItem.selectedBackground,
-    borderRightColor: nagPlanTheme.selection.border,
-    borderTopColor: nagPlanTheme.taskItem.selectedBackground,
+  },
+  railLane: {
+    width: nagPlanTheme.rail.focusLaneWidth,
   },
 });

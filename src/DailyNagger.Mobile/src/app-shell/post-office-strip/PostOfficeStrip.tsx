@@ -408,11 +408,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     position: "absolute",
-    shadowColor: "#060708",
-    shadowOffset: { width: -2, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 4,
     width: postOfficeStripConfig.stripWidth,
   },
   slot: {

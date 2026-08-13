@@ -10,6 +10,7 @@ export type ClientModel<TClientViewProps, TNodeType extends ClientNodeType> = Im
 export type ClientSharedProps = Immutable<{
   readonly isSelected: boolean;
   readonly hasFocus: boolean;
+  readonly isFocusParent: boolean;
   readonly indexHint: number;
 }>;
 
@@ -23,6 +24,7 @@ export const nagPlanClientModelExtensionDefaults: ClientModel<
   clientProps: {
     isSelected: false,
     hasFocus: false,
+    isFocusParent: false,
     indexHint: 0,
     isShowingPinnedTasks: false,
   },
@@ -38,6 +40,7 @@ export const naggerClientModelExtensionDefaults: ClientModel<
   clientProps: {
     isSelected: false,
     hasFocus: false,
+    isFocusParent: false,
     indexHint: 0,
     isExpanded: false,
   },
@@ -53,6 +56,7 @@ export const taskLogClientModelExtensionDefaults: ClientModel<
   clientProps: {
     isSelected: false,
     hasFocus: false,
+    isFocusParent: false,
     indexHint: 0,
     isExpanded: false,
   },
@@ -68,6 +72,7 @@ export const taskItemClientModelExtensionDefaults: ClientModel<
   clientProps: {
     isSelected: false,
     hasFocus: false,
+    isFocusParent: false,
     indexHint: 0,
     isExpanded: false,
   },
@@ -83,6 +88,7 @@ export const taskEntryClientModelExtensionDefaults: ClientModel<
   clientProps: {
     isSelected: false,
     hasFocus: false,
+    isFocusParent: false,
     indexHint: 0,
     isVisible: true,
   },

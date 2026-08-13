@@ -2,6 +2,7 @@ import type { TaskEntry } from "@/models";
 import { Pressable, StyleSheet, View } from "react-native";
 import * as Input from "@/components/input";
 import * as Primitives from "@/components/primitives";
+import { nagPlanTheme } from "@/features/nag-plan/theme";
 import { cardRowLayout } from "./cardRowLayout";
 
 type TaskEntryFieldProps = {
@@ -13,6 +14,7 @@ type TaskEntryFieldProps = {
   readonly commitValueOnChange?: boolean;
   readonly isTagPickerOpen?: boolean;
   readonly isValueTypePickerOpen?: boolean;
+  readonly showTag?: boolean;
   readonly showComponentOutlines: boolean;
   readonly onFocus: () => void;
   readonly onLabelCommit: (label: string) => void;
@@ -31,6 +33,7 @@ export const TaskEntryField = (props: TaskEntryFieldProps) => {
     commitValueOnChange = false,
     isTagPickerOpen = false,
     isValueTypePickerOpen = false,
+    showTag = true,
     onFocus: selectTaskEntry,
     showComponentOutlines,
     onLabelCommit,
@@ -39,7 +42,7 @@ export const TaskEntryField = (props: TaskEntryFieldProps) => {
     onPressValueType,
   } = props;
 
-  const shouldShowTag = taskEntry.tag !== null || showComponentOutlines;
+  const shouldShowTag = showTag && (taskEntry.tag !== null || showComponentOutlines);
   const tagText = taskEntry.tag ?? "tag";
 
   return (
@@ -51,11 +54,8 @@ export const TaskEntryField = (props: TaskEntryFieldProps) => {
           onCommit={onLabelCommit}
           onFocus={allowEditLabel ? selectTaskEntry : undefined}
           editable={allowEditLabel}
-          style={[
-            cardRowLayout.textInput,
-            styles.labelInput,
-            showComponentOutlines && styles.outlinedComponent,
-          ]}
+          showEditFrame={showComponentOutlines}
+          style={[cardRowLayout.textInput, styles.labelInput]}
         />
       </Pressable>
 
@@ -63,6 +63,7 @@ export const TaskEntryField = (props: TaskEntryFieldProps) => {
         <Primitives.PillButton
           label={tagText}
           isEmpty={taskEntry.tag === null}
+          maxWidth={48}
           showOutline={showComponentOutlines}
           isActive={isTagPickerOpen}
           onPress={() => {
@@ -89,9 +90,9 @@ export const TaskEntryField = (props: TaskEntryFieldProps) => {
           style={[
             styles.valueInput,
             taskEntry.rolloverBehavior === "CarryOverValue" && styles.carryOverValueInput,
-            showComponentOutlines && styles.outlinedComponent,
             isValueTypePickerOpen && styles.activeValueTypeInput,
           ]}
+          showEditFrame={showComponentOutlines}
         />
       </Pressable>
     </View>
@@ -109,10 +110,10 @@ const styles = StyleSheet.create({
   },
   labelInput: {
     color: "#243947",
-    fontSize: 15,
-    fontWeight: "700",
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+    fontSize: nagPlanTheme.typography.taskEntryLabelSize,
+    fontWeight: nagPlanTheme.typography.taskEntryLabelWeight,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   valueInput: {
     backgroundColor: "#f8f4ef",
@@ -120,8 +121,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     color: "#18242b",
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: nagPlanTheme.typography.taskEntryValueSize,
+    fontWeight: nagPlanTheme.typography.taskEntryValueWeight,
     minWidth: 120,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -130,14 +131,6 @@ const styles = StyleSheet.create({
   carryOverValueInput: {
     backgroundColor: "#fff2bf",
     borderColor: "#e0bc56",
-  },
-  outlinedComponent: {
-    borderColor: "#9fb7c3",
-    borderRadius: 10,
-    borderStyle: "dashed",
-    borderWidth: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
   },
   activeValueTypeInput: {
     borderColor: "#18242b",

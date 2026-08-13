@@ -17,6 +17,12 @@ over keeping deployment or build steps only in chat history.
 - `build-mobile-release-apk.ps1` builds the Android release APK and installs it
   on a connected device unless `-SkipInstall` is used.
 - Use `-Notify` when the build can run while you do something else.
+- The release build script owns repeatable build details only: release
+  environment checks, Gradle cache location, generated build cleanup, dependency
+  compatibility shims, APK discovery, and device install.
+- It should not install system tools. If Java, Android SDK, Docker, Node, or
+  other machine-level tools are missing, improve `bootstrap-dev.ps1` or add a
+  guided setup step there.
 
 ## Server Deploy
 
@@ -36,3 +42,9 @@ over keeping deployment or build steps only in chat history.
 
 If a command becomes important enough to repeat, put it in a script or improve
 an existing script.
+
+Keep script boundaries narrow:
+
+- Bootstrap scripts prepare a machine.
+- Build scripts build artifacts.
+- Deploy scripts move verified artifacts to a server.

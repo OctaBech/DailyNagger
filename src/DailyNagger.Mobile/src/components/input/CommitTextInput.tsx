@@ -17,6 +17,7 @@ type CommitTextInputProps<TCommitValue extends string | null = string> = {
   readonly onFocus?: TextInputProps["onFocus"];
   readonly onTouchStart?: TextInputProps["onTouchStart"];
   readonly editable?: boolean;
+  readonly showEditFrame?: boolean;
   readonly fitContent?: boolean;
   readonly fitContentCharacterWidth?: number;
   readonly fitContentMinWidth?: number;
@@ -55,6 +56,7 @@ export function CommitTextInput<TCommitValue extends string | null = string>({
   onFocus,
   onTouchStart,
   editable = true,
+  showEditFrame = false,
   fitContent = false,
   fitContentCharacterWidth = estimatedCharacterWidth,
   fitContentMinWidth = 40,
@@ -184,18 +186,20 @@ export function CommitTextInput<TCommitValue extends string | null = string>({
             textAlignVertical: "top" as const,
           }
         : undefined,
-      mode === "title" && webFocusOutlineHiddenStyle,
+      editFrameBaseStyle,
+      showEditFrame && editFrameEditableStyle,
+      webFocusOutlineHiddenStyle,
       { textAlign },
     ],
     [
       fitContentWidth,
       hasInvalidInitialValue,
       invalidInitialStyle,
-      mode,
       multiline,
       multilineHeight,
       multilineMaxHeight,
       multilineMinHeight,
+      showEditFrame,
       style,
       textAlign,
     ],
@@ -277,6 +281,18 @@ const StableTextInput = memo(function StableTextInput({
 const webFocusOutlineHiddenStyle = {
   outlineColor: "transparent",
   outlineWidth: 0,
+} as const;
+
+const editFrameBaseStyle = {
+  borderColor: "transparent",
+  borderRadius: 1,
+  borderStyle: "solid",
+  borderWidth: 1,
+} as const;
+
+const editFrameEditableStyle = {
+  borderColor: "#9fb7c3",
+  borderStyle: "dashed",
 } as const;
 
 function getReplacementTextForInvalidInitialValue(rawText: string, currentText: string): string {

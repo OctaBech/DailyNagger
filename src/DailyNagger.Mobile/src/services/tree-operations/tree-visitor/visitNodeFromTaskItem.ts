@@ -42,6 +42,12 @@ export function visitNodeFromTaskItem(
     if (result.kind === "visited") {
       newTaskItem = withTaskEntries(newTaskItem, result.nodes, result.indexFound);
       newPath = [...result.recordedPath];
+      return visitCurrentNode({
+        node: newTaskItem,
+        childPath: newPath,
+        childBubble: result.bubble,
+        visitNode: visitor.visitTaskItem,
+      });
     }
   }
 
@@ -57,15 +63,14 @@ export function visitNodeFromTaskItem(
     if (result.kind === "visited") {
       newTaskItem = withTaskItems(newTaskItem, result.nodes, result.indexFound);
       newPath = [...result.recordedPath, ...newPath];
+      return visitCurrentNode({
+        node: newTaskItem,
+        childPath: newPath,
+        childBubble: result.bubble,
+        visitNode: visitor.visitTaskItem,
+      });
     }
   }
-
-  if (newPath.length > 0)
-    return visitCurrentNode({
-      node: newTaskItem,
-      childPath: newPath,
-      visitNode: visitor.visitTaskItem,
-    });
 
   return nodeNotFound(taskItem);
 }

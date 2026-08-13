@@ -1,6 +1,8 @@
 param(
     [string]$RepoRootPath,
     [string]$MobileProjectPath,
+    [string]$DevCacheRootPath = "E:\DevCache",
+    [string]$AndroidSdkPath,
     [string]$DeviceId,
     [switch]$SkipInstall,
     [switch]$Notify
@@ -63,6 +65,26 @@ function Get-RequiredEnv {
     }
 
     return $value
+}
+
+function Get-AndroidSdkPath {
+    param([string]$ConfiguredPath)
+
+    if (![string]::IsNullOrWhiteSpace($ConfiguredPath)) {
+        return $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfiguredPath)
+    }
+
+    $androidHome = [Environment]::GetEnvironmentVariable("ANDROID_HOME")
+    if (![string]::IsNullOrWhiteSpace($androidHome)) {
+        return $androidHome
+    }
+
+    $androidSdkRoot = [Environment]::GetEnvironmentVariable("ANDROID_SDK_ROOT")
+    if (![string]::IsNullOrWhiteSpace($androidSdkRoot)) {
+        return $androidSdkRoot
+    }
+
+    throw "Missing Android SDK path. Set ANDROID_HOME, ANDROID_SDK_ROOT, or pass -AndroidSdkPath <path>."
 }
 
 function Get-AdbDeviceIds {
@@ -175,10 +197,38 @@ function Ensure-ExpoModulesCoreCMakeVersion {
     return $true
 }
 
+function Ensure-ReactNativeGradlePluginFoojayVersion {
+    param([string]$MobileProject)
+
+    $settingsGradlePath = Join-Path $MobileProject "node_modules\@react-native\gradle-plugin\settings.gradle.kts"
+    if (!(Test-Path $settingsGradlePath)) {
+        throw "Missing React Native Gradle plugin settings file at $settingsGradlePath. Run npm install before release building."
+    }
+
+    $settingsGradle = Get-Content $settingsGradlePath -Raw
+    if ($settingsGradle -match 'foojay-resolver-convention"\)\.version\("1\.0\.0"\)') {
+        return $false
+    }
+
+    $oldPluginLine = 'plugins { id("org.gradle.toolchains.foojay-resolver-convention").version("0.5.0") }'
+    $newPluginLine = 'plugins { id("org.gradle.toolchains.foojay-resolver-convention").version("1.0.0") }'
+
+    if (!$settingsGradle.Contains($oldPluginLine)) {
+        throw "Could not patch React Native Gradle plugin Foojay resolver version. Expected plugin line was not found."
+    }
+
+    Write-Host "Pinning React Native Gradle plugin Foojay resolver to 1.0.0 for Gradle 9 compatibility..."
+    $settingsGradle.Replace($oldPluginLine, $newPluginLine) |
+        Set-Content -Path $settingsGradlePath -NoNewline
+
+    return $true
+}
+
 function Invoke-GradleReleaseBuild {
     param(
         [string]$MobileProject,
         [string]$GradlePath,
+        [string]$GradleUserHome,
         [string]$BuildLogPath
     )
 
@@ -187,7 +237,11 @@ function Invoke-GradleReleaseBuild {
     $ErrorActionPreference = "Continue"
 
     try {
-        & $GradlePath -p (Join-Path $MobileProject "android") assembleRelease --stacktrace 2>&1 |
+        & $GradlePath `
+            --gradle-user-home $GradleUserHome `
+            -p (Join-Path $MobileProject "android") `
+            assembleRelease `
+            --stacktrace 2>&1 |
             ForEach-Object { "$_" } |
             ForEach-Object {
                 Add-Content -Path $BuildLogPath -Value $_
@@ -222,11 +276,20 @@ $buildLogPath = Join-Path $buildLogDirectory "release-apk-build.log"
 $envPath = Join-Path $mobileProject ".env"
 $gradlePath = Join-Path $mobileProject "android\gradlew.bat"
 $apkOutputPath = Join-Path $mobileProject "android\app\build\outputs\apk\release"
+$devCacheRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DevCacheRootPath)
+$gradleUserHome = Join-Path $devCacheRoot "Gradle"
+$buildTempPath = Join-Path $devCacheRoot "Temp\mobile-release-apk"
+$androidSdk = Get-AndroidSdkPath $AndroidSdkPath
 
 $mobileProjectDrive = [System.IO.Path]::GetPathRoot($mobileProject)
+$androidSdkDrive = [System.IO.Path]::GetPathRoot($androidSdk)
 $substDrives = @(subst)
 if ($substDrives | Where-Object { $_.StartsWith("$mobileProjectDrive =>", [StringComparison]::OrdinalIgnoreCase) }) {
     Write-Warning "Mobile project is on a subst drive. React Native codegen can fail if Gradle sees both the subst path and the real path."
+}
+
+if ($androidSdkDrive.Equals("C:\", [StringComparison]::OrdinalIgnoreCase)) {
+    Write-Warning "Android SDK is still on C:. Pass -AndroidSdkPath after migrating the SDK to E:."
 }
 
 if (!(Test-Path $envPath)) {
@@ -242,6 +305,11 @@ Import-DotEnv $envPath
 $apiBaseUrl = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_API_BASE_URL"
 $apiToken = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_API_TOKEN"
 $env:NODE_ENV = "production"
+$env:GRADLE_USER_HOME = $gradleUserHome
+$env:ANDROID_HOME = $androidSdk
+$env:ANDROID_SDK_ROOT = $androidSdk
+$env:TEMP = $buildTempPath
+$env:TMP = $buildTempPath
 
 if ($apiBaseUrl -match "localhost|127\.0\.0\.1") {
     throw "Release build refused: API base URL points to local machine: $apiBaseUrl"
@@ -257,8 +325,16 @@ Write-Host "Mobile project: $mobileProject"
 Write-Host "API base URL: $apiBaseUrl"
 Write-Host "API token: configured"
 Write-Host "Build log: $buildLogPath"
+Write-Host "Gradle user home: $gradleUserHome"
+Write-Host "Android SDK: $androidSdk"
+Write-Host "Build temp: $buildTempPath"
 
 New-Item -ItemType Directory -Force -Path $buildLogDirectory | Out-Null
+New-Item -ItemType Directory -Force -Path $gradleUserHome | Out-Null
+New-Item -ItemType Directory -Force -Path $buildTempPath | Out-Null
+if (!(Test-Path $androidSdk)) {
+    throw "Android SDK path does not exist: $androidSdk"
+}
 Remove-Item $buildLogPath -ErrorAction SilentlyContinue
 
 $patchedExpoModulesCore = Ensure-ExpoModulesCoreCMakeVersion $mobileProject
@@ -266,9 +342,12 @@ if ($patchedExpoModulesCore) {
     Clear-KnownDirtyCMakeCache $mobileProject
 }
 
+$patchedReactNativeFoojay = Ensure-ReactNativeGradlePluginFoojayVersion $mobileProject
+
 $buildExitCode = Invoke-GradleReleaseBuild `
     -MobileProject $mobileProject `
     -GradlePath $gradlePath `
+    -GradleUserHome $gradleUserHome `
     -BuildLogPath $buildLogPath
 
 if ($buildExitCode -ne 0) {
@@ -281,6 +360,7 @@ if ($buildExitCode -ne 0) {
         $buildExitCode = Invoke-GradleReleaseBuild `
             -MobileProject $mobileProject `
             -GradlePath $gradlePath `
+            -GradleUserHome $gradleUserHome `
             -BuildLogPath $buildLogPath
 
         if ($buildExitCode -ne 0) {
@@ -295,6 +375,7 @@ if ($buildExitCode -ne 0) {
         $buildExitCode = Invoke-GradleReleaseBuild `
             -MobileProject $mobileProject `
             -GradlePath $gradlePath `
+            -GradleUserHome $gradleUserHome `
             -BuildLogPath $buildLogPath
     }
 }

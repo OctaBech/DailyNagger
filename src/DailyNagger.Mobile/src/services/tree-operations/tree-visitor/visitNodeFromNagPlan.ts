@@ -31,6 +31,7 @@ export function visitNodeFromNagPlan(
     return visitCurrentNode({
       node: nodeWithVisitedNaggers,
       childPath: naggerResult.recordedPath,
+      childBubble: naggerResult.bubble,
       visitNode: visitor.visitNagPlan,
     });
   }

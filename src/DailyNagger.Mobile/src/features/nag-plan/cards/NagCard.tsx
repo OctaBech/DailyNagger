@@ -12,6 +12,8 @@ type NagCardProps = {
   readonly nagger: Nagger;
 };
 
+type RailTone = "active" | "completed";
+
 const NagCardComponent = ({ nagger }: NagCardProps) => {
   useDebugRenderFrameCounter("PlanNaggerCard", nagger.id);
 
@@ -19,35 +21,44 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
 
   const isTaskLogCompleted = isCompletedTaskLog(nagger.taskLog);
   const tone = getNaggerCardTone(nagger.clientProps.isSelected, isTaskLogCompleted);
+  const railTone = getRailTone(isTaskLogCompleted);
 
   return (
-    <Card.NaggerFrame
-      hasFocus={nagger.clientProps.hasFocus}
-      isPinned={nagger.pinnedBy !== "None"}
-      tone={tone}
-    >
-      <Card.NaggerField
-        nagger={nagger}
-        isExpanded={nagger.clientProps.isExpanded}
-        isCompleted={isTaskLogCompleted}
-        allowEditSchedule={false}
-        allowEditTitle={false}
-        showComponentOutlines={false}
-        onFocus={() => setFocused(nagger)}
-        onHeaderPress={() => {
-          setExpanded(nagger, !nagger.clientProps.isExpanded);
-        }}
-        onExpandPress={() => {
-          setExpanded(nagger, !nagger.clientProps.isExpanded);
-        }}
-      />
+    <View style={styles.naggerGroup}>
+      <Card.NaggerFrame
+        hasFocus={nagger.clientProps.hasFocus}
+        isPinned={nagger.pinnedBy !== "None"}
+        onRailPress={() => setFocused(nagger)}
+        tone={tone}
+      >
+        <Card.NaggerField
+          nagger={nagger}
+          isExpanded={nagger.clientProps.isExpanded}
+          isCompleted={isTaskLogCompleted}
+          allowEditSchedule={false}
+          allowEditTitle={false}
+          showComponentOutlines={false}
+          onFocus={() => setFocused(nagger)}
+          onHeaderPress={() => {
+            setExpanded(nagger, !nagger.clientProps.isExpanded);
+          }}
+          onExpandPress={() => {
+            setExpanded(nagger, !nagger.clientProps.isExpanded);
+          }}
+        />
+      </Card.NaggerFrame>
 
       <Activity mode={nagger.clientProps.isExpanded ? "visible" : "hidden"}>
         <View style={styles.taskLogPanel}>
-          <TaskLogCard key={nagger.taskLog.id} taskLog={nagger.taskLog} />
+          <TaskLogCard
+            key={nagger.taskLog.id}
+            taskLog={nagger.taskLog}
+            parentNaggerHasFocus={nagger.clientProps.hasFocus}
+            railTone={railTone}
+          />
         </View>
       </Activity>
-    </Card.NaggerFrame>
+    </View>
   );
 };
 
@@ -70,11 +81,16 @@ function getNaggerCardTone(
   return "active";
 }
 
+function getRailTone(isCompleted: boolean): RailTone {
+  return isCompleted ? "completed" : "active";
+}
+
 const styles = StyleSheet.create({
+  naggerGroup: {
+    backgroundColor: "transparent",
+  },
   taskLogPanel: {
     backgroundColor: "transparent",
-    borderRadius: nagPlanTheme.radius.card,
     gap: nagPlanTheme.cardDensity.fieldGap,
-    paddingTop: nagPlanTheme.cardDensity.padding,
   },
 });

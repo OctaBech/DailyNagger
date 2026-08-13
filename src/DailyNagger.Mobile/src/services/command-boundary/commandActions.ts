@@ -195,6 +195,7 @@ type TaskEntrySetTagArgs = {
 type TaskEntrySetValueTypeArgs = {
   readonly taskEntry: TaskEntry;
   readonly valueType: TaskEntryValueType;
+  readonly rolloverBehavior?: TaskEntry["rolloverBehavior"];
 };
 
 function editorStartEdit(
@@ -403,7 +404,7 @@ function taskEntrySetValueType(
   args: TaskEntrySetValueTypeArgs,
   context: CommandInputActionContext,
 ): void {
-  runTaskEntrySetValueType(context, args.taskEntry, args.valueType);
+  runTaskEntrySetValueType(context, args.taskEntry, args.valueType, args.rolloverBehavior);
 }
 
 export const commandActions = {

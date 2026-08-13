@@ -37,6 +37,7 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 4,
           keepOpenAfterPress: true,
+          isDisabled: !nodeReaderOperations.canAddTaskEntryToSelectedNode(selectedPath),
           onSelect: taskEntryAdd,
         },
         {

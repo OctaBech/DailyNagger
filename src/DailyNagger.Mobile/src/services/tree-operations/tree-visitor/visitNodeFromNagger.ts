@@ -33,6 +33,7 @@ export function visitNodeFromNagger(
       return visitCurrentNode({
         node: nodeWithVisitedTaskLog,
         childPath: taskLogResult.recordedPath,
+        childBubble: taskLogResult.bubble,
         visitNode: visitor.visitNagger,
       });
     }

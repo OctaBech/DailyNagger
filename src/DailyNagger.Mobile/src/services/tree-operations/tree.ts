@@ -1,7 +1,6 @@
 import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree } from "@/models";
 import type { TreeReader } from "./contracts";
 import { targets } from "./targets";
-import { treeMutationOperations } from "@/services/core-tree-operations";
 
 type ReadNaggerResult = {
   readonly freshTree: Tree;
@@ -111,17 +110,29 @@ function readTaskLog(memory: TreeReader, staleTaskItem: TaskItem): ReadTaskLogRe
 }
 
 function replaceNagger(tree: Tree, nagger: Nagger): Tree {
-  const { tree: newTree } = treeMutationOperations.replaceNagger(tree, nagger, () => nagger);
+  const result = targets.visitNode(tree, nagger, {
+    visitNagger: (currentNagger, context) => {
+      return context.isTargetNode ? nagger : currentNagger;
+    },
+  });
 
-  return newTree;
+  if (result.kind === "not-found") {
+    throw new Error(`Nagger '${nagger.id}' was not found in the current tree.`);
+  }
+
+  return result.node as Tree;
 }
 
 function replaceTaskEntry(tree: Tree, taskEntry: TaskEntry): Tree {
-  const { tree: newTree } = treeMutationOperations.replaceTaskEntry(
-    tree,
-    taskEntry,
-    () => taskEntry,
-  );
+  const result = targets.visitNode(tree, taskEntry, {
+    visitTaskEntry: (currentTaskEntry, context) => {
+      return context.isTargetNode ? taskEntry : currentTaskEntry;
+    },
+  });
 
-  return newTree;
+  if (result.kind === "not-found") {
+    throw new Error(`TaskEntry '${taskEntry.id}' was not found in the current tree.`);
+  }
+
+  return result.node as Tree;
 }

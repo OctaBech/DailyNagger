@@ -21,7 +21,7 @@ export const TaskEntryBooleanInput = ({
   return (
     <Pressable hitSlop={8} onPress={onPress} style={[styles.container, style]}>
       {label !== undefined && (
-        <Text selectable={false} style={styles.label}>
+        <Text selectable={false} style={[styles.label, referenceChecked && styles.referenceLabel]}>
           {label}
         </Text>
       )}
@@ -47,6 +47,9 @@ const styles = StyleSheet.create({
     color: nagPlanTheme.taskEntry.inputText,
     fontSize: 15,
     fontWeight: "700",
+  },
+  referenceLabel: {
+    color: nagPlanTheme.taskEntry.referenceText,
   },
   checkbox: {
     backgroundColor: nagPlanTheme.taskEntry.checkboxBackground,

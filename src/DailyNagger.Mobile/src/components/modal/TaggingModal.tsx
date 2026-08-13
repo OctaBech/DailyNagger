@@ -125,7 +125,7 @@ export function TaggingModal({
             <Text style={styles.secondaryButtonText}>Clear</Text>
           </Pressable>
           <Pressable style={[styles.button, styles.primaryButton]} onPress={saveTagName}>
-            <Text style={styles.primaryButtonText}>Save</Text>
+            <Text style={styles.primaryButtonText}>Done</Text>
           </Pressable>
         </View>
       }

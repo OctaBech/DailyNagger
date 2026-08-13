@@ -1,5 +1,5 @@
 import { Activity, memo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Card, Modal } from "@/components";
 import { type TaskItem } from "@/models";
 import { useEditorScreenCommands } from "@/services";
@@ -21,6 +21,7 @@ const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
   const isExpanded = taskItem.clientProps.isExpanded && hasChildren;
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
+  const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
   const toggleExpanded = () => {
     taskItemActions.setExpanded(taskItem, !isExpanded && hasChildren);
   };
@@ -33,7 +34,15 @@ const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
         taskItem.rolloverBehavior === "RemoveWhenDone" && styles.removedOnRolloverCard,
       ]}
     >
-      {hasFocus ? <Card.FocusFrame radius={nagPlanTheme.radius.card} /> : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select task item"
+        onPress={() => taskItemActions.setFocused(taskItem)}
+        style={[
+          styles.railLane,
+          { backgroundColor: hasActiveRail ? nagPlanTheme.rail.active : nagPlanTheme.rail.neutral },
+        ]}
+      />
       <Card.TaskItemFrame>
         <Card.TaskItemField
           taskItem={taskItem}
@@ -81,37 +90,24 @@ const TaskItemCardComponent = ({ taskItem }: TaskItemCardProps) => {
 
 export const TaskItemCard = memo(TaskItemCardComponent);
 
-const taskItemChrome = Card.createStableCardChromeStyleObjects({
-  background: nagPlanTheme.taskItem.background,
-  border: nagPlanTheme.taskItem.border,
-  chrome: nagPlanTheme.cardChrome,
-  radius: nagPlanTheme.radius.card,
-  selectedBackground: nagPlanTheme.taskItem.selectedBackground,
-  selectedBorder: nagPlanTheme.selection.border,
-});
-
 const styles = StyleSheet.create({
-  ...taskItemChrome,
   card: {
-    ...taskItemChrome.card,
+    flexDirection: "row",
+    gap: nagPlanTheme.rail.contentGap,
+    overflow: "hidden",
     position: "relative",
   },
   children: {
     gap: nagPlanTheme.cardDensity.fieldGap,
-    paddingTop: nagPlanTheme.cardDensity.padding,
+    paddingTop: nagPlanTheme.cardDensity.childTopPadding,
   },
   removedOnRolloverCard: {
     backgroundColor: nagPlanTheme.taskItem.removedOnRolloverBackground,
-    borderBottomColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
-    borderLeftColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
-    borderRightColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
-    borderTopColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
   },
   selectedCard: {
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,
-    borderBottomColor: nagPlanTheme.selection.border,
-    borderLeftColor: nagPlanTheme.taskItem.selectedBackground,
-    borderRightColor: nagPlanTheme.selection.border,
-    borderTopColor: nagPlanTheme.taskItem.selectedBackground,
+  },
+  railLane: {
+    width: nagPlanTheme.rail.focusLaneWidth,
   },
 });

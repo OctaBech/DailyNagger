@@ -62,7 +62,7 @@ function VisibleNaggerTargetTimeModal({
             style={[styles.button, styles.primaryButton]}
             onPress={() => onDone(formatTargetTime(draftTime.hours, draftTime.minutes))}
           >
-            <Text style={styles.primaryButtonText}>Save</Text>
+            <Text style={styles.primaryButtonText}>Done</Text>
           </Pressable>
         </View>
       }

@@ -58,6 +58,7 @@ export type VisitRequest =
 
 export type VisitContext = {
   readonly isTargetNode: boolean;
+  readonly isTargetParent: boolean;
   readonly path: readonly TraversedNode[];
 };
 

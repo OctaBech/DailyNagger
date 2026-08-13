@@ -6,9 +6,10 @@ import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
 type TaskEntryCardProps = {
   readonly taskEntry: TaskEntry;
+  readonly railTone: "active" | "completed";
 };
 
-const TaskEntryCardComponent = ({ taskEntry }: TaskEntryCardProps) => {
+const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => {
   const { decimalSeparator, setFocused, setValue } = usePlanScreenCommands().taskEntry;
   useDebugRenderFrameCounter("PlanTaskEntryCard", taskEntry.id);
 
@@ -19,6 +20,8 @@ const TaskEntryCardComponent = ({ taskEntry }: TaskEntryCardProps) => {
       hasFocus={taskEntry.clientProps.hasFocus}
       isSelected={isSelected}
       isRemovedOnRollover={taskEntry.rolloverBehavior === "Remove"}
+      onMarkerPress={() => setFocused(taskEntry)}
+      railTone={railTone}
     >
       <Card.TaskEntryField
         taskEntry={taskEntry}

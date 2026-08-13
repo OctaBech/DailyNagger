@@ -57,11 +57,8 @@ export const NaggerField = (props: NaggerFieldProps) => {
               onFocus={onFocus}
               placeholder="Name the task"
               placeholderTextColor="#6b7c86"
-              style={[
-                cardRowLayout.textInput,
-                styles.title,
-                showComponentOutlines && styles.outlinedComponent,
-              ]}
+              showEditFrame={showComponentOutlines}
+              style={[cardRowLayout.textInput, styles.title]}
             />
           </View>
         ) : (
@@ -90,16 +87,18 @@ export const NaggerField = (props: NaggerFieldProps) => {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Expand nagger log"
-            hitSlop={8}
             onPress={() => {
               onFocus?.();
               onExpandPress();
             }}
             style={({ pressed }) => [styles.expandButton, pressed && styles.expandButtonPressed]}
           >
-            <Text selectable={false} style={styles.expandButtonText}>
-              {isExpanded ? "v" : ">>"}
-            </Text>
+            <Primitives.ExpandIndicator
+              color={nagPlanTheme.taskItem.chevronText}
+              hasExpandableContent
+              isExpanded={isExpanded}
+              size={28}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -117,8 +116,7 @@ export const NaggerField = (props: NaggerFieldProps) => {
           }}
           style={({ pressed }) => [
             styles.schedule,
-            showComponentOutlines && styles.outlinedComponent,
-            isSchedulePickerOpen && styles.activeSchedule,
+              isSchedulePickerOpen && styles.activeSchedule,
             pressed && styles.schedulePressed,
           ]}
         >
@@ -164,7 +162,6 @@ export const NaggerField = (props: NaggerFieldProps) => {
             }}
             style={({ pressed }) => [
               styles.targetTime,
-              showComponentOutlines && styles.outlinedComponent,
               isTargetTimePickerOpen && styles.activeSchedule,
               pressed && styles.schedulePressed,
             ]}
@@ -225,7 +222,8 @@ const styles = StyleSheet.create({
     color: nagPlanTheme.nagger.titleText,
     fontSize: 22,
     fontWeight: "800",
-    paddingRight: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
   },
   titlePressable: {
     alignSelf: "stretch",
@@ -248,23 +246,13 @@ const styles = StyleSheet.create({
   },
   expandButton: {
     alignItems: "center",
-    backgroundColor: nagPlanTheme.screen.text,
-    borderColor: nagPlanTheme.nagger.border,
-    borderRadius: 15,
-    borderWidth: 1,
-    height: 30,
+    alignSelf: "stretch",
     justifyContent: "center",
-    minWidth: 34,
-    paddingHorizontal: 7,
+    minWidth: 32,
+    paddingHorizontal: 2,
   },
   expandButtonPressed: {
     opacity: 0.72,
-  },
-  expandButtonText: {
-    color: nagPlanTheme.taskItem.chevronText,
-    fontSize: 14,
-    fontWeight: "900",
-    lineHeight: 16,
   },
   schedule: {
     alignItems: "center",
@@ -296,14 +284,6 @@ const styles = StyleSheet.create({
   },
   completedScheduleText: {
     color: nagPlanTheme.nagger.completedDueText,
-  },
-  outlinedComponent: {
-    borderColor: "#9fb7c3",
-    borderRadius: 10,
-    borderStyle: "dashed",
-    borderWidth: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
   },
   activeSchedule: {
     borderColor: "#18242b",

@@ -8,9 +8,10 @@ import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
 type TaskLogCardProps = {
   taskLog: TaskLog;
+  readonly parentNaggerHasFocus?: boolean;
 };
 
-const TaskLogCardComponent = ({ taskLog }: TaskLogCardProps) => {
+const TaskLogCardComponent = ({ taskLog, parentNaggerHasFocus = false }: TaskLogCardProps) => {
   const { taskLog: taskLogActions } = useEditorScreenCommands();
   useDebugRenderFrameCounter("EditorTaskLogCard", taskLog.id);
   const [isTagModalVisible, setIsTagModalVisible] = useState(false);
@@ -18,20 +19,25 @@ const TaskLogCardComponent = ({ taskLog }: TaskLogCardProps) => {
 
   return (
     <>
-      <Card.TaskLogFrame hasFocus={taskLog.clientProps.hasFocus} isSelected={isSelected}>
+      <Card.TaskLogFrame
+        hasFocus={taskLog.clientProps.hasFocus}
+        parentNaggerHasFocus={parentNaggerHasFocus}
+        isSelected={isSelected}
+        onRailPress={() => taskLogActions.setFocused(taskLog)}
+      >
         <Card.TaskLogField
+          onFocus={() => taskLogActions.setFocused(taskLog)}
+        />
+        {taskLog.taskItems.map((taskItem) => (
+          <TaskItemCard key={taskItem.id} taskItem={taskItem} />
+        ))}
+        <Card.TaskLogTail
           taskLog={taskLog}
           allowEditTag
           isTagPickerOpen={isTagModalVisible}
           showComponentOutlines
           onFocus={() => taskLogActions.setFocused(taskLog)}
           onPressTag={() => setIsTagModalVisible(true)}
-        />
-        {taskLog.taskItems.map((taskItem) => (
-          <TaskItemCard key={taskItem.id} taskItem={taskItem} />
-        ))}
-        <Card.TaskLogTail
-          onFocus={() => taskLogActions.setFocused(taskLog)}
           isTaskStepAddDisabled
         />
       </Card.TaskLogFrame>

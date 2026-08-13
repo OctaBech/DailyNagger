@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { StyleSheet, View, type ViewStyle } from "react-native";
+import { Pressable, StyleSheet, View, type ViewStyle } from "react-native";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
-import { FocusFrame } from "./FocusFrame";
 
 export type NaggerFrameTone =
   | "active"
@@ -13,15 +12,18 @@ type NaggerFrameProps = {
   readonly children: ReactNode;
   readonly hasFocus?: boolean;
   readonly isPinned?: boolean;
+  readonly onRailPress?: () => void;
   readonly tone: NaggerFrameTone;
 };
 
 export const NaggerFrame = ({
   children,
-  hasFocus = false,
   isPinned = false,
+  onRailPress,
   tone,
 }: NaggerFrameProps) => {
+  const isCompleted = tone === "completed" || tone === "completedSelected";
+
   return (
     <View
       style={[
@@ -30,14 +32,22 @@ export const NaggerFrame = ({
         (tone === "selected" || tone === "completedSelected") && styles.selectedFrame,
       ]}
     >
-      {hasFocus ? <FocusFrame radius={nagPlanTheme.radius.card} /> : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select nagger"
+        onPress={onRailPress}
+        style={[
+          styles.statusLane,
+          { backgroundColor: isCompleted ? nagPlanTheme.rail.completed : nagPlanTheme.rail.active },
+        ]}
+      />
       {isPinned ? (
         <View style={styles.pinMarker}>
           <View style={styles.pinHead} />
           <View style={styles.pinNeedle} />
         </View>
       ) : null}
-      {children}
+      <View style={styles.content}>{children}</View>
     </View>
   );
 };
@@ -45,9 +55,20 @@ export const NaggerFrame = ({
 const styles = StyleSheet.create({
   card: {
     borderRadius: nagPlanTheme.radius.card,
-    borderWidth: 1,
-    padding: nagPlanTheme.cardDensity.padding,
+    borderBottomWidth: nagPlanTheme.cardChrome.borderBottomWidth,
+    borderLeftWidth: nagPlanTheme.cardChrome.borderLeftWidth,
+    borderRightWidth: nagPlanTheme.cardChrome.borderRightWidth,
+    borderTopWidth: nagPlanTheme.cardChrome.borderTopWidth,
+    flexDirection: "row",
+    gap: nagPlanTheme.rail.contentGap,
+    overflow: "hidden",
     position: "relative",
+  },
+  content: {
+    flex: 1,
+    paddingBottom: nagPlanTheme.cardDensity.naggerPadding,
+    paddingRight: nagPlanTheme.cardDensity.naggerPadding,
+    paddingTop: nagPlanTheme.cardDensity.naggerPadding,
   },
   pinMarker: {
     alignItems: "center",
@@ -67,12 +88,7 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     borderWidth: 1,
     height: 18,
-    shadowColor: "#1b1010",
-    shadowOffset: { width: -1, height: 1 },
-    shadowOpacity: 0.28,
-    shadowRadius: 1,
     width: 18,
-    elevation: 2,
   },
   pinNeedle: {
     backgroundColor: "#2f2424",
@@ -82,10 +98,9 @@ const styles = StyleSheet.create({
   },
   selectedFrame: {
     borderColor: nagPlanTheme.selection.border,
-    shadowColor: nagPlanTheme.selection.shadow,
-    shadowOffset: { width: -2, height: 3 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2,
+  },
+  statusLane: {
+    width: nagPlanTheme.rail.statusLaneWidth,
   },
 });
 
@@ -101,11 +116,9 @@ const toneStyles = StyleSheet.create({
   completed: {
     backgroundColor: nagPlanTheme.nagger.completedBackground,
     borderColor: nagPlanTheme.nagger.completedBorder,
-    padding: nagPlanTheme.cardDensity.padding,
   },
   completedSelected: {
     backgroundColor: nagPlanTheme.nagger.completedSelectedBackground,
     borderColor: nagPlanTheme.nagger.completedBorder,
-    padding: nagPlanTheme.cardDensity.padding,
   },
 } satisfies Record<NaggerFrameTone, ViewStyle>);

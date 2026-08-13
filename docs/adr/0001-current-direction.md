@@ -29,8 +29,21 @@ analytics, and lifestyle optimization.
 The product should make current routines, reminders, and observations easy to
 capture and act on without requiring the user to manage a large dashboard.
 
+Automation should be polite. It may suggest, prefill, and reuse known
+user-provided information, but it should not invent new truth, take control away
+from the user, or hide meaningful changes. The user should be able to see,
+correct, or undo what the app did on their behalf.
+
 Task structures should remain easy to reshape as the user's understanding of the
 task improves.
+
+The editor should show the same task tree reality as the plan screen. Editing is
+a tool layer on top of the current tree, not a separate visual mode with a
+different meaning for card colors or completion state.
+
+The editor has its own screen to make editing boundaries obvious to the user:
+they are working on this task tree, with these allowed tools, without reaching
+sideways into unrelated cards.
 
 ## Consequences
 
@@ -41,3 +54,6 @@ task improves.
 - Features should reduce decision load rather than create more planning work.
 - Editing flows should support quick adjustment without making the user feel
   locked into yesterday's task model.
+- Editor-only controls should appear as editing affordances, such as outlines,
+  handles, modals, or action buttons. They should not change what the underlying
+  cards appear to be.

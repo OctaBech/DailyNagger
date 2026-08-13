@@ -43,6 +43,7 @@ export function visitNodeFromTaskLog(
     return visitCurrentNode({
       node: nodeWithVisitedTaskItems,
       childPath: taskItemsResult.recordedPath,
+      childBubble: taskItemsResult.bubble,
       visitNode: visitor.visitTaskLog,
     });
   }

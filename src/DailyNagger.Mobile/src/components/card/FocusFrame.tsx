@@ -2,21 +2,29 @@ import { StyleSheet, View } from "react-native";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 
 type FocusFrameProps = {
+  readonly color?: string;
   readonly radius?: number;
 };
 
-export const FocusFrame = ({ radius = nagPlanTheme.radius.focusFrame }: FocusFrameProps) => {
-  return <View pointerEvents="none" style={[styles.focusFrame, { borderRadius: radius }]} />;
+export const FocusFrame = ({
+  color = nagPlanTheme.selection.focusBorder,
+  radius = nagPlanTheme.radius.focusFrame,
+}: FocusFrameProps) => {
+  return (
+    <View
+      pointerEvents="none"
+      style={[styles.focusRail, { backgroundColor: color, borderRadius: Math.min(radius, 1) }]}
+    />
+  );
 };
 
 const styles = StyleSheet.create({
-  focusFrame: {
-    borderColor: nagPlanTheme.selection.focusBorder,
-    borderWidth: 1,
-    bottom: 1,
-    left: 1,
+  focusRail: {
+    bottom: 0,
+    left: 0,
     position: "absolute",
-    right: 1,
-    top: 1,
+    top: 0,
+    width: nagPlanTheme.rail.focusLaneWidth,
+    zIndex: 3,
   },
 });

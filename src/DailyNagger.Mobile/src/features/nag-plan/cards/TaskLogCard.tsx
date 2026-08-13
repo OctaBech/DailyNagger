@@ -8,9 +8,15 @@ import { useTaskStepNameSuggestions } from "@/task-step-suggestions";
 
 type TaskLogCardProps = {
   taskLog: TaskLog;
+  readonly parentNaggerHasFocus?: boolean;
+  readonly railTone: "active" | "completed";
 };
 
-const TaskLogCardComponent = ({ taskLog }: TaskLogCardProps) => {
+const TaskLogCardComponent = ({
+  taskLog,
+  parentNaggerHasFocus = false,
+  railTone,
+}: TaskLogCardProps) => {
   const { addTaskStep, setFocused } = usePlanScreenCommands().taskLog;
   useDebugRenderFrameCounter("PlanTaskLogCard", taskLog.id);
   const [isTaskStepNameModalVisible, setIsTaskStepNameModalVisible] = useState(false);
@@ -27,18 +33,20 @@ const TaskLogCardComponent = ({ taskLog }: TaskLogCardProps) => {
     <>
       <Card.TaskLogFrame
         hasFocus={taskLog.clientProps.hasFocus}
+        parentNaggerHasFocus={parentNaggerHasFocus}
         isCompleted={isCompleted}
         isSelected={isSelected}
+        onRailPress={() => setFocused(taskLog)}
+        railTone={railTone}
       >
         <Card.TaskLogField
-          taskLog={taskLog}
-          showComponentOutlines={false}
           onFocus={() => setFocused(taskLog)}
         />
         {taskLog.taskItems.map((taskItem) => (
-          <TaskItemCard key={taskItem.id} taskItem={taskItem} />
+          <TaskItemCard key={taskItem.id} taskItem={taskItem} railTone={railTone} />
         ))}
         <Card.TaskLogTail
+          taskLog={taskLog}
           onFocus={() => setFocused(taskLog)}
           onPressAddTaskStep={() => setIsTaskStepNameModalVisible(true)}
         />

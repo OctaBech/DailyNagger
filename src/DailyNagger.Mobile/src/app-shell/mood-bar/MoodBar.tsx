@@ -74,42 +74,45 @@ export const MoodBar = (props: MoodBarProps) => {
           })}
         </View>
 
-        <View style={styles.bubbleRow}>
-          {options.map((mood, index) => {
-            const isSelected = mood.label === selected;
-            const isNearStart = index < 2;
-            const isNearEnd = index >= options.length - 2;
-            const bubbleTheme = moodBubbleThemes[mood.label];
+        {bubbleVisibility.visible && (
+          <View style={[styles.bubbleRow, styles.noPointerEvents]}>
+            {options.map((mood, index) => {
+              const isSelected = mood.label === selected;
+              const isNearStart = index < 2;
+              const isNearEnd = index >= options.length - 2;
+              const bubbleTheme = moodBubbleThemes[mood.label];
 
-            return (
-              <View key={mood.label} style={styles.bubbleSpace}>
-                {isSelected && bubbleVisibility.visible && (
-                  <View
-                    style={[
-                      styles.speechBubbleWrapper,
-                      isNearStart && styles.startBubbleWrapper,
-                      isNearEnd && styles.endBubbleWrapper,
-                    ]}
-                  >
+              return (
+                <View key={mood.label} style={styles.bubbleSpace}>
+                  {isSelected && (
                     <View
                       style={[
-                        styles.bubbleArrowUp,
-                        { borderBottomColor: bubbleTheme.arrowColor },
-                        isNearStart && styles.startBubbleArrowUp,
-                        isNearEnd && styles.endBubbleArrowUp,
+                        styles.speechBubbleWrapper,
+                        styles.noPointerEvents,
+                        isNearStart && styles.startBubbleWrapper,
+                        isNearEnd && styles.endBubbleWrapper,
                       ]}
-                    />
-                    <View style={[styles.bubbleBody, bubbleTheme.body]}>
-                      <Text style={[styles.smileyLabel, bubbleTheme.label, styles.noSelect]}>
-                        {mood.label}
-                      </Text>
+                    >
+                      <View
+                        style={[
+                          styles.bubbleArrowUp,
+                          { borderBottomColor: bubbleTheme.arrowColor },
+                          isNearStart && styles.startBubbleArrowUp,
+                          isNearEnd && styles.endBubbleArrowUp,
+                        ]}
+                      />
+                      <View style={[styles.bubbleBody, bubbleTheme.body]}>
+                        <Text style={[styles.smileyLabel, bubbleTheme.label, styles.noSelect]}>
+                          {mood.label}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -131,11 +134,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: appLayout.moodBar.paddingHorizontal,
     paddingVertical: 5,
-    shadowColor: "#060708",
-    shadowOffset: { width: -3, height: 4 },
-    shadowOpacity: 0.42,
-    shadowRadius: 4,
-    elevation: 5,
   },
   itemContainer: {
     alignItems: "center",
@@ -227,6 +225,9 @@ const styles = StyleSheet.create({
   },
   noSelect: {
     userSelect: "none",
+  },
+  noPointerEvents: {
+    pointerEvents: "none",
   },
 });
 

@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
-import { FocusFrame } from "./FocusFrame";
 
 type TaskEntryFrameProps = {
   readonly children: ReactNode;
   readonly hasFocus?: boolean;
   readonly isSelected?: boolean;
   readonly isRemovedOnRollover?: boolean;
+  readonly onMarkerPress?: () => void;
+  readonly railTone?: "active" | "completed";
 };
 
 export const TaskEntryFrame = ({
@@ -15,7 +16,12 @@ export const TaskEntryFrame = ({
   hasFocus = false,
   isSelected = false,
   isRemovedOnRollover = false,
+  onMarkerPress,
+  railTone = "active",
 }: TaskEntryFrameProps) => {
+  const focusMarkerColor =
+    railTone === "completed" ? nagPlanTheme.rail.completed : nagPlanTheme.rail.active;
+
   return (
     <View
       style={[
@@ -24,24 +30,59 @@ export const TaskEntryFrame = ({
         isSelected && styles.selectedCard,
       ]}
     >
-      {children}
-      {hasFocus ? <FocusFrame radius={nagPlanTheme.radius.control} /> : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select task entry"
+        onPress={onMarkerPress}
+        style={styles.markerLane}
+      >
+        <View
+          style={[
+            styles.marker,
+            hasFocus ? [styles.focusMarker, { backgroundColor: focusMarkerColor }] : styles.neutralMarker,
+          ]}
+        />
+      </Pressable>
+      <View style={styles.content}>{children}</View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    borderColor: nagPlanTheme.taskItem.background,
+    borderColor: "transparent",
     borderRadius: nagPlanTheme.radius.control,
-    borderWidth: 1,
-    position: "relative",
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+    flexDirection: "row",
+    gap: nagPlanTheme.rail.contentGap,
+    overflow: "hidden",
+  },
+  content: {
+    flex: 1,
   },
   removedOnRolloverCard: {
     backgroundColor: nagPlanTheme.taskItem.removedOnRolloverBackground,
-    borderColor: nagPlanTheme.taskItem.removedOnRolloverBorder,
+    borderColor: "transparent",
   },
   selectedCard: {
-    borderColor: nagPlanTheme.selection.border,
+    borderColor: "transparent",
+  },
+  markerLane: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: nagPlanTheme.rail.focusLaneWidth,
+  },
+  marker: {
+    backgroundColor: nagPlanTheme.rail.neutral,
+    width: nagPlanTheme.rail.focusLaneWidth,
+  },
+  focusMarker: {
+    height: nagPlanTheme.rail.entryMarkerHeight,
+  },
+  neutralMarker: {
+    height: nagPlanTheme.rail.entryMarkerNeutralHeight,
   },
 });

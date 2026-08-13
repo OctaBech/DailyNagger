@@ -101,8 +101,16 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
         setValue: (taskEntry: TaskEntry, newValue: string | null) => {
           dispatch("editor-input", "task-entry/set-value", { taskEntry, newValue });
         },
-        setValueType: (taskEntry: TaskEntry, valueType: TaskEntryValueType) => {
-          dispatch("editor-input", "task-entry/set-value-type", { taskEntry, valueType });
+        setValueType: (
+          taskEntry: TaskEntry,
+          valueType: TaskEntryValueType,
+          rolloverBehavior?: TaskEntry["rolloverBehavior"],
+        ) => {
+          dispatch("editor-input", "task-entry/set-value-type", {
+            taskEntry,
+            valueType,
+            rolloverBehavior,
+          });
         },
       },
     }),

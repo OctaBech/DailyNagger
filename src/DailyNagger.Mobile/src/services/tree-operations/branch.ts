@@ -95,6 +95,7 @@ function setIndividualNodeFocus<TNode extends TreeNode>(
       ...node.clientProps,
       isSelected: hasFocus,
       hasFocus: hasFocus && context.isTargetNode,
+      isFocusParent: hasFocus && context.isTargetParent,
     },
   } as TNode;
 }

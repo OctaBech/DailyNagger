@@ -12,6 +12,7 @@ export const TaskItemFrame = ({ children }: TaskItemFrameProps) => {
 
 const styles = StyleSheet.create({
   frame: {
-    padding: nagPlanTheme.cardDensity.padding,
+    flex: 1,
+    padding: nagPlanTheme.cardDensity.taskItemPadding,
   },
 });

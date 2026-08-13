@@ -27,7 +27,5 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     backgroundColor: "#d8dddd",
-    elevation: 0,
-    shadowOpacity: 0,
   },
 });

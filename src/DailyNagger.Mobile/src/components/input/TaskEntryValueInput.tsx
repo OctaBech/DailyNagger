@@ -13,6 +13,7 @@ type TaskEntryValueInputProps = {
   readonly onCommit: (value: string | null) => void;
   readonly commitOnChange?: boolean;
   readonly onPressValueType?: () => void;
+  readonly showEditFrame?: boolean;
   readonly style: StyleProp<TextStyle & ViewStyle>;
 };
 
@@ -48,6 +49,7 @@ function textInput(
     taskEntry,
     onCommit,
     onFocus,
+    showEditFrame = false,
     style,
   } = props;
   const value =
@@ -70,6 +72,7 @@ function textInput(
       editable={editable}
       keyboardType={keyboardType}
       multiline={isTextValue}
+      showEditFrame={showEditFrame}
       textAlign={textAlign}
       style={style}
       invalidInitialStyle={styles.invalidInitialValue}
@@ -105,7 +108,7 @@ function booleanInput(props: TaskEntryValueInputProps) {
 
   const isChecked = isYes(taskEntry.value);
   const isReferenceChecked = !isChecked && isYes(taskEntry.lastTaskRunReferenceValue);
-  const label = isChecked ? "Yes" : isReferenceChecked ? "Previous yes" : "No";
+  const label = isChecked || isReferenceChecked ? "Yes" : "No";
 
   return (
     <TaskEntryBooleanInput

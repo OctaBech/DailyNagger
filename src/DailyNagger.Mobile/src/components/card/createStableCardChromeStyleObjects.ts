@@ -43,9 +43,9 @@ export function createStableCardChromeStyleObjects({
     selectedCard: {
       backgroundColor: selectedBackground,
       borderBottomColor: selectedBorder,
-      borderLeftColor: selectedBackground,
+      borderLeftColor: selectedBorder,
       borderRightColor: selectedBorder,
-      borderTopColor: selectedBackground,
+      borderTopColor: selectedBorder,
     },
   };
 }

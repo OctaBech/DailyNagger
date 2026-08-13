@@ -23,38 +23,45 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
 
   return (
     <>
-      <Card.NaggerFrame
-        hasFocus={nagger.clientProps.hasFocus}
-        isPinned={nagger.pinnedBy !== "None"}
-        tone={isSelected ? "selected" : "active"}
-      >
-        <Card.NaggerField
-          nagger={nagger}
-          isExpanded={isExpanded}
-          allowEditSchedule
-          allowEditTargetTime
-          allowEditTitle
-          isSchedulePickerOpen={isScheduleModalVisible}
-          isTargetTimePickerOpen={isTargetTimeModalVisible}
-          showComponentOutlines
-          onFocus={() => naggerActions.setFocused(nagger)}
-          onTitleCommit={(title) => naggerActions.setTitle(nagger, title)}
-          onSchedulePress={() => setIsScheduleModalVisible(true)}
-          onTargetTimePress={() => setIsTargetTimeModalVisible(true)}
-          onHeaderPress={() => {
-            naggerActions.setExpanded(nagger, !isExpanded);
-          }}
-          onExpandPress={() => {
-            naggerActions.setExpanded(nagger, !isExpanded);
-          }}
-        />
+      <View style={styles.naggerGroup}>
+        <Card.NaggerFrame
+          hasFocus={nagger.clientProps.hasFocus}
+          isPinned={nagger.pinnedBy !== "None"}
+          onRailPress={() => naggerActions.setFocused(nagger)}
+          tone={isSelected ? "selected" : "active"}
+        >
+          <Card.NaggerField
+            nagger={nagger}
+            isExpanded={isExpanded}
+            allowEditSchedule
+            allowEditTargetTime
+            allowEditTitle
+            isSchedulePickerOpen={isScheduleModalVisible}
+            isTargetTimePickerOpen={isTargetTimeModalVisible}
+            showComponentOutlines
+            onFocus={() => naggerActions.setFocused(nagger)}
+            onTitleCommit={(title) => naggerActions.setTitle(nagger, title)}
+            onSchedulePress={() => setIsScheduleModalVisible(true)}
+            onTargetTimePress={() => setIsTargetTimeModalVisible(true)}
+            onHeaderPress={() => {
+              naggerActions.setExpanded(nagger, !isExpanded);
+            }}
+            onExpandPress={() => {
+              naggerActions.setExpanded(nagger, !isExpanded);
+            }}
+          />
+        </Card.NaggerFrame>
 
         <Activity mode={isExpanded ? "visible" : "hidden"}>
           <View style={styles.taskLogPanel}>
-            <TaskLogCard key={nagger.taskLog.id} taskLog={nagger.taskLog} />
+            <TaskLogCard
+              key={nagger.taskLog.id}
+              taskLog={nagger.taskLog}
+              parentNaggerHasFocus={nagger.clientProps.hasFocus}
+            />
           </View>
         </Activity>
-      </Card.NaggerFrame>
+      </View>
 
       <Modal.NaggerScheduleModal
         visible={isScheduleModalVisible}
@@ -87,10 +94,11 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
 export const NagCard = memo(NagCardComponent);
 
 const styles = StyleSheet.create({
+  naggerGroup: {
+    backgroundColor: "transparent",
+  },
   taskLogPanel: {
     backgroundColor: "transparent",
-    borderRadius: nagPlanTheme.radius.card,
-    gap: nagPlanTheme.spacing.taskLog,
-    paddingTop: 8,
+    gap: nagPlanTheme.cardDensity.fieldGap,
   },
 });

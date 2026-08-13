@@ -114,7 +114,7 @@ function useCreateServices(): {
 
   const loading = useLoading(planMemory);
   const startup = useStartup(sending, loading, rollover);
-  const selectMood = (mood: UserMoodLabel) => {
+  const selectMood = useCallback((mood: UserMoodLabel) => {
     const selection = userMood.create({
       mood,
       timeZone: cultureSettings.getUserTimeZone(),
@@ -124,7 +124,7 @@ function useCreateServices(): {
     currentMoodRef.current = selection.mood;
     userMood.select(selection);
     sending.queue(selection);
-  };
+  }, [cultureSettings, sending, userMood]);
 
   // Wiring jsx screen services
   const appShell = useMemo(

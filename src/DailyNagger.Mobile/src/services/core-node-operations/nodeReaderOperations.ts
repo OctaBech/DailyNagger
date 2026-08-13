@@ -9,6 +9,7 @@ import {
 } from "./selectedNodeContextOperations";
 
 export const nodeReaderOperations = {
+  canAddTaskEntryToSelectedNode,
   canSelectedNaggerBePinned,
   canSelectedNaggerBeUnpinned,
   canBePinned,
@@ -19,6 +20,11 @@ export const nodeReaderOperations = {
   canMoveSelectedNodeDown,
   canMoveSelectedNodeUp,
 } as const;
+
+function canAddTaskEntryToSelectedNode(path: TreePath): boolean {
+  const selectedNodeType = selectedPathOperations.tryGetSelectedNode(path)?.nodeType;
+  return selectedNodeType === "TaskItem" || selectedNodeType === "TaskEntry";
+}
 
 function canSelectedNaggerBePinned(selectedNodes: SelectedNodes): boolean {
   return selectedNodes.nagger?.pinnedBy === "None";

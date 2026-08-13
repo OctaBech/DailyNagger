@@ -1,6 +1,6 @@
 import type { TraversedNode } from "../../core-tree-operations/traversed-node/contracts";
 import type { VisitRequest } from "./contracts";
-import type { VisitResult } from "./visitResult";
+import type { VisitBubble, VisitResult } from "./visitResult";
 
 type VisitArrayResult<TNode extends TraversedNode> =
   | {
@@ -12,6 +12,7 @@ type VisitArrayResult<TNode extends TraversedNode> =
       readonly nodes: readonly TNode[];
       readonly recordedPath: readonly TraversedNode[];
       readonly indexFound: number;
+      readonly bubble: VisitBubble;
     };
 
 type VisitTargetArrayNodesProps<TNode extends TraversedNode> = {
@@ -89,6 +90,7 @@ function visitTargetArrayNode<TNode extends TraversedNode>({
       nodes: copiedNodes,
       recordedPath: result.recordedPath,
       indexFound: index,
+      bubble: result.bubble,
     };
   }
 
@@ -120,6 +122,7 @@ function visitAllArrayNodes<TNode extends TraversedNode>({
     nodes: newNodes,
     recordedPath,
     indexFound: getIndexHint(ownerNode, nodes.length),
+    bubble: { kind: "none" },
   };
 }
 

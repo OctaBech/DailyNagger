@@ -7,7 +7,7 @@ export const appTiming = {
   },
   rollover: {
     dayBoundaryTime: "05:00",
-    checkIntervalMs: 15 * 60 * 1000,
+    checkIntervalMs: 2 * 60 * 1000,
   },
   sendQueue: {
     debounceDelayMs: 1000,
