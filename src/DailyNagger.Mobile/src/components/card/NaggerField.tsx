@@ -78,10 +78,12 @@ export const NaggerField = (props: NaggerFieldProps) => {
           </Pressable>
         )}
 
-        <Primitives.ProgressPill
-          done={nagger.taskLog.doneDescendantTaskItemCount}
-          total={nagger.taskLog.descendantTaskItemCount}
-        />
+        <View style={styles.headerControl}>
+          <Primitives.ProgressPill
+            done={nagger.taskLog.doneDescendantTaskItemCount}
+            total={nagger.taskLog.descendantTaskItemCount}
+          />
+        </View>
 
         {allowExpand ? (
           <Pressable
@@ -115,8 +117,10 @@ export const NaggerField = (props: NaggerFieldProps) => {
             if (allowExpand) onHeaderPress?.();
           }}
           style={({ pressed }) => [
+            Primitives.inactiveEditableFrame,
             styles.schedule,
-              isSchedulePickerOpen && styles.activeSchedule,
+            showComponentOutlines && Primitives.editableFrame,
+            isSchedulePickerOpen && styles.activeSchedule,
             pressed && styles.schedulePressed,
           ]}
         >
@@ -161,7 +165,9 @@ export const NaggerField = (props: NaggerFieldProps) => {
               if (allowExpand) onHeaderPress?.();
             }}
             style={({ pressed }) => [
+              Primitives.inactiveEditableFrame,
               styles.targetTime,
+              showComponentOutlines && Primitives.editableFrame,
               isTargetTimePickerOpen && styles.activeSchedule,
               pressed && styles.schedulePressed,
             ]}
@@ -214,9 +220,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   titleRow: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
     gap: 8,
+  },
+  headerControl: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 30,
   },
   title: {
     color: nagPlanTheme.nagger.titleText,
@@ -246,8 +257,8 @@ const styles = StyleSheet.create({
   },
   expandButton: {
     alignItems: "center",
-    alignSelf: "stretch",
     justifyContent: "center",
+    minHeight: 30,
     minWidth: 32,
     paddingHorizontal: 2,
   },

@@ -36,12 +36,7 @@ export const TaskItemCheckmark = ({
 
   return (
     <View
-      style={[
-        styles.box,
-        shapeStyle,
-        styles.readonlyBox,
-        checked && styles.readonlyCheckedBox,
-      ]}
+      style={[styles.box, shapeStyle, styles.readonlyBox, checked && styles.readonlyCheckedBox]}
     >
       {checked && <Text style={styles.checkedMark}>{checkmarkGlyph}</Text>}
     </View>
@@ -51,12 +46,12 @@ export const TaskItemCheckmark = ({
 const styles = StyleSheet.create({
   box: {
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#fffaf3",
     borderColor: "#1d2428",
     borderWidth: 2,
-    height: 20,
-    justifyContent: "center",
-    width: 20,
+    height: 16,
+    width: 16,
   },
   circleBox: {
     borderRadius: 10,
@@ -78,16 +73,16 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   checkedMark: {
-    color: "#1d2428",
+    color: "#287211",
     fontSize: 20,
-    fontWeight: "900",
-    height: 28,
-    left: 0,
+    fontWeight: "100",
+    height: 30,
+    width: 30,
+    left: -6,
+    top: -12,
     lineHeight: 28,
     position: "absolute",
     textAlign: "center",
     textAlignVertical: "center",
-    top: -3,
-    width: 28,
   },
 });

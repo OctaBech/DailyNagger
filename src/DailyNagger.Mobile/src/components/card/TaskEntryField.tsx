@@ -89,6 +89,7 @@ export const TaskEntryField = (props: TaskEntryFieldProps) => {
           onPressValueType={onPressValueType}
           style={[
             styles.valueInput,
+            taskEntry.valueType === "Boolean" && styles.booleanValueInput,
             taskEntry.rolloverBehavior === "CarryOverValue" && styles.carryOverValueInput,
             isValueTypePickerOpen && styles.activeValueTypeInput,
           ]}
@@ -105,7 +106,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     flexDirection: "row",
     gap: 8,
-    paddingHorizontal: 4,
     paddingVertical: 2,
   },
   labelInput: {
@@ -127,6 +127,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     textAlign: "right",
+  },
+  booleanValueInput: {
+    minWidth: 104,
   },
   carryOverValueInput: {
     backgroundColor: "#fff2bf",

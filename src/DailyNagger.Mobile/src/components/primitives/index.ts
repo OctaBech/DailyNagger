@@ -1,3 +1,5 @@
+export { CardSideGutter } from "./CardSideGutter";
+export { editableFrame, inactiveEditableFrame } from "./editableFrame";
 export { ExpandIndicator } from "./ExpandIndicator";
 export { PillButton } from "./PillButton";
 export { ProgressCount } from "./ProgressCount";

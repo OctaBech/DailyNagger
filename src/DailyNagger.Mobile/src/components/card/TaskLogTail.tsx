@@ -9,9 +9,7 @@ type TaskLogTailProps = {
   readonly isTagPickerOpen?: boolean;
   readonly showComponentOutlines?: boolean;
   readonly onFocus?: () => void;
-  readonly isTaskStepAddDisabled?: boolean;
   readonly onPressTag?: () => void;
-  readonly onPressAddTaskStep?: () => void;
 };
 
 export const TaskLogTail = ({
@@ -20,9 +18,7 @@ export const TaskLogTail = ({
   isTagPickerOpen = false,
   showComponentOutlines = false,
   onFocus,
-  isTaskStepAddDisabled = false,
   onPressTag,
-  onPressAddTaskStep,
 }: TaskLogTailProps) => {
   const shouldShowTag = taskLog.tag !== null || showComponentOutlines;
   const tagText = taskLog.tag ?? "tag";
@@ -48,15 +44,6 @@ export const TaskLogTail = ({
           />
         )}
       </View>
-      <View style={styles.actionsArea}>
-        <Primitives.TaskStepAddButton
-          isDisabled={isTaskStepAddDisabled}
-          onPress={() => {
-            onFocus?.();
-            onPressAddTaskStep?.();
-          }}
-        />
-      </View>
     </Pressable>
   );
 };
@@ -65,16 +52,10 @@ const styles = StyleSheet.create({
   field: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
     alignSelf: "stretch",
-    minHeight: 32,
+    minHeight: 48,
   },
   metaArea: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionsArea: {
     alignItems: "center",
     flexDirection: "row",
     gap: 8,

@@ -104,7 +104,7 @@ function getPlaceholderForValueType(taskEntry: TaskEntry, decimalSeparator: stri
 }
 
 function booleanInput(props: TaskEntryValueInputProps) {
-  const { editable, taskEntry, onCommit, onFocus, onPressValueType } = props;
+  const { editable, taskEntry, onCommit, onFocus, onPressValueType, showEditFrame = false } = props;
 
   const isChecked = isYes(taskEntry.value);
   const isReferenceChecked = !isChecked && isYes(taskEntry.lastTaskRunReferenceValue);
@@ -117,6 +117,7 @@ function booleanInput(props: TaskEntryValueInputProps) {
       label={label}
       style={props.style}
       compact
+      showEditFrame={showEditFrame}
       onPress={() => {
         onFocus();
         if (editable) {

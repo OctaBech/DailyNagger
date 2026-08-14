@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { FAB, Portal } from "react-native-paper";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { actionButtonTheme } from "@/components/primitives/actionButtonTheme";
 import { appLayout, appTiming } from "@/config";
 import type { SpeedDialMenu, SpeedDialMenuItem } from "@/services";
@@ -14,10 +15,13 @@ type PaperSpeedDialAction = Omit<SpeedDialMenuItem, "keepOpenAfterPress" | "onSe
 };
 
 export const SpeedDial = ({ menu }: SpeedDialProps) => {
+  const { bottom } = useSafeAreaInsets();
   const [state, setState] = useState<{ open: boolean }>({ open: false });
   const [showLabels, setShowLabels] = useState(false);
 
   const { open } = state;
+  const bottomOffset = Math.max(appLayout.speedDial.bottom, bottom + 12);
+  const actionGridBottom = bottomOffset + appLayout.speedDial.actionGridGap;
   const paperSpeedDialActions = menu.items.map(({ keepOpenAfterPress, onSelect, ...action }) => ({
     ...action,
     onPress: () => {
@@ -61,7 +65,7 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
           ) : null}
 
           {open ? (
-            <View pointerEvents="box-none" style={styles.actionsGrid}>
+            <View pointerEvents="box-none" style={[styles.actionsGrid, { bottom: actionGridBottom }]}>
               {actionRows.map((row) => (
                 <View key={row.key} style={styles.actionRow}>
                   {row.actions.map((action) => (
@@ -96,7 +100,7 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
             color={actionButtonTheme.icon}
             icon={open ? "close" : "plus"}
             onPress={toggleOpen}
-            style={styles.mainButton}
+            style={[styles.mainButton, { bottom: bottomOffset }]}
           />
         </View>
       ) : null}
@@ -137,7 +141,6 @@ const styles = StyleSheet.create({
   },
   actionsGrid: {
     alignItems: "flex-end",
-    bottom: appLayout.speedDial.actionGridBottom,
     gap: 12,
     maxWidth: 360,
     position: "absolute",
@@ -172,7 +175,6 @@ const styles = StyleSheet.create({
   },
   mainButton: {
     backgroundColor: actionButtonTheme.background,
-    bottom: appLayout.speedDial.bottom,
     position: "absolute",
     right: appLayout.speedDial.right,
   },

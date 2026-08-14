@@ -25,9 +25,6 @@ const TaskLogCardComponent = ({ taskLog, parentNaggerHasFocus = false }: TaskLog
         isSelected={isSelected}
         onRailPress={() => taskLogActions.setFocused(taskLog)}
       >
-        <Card.TaskLogField
-          onFocus={() => taskLogActions.setFocused(taskLog)}
-        />
         {taskLog.taskItems.map((taskItem) => (
           <TaskItemCard key={taskItem.id} taskItem={taskItem} />
         ))}
@@ -38,7 +35,6 @@ const TaskLogCardComponent = ({ taskLog, parentNaggerHasFocus = false }: TaskLog
           showComponentOutlines
           onFocus={() => taskLogActions.setFocused(taskLog)}
           onPressTag={() => setIsTagModalVisible(true)}
-          isTaskStepAddDisabled
         />
       </Card.TaskLogFrame>
 

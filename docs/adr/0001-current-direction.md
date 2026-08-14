@@ -45,6 +45,9 @@ The editor has its own screen to make editing boundaries obvious to the user:
 they are working on this task tree, with these allowed tools, without reaching
 sideways into unrelated cards.
 
+See [UI Decisions](../ui-decisions/README.md) for the concrete interaction rules
+that follow from this direction.
+
 ## Consequences
 
 - Screens should prefer current relevance over complete historical context.

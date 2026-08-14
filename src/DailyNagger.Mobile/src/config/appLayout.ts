@@ -9,8 +9,8 @@ export const appLayout = {
     paddingHorizontal: 4,
   },
   speedDial: {
-    actionGridBottom: 154,
-    bottom: 82,
+    actionGridGap: 72,
+    bottom: 34,
     right: 16,
   },
 } as const;

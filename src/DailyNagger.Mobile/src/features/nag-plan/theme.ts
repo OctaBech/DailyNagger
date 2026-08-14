@@ -1,11 +1,15 @@
 export const nagPlanTheme = {
   screen: {
-    background: "#1a1b1d",
+    background: "#f4f1ed",
     text: "#f4f1ed",
     accent: "#d97828",
   },
   screenDensity: {
     horizontalPadding: 8,
+  },
+  gutter: {
+    cardSide: 8,
+    cardSideHalf: 4,
   },
   selection: {
     border: "#2f3b3f",
@@ -18,23 +22,29 @@ export const nagPlanTheme = {
     entryMarkerHeight: 22,
     entryMarkerNeutralHeight: 8,
     focusLaneWidth: 5,
+    empty: "#7fa7b5",
     neutral: "#d6dddd",
     statusLaneWidth: 10,
   },
+  selectionLane: {
+    width: 9,
+    railWidth: 5,
+  },
   nagger: {
     background: "#f4f1ed",
+    activeBackground: "#f7eee5",
     completedBackground: "#eef3e8",
-    selectedBackground: "#f4f1ed",
+    selectedBackground: "#f7eee5",
     completedSelectedBackground: "#eef3e8",
-    border: "#2f3b3f",
-    completedBorder: "#2f3b3f",
+    border: "#b8c2c0",
+    completedBorder: "#b8c9b1",
+    borderWidth: 1,
     titleText: "#19120c",
     dueText: "#263236",
     completedDueText: "#26301f",
   },
   taskLog: {
     background: "#f4f1ed",
-    completedBackground: "#edf2e8",
     border: "#2f3b3f",
     completedBorder: "#2f3b3f",
     foldBorder: "#8d9697",

@@ -20,6 +20,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
   const { setExpanded, setFocused } = usePlanScreenCommands().nagger;
 
   const isTaskLogCompleted = isCompletedTaskLog(nagger.taskLog);
+  const hasTaskItems = nagger.taskLog.descendantTaskItemCount > 0;
   const tone = getNaggerCardTone(nagger.clientProps.isSelected, isTaskLogCompleted);
   const railTone = getRailTone(isTaskLogCompleted);
 
@@ -27,6 +28,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
     <View style={styles.naggerGroup}>
       <Card.NaggerFrame
         hasFocus={nagger.clientProps.hasFocus}
+        hasTaskItems={hasTaskItems}
         isPinned={nagger.pinnedBy !== "None"}
         onRailPress={() => setFocused(nagger)}
         tone={tone}

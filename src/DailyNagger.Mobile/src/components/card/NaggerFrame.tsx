@@ -10,6 +10,7 @@ export type NaggerFrameTone =
 
 type NaggerFrameProps = {
   readonly children: ReactNode;
+  readonly hasTaskItems?: boolean;
   readonly hasFocus?: boolean;
   readonly isPinned?: boolean;
   readonly onRailPress?: () => void;
@@ -18,18 +19,24 @@ type NaggerFrameProps = {
 
 export const NaggerFrame = ({
   children,
+  hasTaskItems = true,
   isPinned = false,
   onRailPress,
   tone,
 }: NaggerFrameProps) => {
   const isCompleted = tone === "completed" || tone === "completedSelected";
+  const statusLaneColor = isCompleted
+    ? nagPlanTheme.rail.completed
+    : hasTaskItems
+      ? nagPlanTheme.rail.active
+      : nagPlanTheme.rail.empty;
 
   return (
     <View
       style={[
         styles.card,
         toneStyles[tone],
-        (tone === "selected" || tone === "completedSelected") && styles.selectedFrame,
+        !hasTaskItems && styles.emptyTaskListCard,
       ]}
     >
       <Pressable
@@ -38,7 +45,7 @@ export const NaggerFrame = ({
         onPress={onRailPress}
         style={[
           styles.statusLane,
-          { backgroundColor: isCompleted ? nagPlanTheme.rail.completed : nagPlanTheme.rail.active },
+          { backgroundColor: statusLaneColor },
         ]}
       />
       {isPinned ? (
@@ -55,10 +62,7 @@ export const NaggerFrame = ({
 const styles = StyleSheet.create({
   card: {
     borderRadius: nagPlanTheme.radius.card,
-    borderBottomWidth: nagPlanTheme.cardChrome.borderBottomWidth,
-    borderLeftWidth: nagPlanTheme.cardChrome.borderLeftWidth,
-    borderRightWidth: nagPlanTheme.cardChrome.borderRightWidth,
-    borderTopWidth: nagPlanTheme.cardChrome.borderTopWidth,
+    borderWidth: nagPlanTheme.nagger.borderWidth,
     flexDirection: "row",
     gap: nagPlanTheme.rail.contentGap,
     overflow: "hidden",
@@ -96,17 +100,17 @@ const styles = StyleSheet.create({
     marginTop: -2,
     width: 3,
   },
-  selectedFrame: {
-    borderColor: nagPlanTheme.selection.border,
-  },
   statusLane: {
     width: nagPlanTheme.rail.statusLaneWidth,
+  },
+  emptyTaskListCard: {
+    backgroundColor: nagPlanTheme.nagger.background,
   },
 });
 
 const toneStyles = StyleSheet.create({
   active: {
-    backgroundColor: nagPlanTheme.nagger.background,
+    backgroundColor: nagPlanTheme.nagger.activeBackground,
     borderColor: nagPlanTheme.nagger.border,
   },
   selected: {

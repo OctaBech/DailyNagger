@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
+import { SelectionLane } from "@/components/selection-lane";
 
 type TaskEntryFrameProps = {
   readonly children: ReactNode;
@@ -19,8 +20,7 @@ export const TaskEntryFrame = ({
   onMarkerPress,
   railTone = "active",
 }: TaskEntryFrameProps) => {
-  const focusMarkerColor =
-    railTone === "completed" ? nagPlanTheme.rail.completed : nagPlanTheme.rail.active;
+  const markerHeight = nagPlanTheme.rail.entryMarkerNeutralHeight;
 
   return (
     <View
@@ -30,19 +30,12 @@ export const TaskEntryFrame = ({
         isSelected && styles.selectedCard,
       ]}
     >
-      <Pressable
-        accessibilityRole="button"
+      <SelectionLane
         accessibilityLabel="Select task entry"
         onPress={onMarkerPress}
-        style={styles.markerLane}
-      >
-        <View
-          style={[
-            styles.marker,
-            hasFocus ? [styles.focusMarker, { backgroundColor: focusMarkerColor }] : styles.neutralMarker,
-          ]}
-        />
-      </Pressable>
+        markerHeight={markerHeight}
+        tone={hasFocus ? railTone : "neutral"}
+      />
       <View style={styles.content}>{children}</View>
     </View>
   );
@@ -57,7 +50,6 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderTopWidth: 0,
     flexDirection: "row",
-    gap: nagPlanTheme.rail.contentGap,
     overflow: "hidden",
   },
   content: {
@@ -69,20 +61,5 @@ const styles = StyleSheet.create({
   },
   selectedCard: {
     borderColor: "transparent",
-  },
-  markerLane: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: nagPlanTheme.rail.focusLaneWidth,
-  },
-  marker: {
-    backgroundColor: nagPlanTheme.rail.neutral,
-    width: nagPlanTheme.rail.focusLaneWidth,
-  },
-  focusMarker: {
-    height: nagPlanTheme.rail.entryMarkerHeight,
-  },
-  neutralMarker: {
-    height: nagPlanTheme.rail.entryMarkerNeutralHeight,
   },
 });

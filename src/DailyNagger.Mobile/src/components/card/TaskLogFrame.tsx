@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import * as Primitives from "@/components/primitives";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
+import { SelectionLane } from "@/components/selection-lane";
 
 type TaskLogFrameProps = {
   readonly children: ReactNode;
   readonly hasFocus?: boolean;
   readonly parentNaggerHasFocus?: boolean;
-  readonly isCompleted?: boolean;
   readonly isSelected?: boolean;
   readonly onRailPress?: () => void;
+  readonly onPressAddTaskStep?: () => void;
   readonly railTone?: "active" | "completed";
 };
 
@@ -16,26 +18,28 @@ export const TaskLogFrame = ({
   children,
   hasFocus = false,
   parentNaggerHasFocus = false,
-  isCompleted = false,
   isSelected = false,
   onRailPress,
+  onPressAddTaskStep,
   railTone = "active",
 }: TaskLogFrameProps) => {
   const hasActiveRail = hasFocus || parentNaggerHasFocus;
-  const railColor = railTone === "completed" ? nagPlanTheme.rail.completed : nagPlanTheme.rail.active;
 
   return (
-    <View style={[styles.card, isCompleted && styles.completedCard, isSelected && styles.selectedCard]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Select task log"
-        onPress={onRailPress}
-        style={[
-          styles.railLane,
-          { backgroundColor: hasActiveRail ? railColor : nagPlanTheme.rail.neutral },
-        ]}
-      />
+    <View style={[styles.card, isSelected && styles.selectedCard]}>
+      <View style={styles.laneArea}>
+        <SelectionLane
+          accessibilityLabel="Select task log"
+          onPress={onRailPress}
+          tone={hasActiveRail ? railTone : "neutral"}
+        />
+      </View>
       <View style={styles.content}>{children}</View>
+      {onPressAddTaskStep !== undefined && (
+        <View style={styles.laneAction}>
+          <Primitives.TaskStepAddButton onPress={onPressAddTaskStep} />
+        </View>
+      )}
     </View>
   );
 };
@@ -43,24 +47,24 @@ export const TaskLogFrame = ({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: nagPlanTheme.taskLog.background,
-    borderTopColor: nagPlanTheme.taskLog.foldBorder,
-    borderTopWidth: 1,
     flexDirection: "row",
     overflow: "hidden",
     position: "relative",
   },
   content: {
     flex: 1,
-    gap: nagPlanTheme.cardDensity.fieldGap,
-    paddingBottom: nagPlanTheme.cardDensity.taskLogPadding,
-    paddingRight: nagPlanTheme.cardDensity.taskLogPadding,
-    paddingTop: nagPlanTheme.cardDensity.taskLogPadding,
   },
-  railLane: {
-    width: nagPlanTheme.rail.focusLaneWidth,
+  laneAction: {
+    alignItems: "center",
+    bottom: 10,
+    left: 0,
+    position: "absolute",
+    width: 56,
   },
-  completedCard: {
-    backgroundColor: nagPlanTheme.taskLog.completedBackground,
+  laneArea: {
+    alignSelf: "stretch",
+    position: "relative",
+    width: nagPlanTheme.selectionLane.width,
   },
   selectedCard: {
     backgroundColor: nagPlanTheme.taskLog.background,

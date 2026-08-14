@@ -1,4 +1,5 @@
 import { appTiming } from "@/config";
+import { editableFrame, inactiveEditableFrame } from "@/components/primitives/editableFrame";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { StyleProp, TextInputProps, TextStyle } from "react-native";
 import { TextInput } from "react-native";
@@ -175,6 +176,7 @@ export function CommitTextInput<TCommitValue extends string | null = string>({
       : undefined;
   const inputStyle = useMemo(
     () => [
+      inactiveEditableFrame,
       style,
       hasInvalidInitialValue && invalidInitialStyle,
       fitContentWidth === undefined ? undefined : { width: fitContentWidth },
@@ -186,8 +188,7 @@ export function CommitTextInput<TCommitValue extends string | null = string>({
             textAlignVertical: "top" as const,
           }
         : undefined,
-      editFrameBaseStyle,
-      showEditFrame && editFrameEditableStyle,
+      showEditFrame && editableFrame,
       webFocusOutlineHiddenStyle,
       { textAlign },
     ],
@@ -281,18 +282,6 @@ const StableTextInput = memo(function StableTextInput({
 const webFocusOutlineHiddenStyle = {
   outlineColor: "transparent",
   outlineWidth: 0,
-} as const;
-
-const editFrameBaseStyle = {
-  borderColor: "transparent",
-  borderRadius: 1,
-  borderStyle: "solid",
-  borderWidth: 1,
-} as const;
-
-const editFrameEditableStyle = {
-  borderColor: "#9fb7c3",
-  borderStyle: "dashed",
 } as const;
 
 function getReplacementTextForInvalidInitialValue(rawText: string, currentText: string): string {

@@ -1,6 +1,6 @@
 import { Activity, memo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { Card } from "@/components";
+import { StyleSheet, View } from "react-native";
+import { Card, SelectionLane } from "@/components";
 import { type TaskItem } from "@/models";
 import { usePlanScreenCommands } from "@/services";
 import { TaskEntryCard } from "./TaskEntryCard";
@@ -33,14 +33,10 @@ const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
         taskItem.rolloverBehavior === "RemoveWhenDone" && styles.removedOnRolloverCard,
       ]}
     >
-      <Pressable
-        accessibilityRole="button"
+      <SelectionLane.SelectionLane
         accessibilityLabel="Select task item"
         onPress={() => setFocused(taskItem)}
-        style={[
-          styles.railLane,
-          { backgroundColor: hasActiveRail ? getRailColor(railTone) : nagPlanTheme.rail.neutral },
-        ]}
+        tone={hasActiveRail ? railTone : "neutral"}
       />
       <Card.TaskItemFrame>
         <Card.TaskItemField
@@ -74,14 +70,9 @@ const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
 
 export const TaskItemCard = memo(TaskItemCardComponent);
 
-function getRailColor(railTone: TaskItemCardProps["railTone"]): string {
-  return railTone === "completed" ? nagPlanTheme.rail.completed : nagPlanTheme.rail.active;
-}
-
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    gap: nagPlanTheme.rail.contentGap,
     overflow: "hidden",
     position: "relative",
   },
@@ -94,8 +85,5 @@ const styles = StyleSheet.create({
   },
   selectedCard: {
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,
-  },
-  railLane: {
-    width: nagPlanTheme.rail.focusLaneWidth,
   },
 });

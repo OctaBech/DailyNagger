@@ -1,4 +1,8 @@
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  editableFrame,
+  inactiveEditableFrame,
+} from "@/components/primitives/editableFrame";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 
 type TaskEntryBooleanInputProps = {
@@ -8,6 +12,7 @@ type TaskEntryBooleanInputProps = {
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   compact?: boolean;
+  showEditFrame?: boolean;
 };
 
 export const TaskEntryBooleanInput = ({
@@ -17,9 +22,14 @@ export const TaskEntryBooleanInput = ({
   onPress,
   style,
   compact = false,
+  showEditFrame = false,
 }: TaskEntryBooleanInputProps) => {
   return (
-    <Pressable hitSlop={8} onPress={onPress} style={[styles.container, style]}>
+    <Pressable
+      hitSlop={8}
+      onPress={onPress}
+      style={[inactiveEditableFrame, styles.container, style, showEditFrame && editableFrame]}
+    >
       {label !== undefined && (
         <Text selectable={false} style={[styles.label, referenceChecked && styles.referenceLabel]}>
           {label}
@@ -54,7 +64,7 @@ const styles = StyleSheet.create({
   checkbox: {
     backgroundColor: nagPlanTheme.taskEntry.checkboxBackground,
     borderColor: nagPlanTheme.taskEntry.checkboxBorder,
-    borderRadius: nagPlanTheme.radius.checkbox,
+    borderRadius: editableFrame.borderRadius,
     borderWidth: 4,
     height: 34,
     width: 34,
@@ -62,7 +72,7 @@ const styles = StyleSheet.create({
   compactCheckbox: {
     backgroundColor: nagPlanTheme.taskEntry.checkboxBackground,
     borderColor: nagPlanTheme.taskEntry.checkboxBorder,
-    borderRadius: 5,
+    borderRadius: editableFrame.borderRadius,
     borderWidth: 3,
     height: 24,
     width: 24,

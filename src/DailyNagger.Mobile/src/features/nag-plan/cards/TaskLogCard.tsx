@@ -26,7 +26,6 @@ const TaskLogCardComponent = ({
     [suggestions, taskLog],
   );
 
-  const isCompleted = isCompletedTaskLog(taskLog);
   const isSelected = taskLog.clientProps.isSelected;
 
   return (
@@ -34,21 +33,20 @@ const TaskLogCardComponent = ({
       <Card.TaskLogFrame
         hasFocus={taskLog.clientProps.hasFocus}
         parentNaggerHasFocus={parentNaggerHasFocus}
-        isCompleted={isCompleted}
         isSelected={isSelected}
         onRailPress={() => setFocused(taskLog)}
+        onPressAddTaskStep={() => {
+          setFocused(taskLog);
+          setIsTaskStepNameModalVisible(true);
+        }}
         railTone={railTone}
       >
-        <Card.TaskLogField
-          onFocus={() => setFocused(taskLog)}
-        />
         {taskLog.taskItems.map((taskItem) => (
           <TaskItemCard key={taskItem.id} taskItem={taskItem} railTone={railTone} />
         ))}
         <Card.TaskLogTail
           taskLog={taskLog}
           onFocus={() => setFocused(taskLog)}
-          onPressAddTaskStep={() => setIsTaskStepNameModalVisible(true)}
         />
       </Card.TaskLogFrame>
 
@@ -63,13 +61,6 @@ const TaskLogCardComponent = ({
 };
 
 export const TaskLogCard = memo(TaskLogCardComponent);
-
-function isCompletedTaskLog(taskLog: TaskLog): boolean {
-  return (
-    taskLog.descendantTaskItemCount > 0 &&
-    taskLog.doneDescendantTaskItemCount === taskLog.descendantTaskItemCount
-  );
-}
 
 type TaskStepNameSuggestion = {
   readonly name: string;

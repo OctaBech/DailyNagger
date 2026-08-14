@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text } from "react-native";
+import { editableFrame, inactiveEditableFrame } from "./editableFrame";
 
 type PillButtonProps = {
   readonly label: string;
@@ -24,10 +25,11 @@ export function PillButton({
         numberOfLines={1}
         ellipsizeMode="tail"
         style={[
+          inactiveEditableFrame,
           styles.pill,
           { maxWidth },
           isEmpty && styles.emptyPill,
-          showOutline && styles.outlinedPill,
+          showOutline && editableFrame,
           isActive && styles.activePill,
         ]}
       >
@@ -54,14 +56,6 @@ const styles = StyleSheet.create({
   emptyPill: {
     color: "#7f929d",
     opacity: 0.64,
-  },
-  outlinedPill: {
-    borderColor: "#9fb7c3",
-    borderRadius: 10,
-    borderStyle: "dashed",
-    borderWidth: 2,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
   },
   activePill: {
     borderColor: "#18242b",
