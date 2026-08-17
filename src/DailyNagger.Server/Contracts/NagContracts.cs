@@ -391,6 +391,7 @@ public sealed record SaveUserMoodPayload(
     string? TimeZone = null,
     string? Locale = null);
 
+[method: System.Text.Json.Serialization.JsonConstructor]
 public sealed record SaveUserMoodRequest(
     Guid CommunityId,
     Guid UserId,
