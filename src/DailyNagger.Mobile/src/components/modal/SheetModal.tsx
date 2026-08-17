@@ -2,10 +2,12 @@ import { useModalKeyboardBoundary } from "@/app-shell";
 import { appLayout, appMotion } from "@/config";
 import { useEffect, createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
-import { Animated, Keyboard, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Keyboard, Modal, Pressable, StyleSheet, View } from "react-native";
 import type { KeyboardEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ModalKeyboardBoundaryOwner } from "@/app-shell";
+import { modalTheme } from "./theme";
+import { SheetHeader } from "./SheetHeader";
 
 type SheetModalProps = {
   readonly visible: boolean;
@@ -110,17 +112,14 @@ export function SheetModal({
               },
             ]}
           >
-            <View style={styles.header}>
-              <Text style={styles.title}>{title}</Text>
-              {headerActionPlacement === "title-row" ? headerAction : null}
-            </View>
+            <SheetHeader
+              action={headerActionPlacement === "title-row" ? headerAction : null}
+              title={title}
+              onDismiss={onDismiss}
+            />
             {headerAction === undefined || headerActionPlacement === "title-row" ? null : (
               <View style={styles.headerActions}>{headerAction}</View>
             )}
-            <Pressable style={styles.closeButton} onPress={onDismiss}>
-              <View style={[styles.closeIconLine, styles.closeIconLineForward]} />
-              <View style={[styles.closeIconLine, styles.closeIconLineBackward]} />
-            </Pressable>
             {children}
             {footer === undefined ? null : <View style={styles.footer}>{footer}</View>}
           </Animated.View>
@@ -152,7 +151,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backdropScrim: {
-    backgroundColor: "#000",
+    backgroundColor: modalTheme.sheet.backdrop,
     bottom: 0,
     left: 0,
     position: "absolute",
@@ -160,7 +159,7 @@ const styles = StyleSheet.create({
     top: 0,
   },
   sheet: {
-    backgroundColor: "#f8f4ef",
+    backgroundColor: modalTheme.sheet.background,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     bottom: 0,
@@ -172,56 +171,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
   },
-  header: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    gap: 12,
-    justifyContent: "space-between",
-  },
-  title: {
-    color: "#18242b",
-    flexGrow: 1,
-    flexShrink: 1,
-    fontSize: 22,
-    fontWeight: "900",
-  },
   headerActions: {
     alignItems: "center",
     flexDirection: "row",
     gap: 8,
     justifyContent: "flex-end",
   },
-  closeButton: {
-    alignItems: "center",
-    backgroundColor: "#f8f4ef",
-    borderColor: "#d8d1c9",
-    borderRadius: 22,
-    borderWidth: 1,
-    justifyContent: "center",
-    height: 44,
-    position: "absolute",
-    right: 16,
-    top: -18,
-    width: 44,
-  },
-  closeIconLine: {
-    backgroundColor: "#51636d",
-    borderRadius: 2,
-    height: 4,
-    position: "absolute",
-    width: 28,
-  },
-  closeIconLineForward: {
-    transform: [{ rotate: "45deg" }],
-  },
-  closeIconLineBackward: {
-    transform: [{ rotate: "-45deg" }],
-  },
   keyboardLiftRegion: {
     gap: 12,
   },
   footer: {
-    borderTopColor: "#ddd6cf",
+    borderTopColor: modalTheme.sheet.footerBorder,
     borderTopWidth: 1,
     paddingTop: 12,
   },

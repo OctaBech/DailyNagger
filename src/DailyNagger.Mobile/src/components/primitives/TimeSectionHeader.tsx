@@ -32,12 +32,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    color: nagPlanTheme.screen.text,
+    color: nagPlanTheme.nagger.titleText,
     fontSize: 15,
     fontWeight: "900",
   },
   range: {
-    color: "#aeb8bd",
+    color: nagPlanTheme.rail.empty,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -45,6 +45,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#3e464d",
     height: 1,
     marginTop: 4,
-    width: 120,
+    width: 180,
   },
 });

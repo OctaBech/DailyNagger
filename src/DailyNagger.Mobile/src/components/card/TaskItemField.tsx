@@ -12,9 +12,11 @@ type TaskItemFieldProps = {
   readonly allowEditName?: boolean;
   readonly allowEditTag?: boolean;
   readonly isTagPickerOpen?: boolean;
+  readonly showTag?: boolean;
   readonly showComponentOutlines?: boolean;
   readonly muteCheckmark?: boolean;
   readonly checkmarkShape?: "circle" | "square";
+  readonly forceExpandableIndicator?: boolean;
   readonly onFocus?: () => void;
   readonly onNameFocus?: () => void;
   readonly onNameCommit?: (name: string) => void;
@@ -30,9 +32,11 @@ export const TaskItemField = ({
   allowEditName = false,
   allowEditTag = false,
   isTagPickerOpen = false,
+  showTag = true,
   showComponentOutlines = false,
   muteCheckmark = false,
   checkmarkShape = "square",
+  forceExpandableIndicator = false,
   onFocus,
   onNameFocus,
   onNameCommit,
@@ -40,7 +44,7 @@ export const TaskItemField = ({
   onExpandPress,
   onPressTag,
 }: TaskItemFieldProps) => {
-  const shouldShowTag = taskItem.tag !== null || showComponentOutlines;
+  const shouldShowTag = showTag && (taskItem.tag !== null || showComponentOutlines);
   const tagText = taskItem.tag ?? "tag";
 
   function focusAndRun(action?: () => void) {
@@ -93,7 +97,7 @@ export const TaskItemField = ({
 
       <Pressable
         onPress={() => focusAndRun(onExpandPress)}
-        style={({ pressed }) => [styles.expandArea, pressed && styles.pressedArea]}
+        style={styles.expandArea}
       >
         <Primitives.ProgressCount
           color={nagPlanTheme.taskItem.progressText}
@@ -102,7 +106,7 @@ export const TaskItemField = ({
         />
         <Primitives.ExpandIndicator
           color={nagPlanTheme.taskItem.chevronText}
-          hasExpandableContent={hasChildren}
+          hasExpandableContent={hasChildren || forceExpandableIndicator}
           isExpanded={isExpanded}
         />
       </Pressable>
@@ -120,11 +124,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: nagPlanTheme.cardDensity.fieldPaddingHorizontal,
     paddingVertical: nagPlanTheme.cardDensity.fieldPaddingVertical,
   },
-  pressedArea: {
-    backgroundColor: nagPlanTheme.taskItem.pressedBackground,
-  },
   titleControl: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     paddingVertical: 3,
   },
   title: {

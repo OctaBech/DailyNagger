@@ -1,5 +1,6 @@
 import type { NagPlanDto, NaggerDto, TaskLogDto } from "@/api";
-import type { NagPlan, Nagger, TaskLog } from "@/models";
+import type { NagPlan, Nagger, ScheduleRule, TaskLog } from "@/models";
+import { scheduleRuleModelToDto } from "@/models";
 import {
   naggerClientModelExtensionDefaults,
   nagPlanClientModelExtensionDefaults,
@@ -16,7 +17,15 @@ export function nagPlanToDto(nagPlan: NagPlan): NagPlanDto {
       return stripClientModelExtension(nagPlanToDto, nagPlanClientModelExtensionDefaults);
     },
     (naggerToDto) => {
-      return stripClientModelExtension(naggerToDto, naggerClientModelExtensionDefaults);
+      return stripClientModelExtension(
+        {
+          ...naggerToDto,
+          scheduleRules: (naggerToDto.scheduleRules as readonly ScheduleRule[]).map(
+            scheduleRuleModelToDto,
+          ),
+        },
+        naggerClientModelExtensionDefaults,
+      );
     },
     (taskLogToDto) => {
       return stripClientModelExtension(taskLogToDto, taskLogClientModelExtensionDefaults);

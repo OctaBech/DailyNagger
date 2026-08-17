@@ -65,8 +65,8 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                 [
                     new ScheduleRule
                     {
-                        RuleType = ScheduleRuleType.MonthlyDay,
-                        Day = 1
+                        RuleType = ScheduleRuleType.Date,
+                        RuleJson = MonthlyDayRuleJson(1)
                     }
                 ]
             });
@@ -92,8 +92,8 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                     && nag.Title == "Data read test nag"
                     && nag.ActiveLogDueOn == new DateOnly(2026, 6, 1)
                     && nag.ScheduleRules.Any(rule =>
-                        rule.RuleType == ScheduleRuleType.MonthlyDay
-                        && rule.Day == 1));
+                        rule.RuleType == ScheduleRuleType.Date
+                        && rule.RuleJson == MonthlyDayRuleJson(1)));
         }
         finally
         {
@@ -105,6 +105,15 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
         await controlTransaction.RollbackAsync();
     }
 
+
+    private static string MonthlyDayRuleJson(int dayOfMonth) =>
+        JsonSerializer.Serialize(
+            new
+            {
+                year = 0,
+                month = 0,
+                dayOfMonth
+            });
     private static DailyNaggerControlDbContext CreateControlDbContext()
     {
         var options = new DbContextOptionsBuilder<DailyNaggerControlDbContext>()

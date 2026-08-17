@@ -1,20 +1,45 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { Nagger, ScheduleRule } from "@/models";
+import {
+  SCHEDULE_EVERY,
+  getScheduleRuleKey,
+  type Nagger,
+  type ScheduleRule,
+  type ScheduleWeekday,
+} from "@/models";
 import { newGuid } from "@/shared";
 import { SheetModal } from "./SheetModal";
+import { SheetButton } from "./SheetButton";
+import { SheetChip } from "./SheetChip";
+import { SheetChipRow } from "./SheetChipRow";
+import { SheetFooterActions } from "./SheetFooterActions";
+import { SheetHeadingBelt } from "./SheetHeadingBelt";
+import { SheetSection } from "./SheetSection";
+import { SheetText } from "./SheetText";
+import { SheetWheel } from "./SheetWheel";
 
-type ScheduleTab = "weekdays" | "dates" | "special";
+type ScheduleBuilderType = ScheduleRule["ruleType"];
+
+const scheduleBuilderOptions = [
+  { label: "Weekday", value: "Weekday" },
+  { label: "Date", value: "Date" },
+  { label: "Holiday", value: "Holiday" },
+] as const satisfies readonly { label: string; value: ScheduleBuilderType }[];
 
 const weekdayRules = [
-  { label: "Mon", ruleType: "Monday" },
-  { label: "Tue", ruleType: "Tuesday" },
-  { label: "Wed", ruleType: "Wednesday" },
-  { label: "Thu", ruleType: "Thursday" },
-  { label: "Fri", ruleType: "Friday" },
-  { label: "Sat", ruleType: "Saturday" },
-  { label: "Sun", ruleType: "Sunday" },
+  { label: "Every", value: 0 },
+  { label: "Mon", value: 1 },
+  { label: "Tue", value: 2 },
+  { label: "Wed", value: 3 },
+  { label: "Thu", value: 4 },
+  { label: "Fri", value: 5 },
+  { label: "Sat", value: 6 },
+  { label: "Sun", value: 7 },
 ] as const;
+
+const weekdayWheelOptions = weekdayRules.map((rule) => ({
+  label: rule.label,
+  value: rule.value,
+}));
 
 type NaggerScheduleModalProps = {
   readonly visible: boolean;
@@ -35,40 +60,58 @@ export const NaggerScheduleModal = (props: NaggerScheduleModalProps) => {
 function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
   const { visible, nagger, getPreviewDueOn, onDismiss, onDone } = props;
 
-  const [selectedTab, setSelectedTab] = useState<ScheduleTab>("weekdays");
+  const [selectedBuilderType, setSelectedBuilderType] = useState<ScheduleBuilderType>("Weekday");
+  const [selectedWeekday, setSelectedWeekday] = useState<ScheduleWeekday>(1);
 
   const [draftRules, setDraftRules] = useState<readonly ScheduleRule[]>(nagger.scheduleRules);
   const previewDueOn = getPreviewDueOn(draftRules);
+  const selectedWeekdays = draftRules
+    .filter(isWeekdayRule)
+    .filter((rule) => rule.rule.month === SCHEDULE_EVERY && rule.rule.position === SCHEDULE_EVERY)
+    .map((rule) => rule.rule.weekday);
+  const displayRules = getDisplayRules(draftRules);
 
-  function addScheduleRule(
-    ruleType: ScheduleRule["ruleType"],
-    values: Pick<ScheduleRule, "year" | "month" | "day"> = {
-      year: null,
-      month: null,
-      day: null,
-    },
-  ): void {
-    const newRule: ScheduleRule = {
+  function createWeekdayScheduleRule(weekday: ScheduleWeekday): ScheduleRule {
+    return {
       id: newGuid(),
-      ruleType,
-      ...values,
+      ruleType: "Weekday",
+      rule: {
+        month: SCHEDULE_EVERY,
+        position: SCHEDULE_EVERY,
+        weekday,
+      },
     };
-
-    const ruleAlreadyExists = draftRules.some(
-      (rule) =>
-        rule.ruleType === newRule.ruleType &&
-        rule.year === newRule.year &&
-        rule.month === newRule.month &&
-        rule.day === newRule.day,
-    );
-
-    if (ruleAlreadyExists) return;
-
-    setDraftRules([...draftRules, newRule]);
   }
 
   function removeScheduleRule(ruleId: string): void {
     setDraftRules(draftRules.filter((rule) => rule.id !== ruleId));
+  }
+
+  function addSelectedWeekdayRule(): void {
+    const selectedRule = createWeekdayScheduleRule(selectedWeekday);
+    const selectedRuleKey = getScheduleRuleKey(selectedRule);
+
+    if (draftRules.some((rule) => getScheduleRuleKey(rule) === selectedRuleKey)) return;
+
+    const simpleWeekdayRulesV1 = draftRules.filter(
+      (rule) =>
+        !isWeekdayRule(rule) ||
+        rule.rule.month !== SCHEDULE_EVERY ||
+        rule.rule.position !== SCHEDULE_EVERY ||
+        (selectedWeekday !== SCHEDULE_EVERY && rule.rule.weekday !== SCHEDULE_EVERY),
+    );
+
+    const draftRulesV1 =
+      selectedWeekday === SCHEDULE_EVERY
+        ? draftRules.filter(
+            (rule) =>
+              !isWeekdayRule(rule) ||
+              rule.rule.month !== SCHEDULE_EVERY ||
+              rule.rule.position !== SCHEDULE_EVERY,
+          )
+        : simpleWeekdayRulesV1;
+
+    setDraftRules([...draftRulesV1, selectedRule]);
   }
 
   return (
@@ -78,96 +121,94 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
       title="Build schedule"
       onDismiss={onDismiss}
       footer={
-        <View style={styles.actions}>
-          <Pressable style={[styles.button, styles.doneButton]} onPress={() => onDone(draftRules)}>
-            <Text style={styles.buttonText}>Done</Text>
-          </Pressable>
-        </View>
+        <SheetFooterActions>
+          <SheetButton
+            area="footer"
+            label="Done"
+            tone="primary"
+            onPress={() => onDone(draftRules)}
+          />
+        </SheetFooterActions>
       }
     >
-        <View style={styles.selectedRules}>
+      <SheetSection>
+        <SheetChipRow>
           {draftRules.length === 0 ? (
-            <Text selectable={false} style={styles.ruleChip}>
-              Never
-            </Text>
+            <SheetChip label="Never" tone="selected" />
           ) : (
-            draftRules.map((rule) => (
-              <Pressable key={rule.id} onPress={() => removeScheduleRule(rule.id)}>
-                <Text selectable={false} style={styles.ruleChip}>
-                  {getScheduleRuleText(rule)}
-                </Text>
-              </Pressable>
+            displayRules.map((rule) => (
+              <SheetChip
+                key={rule.id}
+                label={getScheduleRuleText(rule)}
+                tone="selected"
+                onPress={() => removeScheduleRule(rule.id)}
+              />
             ))
           )}
-          <Text selectable={false} style={styles.previewChip}>
-            {getPreviewText(previewDueOn)}
-          </Text>
-        </View>
+        </SheetChipRow>
+        <SheetText tone="status">{getPreviewText(previewDueOn)}</SheetText>
+      </SheetSection>
 
-        <View style={styles.builder}>
-          <View style={styles.tabs}>
-            <Pressable
-              style={[styles.tabButton, selectedTab === "weekdays" && styles.selectedTabButton]}
-              onPress={() => setSelectedTab("weekdays")}
-            >
-              <Text style={styles.tabButtonText}>Weekdays</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.tabButton, selectedTab === "dates" && styles.selectedTabButton]}
-              onPress={() => setSelectedTab("dates")}
-            >
-              <Text style={styles.tabButtonText}>Dates</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.tabButton, selectedTab === "special" && styles.selectedTabButton]}
-              onPress={() => setSelectedTab("special")}
-            >
-              <Text style={styles.tabButtonText}>Special</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.tabContent}>
-            {selectedTab === "weekdays" ? (
-              <View style={styles.weekdayButtons}>
-                {weekdayRules.map((rule) => (
-                  <Pressable
-                    key={rule.ruleType}
-                    style={styles.ruleButton}
-                    onPress={() => addScheduleRule(rule.ruleType)}
-                  >
-                    <Text style={styles.ruleButtonText}>{rule.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.placeholderText}>{getTabPlaceholderText(selectedTab)}</Text>
-            )}
-          </View>
-        </View>
+      <SheetSection>
+        <SheetHeadingBelt
+          options={scheduleBuilderOptions}
+          value={selectedBuilderType}
+          onChange={setSelectedBuilderType}
+        />
+        {selectedBuilderType === "Weekday" ? (
+          <>
+            <SheetWheel
+              label="Day"
+              markedValues={selectedWeekdays}
+              options={weekdayWheelOptions}
+              orientation="horizontal"
+              value={selectedWeekday}
+              onChange={setSelectedWeekday}
+            />
+            <SheetButton
+              area="body"
+              label="Add"
+              tone="primary"
+              onPress={addSelectedWeekdayRule}
+            />
+          </>
+        ) : (
+          <SheetText tone="placeholder">{getBuilderPlaceholderText(selectedBuilderType)}</SheetText>
+        )}
+      </SheetSection>
     </SheetModal>
   );
 }
 
+function isWeekdayRule(rule: ScheduleRule): rule is Extract<ScheduleRule, { ruleType: "Weekday" }> {
+  return rule.ruleType === "Weekday";
+}
+
+function getDisplayRules(draftRules: readonly ScheduleRule[]): readonly ScheduleRule[] {
+  const weekdayRuleIndexByValue = new Map(
+    weekdayRules.map((weekdayRule, index) => [weekdayRule.value, index]),
+  );
+  const weekdayRulesV1 = draftRules
+    .filter(isWeekdayRule)
+    .sort(
+      (left, right) =>
+        weekdayRuleIndexByValue.get(left.rule.weekday)! -
+        weekdayRuleIndexByValue.get(right.rule.weekday)!,
+    );
+  const nonWeekdayRules = draftRules.filter((rule) => !isWeekdayRule(rule));
+
+  return [...weekdayRulesV1, ...nonWeekdayRules];
+}
+
 function getScheduleRuleText(rule: ScheduleRule): string {
   switch (rule.ruleType) {
-    case "Monday":
-      return "Mon";
-    case "Tuesday":
-      return "Tue";
-    case "Wednesday":
-      return "Wed";
-    case "Thursday":
-      return "Thu";
-    case "Friday":
-      return "Fri";
-    case "Saturday":
-      return "Sat";
-    case "Sunday":
-      return "Sun";
-    default:
-      return rule.ruleType;
+    case "Weekday":
+      return weekdayRules.find((weekdayRule) => weekdayRule.value === rule.rule.weekday)?.label ??
+        "Weekday";
+    case "Date":
+      return "Date";
+    case "Holiday":
+      return "Holiday";
   }
 }
 
@@ -177,120 +218,13 @@ function getPreviewText(previewDueOn: string | null): string {
   return `Next due ${previewDueOn}`;
 }
 
-function getTabPlaceholderText(selectedTab: ScheduleTab): string {
-  switch (selectedTab) {
-    case "weekdays":
+function getBuilderPlaceholderText(builderType: ScheduleBuilderType): string {
+  switch (builderType) {
+    case "Weekday":
       return "Weekday rules go here.";
-    case "dates":
+    case "Date":
       return "Date rules go here.";
-    case "special":
-      return "Special rules go here.";
+    case "Holiday":
+      return "Holiday rules go here.";
   }
 }
-
-const styles = StyleSheet.create({
-  selectedRules: {
-    alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  ruleChip: {
-    backgroundColor: "#e7ddff",
-    borderColor: "#b9a7df",
-    borderRadius: 8,
-    borderWidth: 1,
-    color: "#18242b",
-    fontSize: 16,
-    fontWeight: "800",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  previewChip: {
-    color: "#58656d",
-    fontSize: 14,
-    fontWeight: "800",
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-  },
-  actions: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  button: {
-    borderColor: "#d8d1c9",
-    borderRadius: 6,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  buttonText: {
-    color: "#18242b",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-
-  builder: {
-    alignItems: "flex-start",
-    flex: 1,
-    flexDirection: "row",
-    gap: 12,
-    minHeight: 220,
-  },
-  tabs: {
-    alignItems: "stretch",
-    gap: 8,
-    width: 112,
-  },
-  tabButton: {
-    borderColor: "#d8d1c9",
-    borderRadius: 6,
-    borderWidth: 1,
-    minHeight: 0,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  selectedTabButton: {
-    backgroundColor: "#e7ddff",
-    borderColor: "#b9a7df",
-  },
-  tabButtonText: {
-    color: "#18242b",
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  tabContent: {
-    borderColor: "#d8d1c9",
-    borderRadius: 6,
-    borderWidth: 1,
-    flex: 1,
-    padding: 12,
-  },
-  placeholderText: {
-    color: "#58656d",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  weekdayButtons: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  ruleButton: {
-    borderColor: "#d8d1c9",
-    borderRadius: 6,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  ruleButtonText: {
-    color: "#18242b",
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  doneButton: {
-    backgroundColor: "#d67b32",
-    borderColor: "#d67b32",
-  },
-});

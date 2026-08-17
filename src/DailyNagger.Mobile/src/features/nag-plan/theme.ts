@@ -17,7 +17,9 @@ export const nagPlanTheme = {
   },
   rail: {
     active: "#d97828",
+    activeSoft: "#e7b07c",
     completed: "#5f7f4c",
+    completedSoft: "#a8bd9a",
     contentGap: 6,
     entryMarkerHeight: 22,
     entryMarkerNeutralHeight: 8,
@@ -27,7 +29,7 @@ export const nagPlanTheme = {
     statusLaneWidth: 10,
   },
   selectionLane: {
-    width: 9,
+    width: 10,
     railWidth: 5,
   },
   nagger: {

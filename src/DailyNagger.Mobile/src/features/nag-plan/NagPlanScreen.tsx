@@ -1,6 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { MoodBar } from "@/app-shell";
 import { Primitives } from "@/components";
+import { appLayout } from "@/config";
 import { nagPlanTheme } from "./theme";
 import { NagList } from "./NagList";
 import { usePlanScreenData } from "@/services";
@@ -43,7 +44,7 @@ const styles = StyleSheet.create({
     left: 0,
     position: "absolute",
     right: 0,
-    top: 0,
+    top: appLayout.moodBar.topOffset,
     zIndex: 10,
   },
 });

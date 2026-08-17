@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import type { ReactNode } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import * as Primitives from "@/components/primitives";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 import type { TaskLog } from "@/models";
@@ -8,6 +9,7 @@ type TaskLogTailProps = {
   readonly allowEditTag?: boolean;
   readonly isTagPickerOpen?: boolean;
   readonly showComponentOutlines?: boolean;
+  readonly onAddTaskItem?: () => void;
   readonly onFocus?: () => void;
   readonly onPressTag?: () => void;
 };
@@ -17,6 +19,7 @@ export const TaskLogTail = ({
   allowEditTag = false,
   isTagPickerOpen = false,
   showComponentOutlines = false,
+  onAddTaskItem,
   onFocus,
   onPressTag,
 }: TaskLogTailProps) => {
@@ -24,13 +27,8 @@ export const TaskLogTail = ({
   const tagText = taskLog.tag ?? "tag";
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Select task log"
-      onPress={onFocus}
-      style={({ pressed }) => [styles.field, pressed && styles.pressedArea]}
-    >
-      <View style={styles.metaArea}>
+    <View style={styles.tail}>
+      <View style={styles.actions}>
         {shouldShowTag && (
           <Primitives.PillButton
             label={tagText}
@@ -43,24 +41,90 @@ export const TaskLogTail = ({
             }}
           />
         )}
+        {onAddTaskItem !== undefined && (
+          <TailButton
+            accessibilityLabel="Add task step to task log"
+            onPress={() => {
+              onFocus?.();
+              onAddTaskItem();
+            }}
+          >
+            <Text selectable={false} style={styles.plus}>
+              +
+            </Text>
+            <Text selectable={false} style={styles.checkGlyph}>
+              ✔
+            </Text>
+          </TailButton>
+        )}
       </View>
+      <Primitives.RowRemainderPressable
+        accessibilityLabel="Select task log"
+        onPress={onFocus}
+      />
+    </View>
+  );
+};
+
+type TailButtonProps = {
+  readonly accessibilityLabel: string;
+  readonly children: ReactNode;
+  readonly onPress: () => void;
+};
+
+const TailButton = ({ accessibilityLabel, children, onPress }: TailButtonProps) => {
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      hitSlop={6}
+      onPress={onPress}
+      style={({ pressed }) => [styles.button, pressed && styles.pressedButton]}
+    >
+      {children}
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  field: {
+  actions: {
     alignItems: "center",
     flexDirection: "row",
-    alignSelf: "stretch",
-    minHeight: 48,
+    gap: 4,
   },
-  metaArea: {
+  button: {
     alignItems: "center",
+    backgroundColor: nagPlanTheme.taskLog.background,
+    borderColor: nagPlanTheme.selection.border,
+    borderRadius: nagPlanTheme.radius.control,
+    borderWidth: 1,
     flexDirection: "row",
-    gap: 8,
+    gap: 2,
+    height: 28,
+    justifyContent: "center",
+    minWidth: 32,
+    paddingHorizontal: 5,
   },
-  pressedArea: {
+  checkGlyph: {
+    color: nagPlanTheme.taskItem.chevronText,
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 16,
+  },
+  plus: {
+    color: nagPlanTheme.taskItem.chevronText,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 16,
+  },
+  pressedButton: {
     backgroundColor: nagPlanTheme.taskItem.pressedBackground,
+  },
+  tail: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    minHeight: 38,
+    paddingBottom: 5,
+    paddingTop: 5,
   },
 });

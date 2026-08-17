@@ -1,4 +1,4 @@
-import type { TaskItem, Tree, TreeNode, TreePath } from "@/models";
+import type { TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
 import { targets, type TargetVisitContext } from "./targets";
 
 type BranchUpdateResult = {
@@ -7,9 +7,147 @@ type BranchUpdateResult = {
 };
 
 export const branch = {
+  addTaskEntryToTaskItem,
+  addTaskItemToTaskLog,
+  addTaskItemToTaskItem,
   replaceTaskItemAndUpdateDoneCounts,
   setFocusPath,
 } as const;
+
+function addTaskEntryToTaskItem(
+  freshTree: Tree,
+  parentTaskItem: TaskItem,
+  newTaskEntry: TaskEntry,
+): BranchUpdateResult {
+  if (newTaskEntry.taskLogId !== parentTaskItem.taskLogId) {
+    throw new Error(
+      `TaskEntry '${newTaskEntry.id}' belongs to TaskLog '${newTaskEntry.taskLogId}', not '${parentTaskItem.taskLogId}'.`,
+    );
+  }
+
+  if (newTaskEntry.parentTaskItemId !== parentTaskItem.id) {
+    throw new Error(
+      `TaskEntry '${newTaskEntry.id}' does not belong under TaskItem '${parentTaskItem.id}'.`,
+    );
+  }
+
+  const result = targets.visitNode(freshTree, parentTaskItem, {
+    visitTaskItem: (taskItem, context) => {
+      if (!context.isTargetNode) return taskItem;
+
+      return {
+        ...taskItem,
+        clientProps: {
+          ...taskItem.clientProps,
+          isExpanded: true,
+        },
+        taskEntries: [...taskItem.taskEntries, newTaskEntry],
+      };
+    },
+  });
+
+  if (result.kind === "not-found") {
+    throw new Error(`TaskItem '${parentTaskItem.id}' was not found in the current tree.`);
+  }
+
+  return {
+    newTree: result.node as Tree,
+    newPath: [newTaskEntry, ...(result.recordedPath as TreePath)],
+  };
+}
+
+function addTaskItemToTaskLog(
+  freshTree: Tree,
+  parentTaskLog: TaskLog,
+  newTaskItem: TaskItem,
+): BranchUpdateResult {
+  if (newTaskItem.taskLogId !== parentTaskLog.id) {
+    throw new Error(
+      `TaskItem '${newTaskItem.id}' belongs to TaskLog '${newTaskItem.taskLogId}', not '${parentTaskLog.id}'.`,
+    );
+  }
+
+  if (newTaskItem.parentTaskItemId !== null) {
+    throw new Error(
+      `TaskItem '${newTaskItem.id}' is not a root TaskItem for TaskLog '${parentTaskLog.id}'.`,
+    );
+  }
+
+  const result = targets.visitNode(freshTree, parentTaskLog, {
+    visitTaskLog: (taskLog, context) => {
+      if (!context.isTargetNode) return taskLog;
+
+      return {
+        ...taskLog,
+        descendantTaskItemCount: taskLog.descendantTaskItemCount + 1,
+        taskItems: [...taskLog.taskItems, newTaskItem],
+      };
+    },
+  });
+
+  if (result.kind === "not-found") {
+    throw new Error(`TaskLog '${parentTaskLog.id}' was not found in the current tree.`);
+  }
+
+  return {
+    newTree: result.node as Tree,
+    newPath: [newTaskItem, ...(result.recordedPath as TreePath)],
+  };
+}
+
+function addTaskItemToTaskItem(
+  freshTree: Tree,
+  parentTaskItem: TaskItem,
+  newTaskItem: TaskItem,
+): BranchUpdateResult {
+  if (newTaskItem.taskLogId !== parentTaskItem.taskLogId) {
+    throw new Error(
+      `TaskItem '${newTaskItem.id}' belongs to TaskLog '${newTaskItem.taskLogId}', not '${parentTaskItem.taskLogId}'.`,
+    );
+  }
+
+  if (newTaskItem.parentTaskItemId !== parentTaskItem.id) {
+    throw new Error(
+      `TaskItem '${newTaskItem.id}' does not belong under TaskItem '${parentTaskItem.id}'.`,
+    );
+  }
+
+  const result = targets.visitNode(freshTree, parentTaskItem, {
+    visitTaskItem: (taskItem, context) => {
+      if (context.isTargetNode) {
+        return {
+          ...taskItem,
+          clientProps: {
+            ...taskItem.clientProps,
+            isExpanded: true,
+          },
+          descendantTaskItemCount: taskItem.descendantTaskItemCount + 1,
+          taskItems: [...taskItem.taskItems, newTaskItem],
+        };
+      }
+
+      return {
+        ...taskItem,
+        descendantTaskItemCount: taskItem.descendantTaskItemCount + 1,
+      };
+    },
+    visitTaskLog: (taskLog) => {
+      return {
+        ...taskLog,
+        descendantTaskItemCount: taskLog.descendantTaskItemCount + 1,
+      };
+    },
+  });
+
+  if (result.kind === "not-found") {
+    throw new Error(`TaskItem '${parentTaskItem.id}' was not found in the current tree.`);
+  }
+
+  return {
+    newTree: result.node as Tree,
+    newPath: [newTaskItem, ...(result.recordedPath as TreePath)],
+  };
+}
 
 function replaceTaskItemAndUpdateDoneCounts(
   freshTree: Tree,

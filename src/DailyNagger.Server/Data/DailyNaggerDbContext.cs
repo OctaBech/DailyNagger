@@ -107,14 +107,9 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
                 .HasMaxLength(50)
                 .IsRequired();
 
-            entity.Property(rule => rule.Day)
-                .HasColumnName("day");
-
-            entity.Property(rule => rule.Month)
-                .HasColumnName("month");
-
-            entity.Property(rule => rule.Year)
-                .HasColumnName("year");
+            entity.Property(rule => rule.RuleJson)
+                .HasColumnName("rule_json")
+                .IsRequired();
 
             entity.HasIndex(rule => rule.NagId);
         });

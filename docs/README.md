@@ -4,8 +4,8 @@ DailyNagger documentation is intentionally small and close to current work.
 
 ## Active Docs
 
-- `adr/` contains accepted architecture and product direction decisions.
-- `ui-decisions/` contains current UI reasoning and product interaction rules.
+- `adr/` contains accepted architecture, product direction, and UI interaction
+  decisions.
 
 ## Local READMEs
 

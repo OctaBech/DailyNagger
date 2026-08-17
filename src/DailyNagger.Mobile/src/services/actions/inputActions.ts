@@ -74,43 +74,27 @@ export function taskLogAddTaskStep(
   name: string,
   rolloverBehavior: TaskItem["rolloverBehavior"],
 ): void {
-  const currentTree = memory.read.getTree();
-  const taskLogPath = selectedPathOperations.refreshPathToNode(currentTree, taskLog);
-  const { taskLog: currentTaskLog } = selectedPathOperations.deriveSelectedNodes(taskLogPath);
+  const { tree, branch, node } = treeOperations;
+  const { freshTree, freshTaskLog } = tree.readTaskLog(memory, taskLog);
 
-  if (currentTaskLog === null) {
-    throw new Error("Cannot add TaskStep because the target TaskLog was not found.");
-  }
-
-  const taskItemWithoutStamp: TaskItem = {
-    ...NodeTemplates.getTaskItem(currentTaskLog),
-    name,
-    rolloverBehavior,
-  };
+  const taskItemV1 = node.createTaskItem({
+    taskLogId: freshTaskLog.id,
+    parentTaskItemId: null,
+  });
+  const taskItemV2 = node.setTaskItemName(taskItemV1, name);
+  const taskItemV3 = node.setTaskItemRolloverBehavior(taskItemV2, rolloverBehavior);
   const newTaskItem =
-    interactionStamp === null ? taskItemWithoutStamp : interactionStamp.applyTo(taskItemWithoutStamp);
+    interactionStamp === null ? taskItemV3 : interactionStamp.applyTo(taskItemV3);
 
-  const treeWithNewTaskItem = editorOperations.addTaskItemToTaskLog(
-    currentTree,
-    currentTaskLog,
+  const { newTree, newPath } = branch.addTaskItemToTaskLog(
+    freshTree,
+    freshTaskLog,
     newTaskItem,
   );
-  const treeWithUpdatedDescendantCount = editorOperations.updateDescendantTaskItemCount(
-    treeWithNewTaskItem,
-    taskLogPath,
-    +1,
-  );
-  const newTaskItemPath = selectedPathOperations.refreshPathToNode(
-    treeWithUpdatedDescendantCount,
-    newTaskItem,
-  );
-  const { taskLog: updatedTaskLog } = selectedPathOperations.deriveSelectedNodes(newTaskItemPath);
 
-  if (updatedTaskLog === null) {
-    throw new Error("Cannot queue TaskLog update because the new TaskStep has no TaskLog.");
-  }
+  memory.write.setTreeAndFocusPath(newTree, newPath);
 
-  memory.write.setTreeAndSelectedPath(treeWithUpdatedDescendantCount, newTaskItemPath);
+  const { freshTaskLog: updatedTaskLog } = tree.readTaskLog(memory, newTaskItem);
   sending.queue(updatedTaskLog);
 }
 

@@ -9,10 +9,17 @@ import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
 type TaskItemCardProps = {
   taskItem: TaskItem;
+  readonly isInsideFocusedTree?: boolean;
   readonly railTone: "active" | "completed";
 };
 
-const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
+type SelectionLaneTone = "active" | "activeSoft" | "completed" | "completedSoft" | "neutral";
+
+const TaskItemCardComponent = ({
+  isInsideFocusedTree = false,
+  taskItem,
+  railTone,
+}: TaskItemCardProps) => {
   const { setDoneAndSetFocus, setExpanded, setFocused } = usePlanScreenCommands().taskItem;
   useDebugRenderFrameCounter("PlanTaskItemCard", taskItem.id);
 
@@ -21,6 +28,11 @@ const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
   const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
+  const railSelectionTone = getRailSelectionTone(
+    railTone,
+    hasActiveRail,
+    isInsideFocusedTree,
+  );
   const toggleExpanded = () => {
     setExpanded(taskItem, !isExpanded && hasChildren);
   };
@@ -30,13 +42,12 @@ const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
       style={[
         styles.card,
         isSelected && styles.selectedCard,
-        taskItem.rolloverBehavior === "RemoveWhenDone" && styles.removedOnRolloverCard,
       ]}
     >
       <SelectionLane.SelectionLane
         accessibilityLabel="Select task item"
         onPress={() => setFocused(taskItem)}
-        tone={hasActiveRail ? railTone : "neutral"}
+        tone={railSelectionTone}
       />
       <Card.TaskItemFrame>
         <Card.TaskItemField
@@ -59,7 +70,12 @@ const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
               <TaskEntryCard key={taskEntry.id} taskEntry={taskEntry} railTone={railTone} />
             ))}
             {taskItem.taskItems.map((childTaskItem) => (
-              <TaskItemCard key={childTaskItem.id} taskItem={childTaskItem} railTone={railTone} />
+              <TaskItemCard
+                key={childTaskItem.id}
+                isInsideFocusedTree={isInsideFocusedTree}
+                taskItem={childTaskItem}
+                railTone={railTone}
+              />
             ))}
           </View>
         </Activity>
@@ -70,6 +86,17 @@ const TaskItemCardComponent = ({ taskItem, railTone }: TaskItemCardProps) => {
 
 export const TaskItemCard = memo(TaskItemCardComponent);
 
+function getRailSelectionTone(
+  railTone: TaskItemCardProps["railTone"],
+  hasActiveRail: boolean,
+  isInsideFocusedTree: boolean,
+): SelectionLaneTone {
+  if (hasActiveRail) return railTone;
+  if (!isInsideFocusedTree) return "neutral";
+
+  return railTone === "completed" ? "completedSoft" : "activeSoft";
+}
+
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
@@ -79,9 +106,6 @@ const styles = StyleSheet.create({
   children: {
     gap: nagPlanTheme.cardDensity.fieldGap,
     paddingTop: nagPlanTheme.cardDensity.childTopPadding,
-  },
-  removedOnRolloverCard: {
-    backgroundColor: nagPlanTheme.taskItem.removedOnRolloverBackground,
   },
   selectedCard: {
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,

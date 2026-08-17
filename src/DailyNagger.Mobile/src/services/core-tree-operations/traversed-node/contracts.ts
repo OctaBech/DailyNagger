@@ -3,6 +3,7 @@
 // Visitors are responsible for returning a fully valid output node.
 
 import type { NagPlanDto, NaggerDto, TaskLogDto, TaskItemDto, TaskEntryDto } from "@/api";
+import type { ScheduleRule } from "@/models";
 import type {
   ClientModel,
   ClientNodeType,
@@ -33,7 +34,9 @@ export type NagPlanTraversedNode = Immutable<
 >;
 
 export type NaggerTraversedNode = Immutable<
-  NaggerDto<TaskLogTraversedNode> & PartialClientModelExtension<NaggerClientModelExtension>
+  Omit<NaggerDto<TaskLogTraversedNode>, "scheduleRules"> & {
+    readonly scheduleRules: readonly NaggerDto["scheduleRules"][number][] | readonly ScheduleRule[];
+  } & PartialClientModelExtension<NaggerClientModelExtension>
 >;
 
 export type TaskLogTraversedNode = Immutable<

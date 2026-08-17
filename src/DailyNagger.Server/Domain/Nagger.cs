@@ -42,22 +42,14 @@ public sealed class ScheduleRule
     public Guid Id { get; init; } = Guid.NewGuid();
     public Guid NagId { get; init; }
     public ScheduleRuleType RuleType { get; init; }
-    public int? Day { get; init; }
-    public int? Month { get; init; }
-    public int? Year { get; init; }
+    public required string RuleJson { get; init; }
 }
 
 public enum ScheduleRuleType
 {
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-    Sunday,
-    MonthlyDay,
-    Date
+    Weekday,
+    Date,
+    Holiday
 }
 
 public sealed class TaskLog

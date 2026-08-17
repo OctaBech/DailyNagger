@@ -1,4 +1,4 @@
-import type { NagPlanDto } from "@/api";
+import type { NagPlanDto, ScheduleRuleDto } from "@/api";
 import {
   naggerClientModelExtensionDefaults,
   nagPlanClientModelExtensionDefaults,
@@ -6,6 +6,7 @@ import {
   taskItemClientModelExtensionDefaults,
   taskLogClientModelExtensionDefaults,
 } from "@/models/clientModelExtensions";
+import { scheduleRuleDtoToModel } from "@/models";
 import { treeMutationOperations } from "@/services/core-tree-operations";
 
 export function nagPlanDtoToTree(nagPlanDto: NagPlanDto) {
@@ -15,7 +16,15 @@ export function nagPlanDtoToTree(nagPlanDto: NagPlanDto) {
       return extendDtoNode(nagPlanDtoConvert, nagPlanClientModelExtensionDefaults);
     },
     (naggerDtoConvert) => {
-      return extendDtoNode(naggerDtoConvert, naggerClientModelExtensionDefaults);
+      return extendDtoNode(
+        {
+          ...naggerDtoConvert,
+          scheduleRules: (naggerDtoConvert.scheduleRules as readonly ScheduleRuleDto[]).map(
+            scheduleRuleDtoToModel,
+          ),
+        },
+        naggerClientModelExtensionDefaults,
+      );
     },
     (taskLogDtoConvert) => {
       return extendDtoNode(taskLogDtoConvert, taskLogClientModelExtensionDefaults);

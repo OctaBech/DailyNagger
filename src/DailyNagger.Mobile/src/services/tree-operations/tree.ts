@@ -88,12 +88,16 @@ function readTaskEntry(memory: TreeReader, staleTaskEntry: TaskEntry): ReadTaskE
   return { freshTree, freshTaskEntry };
 }
 
-function readTaskLog(memory: TreeReader, staleTaskItem: TaskItem): ReadTaskLogResult {
+function readTaskLog(
+  memory: TreeReader,
+  staleNode: TaskItem | TaskLog,
+): ReadTaskLogResult {
   const freshTree = memory.read.getTree();
   let freshTaskLog: TaskLog | null = null;
 
-  const result = targets.visitNode(freshTree, staleTaskItem, {
-    visitTaskLog: (taskLog) => {
+  const result = targets.visitNode(freshTree, staleNode, {
+    visitTaskLog: (taskLog, context) => {
+      if (staleNode.nodeType === "TaskLog" && !context.isTargetNode) return taskLog;
       freshTaskLog = taskLog as TaskLog;
 
       return taskLog;
@@ -102,7 +106,7 @@ function readTaskLog(memory: TreeReader, staleTaskItem: TaskItem): ReadTaskLogRe
 
   if (result.kind === "not-found" || freshTaskLog === null) {
     throw new Error(
-      `TaskLog '${staleTaskItem.taskLogId}' was not found in the current tree.`,
+      `TaskLog '${staleNode.nodeType === "TaskLog" ? staleNode.id : staleNode.taskLogId}' was not found in the current tree.`,
     );
   }
 

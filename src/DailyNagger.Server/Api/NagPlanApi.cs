@@ -155,22 +155,14 @@ public static class NagPlanApi
         new(
             rule.Id,
             ToDto(rule.RuleType),
-            rule.Day,
-            rule.Month,
-            rule.Year);
+            rule.RuleJson);
 
     private static ScheduleRuleTypeDto ToDto(ScheduleRuleType ruleType) =>
         ruleType switch
         {
-            ScheduleRuleType.Monday => ScheduleRuleTypeDto.Monday,
-            ScheduleRuleType.Tuesday => ScheduleRuleTypeDto.Tuesday,
-            ScheduleRuleType.Wednesday => ScheduleRuleTypeDto.Wednesday,
-            ScheduleRuleType.Thursday => ScheduleRuleTypeDto.Thursday,
-            ScheduleRuleType.Friday => ScheduleRuleTypeDto.Friday,
-            ScheduleRuleType.Saturday => ScheduleRuleTypeDto.Saturday,
-            ScheduleRuleType.Sunday => ScheduleRuleTypeDto.Sunday,
-            ScheduleRuleType.MonthlyDay => ScheduleRuleTypeDto.MonthlyDay,
+            ScheduleRuleType.Weekday => ScheduleRuleTypeDto.Weekday,
             ScheduleRuleType.Date => ScheduleRuleTypeDto.Date,
+            ScheduleRuleType.Holiday => ScheduleRuleTypeDto.Holiday,
             _ => throw new ArgumentOutOfRangeException(nameof(ruleType), ruleType, null)
         };
 

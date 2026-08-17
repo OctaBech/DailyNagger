@@ -1,81 +1,119 @@
-import type { ScheduleRule } from "@/models";
+import {
+  SCHEDULE_EVERY,
+  SCHEDULE_LAST_DAY,
+  SCHEDULE_LAST_POSITION,
+  type DateScheduleRuleBody,
+  type WeekdayScheduleRuleBody,
+} from "@/models";
 import type { CultureSettings } from "../culture";
 
 export const operations = {
-  getNextWeeklyOccurrence,
-  getNextMonthlyOccurrence,
+  getNextWeekdayOccurrence,
   getNextDateOccurrence,
 } as const;
 
-function getNextWeeklyOccurrence(
-  dayOfWeek: number,
-  fromDate: Date,
-  cultureSettings: CultureSettings,
-): string {
-  const daysUntilTarget = (dayOfWeek - fromDate.getDay() + 7) % 7;
-  const candidate = addDays(fromDate, daysUntilTarget);
-
-  return cultureSettings.toLocalIsoDate(candidate);
-}
-
-function getNextMonthlyOccurrence(
-  rule: ScheduleRule,
+function getNextWeekdayOccurrence(
+  rule: WeekdayScheduleRuleBody,
   fromDate: Date,
   cultureSettings: CultureSettings,
 ): string | null {
-  if (rule.day === null) return null;
+  if (rule.position === SCHEDULE_EVERY && rule.month === SCHEDULE_EVERY) {
+    if (rule.weekday === SCHEDULE_EVERY) {
+      return cultureSettings.toLocalIsoDate(fromDate);
+    }
+
+    const daysUntilTarget = (toJavaScriptDay(rule.weekday) - fromDate.getDay() + 7) % 7;
+    const candidate = addDays(fromDate, daysUntilTarget);
+
+    return cultureSettings.toLocalIsoDate(candidate);
+  }
+
+  if (rule.weekday === SCHEDULE_EVERY) return null;
 
   let year = fromDate.getFullYear();
   let month = fromDate.getMonth() + 1;
 
   for (let monthsChecked = 0; monthsChecked < 24; monthsChecked++) {
-    if (isValidLocalDate(year, month, rule.day)) {
-      const candidate = new Date(year, month - 1, rule.day);
+    if (rule.month === SCHEDULE_EVERY || rule.month === month) {
+      const candidate = getWeekdayCandidate(year, month, rule);
 
-      if (candidate >= fromDate) {
+      if (candidate !== null && candidate >= fromDate) {
         return cultureSettings.toLocalIsoDate(candidate);
       }
     }
 
-    month++;
-    if (month <= 12) continue;
-
-    year++;
-    month = 1;
+    ({ year, month } = getNextMonth(year, month));
   }
 
   return null;
 }
 
 function getNextDateOccurrence(
-  rule: ScheduleRule,
+  rule: DateScheduleRuleBody,
   fromDate: Date,
   cultureSettings: CultureSettings,
 ): string | null {
-  if (rule.day === null || rule.month === null) return null;
+  const fixedYear = rule.year !== SCHEDULE_EVERY;
+  const fixedMonth = rule.month !== SCHEDULE_EVERY;
 
-  if (rule.year !== null) {
-    if (!isValidLocalDate(rule.year, rule.month, rule.day)) return null;
+  let year = fixedYear ? rule.year : fromDate.getFullYear();
+  let month = fixedMonth ? rule.month : fromDate.getMonth() + 1;
 
-    const exactDate = new Date(rule.year, rule.month - 1, rule.day);
-    return exactDate >= fromDate ? cultureSettings.toLocalIsoDate(exactDate) : null;
-  }
+  for (let monthsChecked = 0; monthsChecked < 120; monthsChecked++) {
+    const candidate = getDateCandidate(year, month, rule.dayOfMonth);
 
-  let year = fromDate.getFullYear();
-
-  for (let yearsChecked = 0; yearsChecked < 10; yearsChecked++) {
-    if (isValidLocalDate(year, rule.month, rule.day)) {
-      const candidate = new Date(year, rule.month - 1, rule.day);
-
-      if (candidate >= fromDate) {
+    if (candidate !== null && candidate >= fromDate) {
+      if (!fixedYear || candidate.getFullYear() === rule.year) {
         return cultureSettings.toLocalIsoDate(candidate);
       }
     }
 
-    year++;
+    if (fixedYear && fixedMonth) return null;
+
+    if (fixedMonth) {
+      year++;
+    } else {
+      ({ year, month } = getNextMonth(year, month));
+    }
+
+    if (fixedYear && year !== rule.year) return null;
   }
 
   return null;
+}
+
+function getWeekdayCandidate(
+  year: number,
+  month: number,
+  rule: WeekdayScheduleRuleBody,
+): Date | null {
+  if (rule.position === SCHEDULE_EVERY) {
+    const firstOfMonth = new Date(year, month - 1, 1);
+    const daysUntilTarget = (toJavaScriptDay(rule.weekday) - firstOfMonth.getDay() + 7) % 7;
+
+    return addDays(firstOfMonth, daysUntilTarget);
+  }
+
+  if (rule.position === SCHEDULE_LAST_POSITION) {
+    const lastOfMonth = new Date(year, month, 0);
+    const daysBackToTarget = (lastOfMonth.getDay() - toJavaScriptDay(rule.weekday) + 7) % 7;
+
+    return addDays(lastOfMonth, -daysBackToTarget);
+  }
+
+  const firstOfMonth = new Date(year, month - 1, 1);
+  const daysUntilTarget = (toJavaScriptDay(rule.weekday) - firstOfMonth.getDay() + 7) % 7;
+  const candidate = addDays(firstOfMonth, daysUntilTarget + (rule.position - 1) * 7);
+
+  return candidate.getMonth() === month - 1 ? candidate : null;
+}
+
+function getDateCandidate(year: number, month: number, dayOfMonth: number): Date | null {
+  const day = dayOfMonth === SCHEDULE_LAST_DAY ? getDaysInMonth(year, month) : dayOfMonth;
+
+  if (!isValidLocalDate(year, month, day)) return null;
+
+  return new Date(year, month - 1, day);
 }
 
 function addDays(date: Date, days: number): Date {
@@ -85,8 +123,24 @@ function addDays(date: Date, days: number): Date {
   return newDate;
 }
 
+function getNextMonth(year: number, month: number): { readonly year: number; readonly month: number } {
+  if (month < 12) {
+    return { year, month: month + 1 };
+  }
+
+  return { year: year + 1, month: 1 };
+}
+
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
 function isValidLocalDate(year: number, month: number, day: number): boolean {
   const date = new Date(year, month - 1, day);
 
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
+
+function toJavaScriptDay(weekday: number): number {
+  return weekday === 7 ? 0 : weekday;
 }

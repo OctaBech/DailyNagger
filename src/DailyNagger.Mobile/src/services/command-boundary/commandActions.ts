@@ -19,6 +19,9 @@ import {
   editorStartEdit as runEditorStartEdit,
   editorTaskEntryAdd as runEditorTaskEntryAdd,
   editorTaskItemAdd as runEditorTaskItemAdd,
+  addTaskEntryToTaskItem as runAddTaskEntryToTaskItem,
+  addTaskItemToTaskItem as runAddTaskItemToTaskItem,
+  addTaskItemToTaskLog as runAddTaskItemToTaskLog,
   type EditorSessionActionScope,
   naggerSetScheduleRules as runNaggerSetScheduleRules,
   naggerSetTargetTime as runNaggerSetTargetTime,
@@ -154,6 +157,10 @@ type TaskLogAddTaskStepArgs = {
   readonly rolloverBehavior: TaskItem["rolloverBehavior"];
 };
 
+type TaskLogAddTaskItemArgs = {
+  readonly taskLog: TaskLog;
+};
+
 type TaskItemSetFocusedArgs = {
   readonly taskItem: TaskItem;
 };
@@ -169,6 +176,14 @@ type TaskItemSetDoneAndSetFocusArgs = {
 };
 
 type TaskItemAddQuickNoteArgs = {
+  readonly taskItem: TaskItem;
+};
+
+type TaskItemAddTaskEntryArgs = {
+  readonly taskItem: TaskItem;
+};
+
+type TaskItemAddTaskItemArgs = {
   readonly taskItem: TaskItem;
 };
 
@@ -319,6 +334,13 @@ function taskLogAddTaskStep(
   runTaskLogAddTaskStep(context, args.taskLog, args.name, args.rolloverBehavior);
 }
 
+function taskLogAddTaskItem(
+  args: TaskLogAddTaskItemArgs,
+  context: CommandEditorActionContext,
+): void {
+  runAddTaskItemToTaskLog(context, args.taskLog);
+}
+
 function taskItemSetExpanded(
   args: TaskItemSetExpandedArgs,
   context: CommandViewActionContext,
@@ -353,6 +375,20 @@ function taskItemAddQuickNote(
   context: CommandInputActionContext,
 ): void {
   runTaskItemAddQuickNote(context, args.taskItem);
+}
+
+function taskItemAddTaskEntry(
+  args: TaskItemAddTaskEntryArgs,
+  context: CommandEditorActionContext,
+): void {
+  runAddTaskEntryToTaskItem(context, args.taskItem);
+}
+
+function taskItemAddTaskItem(
+  args: TaskItemAddTaskItemArgs,
+  context: CommandEditorActionContext,
+): void {
+  runAddTaskItemToTaskItem(context, args.taskItem);
 }
 
 function taskItemSetName(
@@ -425,10 +461,13 @@ export const commandActions = {
   "task-log/set-focused": command("view", taskLogSetFocused),
   "task-log/set-tag": command("input", taskLogSetTag),
   "task-log/add-task-step": command("input", taskLogAddTaskStep),
+  "task-log/add-task-item": command("editor-action", taskLogAddTaskItem),
   "task-item/set-expanded": command("view", taskItemSetExpanded),
   "task-item/set-focused": command("view", taskItemSetFocused),
   "task-item/set-done-and-set-focus": command("input", taskItemSetDoneAndSetFocus),
   "task-item/add-quick-note": command("input", taskItemAddQuickNote),
+  "task-item/add-task-entry": command("editor-action", taskItemAddTaskEntry),
+  "task-item/add-task-item": command("editor-action", taskItemAddTaskItem),
   "task-item/set-name": command("input", taskItemSetName),
   "task-item/set-tag": command("input", taskItemSetTag),
   "task-entry/set-focused": command("view", taskEntrySetFocused),

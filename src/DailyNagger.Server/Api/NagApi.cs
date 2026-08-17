@@ -206,9 +206,7 @@ public static class NagApi
         new(
             rule.Id,
             ToDto(rule.RuleType),
-            rule.Day,
-            rule.Month,
-            rule.Year);
+            rule.RuleJson);
 
     private static ScheduleRule ToDomain(Guid nagId, ScheduleRuleDto rule) =>
         new()
@@ -216,38 +214,24 @@ public static class NagApi
             Id = rule.Id,
             NagId = nagId,
             RuleType = ToDomain(rule.RuleType),
-            Day = rule.Day,
-            Month = rule.Month,
-            Year = rule.Year
+            RuleJson = rule.RuleJson
         };
 
     private static ScheduleRuleTypeDto ToDto(ScheduleRuleType ruleType) =>
         ruleType switch
         {
-            ScheduleRuleType.Monday => ScheduleRuleTypeDto.Monday,
-            ScheduleRuleType.Tuesday => ScheduleRuleTypeDto.Tuesday,
-            ScheduleRuleType.Wednesday => ScheduleRuleTypeDto.Wednesday,
-            ScheduleRuleType.Thursday => ScheduleRuleTypeDto.Thursday,
-            ScheduleRuleType.Friday => ScheduleRuleTypeDto.Friday,
-            ScheduleRuleType.Saturday => ScheduleRuleTypeDto.Saturday,
-            ScheduleRuleType.Sunday => ScheduleRuleTypeDto.Sunday,
-            ScheduleRuleType.MonthlyDay => ScheduleRuleTypeDto.MonthlyDay,
+            ScheduleRuleType.Weekday => ScheduleRuleTypeDto.Weekday,
             ScheduleRuleType.Date => ScheduleRuleTypeDto.Date,
+            ScheduleRuleType.Holiday => ScheduleRuleTypeDto.Holiday,
             _ => throw new ArgumentOutOfRangeException(nameof(ruleType), ruleType, null)
         };
 
     private static ScheduleRuleType ToDomain(ScheduleRuleTypeDto ruleType) =>
         ruleType switch
         {
-            ScheduleRuleTypeDto.Monday => ScheduleRuleType.Monday,
-            ScheduleRuleTypeDto.Tuesday => ScheduleRuleType.Tuesday,
-            ScheduleRuleTypeDto.Wednesday => ScheduleRuleType.Wednesday,
-            ScheduleRuleTypeDto.Thursday => ScheduleRuleType.Thursday,
-            ScheduleRuleTypeDto.Friday => ScheduleRuleType.Friday,
-            ScheduleRuleTypeDto.Saturday => ScheduleRuleType.Saturday,
-            ScheduleRuleTypeDto.Sunday => ScheduleRuleType.Sunday,
-            ScheduleRuleTypeDto.MonthlyDay => ScheduleRuleType.MonthlyDay,
+            ScheduleRuleTypeDto.Weekday => ScheduleRuleType.Weekday,
             ScheduleRuleTypeDto.Date => ScheduleRuleType.Date,
+            ScheduleRuleTypeDto.Holiday => ScheduleRuleType.Holiday,
             _ => throw new ArgumentOutOfRangeException(nameof(ruleType), ruleType, null)
         };
 }

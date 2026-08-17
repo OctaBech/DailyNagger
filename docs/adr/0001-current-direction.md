@@ -45,8 +45,9 @@ The editor has its own screen to make editing boundaries obvious to the user:
 they are working on this task tree, with these allowed tools, without reaching
 sideways into unrelated cards.
 
-See [UI Decisions](../ui-decisions/README.md) for the concrete interaction rules
-that follow from this direction.
+See [ADR 0002: Selection Lanes](0002-selection-lanes.md) and
+[ADR 0003: Plan Screen And Editor Boundary](0003-plan-screen-and-editor-boundary.md)
+for concrete interaction decisions that follow from this direction.
 
 ## Consequences
 

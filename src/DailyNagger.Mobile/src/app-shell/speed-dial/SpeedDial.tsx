@@ -98,6 +98,7 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
 
           <FAB
             color={actionButtonTheme.icon}
+            customSize={appLayout.speedDial.mainSize}
             icon={open ? "close" : "plus"}
             onPress={toggleOpen}
             style={[styles.mainButton, { bottom: bottomOffset }]}

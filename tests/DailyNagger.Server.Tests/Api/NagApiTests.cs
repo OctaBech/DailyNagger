@@ -49,7 +49,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                     && item.ActiveLogDueOn == new DateOnly(2026, 6, 1)
                     && !item.IsDeactivated
                     && item.ScheduleRules.Any(rule =>
-                        rule.RuleType == ScheduleRuleTypeDto.Wednesday));
+                        IsEveryWeekdayRule(rule, DayOfWeek.Wednesday)));
         }
         finally
         {
@@ -188,7 +188,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.False(firstNag.IsDeactivated);
             Assert.Equal(1, firstNag.TaskLog.Version);
             Assert.Equal(1, secondNag.TaskLog.Version);
-            Assert.Contains(firstNag.ScheduleRules, rule => rule.RuleType == ScheduleRuleTypeDto.Monday);
+            Assert.Contains(firstNag.ScheduleRules, rule => IsEveryWeekdayRule(rule, DayOfWeek.Monday));
             Assert.Equal("Bench press", rootNode.Name);
             Assert.Equal(exerciseNodeId, childNode.ParentTaskItemId);
             Assert.Equal(repsInputId, input.Id);
@@ -223,9 +223,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        nagTimeId,
-                        ScheduleRuleTypeDto.Monday, null, null, null)
+                    EveryWeekdayRuleDto(nagTimeId, DayOfWeek.Monday)
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 0,
@@ -256,7 +254,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.Contains(
                 created.ScheduleRules,
                 rule => rule.Id == nagTimeId
-                    && rule.RuleType == ScheduleRuleTypeDto.Monday);
+                    && IsEveryWeekdayRule(rule, DayOfWeek.Monday));
 
             await using var dataDb = CreateDataDbContext();
             var storedNag = await dataDb.Nags.SingleAsync(nag => nag.Id == nagId);
@@ -267,7 +265,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             var nagTimeExists = await dataDb.ScheduleRules.AnyAsync(
                 nagTime => nagTime.Id == nagTimeId
                     && nagTime.NagId == nagId
-                    && nagTime.RuleType == ScheduleRuleType.Monday);
+                    && nagTime.RuleType == ScheduleRuleType.Weekday
+                    && nagTime.RuleJson == WeekdayRuleJson(DayOfWeek.Monday));
 
             Assert.True(nagTimeExists);
 
@@ -437,9 +436,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        oldScheduleRuleId,
-                        ScheduleRuleTypeDto.Monday, null, null, null)
+                    EveryWeekdayRuleDto(oldScheduleRuleId, DayOfWeek.Monday)
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 0,
@@ -467,12 +464,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        newTuesdayScheduleRuleId,
-                        ScheduleRuleTypeDto.Tuesday, null, null, null),
-                    new ScheduleRuleDto(
-                        newThursdayScheduleRuleId,
-                        ScheduleRuleTypeDto.Thursday, null, null, null)
+                    EveryWeekdayRuleDto(newTuesdayScheduleRuleId, DayOfWeek.Tuesday),
+                    EveryWeekdayRuleDto(newThursdayScheduleRuleId, DayOfWeek.Thursday)
 
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
@@ -542,9 +535,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        oldScheduleRuleId,
-                        ScheduleRuleTypeDto.Monday, null, null, null)
+                    EveryWeekdayRuleDto(oldScheduleRuleId, DayOfWeek.Monday)
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 0,
@@ -570,12 +561,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        duplicateScheduleRuleId,
-                        ScheduleRuleTypeDto.Tuesday, null, null, null),
-                    new ScheduleRuleDto(
-                        duplicateScheduleRuleId,
-                        ScheduleRuleTypeDto.Thursday, null, null, null)
+                    EveryWeekdayRuleDto(duplicateScheduleRuleId, DayOfWeek.Tuesday),
+                    EveryWeekdayRuleDto(duplicateScheduleRuleId, DayOfWeek.Thursday)
 
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
@@ -627,9 +614,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        Guid.NewGuid(),
-                        ScheduleRuleTypeDto.Monday, null, null, null)
+                    EveryWeekdayRuleDto(Guid.NewGuid(), DayOfWeek.Monday)
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 0,
@@ -651,9 +636,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        Guid.NewGuid(),
-                        ScheduleRuleTypeDto.Tuesday, null, null, null)
+                    EveryWeekdayRuleDto(Guid.NewGuid(), DayOfWeek.Tuesday)
 
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
@@ -676,9 +659,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        Guid.NewGuid(),
-                        ScheduleRuleTypeDto.Wednesday, null, null, null)
+                    EveryWeekdayRuleDto(Guid.NewGuid(), DayOfWeek.Wednesday)
 
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
@@ -733,12 +714,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                     null,
                     null,
                     [
-                        new ScheduleRuleDto(
-                            Guid.NewGuid(),
-                            ScheduleRuleTypeDto.Monday,
-                            null,
-                            null,
-                            null)
+                        EveryWeekdayRuleDto(Guid.NewGuid(), DayOfWeek.Monday)
                     ],
                     Version: 5),
                 BaseVersion = 0,
@@ -777,12 +753,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 null,
                 false,
                 [
-                    new ScheduleRuleDto(
-                        Guid.NewGuid(),
-                        ScheduleRuleTypeDto.Date,
-                        15,
-                        null,
-                        null)
+                    new ScheduleRuleDto(Guid.NewGuid(), ScheduleRuleTypeDto.Date, InvalidDateRuleJson())
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 0,
@@ -795,7 +766,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Contains("Date schedule rules require Month.", responseBody);
+            Assert.Contains("Date schedule rules require month.", responseBody);
 
             await using var dataDb = CreateDataDbContext();
             var exists = await dataDb.Nags.AnyAsync(
@@ -2249,7 +2220,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             [
                 new ScheduleRule
                 {
-                    RuleType = ScheduleRuleType.Wednesday
+                    RuleType = ScheduleRuleType.Weekday,
+                    RuleJson = WeekdayRuleJson(DayOfWeek.Wednesday)
                 }
             ]
         });
@@ -2276,12 +2248,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             null,
             isDeactivated,
             [
-                new ScheduleRuleDto(
-                    Guid.NewGuid(),
-                    ToScheduleRuleType(dayOfWeek),
-                    null,
-                    null,
-                    null)
+                EveryWeekdayRuleDto(Guid.NewGuid(), dayOfWeek)
             ],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 0,
@@ -2296,16 +2263,42 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         Assert.True(response.StatusCode == HttpStatusCode.OK, body);
     }
 
-    private static ScheduleRuleTypeDto ToScheduleRuleType(DayOfWeek dayOfWeek) =>
+    private static ScheduleRuleDto EveryWeekdayRuleDto(Guid id, DayOfWeek dayOfWeek) =>
+        new(id, ScheduleRuleTypeDto.Weekday, WeekdayRuleJson(dayOfWeek));
+
+    private static bool IsEveryWeekdayRule(ScheduleRuleDto rule, DayOfWeek dayOfWeek) =>
+        rule.RuleType == ScheduleRuleTypeDto.Weekday
+        && rule.RuleJson == WeekdayRuleJson(dayOfWeek);
+
+    private static string WeekdayRuleJson(DayOfWeek dayOfWeek) =>
+        JsonSerializer.Serialize(
+            new
+            {
+                month = 0,
+                position = 0,
+                weekday = ToScheduleWeekday(dayOfWeek)
+            },
+            JsonOptions);
+
+    private static string InvalidDateRuleJson() =>
+        JsonSerializer.Serialize(
+            new
+            {
+                year = 0,
+                dayOfMonth = 15
+            },
+            JsonOptions);
+
+    private static int ToScheduleWeekday(DayOfWeek dayOfWeek) =>
         dayOfWeek switch
         {
-            DayOfWeek.Monday => ScheduleRuleTypeDto.Monday,
-            DayOfWeek.Tuesday => ScheduleRuleTypeDto.Tuesday,
-            DayOfWeek.Wednesday => ScheduleRuleTypeDto.Wednesday,
-            DayOfWeek.Thursday => ScheduleRuleTypeDto.Thursday,
-            DayOfWeek.Friday => ScheduleRuleTypeDto.Friday,
-            DayOfWeek.Saturday => ScheduleRuleTypeDto.Saturday,
-            DayOfWeek.Sunday => ScheduleRuleTypeDto.Sunday,
+            DayOfWeek.Monday => 1,
+            DayOfWeek.Tuesday => 2,
+            DayOfWeek.Wednesday => 3,
+            DayOfWeek.Thursday => 4,
+            DayOfWeek.Friday => 5,
+            DayOfWeek.Saturday => 6,
+            DayOfWeek.Sunday => 7,
             _ => throw new ArgumentOutOfRangeException(nameof(dayOfWeek), dayOfWeek, null)
         };
 

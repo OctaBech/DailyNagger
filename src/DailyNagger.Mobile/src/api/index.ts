@@ -15,6 +15,7 @@ export type { SendApiRequest, TagDto, TaskStepNameSuggestionDto } from "./client
 export type {
   NagPlanDto,
   NaggerDto,
+  ScheduleRuleDto,
   TaskLogDto,
   TaskItemDto,
   TaskEntryDto,

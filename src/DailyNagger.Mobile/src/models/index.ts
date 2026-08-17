@@ -1,4 +1,22 @@
 export type { NagPlan, Nagger, ScheduleRule, TaskLog, TaskItem, TaskEntry } from "./clientModel";
+export {
+  SCHEDULE_EVERY,
+  SCHEDULE_LAST_DAY,
+  SCHEDULE_LAST_POSITION,
+  getScheduleRuleKey,
+  scheduleRuleDtoToModel,
+  scheduleRuleModelToDto,
+} from "./scheduleRules";
+export type {
+  DateScheduleRule,
+  DateScheduleRuleBody,
+  HolidayScheduleRule,
+  HolidayScheduleRuleBody,
+  ScheduleRuleType,
+  ScheduleWeekday,
+  WeekdayScheduleRule,
+  WeekdayScheduleRuleBody,
+} from "./scheduleRules";
 export type { ClientIdentity } from "./clientIdentity";
 export {
   isUserMood,

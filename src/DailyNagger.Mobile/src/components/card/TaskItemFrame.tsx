@@ -13,6 +13,9 @@ export const TaskItemFrame = ({ children }: TaskItemFrameProps) => {
 const styles = StyleSheet.create({
   frame: {
     flex: 1,
-    padding: nagPlanTheme.cardDensity.taskItemPadding,
+    paddingBottom: nagPlanTheme.cardDensity.taskItemPadding,
+    paddingLeft: nagPlanTheme.rail.contentGap,
+    paddingRight: nagPlanTheme.cardDensity.taskItemPadding,
+    paddingTop: nagPlanTheme.cardDensity.taskItemPadding,
   },
 });

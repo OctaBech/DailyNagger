@@ -1,4 +1,5 @@
 using DailyNagger.Server.Contracts;
+using System.Text.Json;
 
 namespace DailyNagger.Server.Validation;
 
@@ -175,37 +176,93 @@ public sealed class NagRequestValidator
 
         switch (rule.RuleType)
         {
-            case ScheduleRuleTypeDto.Monday:
-            case ScheduleRuleTypeDto.Tuesday:
-            case ScheduleRuleTypeDto.Wednesday:
-            case ScheduleRuleTypeDto.Thursday:
-            case ScheduleRuleTypeDto.Friday:
-            case ScheduleRuleTypeDto.Saturday:
-            case ScheduleRuleTypeDto.Sunday:
-                break;
-
-            case ScheduleRuleTypeDto.MonthlyDay:
-                Require(rule.Day is not null, "MonthlyDay schedule rules require Day.");
+            case ScheduleRuleTypeDto.Weekday:
+                ValidateWeekdayRuleBody(rule.RuleJson);
                 break;
 
             case ScheduleRuleTypeDto.Date:
-                Require(rule.Day is not null, "Date schedule rules require Day.");
-                Require(rule.Month is not null, "Date schedule rules require Month.");
+                ValidateDateRuleBody(rule.RuleJson);
+                break;
+
+            case ScheduleRuleTypeDto.Holiday:
+                ValidateHolidayRuleBody(rule.RuleJson);
                 break;
 
             default:
                 throw new NagValidationException($"Unknown schedule rule type: {rule.RuleType}.");
         }
+    }
 
-        if (rule.Day is < 1 or > 31)
+    private static void ValidateWeekdayRuleBody(string ruleJson)
+    {
+        using var document = ParseRuleJson(ruleJson);
+        var root = document.RootElement;
+        var month = GetRequiredInt(root, "month");
+        var position = GetRequiredInt(root, "position");
+        var weekday = GetRequiredInt(root, "weekday");
+
+        Require(month is >= 0 and <= 12, "Weekday schedule rule Month must be between 0 and 12.");
+        Require(position is >= 0 and <= 5, "Weekday schedule rule Position must be between 0 and 5.");
+        Require(weekday is >= 0 and <= 7, "Weekday schedule rule Weekday must be between 0 and 7.");
+        Require(
+            weekday != 0 || (month == 0 && position == 0),
+            "Weekday schedule rule Every weekday requires Month and Position to be 0.");
+    }
+
+    private static void ValidateDateRuleBody(string ruleJson)
+    {
+        using var document = ParseRuleJson(ruleJson);
+        var root = document.RootElement;
+
+        Require(GetRequiredInt(root, "year") >= 0, "Date schedule rule Year must be 0 or later.");
+        Require(GetRequiredInt(root, "month") is >= 0 and <= 12, "Date schedule rule Month must be between 0 and 12.");
+        Require(GetRequiredInt(root, "dayOfMonth") is >= 1 and <= 32, "Date schedule rule DayOfMonth must be between 1 and 32.");
+    }
+
+    private static void ValidateHolidayRuleBody(string ruleJson)
+    {
+        using var document = ParseRuleJson(ruleJson);
+        var root = document.RootElement;
+
+        Require(!string.IsNullOrWhiteSpace(GetRequiredString(root, "countryCode")), "Holiday schedule rule CountryCode is required.");
+        Require(!string.IsNullOrWhiteSpace(GetRequiredString(root, "holidayId")), "Holiday schedule rule HolidayId is required.");
+    }
+
+    private static JsonDocument ParseRuleJson(string ruleJson)
+    {
+        if (string.IsNullOrWhiteSpace(ruleJson))
         {
-            throw new NagValidationException("ScheduleRule Day must be between 1 and 31.");
+            throw new NagValidationException("ScheduleRule RuleJson is required.");
         }
 
-        if (rule.Month is < 1 or > 12)
+        try
         {
-            throw new NagValidationException("ScheduleRule Month must be between 1 and 12.");
+            var document = JsonDocument.Parse(ruleJson);
+            Require(document.RootElement.ValueKind == JsonValueKind.Object, "ScheduleRule RuleJson must be a JSON object.");
+
+            return document;
         }
+        catch (JsonException exception)
+        {
+            throw new NagValidationException($"ScheduleRule RuleJson is invalid JSON: {exception.Message}");
+        }
+    }
+
+    private static int GetRequiredInt(JsonElement root, string propertyName)
+    {
+        Require(root.TryGetProperty(propertyName, out var property), $"ScheduleRule RuleJson requires {propertyName}.");
+        Require(property.ValueKind == JsonValueKind.Number, $"ScheduleRule RuleJson {propertyName} must be a number.");
+        Require(property.TryGetInt32(out var value), $"ScheduleRule RuleJson {propertyName} must be an integer.");
+
+        return value;
+    }
+
+    private static string GetRequiredString(JsonElement root, string propertyName)
+    {
+        Require(root.TryGetProperty(propertyName, out var property), $"ScheduleRule RuleJson requires {propertyName}.");
+        Require(property.ValueKind == JsonValueKind.String, $"ScheduleRule RuleJson {propertyName} must be a string.");
+
+        return property.GetString() ?? "";
     }
 
     private static void ValidateUpdatedAt(DateTimeOffset updatedAt)

@@ -101,27 +101,20 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<int?>("Day")
-                        .HasColumnType("int")
-                        .HasColumnName("day");
-
-                    b.Property<int?>("Month")
-                        .HasColumnType("int")
-                        .HasColumnName("month");
-
                     b.Property<Guid>("NagId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("nag_id");
+
+                    b.Property<string>("RuleJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("rule_json");
 
                     b.Property<string>("RuleType")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("rule_type");
-
-                    b.Property<int?>("Year")
-                        .HasColumnType("int")
-                        .HasColumnName("year");
 
                     b.HasKey("Id");
 

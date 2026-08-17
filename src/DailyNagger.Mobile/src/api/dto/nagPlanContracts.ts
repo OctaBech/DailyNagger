@@ -3,16 +3,7 @@ import { type Guid } from "@/shared";
 export type TaskEntryValueType = "Text" | "Integer" | "Decimal" | "Boolean";
 export type NaggerPinnedBy = "None" | "User" | "Llm" | "Community";
 
-export type ScheduleRuleType =
-  | "Monday"
-  | "Tuesday"
-  | "Wednesday"
-  | "Thursday"
-  | "Friday"
-  | "Saturday"
-  | "Sunday"
-  | "MonthlyDay"
-  | "Date";
+export type ScheduleRuleType = "Weekday" | "Date" | "Holiday";
 
 export type NagPlanDto<TNagger = NaggerDto> = {
   readonly date: string;
@@ -39,9 +30,7 @@ export type NaggerDto<TTaskLog = TaskLogDto> = {
 export type ScheduleRuleDto = {
   readonly id: Guid;
   readonly ruleType: ScheduleRuleType;
-  readonly day: number | null;
-  readonly month: number | null;
-  readonly year: number | null;
+  readonly ruleJson: string;
 };
 
 export type TaskLogVersionDto = {

@@ -1,10 +1,19 @@
-import { emptyInteractionStamp, type Nagger, type TaskEntry, type TaskItem, type TaskLog } from "@/models";
+import {
+  emptyInteractionStamp,
+  type Nagger,
+  type TaskEntry,
+  type TaskItem,
+  type TaskLog,
+} from "@/models";
 import { newGuid, type Guid } from "@/shared";
 import { treeCountOperations } from "@/services/core-tree-operations";
+import { nodeTemplates } from "./node-templates";
 
 export const node = {
   attachTaskLog,
   closeTaskLogForNaggerHistory,
+  createTaskEntry,
+  createTaskItem,
   createRolledOverTaskLog,
   isTaskLogClosed,
   setTaskEntryValue,
@@ -12,6 +21,8 @@ export const node = {
   setTaskEntryValueType,
   tryPrefillCarryOverTaskEntryValueFromHistory,
   setTaskItemDone,
+  setTaskItemName,
+  setTaskItemRolloverBehavior,
 } as const;
 
 function attachTaskLog(nagger: Nagger, taskLog: TaskLog, activeLogDueOn: string | null): Nagger {
@@ -107,12 +118,61 @@ function isTaskLogClosed(taskLog: TaskLog): boolean {
   return taskLog.closedOn !== null;
 }
 
+type CreateTaskItemInput = {
+  readonly taskLogId: Guid;
+  readonly parentTaskItemId: Guid | null;
+};
+
+type CreateTaskEntryInput = {
+  readonly taskLogId: Guid;
+  readonly parentTaskItemId: Guid;
+};
+
+function createTaskItem({ taskLogId, parentTaskItemId }: CreateTaskItemInput): TaskItem {
+  return nodeTemplates.createTaskItem({
+    id: newGuid(),
+    taskLogId,
+    parentTaskItemId,
+    name: "",
+  });
+}
+
+function createTaskEntry({ taskLogId, parentTaskItemId }: CreateTaskEntryInput): TaskEntry {
+  return nodeTemplates.createTaskEntry({
+    id: newGuid(),
+    taskLogId,
+    parentTaskItemId,
+    label: "",
+  });
+}
+
 function setTaskItemDone(taskItem: TaskItem, isDone: boolean): TaskItem {
   if (taskItem.isDone === isDone) return taskItem;
 
   return {
     ...taskItem,
     isDone,
+  };
+}
+
+function setTaskItemName(taskItem: TaskItem, name: string): TaskItem {
+  if (taskItem.name === name) return taskItem;
+
+  return {
+    ...taskItem,
+    name,
+  };
+}
+
+function setTaskItemRolloverBehavior(
+  taskItem: TaskItem,
+  rolloverBehavior: TaskItem["rolloverBehavior"],
+): TaskItem {
+  if (taskItem.rolloverBehavior === rolloverBehavior) return taskItem;
+
+  return {
+    ...taskItem,
+    rolloverBehavior,
   };
 }
 

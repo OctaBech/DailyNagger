@@ -5,11 +5,14 @@ import { useEditorScreenCommands, useEditorScreenData } from "@/services";
 import { TaskLogCard } from "./TaskLogCard";
 import { nagPlanTheme } from "../theme";
 import { Card, Modal } from "@/components";
+import type { NaggerFrameTone } from "@/components/card";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
 type NagCardProps = {
   nagger: Nagger;
 };
+
+type RailTone = "active" | "completed";
 
 const NagCardComponent = ({ nagger }: NagCardProps) => {
   const { nagger: naggerActions } = useEditorScreenCommands();
@@ -18,6 +21,10 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
 
   const isExpanded = nagger.clientProps?.isExpanded ?? false;
   const isSelected = nagger.clientProps.isSelected;
+  const isTaskLogCompleted = isCompletedTaskLog(nagger.taskLog);
+  const hasTaskItems = nagger.taskLog.descendantTaskItemCount > 0;
+  const tone = getNaggerCardTone(isSelected, isTaskLogCompleted);
+  const railTone = getRailTone(isTaskLogCompleted);
   const [isScheduleModalVisible, setIsScheduleModalVisible] = useState(false);
   const [isTargetTimeModalVisible, setIsTargetTimeModalVisible] = useState(false);
 
@@ -25,14 +32,16 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
     <>
       <View style={styles.naggerGroup}>
         <Card.NaggerFrame
+          hasTaskItems={hasTaskItems}
           hasFocus={nagger.clientProps.hasFocus}
           isPinned={nagger.pinnedBy !== "None"}
           onRailPress={() => naggerActions.setFocused(nagger)}
-          tone={isSelected ? "selected" : "active"}
+          tone={tone}
         >
           <Card.NaggerField
             nagger={nagger}
             isExpanded={isExpanded}
+            isCompleted={isTaskLogCompleted}
             allowEditSchedule
             allowEditTargetTime
             allowEditTitle
@@ -58,6 +67,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
               key={nagger.taskLog.id}
               taskLog={nagger.taskLog}
               parentNaggerHasFocus={nagger.clientProps.hasFocus}
+              railTone={railTone}
             />
           </View>
         </Activity>
@@ -92,6 +102,25 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
 };
 
 export const NagCard = memo(NagCardComponent);
+
+function isCompletedTaskLog(taskLog: Nagger["taskLog"]): boolean {
+  return (
+    taskLog.descendantTaskItemCount > 0 &&
+    taskLog.doneDescendantTaskItemCount === taskLog.descendantTaskItemCount
+  );
+}
+
+function getNaggerCardTone(
+  isSelected: boolean,
+  isCompleted: boolean,
+): NaggerFrameTone {
+  if (isCompleted) return isSelected ? "completedSelected" : "completed";
+  return isSelected ? "selected" : "active";
+}
+
+function getRailTone(isCompleted: boolean): RailTone {
+  return isCompleted ? "completed" : "active";
+}
 
 const styles = StyleSheet.create({
   naggerGroup: {

@@ -5,7 +5,7 @@ type SelectionLaneProps = {
   readonly accessibilityLabel: string;
   readonly markerHeight?: number;
   readonly onPress?: () => void;
-  readonly tone?: "active" | "completed" | "neutral";
+  readonly tone?: "active" | "activeSoft" | "completed" | "completedSoft" | "neutral";
 };
 
 export const SelectionLane = ({
@@ -41,8 +41,12 @@ function getRailColor(tone: NonNullable<SelectionLaneProps["tone"]>): string {
   switch (tone) {
     case "active":
       return nagPlanTheme.rail.active;
+    case "activeSoft":
+      return nagPlanTheme.rail.activeSoft;
     case "completed":
       return nagPlanTheme.rail.completed;
+    case "completedSoft":
+      return nagPlanTheme.rail.completedSoft;
     case "neutral":
       return nagPlanTheme.rail.neutral;
   }
@@ -50,9 +54,10 @@ function getRailColor(tone: NonNullable<SelectionLaneProps["tone"]>): string {
 
 const styles = StyleSheet.create({
   lane: {
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     alignSelf: "stretch",
+    paddingLeft: 2,
     width: nagPlanTheme.selectionLane.width,
   },
   rail: {

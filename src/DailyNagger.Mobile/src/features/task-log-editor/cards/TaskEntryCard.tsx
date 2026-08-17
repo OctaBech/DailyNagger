@@ -6,9 +6,10 @@ import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
 type TaskEntryCardProps = {
   taskEntry: TaskEntry;
+  readonly railTone: "active" | "completed";
 };
 
-const TaskEntryCardComponent = ({ taskEntry }: TaskEntryCardProps) => {
+const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => {
   const { taskEntry: taskEntryActions } = useEditorScreenCommands();
   useDebugRenderFrameCounter("EditorTaskEntryCard", taskEntry.id);
   const isSelected = taskEntry.clientProps.isSelected;
@@ -21,6 +22,7 @@ const TaskEntryCardComponent = ({ taskEntry }: TaskEntryCardProps) => {
         isSelected={isSelected}
         isRemovedOnRollover={taskEntry.rolloverBehavior === "Remove"}
         onMarkerPress={() => taskEntryActions.setFocused(taskEntry)}
+        railTone={railTone}
       >
         <Card.TaskEntryField
           taskEntry={taskEntry}

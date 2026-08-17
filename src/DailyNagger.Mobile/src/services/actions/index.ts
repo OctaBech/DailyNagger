@@ -3,6 +3,11 @@ export {
   editorStartEdit,
   type EditorSessionActionScope,
 } from "./editorSessionActions";
+export {
+  addTaskEntryToTaskItem,
+  addTaskItemToTaskItem,
+  addTaskItemToTaskLog,
+} from "./addTreeNodeActions";
 export { importLoadedPlanToMemory } from "./loadedPlanImportActions";
 export { closeTaskLogForRollover, rolloverNagger } from "./rolloverActions";
 export {

@@ -19,33 +19,34 @@ const TaskLogCardComponent = ({
 }: TaskLogCardProps) => {
   const { addTaskStep, setFocused } = usePlanScreenCommands().taskLog;
   useDebugRenderFrameCounter("PlanTaskLogCard", taskLog.id);
+
   const [isTaskStepNameModalVisible, setIsTaskStepNameModalVisible] = useState(false);
   const { suggestions } = useTaskStepNameSuggestions(taskLog.nagId);
   const taskStepNameSuggestions = useMemo(
     () => mergeTaskStepNameSuggestions(suggestions, taskLog),
     [suggestions, taskLog],
   );
-
   const isSelected = taskLog.clientProps.isSelected;
+  const isInsideFocusedTree =
+    parentNaggerHasFocus || taskLog.clientProps.hasFocus || isSelected;
 
   return (
     <>
-      <Card.TaskLogFrame
-        hasFocus={taskLog.clientProps.hasFocus}
-        parentNaggerHasFocus={parentNaggerHasFocus}
-        isSelected={isSelected}
-        onRailPress={() => setFocused(taskLog)}
-        onPressAddTaskStep={() => {
-          setFocused(taskLog);
-          setIsTaskStepNameModalVisible(true);
-        }}
-        railTone={railTone}
-      >
+      <Card.TaskLogFrame isSelected={isSelected}>
         {taskLog.taskItems.map((taskItem) => (
-          <TaskItemCard key={taskItem.id} taskItem={taskItem} railTone={railTone} />
+          <TaskItemCard
+            key={taskItem.id}
+            isInsideFocusedTree={isInsideFocusedTree}
+            taskItem={taskItem}
+            railTone={railTone}
+          />
         ))}
         <Card.TaskLogTail
           taskLog={taskLog}
+          onAddTaskItem={() => {
+            setFocused(taskLog);
+            setIsTaskStepNameModalVisible(true);
+          }}
           onFocus={() => setFocused(taskLog)}
         />
       </Card.TaskLogFrame>
@@ -53,8 +54,11 @@ const TaskLogCardComponent = ({
       <Modal.TaskStepNameModal
         visible={isTaskStepNameModalVisible}
         suggestions={taskStepNameSuggestions}
-        onAddTaskStep={(name, rolloverBehavior) => addTaskStep(taskLog, name, rolloverBehavior)}
         onDismiss={() => setIsTaskStepNameModalVisible(false)}
+        onAddTaskStep={(name, rolloverBehavior) => {
+          addTaskStep(taskLog, name, rolloverBehavior);
+          setIsTaskStepNameModalVisible(false);
+        }}
       />
     </>
   );
@@ -70,7 +74,6 @@ function mergeTaskStepNameSuggestions(
   remoteSuggestions: readonly TaskStepNameSuggestion[],
   taskLog: TaskLog,
 ): readonly TaskStepNameSuggestion[] {
-  // Include local task steps so newly queued names are suggested without refetching the DB-backed list.
   const names = new Set(remoteSuggestions.map((suggestion) => suggestion.name));
 
   addTaskItemNames(names, taskLog.taskItems);

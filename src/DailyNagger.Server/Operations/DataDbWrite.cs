@@ -222,9 +222,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 Id = rule.Id,
                 NagId = nagId,
                 RuleType = rule.RuleType,
-                Day = rule.Day,
-                Month = rule.Month,
-                Year = rule.Year
+                RuleJson = rule.RuleJson
             })
             .ToList();
 
@@ -356,9 +354,9 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             await using var ruleCommand = new SqlCommand(
                 """
                 insert into schedule_rule
-                    (id, nag_id, rule_type, day, month, year)
+                    (id, nag_id, rule_type, rule_json)
                 values
-                    (@id, @nagId, @ruleType, @day, @month, @year)
+                    (@id, @nagId, @ruleType, @ruleJson)
                 """,
                 connection,
                 transaction);
@@ -366,9 +364,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             ruleCommand.Parameters.AddWithValue("@id", rule.Id);
             ruleCommand.Parameters.AddWithValue("@nagId", nag.Id);
             ruleCommand.Parameters.AddWithValue("@ruleType", rule.RuleType.ToString());
-            ruleCommand.Parameters.AddWithValue("@day", (object?)rule.Day ?? DBNull.Value);
-            ruleCommand.Parameters.AddWithValue("@month", (object?)rule.Month ?? DBNull.Value);
-            ruleCommand.Parameters.AddWithValue("@year", (object?)rule.Year ?? DBNull.Value);
+            ruleCommand.Parameters.AddWithValue("@ruleJson", rule.RuleJson);
             await ruleCommand.ExecuteNonQueryAsync(cancellationToken);
         }
 

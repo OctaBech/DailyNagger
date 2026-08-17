@@ -1,5 +1,4 @@
 import type { Nagger, ScheduleRule } from "@/models";
-import { assertNever } from "@/shared";
 import type { CultureSettings } from "../culture";
 import { operations } from "./operations";
 
@@ -47,25 +46,11 @@ function getNextOccurrence(
   cultureSettings: CultureSettings,
 ): string | null {
   switch (rule.ruleType) {
-    case "Monday":
-      return operations.getNextWeeklyOccurrence(1, fromDate, cultureSettings);
-    case "Tuesday":
-      return operations.getNextWeeklyOccurrence(2, fromDate, cultureSettings);
-    case "Wednesday":
-      return operations.getNextWeeklyOccurrence(3, fromDate, cultureSettings);
-    case "Thursday":
-      return operations.getNextWeeklyOccurrence(4, fromDate, cultureSettings);
-    case "Friday":
-      return operations.getNextWeeklyOccurrence(5, fromDate, cultureSettings);
-    case "Saturday":
-      return operations.getNextWeeklyOccurrence(6, fromDate, cultureSettings);
-    case "Sunday":
-      return operations.getNextWeeklyOccurrence(0, fromDate, cultureSettings);
-    case "MonthlyDay":
-      return operations.getNextMonthlyOccurrence(rule, fromDate, cultureSettings);
+    case "Weekday":
+      return operations.getNextWeekdayOccurrence(rule.rule, fromDate, cultureSettings);
     case "Date":
-      return operations.getNextDateOccurrence(rule, fromDate, cultureSettings);
-    default:
-      return assertNever(rule.ruleType);
+      return operations.getNextDateOccurrence(rule.rule, fromDate, cultureSettings);
+    case "Holiday":
+      return null;
   }
 }

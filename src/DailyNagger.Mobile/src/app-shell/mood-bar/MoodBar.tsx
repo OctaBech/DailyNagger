@@ -126,14 +126,15 @@ const styles = StyleSheet.create({
   barContainer: {
     alignItems: "flex-start",
     alignSelf: "center",
-    backgroundColor: "#25292b",
-    borderColor: "#3c4245",
+    backgroundColor: appLayout.moodBar.backgroundColor,
+    borderColor: appLayout.moodBar.borderColor,
     borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
     justifyContent: "center",
+    marginHorizontal: appLayout.moodBar.marginHorizontal,
     paddingHorizontal: appLayout.moodBar.paddingHorizontal,
-    paddingVertical: 5,
+    paddingVertical: appLayout.moodBar.paddingVertical,
   },
   itemContainer: {
     alignItems: "center",
@@ -145,13 +146,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
-    top: -8,
+    top: appLayout.moodBar.selectedAtTopOffset,
     width: 100,
   },
   smileySpace: {
     alignItems: "center",
     height: 38,
     justifyContent: "center",
+    top: appLayout.moodBar.smileyTopOffset,
   },
   unSelectedSmiley: {
     transform: [{ scale: 1.6 }],
@@ -218,7 +220,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   dateLabel: {
-    color: "#aaa",
+    color: appLayout.moodBar.dateLabelColor,
     fontSize: 10,
     fontWeight: "500",
     textAlign: "center",

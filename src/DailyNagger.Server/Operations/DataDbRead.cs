@@ -484,7 +484,7 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
     {
         await using var command = new SqlCommand(
             """
-            select id, rule_type, day, month, year
+            select id, rule_type, rule_json
             from schedule_rule
             where nag_id = @nagId
             order by id
@@ -506,9 +506,7 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
                 Id = reader.GetGuid(0),
                 NagId = nagId,
                 RuleType = Enum.Parse<ScheduleRuleType>(storedRuleType),
-                Day = reader.IsDBNull(2) ? null : reader.GetInt32(2),
-                Month = reader.IsDBNull(3) ? null : reader.GetInt32(3),
-                Year = reader.IsDBNull(4) ? null : reader.GetInt32(4)
+                RuleJson = reader.GetString(2)
             });
         }
 

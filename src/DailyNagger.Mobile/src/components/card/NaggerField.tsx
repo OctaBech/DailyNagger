@@ -78,13 +78,6 @@ export const NaggerField = (props: NaggerFieldProps) => {
           </Pressable>
         )}
 
-        <View style={styles.headerControl}>
-          <Primitives.ProgressPill
-            done={nagger.taskLog.doneDescendantTaskItemCount}
-            total={nagger.taskLog.descendantTaskItemCount}
-          />
-        </View>
-
         {allowExpand ? (
           <Pressable
             accessibilityRole="button"
@@ -140,6 +133,14 @@ export const NaggerField = (props: NaggerFieldProps) => {
           </Text>
         </Pressable>
 
+        <Primitives.RowRemainderPressable
+          accessibilityLabel="Expand nagger log"
+          onPress={() => {
+            onFocus?.();
+            if (allowExpand) onHeaderPress?.();
+          }}
+        />
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Expand nagger log"
@@ -147,8 +148,13 @@ export const NaggerField = (props: NaggerFieldProps) => {
             onFocus?.();
             if (allowExpand) onHeaderPress?.();
           }}
-          style={({ pressed }) => [styles.scheduleSpacer, pressed && styles.schedulePressed]}
-        />
+          style={styles.scheduleProgress}
+        >
+          <Primitives.ProgressPill
+            done={nagger.taskLog.doneDescendantTaskItemCount}
+            total={nagger.taskLog.descendantTaskItemCount}
+          />
+        </Pressable>
       </View>
 
       {allowEditTargetTime || nagger.targetTime !== null ? (
@@ -187,6 +193,13 @@ export const NaggerField = (props: NaggerFieldProps) => {
               {getNaggerTargetTimeText(nagger)}
             </Text>
           </Pressable>
+          <Primitives.RowRemainderPressable
+            accessibilityLabel="Expand nagger log"
+            onPress={() => {
+              onFocus?.();
+              if (allowExpand) onHeaderPress?.();
+            }}
+          />
         </View>
       ) : null}
     </View>
@@ -224,16 +237,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  headerControl: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 30,
-  },
   title: {
     color: nagPlanTheme.nagger.titleText,
     fontSize: 22,
     fontWeight: "800",
-    paddingHorizontal: 6,
+    paddingHorizontal: 4,
     paddingVertical: 3,
   },
   titlePressable: {
@@ -271,7 +279,15 @@ const styles = StyleSheet.create({
     borderRadius: nagPlanTheme.radius.control,
     flexDirection: "row",
     gap: 5,
+    paddingHorizontal: 4,
     paddingVertical: 2,
+  },
+  scheduleProgress: {
+    alignItems: "center",
+    alignSelf: "stretch",
+    justifyContent: "center",
+    minHeight: 30,
+    paddingHorizontal: 4,
   },
   targetTime: {
     alignItems: "center",
@@ -279,11 +295,8 @@ const styles = StyleSheet.create({
     borderRadius: nagPlanTheme.radius.control,
     flexDirection: "row",
     gap: 5,
+    paddingHorizontal: 4,
     paddingVertical: 2,
-  },
-  scheduleSpacer: {
-    flex: 1,
-    minHeight: 30,
   },
   schedulePressed: {
     opacity: 0.72,

@@ -141,21 +141,13 @@ public enum NaggerPinnedByDto
 public sealed record ScheduleRuleDto(
     Guid Id,
     ScheduleRuleTypeDto RuleType,
-    int? Day,
-    int? Month,
-    int? Year);
+    string RuleJson);
 
 public enum ScheduleRuleTypeDto
 {
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-    Sunday,
-    MonthlyDay,
-    Date
+    Weekday,
+    Date,
+    Holiday
 }
 
 public sealed record TaskLogDto(

@@ -67,6 +67,9 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
         },
       },
       taskLog: {
+        addTaskItem: (taskLog: TaskLog) => {
+          dispatch("editor-action", "task-log/add-task-item", { taskLog });
+        },
         setFocused: (taskLog: TaskLog) => {
           dispatch("editor-view", "task-log/set-focused", { taskLog });
         },
@@ -75,6 +78,12 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
         },
       },
       taskItem: {
+        addTaskEntry: (taskItem: TaskItem) => {
+          dispatch("editor-action", "task-item/add-task-entry", { taskItem });
+        },
+        addTaskItem: (taskItem: TaskItem) => {
+          dispatch("editor-action", "task-item/add-task-item", { taskItem });
+        },
         setExpanded: (taskItem: TaskItem, isExpanded: boolean) => {
           dispatch("editor-view", "task-item/set-expanded", { taskItem, isExpanded });
         },

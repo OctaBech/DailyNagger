@@ -89,6 +89,8 @@ const styles = StyleSheet.create({
     backgroundColor: nagPlanTheme.screen.background,
   },
   listContent: {
+    backgroundColor: nagPlanTheme.screen.background,
+    flexGrow: 1,
     paddingHorizontal: nagPlanTheme.screenDensity.horizontalPadding,
     paddingTop: appLayout.moodBar.listTopPadding,
   },
