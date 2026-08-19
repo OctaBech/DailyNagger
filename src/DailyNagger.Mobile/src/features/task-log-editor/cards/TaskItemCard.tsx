@@ -28,7 +28,7 @@ const TaskItemCardComponent = ({
 
   const isOnceTaskItem = taskItem.rolloverBehavior === "RemoveWhenDone";
   const hasChildren = taskItem.taskItems.length + taskItem.taskEntries.length > 0;
-  const canDeleteOnce = isOnceTaskItem && !hasChildren;
+  const canDeleteOnce = isOnceTaskItem && !taskItem.isDone && !hasChildren;
   const isExpanded = taskItem.clientProps.isExpanded;
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
