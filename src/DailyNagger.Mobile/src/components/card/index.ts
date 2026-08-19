@@ -1,3 +1,4 @@
+export { CardActionButton } from "./CardActionButton";
 export { NaggerFrame, type NaggerFrameTone } from "./NaggerFrame";
 export { NaggerField } from "./NaggerField";
 export { FocusFrame } from "./FocusFrame";

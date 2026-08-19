@@ -5,6 +5,7 @@ import type { TaskItem } from "@/models";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 import * as Input from "@/components/input";
 import * as Primitives from "@/components/primitives";
+import { CardActionButton } from "./CardActionButton";
 import { cardRowLayout } from "./cardRowLayout";
 
 type TaskItemFieldProps = {
@@ -115,19 +116,25 @@ export const TaskItemField = ({
       {onDeletePress ? (
         isDeleteArmed ? (
           <View style={styles.deleteConfirmArea}>
-            <ConfirmDeleteButton
+            <CardActionButton
               accessibilityLabel="Cancel delete task step"
-              icon="undo-variant"
               onPress={() => {
                 onFocus?.();
                 setIsDeleteArmed(false);
               }}
-            />
-            <ConfirmDeleteButton
+            >
+              <Icon source="undo-variant" size={17} color={nagPlanTheme.taskItem.chevronText} />
+            </CardActionButton>
+            <CardActionButton
               accessibilityLabel="Confirm delete task step"
-              icon="trash-can-outline"
               onPress={() => focusAndRun(onDeletePress)}
-            />
+            >
+              <Icon
+                source="trash-can-outline"
+                size={17}
+                color={nagPlanTheme.taskItem.chevronText}
+              />
+            </CardActionButton>
           </View>
         ) : (
           <Pressable
@@ -162,30 +169,6 @@ export const TaskItemField = ({
         </Pressable>
       )}
     </View>
-  );
-};
-
-type ConfirmDeleteButtonProps = {
-  readonly accessibilityLabel: string;
-  readonly icon: string;
-  readonly onPress: () => void;
-};
-
-const ConfirmDeleteButton = ({
-  accessibilityLabel,
-  icon,
-  onPress,
-}: ConfirmDeleteButtonProps) => {
-  return (
-    <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityRole="button"
-      hitSlop={6}
-      onPress={onPress}
-      style={({ pressed }) => [styles.confirmDeleteButton, pressed && styles.pressedButton]}
-    >
-      <Icon source={icon} size={17} color={nagPlanTheme.taskItem.chevronText} />
-    </Pressable>
   );
 };
 
@@ -244,19 +227,5 @@ const styles = StyleSheet.create({
     fontSize: nagPlanTheme.typography.taskItemTitleSize,
     fontWeight: "900",
     lineHeight: nagPlanTheme.typography.taskItemTitleSize,
-  },
-  confirmDeleteButton: {
-    alignItems: "center",
-    backgroundColor: nagPlanTheme.taskLog.background,
-    borderColor: nagPlanTheme.selection.border,
-    borderRadius: nagPlanTheme.radius.control,
-    borderWidth: 1,
-    height: 28,
-    justifyContent: "center",
-    minWidth: 32,
-    paddingHorizontal: 5,
-  },
-  pressedButton: {
-    backgroundColor: nagPlanTheme.taskItem.pressedBackground,
   },
 });
