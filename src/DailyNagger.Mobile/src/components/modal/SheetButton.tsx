@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text } from "react-native";
 import { modalTheme } from "./theme";
 
 type SheetButtonArea = "body" | "footer";
-type SheetButtonTone = "choice" | "primary" | "secondary";
+type SheetButtonTone = "choice" | "keep" | "primary" | "secondary";
 
 type SheetButtonProps = {
   readonly area: SheetButtonArea;
@@ -45,6 +45,8 @@ function getToneStyle(tone: SheetButtonTone, selected: boolean, area: SheetButto
       return styles.secondaryTone;
     case "choice":
       return selected ? styles.selectedChoiceTone : styles.choiceTone;
+    case "keep":
+      return styles.keepTone;
   }
 }
 
@@ -56,6 +58,8 @@ function getTextStyle(tone: SheetButtonTone) {
       return styles.secondaryText;
     case "choice":
       return styles.choiceText;
+    case "keep":
+      return styles.keepText;
   }
 }
 
@@ -91,6 +95,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: "800",
+  },
+  keepText: {
+    color: modalTheme.modalButtonTone.primary.text,
+  },
+  keepTone: {
+    backgroundColor: modalTheme.rollover.keepBackground,
+    borderColor: modalTheme.rollover.keepBorder,
   },
   pressed: {
     opacity: 0.72,
