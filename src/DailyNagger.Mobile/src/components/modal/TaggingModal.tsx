@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, TextInput } from "react-native";
+import type { TextInput } from "react-native";
 import { appLimits } from "@/config";
 import { useTags, type TagType } from "@/tagging";
 import { SheetButton } from "./SheetButton";
@@ -7,6 +7,7 @@ import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
 import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
+import { SheetTextArea } from "./SheetTextArea";
 
 export type TaggingModalProps = {
   readonly visible: boolean;
@@ -128,32 +129,13 @@ export function TaggingModal({
           options={tagOptions}
         />
 
-        <TextInput
+        <SheetTextArea
           value={draftTagDescription}
           onChangeText={setDraftTagDescription}
           placeholder="Description"
-          placeholderTextColor="#6f7e87"
-          multiline
           maxLength={appLimits.tags.descriptionMaxLength}
-          style={styles.descriptionInput}
         />
       </KeyboardLiftRegion>
     </SheetModal>
   );
 }
-
-const styles = StyleSheet.create({
-  descriptionInput: {
-    backgroundColor: "#fffaf4",
-    borderColor: "#d8d1c9",
-    borderRadius: 6,
-    borderWidth: 1,
-    color: "#18242b",
-    fontSize: 14,
-    fontWeight: "700",
-    minHeight: 72,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    textAlignVertical: "top",
-  },
-});

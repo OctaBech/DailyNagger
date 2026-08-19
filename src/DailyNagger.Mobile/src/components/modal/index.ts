@@ -17,6 +17,7 @@ export { SheetNarrowControls } from "./SheetNarrowControls";
 export { SheetNarrowPicker } from "./SheetNarrowPicker";
 export { SheetSearchInput } from "./SheetSearchInput";
 export { SheetText } from "./SheetText";
+export { SheetTextArea } from "./SheetTextArea";
 export { SheetToggleGroup } from "./SheetToggleGroup";
 export { SheetWheel } from "./SheetWheel";
 export { KeyboardLiftRegion, SheetModal } from "./SheetModal";
