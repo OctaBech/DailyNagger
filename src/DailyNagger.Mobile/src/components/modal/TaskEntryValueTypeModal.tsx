@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import type { TaskEntryValueType } from "@/api";
 import type { TaskEntry } from "@/models";
 import { SheetButton } from "./SheetButton";
-import { SheetFooterActions } from "./SheetFooterActions";
+import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { SheetModal } from "./SheetModal";
 import { SheetSegmentedControl } from "./SheetSegmentedControl";
 
@@ -47,13 +47,14 @@ export const TaskEntryValueTypeModal = ({
       title="Choose value type"
       onDismiss={onDismiss}
       footer={
-        <SheetFooterActions layout="space-between">
+        <SheetFooterActions>
           <SheetButton
             area="footer"
             label="Log"
             onPress={() => saveDraft("MoveValueToHistory")}
             tone="primary"
           />
+          <SheetFooterSpacer />
           <SheetButton
             area="footer"
             label="Keep"

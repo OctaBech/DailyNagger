@@ -3,7 +3,7 @@ import type { TextInput } from "react-native";
 import { appLimits } from "@/config";
 import type { TaskItem } from "@/models";
 import { SheetButton } from "./SheetButton";
-import { SheetFooterActions } from "./SheetFooterActions";
+import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
 import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
@@ -83,13 +83,14 @@ function TaskStepNameModalContent({
       title="Add task step"
       onDismiss={onDismiss}
       footer={
-        <SheetFooterActions layout="space-between">
+        <SheetFooterActions>
           <SheetButton
             area="footer"
             label="□ Always"
             tone="secondary"
             onPress={() => chooseRollover("persistent")}
           />
+          <SheetFooterSpacer />
           <SheetButton
             area="footer"
             label="○ Once"

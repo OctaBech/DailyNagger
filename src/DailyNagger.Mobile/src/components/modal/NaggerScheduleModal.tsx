@@ -17,7 +17,7 @@ import { SheetModal } from "./SheetModal";
 import { SheetButton } from "./SheetButton";
 import { SheetChip } from "./SheetChip";
 import { SheetChipRow } from "./SheetChipRow";
-import { SheetFooterActions } from "./SheetFooterActions";
+import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { SheetHeadingBelt } from "./SheetHeadingBelt";
 import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
@@ -348,6 +348,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
       onDismiss={onDismiss}
       footer={
         <SheetFooterActions>
+          <SheetFooterSpacer />
           <SheetButton
             area="footer"
             label="Done"

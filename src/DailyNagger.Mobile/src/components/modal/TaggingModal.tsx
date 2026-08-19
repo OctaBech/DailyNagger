@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, TextInput } from "react-native";
 import { appLimits } from "@/config";
 import { useTags, type TagType } from "@/tagging";
+import { SheetButton } from "./SheetButton";
+import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
 import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
@@ -101,14 +103,11 @@ export function TaggingModal({
       title="Choose tag"
       onDismiss={onDismiss}
       footer={
-        <View style={styles.actions}>
-          <Pressable style={[styles.button, styles.secondaryButton]} onPress={clearDraft}>
-            <Text style={styles.secondaryButtonText}>Clear</Text>
-          </Pressable>
-          <Pressable style={[styles.button, styles.primaryButton]} onPress={saveTagName}>
-            <Text style={styles.primaryButtonText}>Done</Text>
-          </Pressable>
-        </View>
+        <SheetFooterActions>
+          <SheetButton area="footer" label="Clear" tone="secondary" onPress={clearDraft} />
+          <SheetFooterSpacer />
+          <SheetButton area="footer" label="Done" tone="primary" onPress={saveTagName} />
+        </SheetFooterActions>
       }
     >
       <KeyboardLiftRegion>
@@ -144,34 +143,6 @@ export function TaggingModal({
 }
 
 const styles = StyleSheet.create({
-  actions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    justifyContent: "flex-end",
-  },
-  button: {
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  primaryButton: {
-    backgroundColor: "#d97828",
-  },
-  primaryButtonText: {
-    color: "#1a1b1d",
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  secondaryButton: {
-    borderColor: "#d8d1c9",
-    borderWidth: 1,
-  },
-  secondaryButtonText: {
-    color: "#18242b",
-    fontSize: 15,
-    fontWeight: "900",
-  },
   descriptionInput: {
     backgroundColor: "#fffaf4",
     borderColor: "#d8d1c9",

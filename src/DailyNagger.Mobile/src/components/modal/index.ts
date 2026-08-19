@@ -3,7 +3,7 @@ export { NaggerTargetTimeModal } from "./NaggerTargetTimeModal";
 export { SheetButton } from "./SheetButton";
 export { SheetChip } from "./SheetChip";
 export { SheetChipRow } from "./SheetChipRow";
-export { SheetFooterActions } from "./SheetFooterActions";
+export { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 export { SheetHeadingBelt } from "./SheetHeadingBelt";
 export { SheetHeadline } from "./SheetHeadline";
 export { SheetSegmentedControl } from "./SheetSegmentedControl";

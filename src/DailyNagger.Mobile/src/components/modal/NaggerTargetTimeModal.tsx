@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { TimePicker } from "react-native-paper-dates";
+import { SheetButton } from "./SheetButton";
+import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { SheetModal } from "./SheetModal";
 
 type FocusedTimeInput = "hours" | "minutes";
@@ -52,19 +54,18 @@ function VisibleNaggerTargetTimeModal({
       title="Target time"
       onDismiss={onDismiss}
       footer={
-        <View style={styles.actions}>
+        <SheetFooterActions>
           {targetTime === null ? null : (
-            <Pressable style={[styles.button, styles.secondaryButton]} onPress={onClear}>
-              <Text style={styles.secondaryButtonText}>Clear</Text>
-            </Pressable>
+            <SheetButton area="footer" label="Clear" tone="secondary" onPress={onClear} />
           )}
-          <Pressable
-            style={[styles.button, styles.primaryButton]}
+          <SheetFooterSpacer />
+          <SheetButton
+            area="footer"
+            label="Done"
+            tone="primary"
             onPress={() => onDone(formatTargetTime(draftTime.hours, draftTime.minutes))}
-          >
-            <Text style={styles.primaryButtonText}>Done</Text>
-          </Pressable>
-        </View>
+          />
+        </SheetFooterActions>
       }
     >
       <View style={styles.picker}>
@@ -109,34 +110,6 @@ function formatTargetTime(hours: number, minutes: number): string {
 }
 
 const styles = StyleSheet.create({
-  actions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    justifyContent: "flex-end",
-  },
-  button: {
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  primaryButton: {
-    backgroundColor: "#d97828",
-  },
-  primaryButtonText: {
-    color: "#1a1b1d",
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  secondaryButton: {
-    borderColor: "#d8d1c9",
-    borderWidth: 1,
-  },
-  secondaryButtonText: {
-    color: "#18242b",
-    fontSize: 15,
-    fontWeight: "900",
-  },
   picker: {
     alignItems: "center",
   },
