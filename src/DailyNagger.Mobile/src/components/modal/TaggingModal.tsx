@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { appLimits } from "@/config";
 import { useTags, type TagType } from "@/tagging";
-import { type SheetNarrowChipOption } from "./SheetNarrowChips";
+import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
 import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
 
@@ -29,7 +29,7 @@ export function TaggingModal({
   const tags = useTags(tagType);
   const { existingTags, isLoadingExistingTags, hasExistingTagLoadError } = tags;
 
-  const tagOptions = useMemo<SheetNarrowChipOption<(typeof existingTags)[number]>[]>(
+  const tagOptions = useMemo<SheetNarrowBeltOption<(typeof existingTags)[number]>[]>(
     () =>
       existingTags.map((tag) => ({
         date: tag.lastUsedAt?.toISOString() ?? null,
@@ -53,7 +53,7 @@ export function TaggingModal({
     onSave(trimmedTagName === "" ? null : trimmedTagName);
   }
 
-  function selectExistingTag(option: SheetNarrowChipOption<(typeof existingTags)[number]>) {
+  function selectExistingTag(option: SheetNarrowBeltOption<(typeof existingTags)[number]>) {
     setDraftTagName(option.value.name);
     setDraftTagDescription(option.value.description ?? "");
   }
@@ -61,7 +61,13 @@ export function TaggingModal({
   function changeDraftTagName(nextTagName: string) {
     setDraftTagName(nextTagName);
 
-    const exactMatch = existingTags.find((tag) => tag.name === nextTagName.trim()) ?? null;
+    const trimmedTagName = nextTagName.trim();
+    if (trimmedTagName === "") {
+      setDraftTagDescription("");
+      return;
+    }
+
+    const exactMatch = existingTags.find((tag) => tag.name === trimmedTagName) ?? null;
     if (exactMatch === null) return;
 
     setDraftTagDescription(exactMatch.description ?? "");
@@ -112,7 +118,6 @@ export function TaggingModal({
           emptyText="No matching tags."
           value={draftTagName}
           onChangeText={changeDraftTagName}
-          onClear={clearDraft}
           maxLength={appLimits.tags.nameMaxLength}
           autoFocus
           autoCapitalize="none"

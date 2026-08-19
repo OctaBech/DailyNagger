@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import type { Ref } from "react";
 import type { TextInput, TextInputProps } from "react-native";
 import {
-  SheetNarrowChips,
-  type SheetNarrowChipOption,
-  type SheetNarrowChipSortMode,
-} from "./SheetNarrowChips";
+  SheetNarrowBelt,
+  type SheetNarrowBeltOption,
+  type SheetNarrowBeltSortMode,
+} from "./SheetNarrowBelt";
 import { SheetSearchInput } from "./SheetSearchInput";
 import { SheetSegmentedControl } from "./SheetSegmentedControl";
 import { SheetNarrowControls } from "./SheetNarrowControls";
@@ -18,15 +18,14 @@ type SheetNarrowPickerProps<TValue> = Omit<TextInputProps, "style"> & {
   readonly isLoading?: boolean;
   readonly loadErrorText?: string | null;
   readonly loadingText?: string;
-  readonly onClear?: () => void;
-  readonly onPick: (option: SheetNarrowChipOption<TValue>) => void;
-  readonly options: readonly SheetNarrowChipOption<TValue>[];
+  readonly onPick: (option: SheetNarrowBeltOption<TValue>) => void;
+  readonly options: readonly SheetNarrowBeltOption<TValue>[];
   readonly sortOptions?: readonly SheetNarrowPickerSortOption[];
 };
 
 type SheetNarrowPickerSortOption = {
   readonly label: string;
-  readonly value: SheetNarrowChipSortMode;
+  readonly value: SheetNarrowBeltSortMode;
 };
 
 const defaultSortOptions: readonly SheetNarrowPickerSortOption[] = [
@@ -42,14 +41,13 @@ export function SheetNarrowPicker<TValue>({
   isLoading,
   loadErrorText,
   loadingText,
-  onClear,
   onPick,
   options,
   sortOptions = defaultSortOptions,
   value,
   ...textInputProps
 }: SheetNarrowPickerProps<TValue>) {
-  const [sortMode, setSortMode] = useState<SheetNarrowChipSortMode>(sortOptions[0]?.value ?? "date");
+  const [sortMode, setSortMode] = useState<SheetNarrowBeltSortMode>(sortOptions[0]?.value ?? "date");
   const activeSortMode = sortOptions.some((option) => option.value === sortMode)
     ? sortMode
     : (sortOptions[0]?.value ?? "date");
@@ -69,7 +67,6 @@ export function SheetNarrowPicker<TValue>({
           <SheetSearchInput
             ref={inputRef}
             value={value}
-            onClear={onClear}
             hasExactMatch={hasExactMatch}
             {...textInputProps}
           />
@@ -83,7 +80,7 @@ export function SheetNarrowPicker<TValue>({
         }
       />
 
-      <SheetNarrowChips
+      <SheetNarrowBelt
         edgeToEdge={edgeToEdge}
         emptyText={emptyText}
         inputText={inputText}

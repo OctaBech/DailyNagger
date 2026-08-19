@@ -19,7 +19,7 @@ import { SheetChip } from "./SheetChip";
 import { SheetChipRow } from "./SheetChipRow";
 import { SheetFooterActions } from "./SheetFooterActions";
 import { SheetHeadingBelt } from "./SheetHeadingBelt";
-import { type SheetNarrowChipOption } from "./SheetNarrowChips";
+import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
 import { SheetSection } from "./SheetSection";
 import { SheetText } from "./SheetText";
@@ -162,7 +162,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
   const [draftRules, setDraftRules] = useState<readonly ScheduleRule[]>(nagger.scheduleRules);
   const [activeRuleKey, setActiveRuleKey] = useState<string | null>(null);
   const previewDueOn = getPreviewDueOn(draftRules);
-  const holidayOptions = useMemo<readonly SheetNarrowChipOption<string>[]>(
+  const holidayOptions = useMemo<readonly SheetNarrowBeltOption<string>[]>(
     () =>
       getHolidayDefinitions(selectedHolidayCountryCode).map((holiday) => {
         const holidayDate = holiday.getDate(currentYear);
@@ -318,12 +318,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
     setActiveRuleKey(null);
   }
 
-  function clearHolidaySearchText(): void {
-    setHolidaySearchText("");
-    setActiveRuleKey(null);
-  }
-
-  function pickHoliday(option: SheetNarrowChipOption<string>): void {
+  function pickHoliday(option: SheetNarrowBeltOption<string>): void {
     setSelectedHolidayId(option.value);
     setHolidaySearchText(option.label);
     setActiveRuleKey(null);
@@ -460,7 +455,6 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
               emptyText="No matching holidays."
               highlightMode="closest-match"
               onChangeText={changeHolidaySearchText}
-              onClear={clearHolidaySearchText}
               onPick={pickHoliday}
               options={holidayOptions}
               placeholder="Holiday"
@@ -506,7 +500,7 @@ function removeConflictingSimpleWeekdayRules(
 }
 
 function resolveHolidayIdFromSearchText(
-  holidayOptions: readonly SheetNarrowChipOption<string>[],
+  holidayOptions: readonly SheetNarrowBeltOption<string>[],
   searchText: string,
   fallbackHolidayId: string,
 ): string {

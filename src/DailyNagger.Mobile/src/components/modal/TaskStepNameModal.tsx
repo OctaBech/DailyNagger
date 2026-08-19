@@ -4,7 +4,7 @@ import { appLimits } from "@/config";
 import type { TaskItem } from "@/models";
 import { SheetButton } from "./SheetButton";
 import { SheetFooterActions } from "./SheetFooterActions";
-import { type SheetNarrowChipOption } from "./SheetNarrowChips";
+import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
 import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
 
@@ -50,7 +50,7 @@ function TaskStepNameModalContent({
   const [draftName, setDraftName] = useState("");
   const nameInputRef = useRef<TextInput>(null);
 
-  const suggestionOptions = useMemo<SheetNarrowChipOption<SuggestedTaskStepName>[]>(
+  const suggestionOptions = useMemo<SheetNarrowBeltOption<SuggestedTaskStepName>[]>(
     () =>
       suggestions.map((suggestion) => ({
         label: suggestion.name,
@@ -59,7 +59,7 @@ function TaskStepNameModalContent({
     [suggestions],
   );
 
-  function selectExistingName(option: SheetNarrowChipOption<SuggestedTaskStepName>) {
+  function selectExistingName(option: SheetNarrowBeltOption<SuggestedTaskStepName>) {
     setDraftName(option.value.name);
   }
 

@@ -4,11 +4,10 @@ import { modalTheme } from "./theme";
 
 type SheetSearchInputProps = Omit<TextInputProps, "style"> & {
   readonly hasExactMatch?: boolean;
-  readonly onClear?: () => void;
 };
 
 export const SheetSearchInput = forwardRef<TextInput, SheetSearchInputProps>(
-  function SheetSearchInput({ hasExactMatch = false, onClear, value, ...textInputProps }, ref) {
+  function SheetSearchInput({ hasExactMatch = false, onChangeText, value, ...textInputProps }, ref) {
     const hasValue = `${value ?? ""}`.length > 0;
 
     return (
@@ -16,14 +15,15 @@ export const SheetSearchInput = forwardRef<TextInput, SheetSearchInputProps>(
         <TextInput
           ref={ref}
           value={value}
+          onChangeText={onChangeText}
           placeholderTextColor={modalTheme.control.placeholderText}
           style={styles.input}
           {...textInputProps}
         />
-        {hasValue && onClear !== undefined && (
+        {hasValue && onChangeText !== undefined && (
           <Pressable
             accessibilityRole="button"
-            onPress={onClear}
+            onPress={() => onChangeText("")}
             style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}
           >
             <Text selectable={false} style={styles.clearText}>

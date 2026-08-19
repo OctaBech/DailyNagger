@@ -2,17 +2,17 @@ import { useEffect, useMemo, useRef } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { modalTheme } from "./theme";
 
-export type SheetNarrowChipSortMode = "alphabetical" | "date";
+export type SheetNarrowBeltSortMode = "alphabetical" | "date";
 export type SheetNarrowHighlightMode = "closest-match" | "exact-match";
 
-export type SheetNarrowChipOption<TValue> = {
+export type SheetNarrowBeltOption<TValue> = {
   readonly date?: string | null;
   readonly description?: string | null;
   readonly label: string;
   readonly value: TValue;
 };
 
-type SheetNarrowChipsProps<TValue> = {
+type SheetNarrowBeltProps<TValue> = {
   readonly edgeToEdge?: boolean;
   readonly emptyText?: string;
   readonly inputText: string;
@@ -20,12 +20,12 @@ type SheetNarrowChipsProps<TValue> = {
   readonly loadErrorText?: string | null;
   readonly loadingText?: string;
   readonly highlightMode?: SheetNarrowHighlightMode;
-  readonly onPick: (option: SheetNarrowChipOption<TValue>) => void;
-  readonly options: readonly SheetNarrowChipOption<TValue>[];
-  readonly sortMode?: SheetNarrowChipSortMode;
+  readonly onPick: (option: SheetNarrowBeltOption<TValue>) => void;
+  readonly options: readonly SheetNarrowBeltOption<TValue>[];
+  readonly sortMode?: SheetNarrowBeltSortMode;
 };
 
-export function SheetNarrowChips<TValue>({
+export function SheetNarrowBelt<TValue>({
   edgeToEdge = false,
   emptyText = "No matches.",
   inputText,
@@ -36,8 +36,8 @@ export function SheetNarrowChips<TValue>({
   onPick,
   options,
   sortMode = "alphabetical",
-}: SheetNarrowChipsProps<TValue>) {
-  const listRef = useRef<FlatList<SheetNarrowChipOption<TValue>>>(null);
+}: SheetNarrowBeltProps<TValue>) {
+  const listRef = useRef<FlatList<SheetNarrowBeltOption<TValue>>>(null);
 
   const visibleOptions = useMemo(() => {
     const trimmedInput = inputText.trim();

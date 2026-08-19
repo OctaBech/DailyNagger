@@ -9,10 +9,10 @@ export { SheetHeadline } from "./SheetHeadline";
 export { SheetSegmentedControl } from "./SheetSegmentedControl";
 export { SheetSection } from "./SheetSection";
 export {
-  SheetNarrowChips,
-  type SheetNarrowChipOption,
-  type SheetNarrowChipSortMode,
-} from "./SheetNarrowChips";
+  SheetNarrowBelt,
+  type SheetNarrowBeltOption,
+  type SheetNarrowBeltSortMode,
+} from "./SheetNarrowBelt";
 export { SheetNarrowControls } from "./SheetNarrowControls";
 export { SheetNarrowPicker } from "./SheetNarrowPicker";
 export { SheetSearchInput } from "./SheetSearchInput";
