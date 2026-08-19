@@ -6,7 +6,6 @@ import { SheetButton } from "./SheetButton";
 import { SheetFooterActions } from "./SheetFooterActions";
 import { SheetModal } from "./SheetModal";
 import { SheetSegmentedControl } from "./SheetSegmentedControl";
-import { SheetSection } from "./SheetSection";
 
 export type TaskEntryValueTypeModalProps = {
   readonly visible: boolean;
@@ -64,23 +63,21 @@ export const TaskEntryValueTypeModal = ({
         </SheetFooterActions>
       }
     >
-      <SheetSection title="Value type">
-        <View style={styles.valueTypeControl}>
-          <SheetSegmentedControl
-            options={valueTypeOptions}
-            orientation="vertical"
-            value={draftValueType}
-            onChange={setDraftValueType}
-          />
-        </View>
-      </SheetSection>
+      <View style={styles.valueTypeControl}>
+        <SheetSegmentedControl
+          options={valueTypeOptions}
+          orientation="vertical"
+          value={draftValueType}
+          onChange={setDraftValueType}
+        />
+      </View>
     </SheetModal>
   );
 };
 
 const styles = StyleSheet.create({
   valueTypeControl: {
-    alignSelf: "flex-start",
+    alignSelf: "center",
     width: "66%",
   },
 });

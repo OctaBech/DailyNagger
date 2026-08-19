@@ -48,7 +48,11 @@ export function SheetSegmentedControl<TValue extends string>({
               adjustsFontSizeToFit
               numberOfLines={1}
               selectable={false}
-              style={[styles.label, isSelected ? styles.selectedLabel : styles.unselectedLabel]}
+              style={[
+                styles.label,
+                isVertical ? styles.verticalLabel : styles.horizontalLabel,
+                isSelected ? styles.selectedLabel : styles.unselectedLabel,
+              ]}
             >
               {option.label}
             </Text>
@@ -103,6 +107,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     minWidth: 48,
   },
+  horizontalLabel: {
+    textAlign: "center",
+  },
   horizontalSharedBorder: {
     marginLeft: -1,
   },
@@ -150,6 +157,10 @@ const styles = StyleSheet.create({
   },
   vertical: {
     flexDirection: "column",
+  },
+  verticalLabel: {
+    alignSelf: "stretch",
+    textAlign: "left",
   },
   verticalSegment: {
     alignSelf: "stretch",
