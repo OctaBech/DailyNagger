@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Icon } from "react-native-paper";
 import type { TaskItem } from "@/models";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 import * as Input from "@/components/input";
@@ -46,10 +48,20 @@ export const TaskItemField = ({
   onExpandPress,
   onPressTag,
 }: TaskItemFieldProps) => {
+  const [isDeleteArmed, setIsDeleteArmed] = useState(false);
   const shouldShowTag = showTag && (taskItem.tag !== null || showComponentOutlines);
   const tagText = taskItem.tag ?? "tag";
 
+  useEffect(() => {
+    if (taskItem.clientProps.hasFocus) return undefined;
+
+    const frame = requestAnimationFrame(() => setIsDeleteArmed(false));
+
+    return () => cancelAnimationFrame(frame);
+  }, [taskItem.clientProps.hasFocus]);
+
   function focusAndRun(action?: () => void) {
+    setIsDeleteArmed(false);
     onFocus?.();
     action?.();
   }
@@ -68,8 +80,11 @@ export const TaskItemField = ({
           mode="title"
           value={taskItem.name}
           onCommit={(name) => onNameCommit?.(name)}
-          onFocus={onNameFocus}
-          onTouchStart={onFocus}
+          onFocus={() => {
+            setIsDeleteArmed(false);
+            onNameFocus?.();
+          }}
+          onTouchStart={() => focusAndRun()}
           showEditFrame={showComponentOutlines}
           style={[cardRowLayout.textInput, styles.titleControl, styles.titleInput]}
         />
@@ -98,14 +113,37 @@ export const TaskItemField = ({
       )}
 
       {onDeletePress ? (
-        <Pressable
-          onPress={() => focusAndRun(onDeletePress)}
-          style={styles.deleteArea}
-        >
-          <Text selectable={false} style={styles.deleteText}>
-            x
-          </Text>
-        </Pressable>
+        isDeleteArmed ? (
+          <View style={styles.deleteConfirmArea}>
+            <ConfirmDeleteButton
+              accessibilityLabel="Cancel delete task step"
+              icon="undo-variant"
+              onPress={() => {
+                onFocus?.();
+                setIsDeleteArmed(false);
+              }}
+            />
+            <ConfirmDeleteButton
+              accessibilityLabel="Confirm delete task step"
+              icon="trash-can-outline"
+              onPress={() => focusAndRun(onDeletePress)}
+            />
+          </View>
+        ) : (
+          <Pressable
+            accessibilityLabel="Prepare delete task step"
+            accessibilityRole="button"
+            onPress={() => {
+              onFocus?.();
+              setIsDeleteArmed(true);
+            }}
+            style={styles.deleteArea}
+          >
+            <Text selectable={false} style={styles.deleteText}>
+              x
+            </Text>
+          </Pressable>
+        )
       ) : (
         <Pressable
           onPress={() => focusAndRun(onExpandPress)}
@@ -124,6 +162,30 @@ export const TaskItemField = ({
         </Pressable>
       )}
     </View>
+  );
+};
+
+type ConfirmDeleteButtonProps = {
+  readonly accessibilityLabel: string;
+  readonly icon: string;
+  readonly onPress: () => void;
+};
+
+const ConfirmDeleteButton = ({
+  accessibilityLabel,
+  icon,
+  onPress,
+}: ConfirmDeleteButtonProps) => {
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      hitSlop={6}
+      onPress={onPress}
+      style={({ pressed }) => [styles.confirmDeleteButton, pressed && styles.pressedButton]}
+    >
+      <Icon source={icon} size={17} color={nagPlanTheme.taskItem.chevronText} />
+    </Pressable>
   );
 };
 
@@ -169,10 +231,32 @@ const styles = StyleSheet.create({
     minWidth: 48,
     paddingHorizontal: nagPlanTheme.cardDensity.fieldPaddingHorizontal,
   },
+  deleteConfirmArea: {
+    alignItems: "center",
+    alignSelf: "stretch",
+    flexDirection: "row",
+    gap: 4,
+    justifyContent: "center",
+    minWidth: 72,
+  },
   deleteText: {
     color: nagPlanTheme.taskItem.chevronText,
     fontSize: nagPlanTheme.typography.taskItemTitleSize,
     fontWeight: "900",
     lineHeight: nagPlanTheme.typography.taskItemTitleSize,
+  },
+  confirmDeleteButton: {
+    alignItems: "center",
+    backgroundColor: nagPlanTheme.taskLog.background,
+    borderColor: nagPlanTheme.selection.border,
+    borderRadius: nagPlanTheme.radius.control,
+    borderWidth: 1,
+    height: 28,
+    justifyContent: "center",
+    minWidth: 32,
+    paddingHorizontal: 5,
+  },
+  pressedButton: {
+    backgroundColor: nagPlanTheme.taskItem.pressedBackground,
   },
 });
