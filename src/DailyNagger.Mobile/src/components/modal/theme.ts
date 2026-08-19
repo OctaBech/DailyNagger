@@ -14,9 +14,9 @@ export const modalTheme = {
   },
   modalButtonFooter: {
     borderRadius: 4,
-    minHeight: 44,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    minHeight: 40,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
   modalButtonTone: {
     primary: {
