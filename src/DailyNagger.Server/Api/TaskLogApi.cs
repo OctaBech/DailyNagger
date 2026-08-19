@@ -179,69 +179,69 @@ public static class TaskLogApi
         }
 
         return new SaveTaskLogRequest(
-            versionedRequest.CommunityId,
-            versionedRequest.UserId,
-            versionedRequest.Payload.Id,
-            versionedRequest.Payload.NagId,
-            versionedRequest.Payload.CopiedFromTaskLogId,
-            versionedRequest.Payload.ClosedOn,
-            versionedRequest.Payload.Tag,
-            versionedRequest.Payload.TaskItems,
-            versionedRequest.Payload.UpdatedAt,
-            versionedRequest.BaseVersion,
-            versionedRequest.NextVersion,
-            versionedRequest.Payload.DescendantTaskItemCount,
-            versionedRequest.Payload.DoneDescendantTaskItemCount,
-            versionedRequest.ClientIdentity);
+            CommunityId: versionedRequest.CommunityId,
+            UserId: versionedRequest.UserId,
+            Id: versionedRequest.Payload.Id,
+            NagId: versionedRequest.Payload.NagId,
+            CopiedFromTaskLogId: versionedRequest.Payload.CopiedFromTaskLogId,
+            ClosedOn: versionedRequest.Payload.ClosedOn,
+            TaskItems: versionedRequest.Payload.TaskItems,
+            UpdatedAt: versionedRequest.Payload.UpdatedAt,
+            BaseVersion: versionedRequest.BaseVersion,
+            NextVersion: versionedRequest.NextVersion,
+            Tag: versionedRequest.Payload.Tag,
+            DescendantTaskItemCount: versionedRequest.Payload.DescendantTaskItemCount,
+            DoneDescendantTaskItemCount: versionedRequest.Payload.DoneDescendantTaskItemCount,
+            ClientIdentity: versionedRequest.ClientIdentity);
     }
 
     private static TaskLogDto ToDto(TaskLog taskLog) =>
         new(
-            taskLog.Id,
-            taskLog.NagId,
-            taskLog.CopiedFromTaskLogId,
-            taskLog.ClosedOn,
-            taskLog.Tag,
-            taskLog.UpdatedAt,
-            taskLog.UpdatedByClientId,
-            taskLog.UpdatedByDeviceName,
-            taskLog.UpdatedByDeviceModel,
-            taskLog.Version,
-            taskLog.TaskItems
+            Id: taskLog.Id,
+            NagId: taskLog.NagId,
+            CopiedFromTaskLogId: taskLog.CopiedFromTaskLogId,
+            ClosedOn: taskLog.ClosedOn,
+            UpdatedAt: taskLog.UpdatedAt,
+            UpdatedByClientId: taskLog.UpdatedByClientId,
+            UpdatedByDeviceName: taskLog.UpdatedByDeviceName,
+            UpdatedByDeviceModel: taskLog.UpdatedByDeviceModel,
+            Version: taskLog.Version,
+            TaskItems: taskLog.TaskItems
                 .Where(node => node.ParentTaskItemId is null)
                 .OrderBy(node => node.SortOrder)
                 .Select(node => ToDto(node, taskLog.TaskItems))
                 .ToArray(),
-            taskLog.DescendantTaskItemCount,
-            taskLog.DoneDescendantTaskItemCount);
+            Tag: taskLog.Tag,
+            DescendantTaskItemCount: taskLog.DescendantTaskItemCount,
+            DoneDescendantTaskItemCount: taskLog.DoneDescendantTaskItemCount);
 
     private static TaskItemDto ToDto(
         TaskItem node,
         IReadOnlyList<TaskItem> allNodes) =>
         new(
-            node.Id,
-            node.TaskLogId,
-            node.ParentTaskItemId,
-            node.Name,
-            node.Tag,
-            node.TaskEntries
+            Id: node.Id,
+            TaskLogId: node.TaskLogId,
+            ParentTaskItemId: node.ParentTaskItemId,
+            Name: node.Name,
+            TaskEntries: node.TaskEntries
                 .OrderBy(input => input.SortOrder)
                 .Select(ToDto)
                 .ToArray(),
-            allNodes
+            TaskItems: allNodes
                 .Where(child => child.ParentTaskItemId == node.Id)
                 .OrderBy(child => child.SortOrder)
                 .Select(child => ToDto(child, allNodes))
                 .ToArray(),
-            node.IsDone,
-            ToDto(node.RolloverBehavior),
-            node.InteractionAt,
-            node.InteractionTimeZone,
-            node.InteractionLocale,
-            node.InteractionMood,
-            node.InteractionMoodAt,
-            node.DescendantTaskItemCount,
-            node.DoneDescendantTaskItemCount);
+            Tag: node.Tag,
+            IsDone: node.IsDone,
+            RolloverBehavior: ToDto(node.RolloverBehavior),
+            InteractionAt: node.InteractionAt,
+            InteractionTimeZone: node.InteractionTimeZone,
+            InteractionLocale: node.InteractionLocale,
+            InteractionMood: node.InteractionMood,
+            InteractionMoodAt: node.InteractionMoodAt,
+            DescendantTaskItemCount: node.DescendantTaskItemCount,
+            DoneDescendantTaskItemCount: node.DoneDescendantTaskItemCount);
 
     private static TaskEntryDto ToDto(TaskEntry input) =>
         new(

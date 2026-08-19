@@ -5,8 +5,17 @@ export { SheetChip } from "./SheetChip";
 export { SheetChipRow } from "./SheetChipRow";
 export { SheetFooterActions } from "./SheetFooterActions";
 export { SheetHeadingBelt } from "./SheetHeadingBelt";
+export { SheetHeadline } from "./SheetHeadline";
 export { SheetSegmentedControl } from "./SheetSegmentedControl";
 export { SheetSection } from "./SheetSection";
+export {
+  SheetNarrowChips,
+  type SheetNarrowChipOption,
+  type SheetNarrowChipSortMode,
+} from "./SheetNarrowChips";
+export { SheetNarrowControls } from "./SheetNarrowControls";
+export { SheetNarrowPicker } from "./SheetNarrowPicker";
+export { SheetSearchInput } from "./SheetSearchInput";
 export { SheetText } from "./SheetText";
 export { SheetToggleGroup } from "./SheetToggleGroup";
 export { SheetWheel } from "./SheetWheel";

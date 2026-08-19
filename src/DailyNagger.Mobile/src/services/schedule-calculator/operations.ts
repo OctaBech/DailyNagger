@@ -2,7 +2,9 @@ import {
   SCHEDULE_EVERY,
   SCHEDULE_LAST_DAY,
   SCHEDULE_LAST_POSITION,
+  getHolidayDefinition,
   type DateScheduleRuleBody,
+  type HolidayScheduleRuleBody,
   type WeekdayScheduleRuleBody,
 } from "@/models";
 import type { CultureSettings } from "../culture";
@@ -10,6 +12,7 @@ import type { CultureSettings } from "../culture";
 export const operations = {
   getNextWeekdayOccurrence,
   getNextDateOccurrence,
+  getNextHolidayOccurrence,
 } as const;
 
 function getNextWeekdayOccurrence(
@@ -35,7 +38,7 @@ function getNextWeekdayOccurrence(
 
   for (let monthsChecked = 0; monthsChecked < 24; monthsChecked++) {
     if (rule.month === SCHEDULE_EVERY || rule.month === month) {
-      const candidate = getWeekdayCandidate(year, month, rule);
+      const candidate = getWeekdayCandidate(year, month, rule, fromDate);
 
       if (candidate !== null && candidate >= fromDate) {
         return cultureSettings.toLocalIsoDate(candidate);
@@ -60,7 +63,7 @@ function getNextDateOccurrence(
   let month = fixedMonth ? rule.month : fromDate.getMonth() + 1;
 
   for (let monthsChecked = 0; monthsChecked < 120; monthsChecked++) {
-    const candidate = getDateCandidate(year, month, rule.dayOfMonth);
+    const candidate = getDateCandidate(year, month, rule.dayOfMonth, fromDate);
 
     if (candidate !== null && candidate >= fromDate) {
       if (!fixedYear || candidate.getFullYear() === rule.year) {
@@ -82,16 +85,41 @@ function getNextDateOccurrence(
   return null;
 }
 
+function getNextHolidayOccurrence(
+  rule: HolidayScheduleRuleBody,
+  fromDate: Date,
+  cultureSettings: CultureSettings,
+): string | null {
+  const holiday = getHolidayDefinition(rule.countryCode, rule.holidayId);
+
+  if (holiday === null) return null;
+
+  for (let yearOffset = 0; yearOffset < 10; yearOffset++) {
+    const candidate = holiday.getDate(fromDate.getFullYear() + yearOffset);
+
+    if (candidate >= fromDate) {
+      return cultureSettings.toLocalIsoDate(candidate);
+    }
+  }
+
+  return null;
+}
+
 function getWeekdayCandidate(
   year: number,
   month: number,
   rule: WeekdayScheduleRuleBody,
+  fromDate: Date,
 ): Date | null {
   if (rule.position === SCHEDULE_EVERY) {
-    const firstOfMonth = new Date(year, month - 1, 1);
-    const daysUntilTarget = (toJavaScriptDay(rule.weekday) - firstOfMonth.getDay() + 7) % 7;
+    const firstCandidateDate =
+      year === fromDate.getFullYear() && month === fromDate.getMonth() + 1
+        ? fromDate
+        : new Date(year, month - 1, 1);
+    const daysUntilTarget = (toJavaScriptDay(rule.weekday) - firstCandidateDate.getDay() + 7) % 7;
+    const candidate = addDays(firstCandidateDate, daysUntilTarget);
 
-    return addDays(firstOfMonth, daysUntilTarget);
+    return candidate.getMonth() === month - 1 ? candidate : null;
   }
 
   if (rule.position === SCHEDULE_LAST_POSITION) {
@@ -108,7 +136,20 @@ function getWeekdayCandidate(
   return candidate.getMonth() === month - 1 ? candidate : null;
 }
 
-function getDateCandidate(year: number, month: number, dayOfMonth: number): Date | null {
+function getDateCandidate(
+  year: number,
+  month: number,
+  dayOfMonth: number,
+  fromDate: Date,
+): Date | null {
+  if (dayOfMonth === SCHEDULE_EVERY) {
+    if (year === fromDate.getFullYear() && month === fromDate.getMonth() + 1) {
+      return fromDate;
+    }
+
+    return new Date(year, month - 1, 1);
+  }
+
   const day = dayOfMonth === SCHEDULE_LAST_DAY ? getDaysInMonth(year, month) : dayOfMonth;
 
   if (!isValidLocalDate(year, month, day)) return null;

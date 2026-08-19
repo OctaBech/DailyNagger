@@ -17,6 +17,13 @@ export type {
   WeekdayScheduleRule,
   WeekdayScheduleRuleBody,
 } from "./scheduleRules";
+export {
+  getHolidayDefinition,
+  getHolidayDefinitions,
+  holidayCountries,
+  type HolidayCountryCode,
+  type HolidayDefinition,
+} from "./scheduleHolidays";
 export type { ClientIdentity } from "./clientIdentity";
 export {
   isUserMood,

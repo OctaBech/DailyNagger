@@ -221,7 +221,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Created from API test",
                 new DateOnly(2026, 6, 1),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(nagTimeId, DayOfWeek.Monday)
                 ],
@@ -374,7 +376,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Persistent shopping list",
                 null,
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 0,
@@ -434,7 +438,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Gym - Push day",
                 new DateOnly(2026, 6, 1),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(oldScheduleRuleId, DayOfWeek.Monday)
                 ],
@@ -462,7 +468,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Gym - Push day updated",
                 new DateOnly(2026, 6, 10),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(newTuesdayScheduleRuleId, DayOfWeek.Tuesday),
                     EveryWeekdayRuleDto(newThursdayScheduleRuleId, DayOfWeek.Thursday)
@@ -533,7 +541,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Original title",
                 new DateOnly(2026, 6, 1),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(oldScheduleRuleId, DayOfWeek.Monday)
                 ],
@@ -559,7 +569,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Should roll back",
                 new DateOnly(2026, 6, 3),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(duplicateScheduleRuleId, DayOfWeek.Tuesday),
                     EveryWeekdayRuleDto(duplicateScheduleRuleId, DayOfWeek.Thursday)
@@ -612,7 +624,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Versioned nag",
                 new DateOnly(2026, 6, 1),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(Guid.NewGuid(), DayOfWeek.Monday)
                 ],
@@ -634,7 +648,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Versioned nag first update",
                 new DateOnly(2026, 6, 2),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(Guid.NewGuid(), DayOfWeek.Tuesday)
 
@@ -657,7 +673,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Versioned nag stale update",
                 new DateOnly(2026, 6, 3),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     EveryWeekdayRuleDto(Guid.NewGuid(), DayOfWeek.Wednesday)
 
@@ -708,7 +726,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                     "Wrapped stale payload",
                     new DateOnly(2026, 6, 1),
                     null,
+                    null,
                     false,
+                    NaggerPinnedByDto.None,
                     DateTimeOffset.UtcNow,
                     null,
                     null,
@@ -751,7 +771,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 "Invalid date rule",
                 new DateOnly(2026, 6, 1),
                 null,
+                null,
                 false,
+                NaggerPinnedByDto.None,
                 [
                     new ScheduleRuleDto(Guid.NewGuid(), ScheduleRuleTypeDto.Date, InvalidDateRuleJson())
                 ],
@@ -2246,7 +2268,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             title,
             NextDayOfWeek(new DateOnly(2026, 6, 1), dayOfWeek),
             null,
+            null,
             isDeactivated,
+            NaggerPinnedByDto.None,
             [
                 EveryWeekdayRuleDto(Guid.NewGuid(), dayOfWeek)
             ],

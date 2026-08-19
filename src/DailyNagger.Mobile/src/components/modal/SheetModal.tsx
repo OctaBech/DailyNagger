@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     gap: 14,
     left: 0,
     maxHeight: "82%",
-    paddingHorizontal: 16,
+    paddingHorizontal: modalTheme.sheet.contentPaddingHorizontal,
     paddingTop: 18,
     position: "absolute",
     right: 0,

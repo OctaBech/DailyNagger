@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { modalTheme } from "./theme";
 
 type SheetChipRowProps = {
@@ -7,14 +7,27 @@ type SheetChipRowProps = {
 };
 
 export function SheetChipRow({ children }: SheetChipRowProps) {
-  return <View style={styles.row}>{children}</View>;
+  return (
+    <ScrollView
+      horizontal
+      keyboardShouldPersistTaps="handled"
+      showsHorizontalScrollIndicator={false}
+      style={styles.row}
+      contentContainerStyle={styles.content}
+    >
+      {children}
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-  row: {
+  content: {
     alignItems: "center",
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: modalTheme.modalChipRow.gap,
+    paddingHorizontal: modalTheme.sheet.contentPaddingHorizontal,
+  },
+  row: {
+    marginHorizontal: -modalTheme.sheet.contentPaddingHorizontal,
   },
 });

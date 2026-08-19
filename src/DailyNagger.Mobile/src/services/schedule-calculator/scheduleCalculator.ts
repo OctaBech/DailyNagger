@@ -51,6 +51,6 @@ function getNextOccurrence(
     case "Date":
       return operations.getNextDateOccurrence(rule.rule, fromDate, cultureSettings);
     case "Holiday":
-      return null;
+      return operations.getNextHolidayOccurrence(rule.rule, fromDate, cultureSettings);
   }
 }

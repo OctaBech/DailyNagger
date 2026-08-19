@@ -20,11 +20,12 @@ export function SheetSegmentedControl<TValue extends string>({
   onChange,
 }: SheetSegmentedControlProps<TValue>) {
   const isVertical = orientation === "vertical";
+  const selectedValue = options.length === 1 ? options[0]?.value : value;
 
   return (
     <View style={[styles.container, isVertical ? styles.vertical : styles.horizontal]}>
       {options.map((option, index) => {
-        const isSelected = option.value === value;
+        const isSelected = option.value === selectedValue;
         const isFirst = index === 0;
         const isLast = index === options.length - 1;
 
@@ -44,6 +45,8 @@ export function SheetSegmentedControl<TValue extends string>({
             ]}
           >
             <Text
+              adjustsFontSizeToFit
+              numberOfLines={1}
               selectable={false}
               style={[styles.label, isSelected ? styles.selectedLabel : styles.unselectedLabel]}
             >
@@ -96,14 +99,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   horizontalSegment: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 0,
+    minWidth: 48,
   },
   horizontalSharedBorder: {
     marginLeft: -1,
   },
   label: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "800",
+    includeFontPadding: false,
   },
   lastHorizontalSegment: {
     borderBottomRightRadius: modalTheme.modalSegmentedControl.borderRadius,
@@ -125,8 +131,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: "center",
     minHeight: modalTheme.modalSegmentedControl.minHeight,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
   },
   selectedLabel: {
     color: modalTheme.modalSegmentedControl.selectedText,

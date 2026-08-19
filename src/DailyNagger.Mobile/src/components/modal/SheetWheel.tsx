@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { modalTheme } from "./theme";
@@ -10,7 +10,6 @@ type SheetWheelOption<TValue extends string | number> = {
 
 type SheetWheelProps<TValue extends string | number> = {
   readonly label?: string;
-  readonly markedValues?: readonly TValue[];
   readonly options: readonly SheetWheelOption<TValue>[];
   readonly orientation?: "horizontal" | "vertical";
   readonly value: TValue;
@@ -19,7 +18,6 @@ type SheetWheelProps<TValue extends string | number> = {
 
 export function SheetWheel<TValue extends string | number>({
   label,
-  markedValues = [],
   options,
   orientation = "vertical",
   value,
@@ -28,36 +26,32 @@ export function SheetWheel<TValue extends string | number>({
   const listRef = useRef<FlatList<SheetWheelOption<TValue>>>(null);
   const [wheelViewportSize, setWheelViewportSize] = useState(0);
   const isHorizontal = orientation === "horizontal";
-  const horizontalSelectionOffset =
-    wheelViewportSize === 0
-      ? itemSize * modalTheme.modalWheel.horizontalLeadingItemCount
-      : Math.min(
-          itemSize * modalTheme.modalWheel.horizontalLeadingItemCount,
-          Math.max(0, wheelViewportSize - itemSize),
-        );
+  const activeItemSize = isHorizontal ? horizontalItemSize : itemSize;
+  const horizontalSelectionOffset = isHorizontal ? modalTheme.sheet.contentPaddingHorizontal : 0;
   const horizontalEndPadding =
-    wheelViewportSize === 0 ? centerPadding : Math.max(0, wheelViewportSize - itemSize - horizontalSelectionOffset);
-  const markedValueSet = useMemo(() => new Set(markedValues), [markedValues]);
+    wheelViewportSize === 0
+      ? centerPadding
+      : Math.max(0, wheelViewportSize - activeItemSize - horizontalSelectionOffset);
   const selectedIndex = useMemo(() => {
     const optionIndex = options.findIndex((option) => option.value === value);
 
     return optionIndex === -1 ? 0 : optionIndex;
   }, [options, value]);
 
-  useEffect(() => {
-    scrollToOptionIndex(selectedIndex, false);
-  }, [selectedIndex]);
-
-  function scrollToOptionIndex(optionIndex: number, animated: boolean): void {
+  const scrollToOptionIndex = useCallback((optionIndex: number, animated: boolean): void => {
     listRef.current?.scrollToOffset({
       animated,
-      offset: optionIndex * modalTheme.modalWheel.itemSize,
+      offset: optionIndex * activeItemSize,
     });
-  }
+  }, [activeItemSize]);
+
+  useEffect(() => {
+    scrollToOptionIndex(selectedIndex, false);
+  }, [scrollToOptionIndex, selectedIndex]);
 
   function selectOptionFromScroll(event: NativeSyntheticEvent<NativeScrollEvent>): void {
     const offset = isHorizontal ? event.nativeEvent.contentOffset.x : event.nativeEvent.contentOffset.y;
-    const optionIndex = Math.round(offset / modalTheme.modalWheel.itemSize);
+    const optionIndex = Math.round(offset / activeItemSize);
 
     selectOptionAtIndex(optionIndex, false);
   }
@@ -81,7 +75,7 @@ export function SheetWheel<TValue extends string | number>({
   }
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, isHorizontal && styles.horizontalRoot]}>
       {label === undefined ? null : (
         <Text selectable={false} style={styles.wheelLabel}>
           {label}
@@ -111,8 +105,8 @@ export function SheetWheel<TValue extends string | number>({
           decelerationRate="fast"
           getItemLayout={(_, index) => ({
             index,
-            length: modalTheme.modalWheel.itemSize,
-            offset: modalTheme.modalWheel.itemSize * index,
+            length: activeItemSize,
+            offset: activeItemSize * index,
           })}
           horizontal={isHorizontal}
           keyExtractor={(option) => String(option.value)}
@@ -120,7 +114,6 @@ export function SheetWheel<TValue extends string | number>({
           renderItem={({ item, index }) => (
             <WheelItem
               isHorizontal={isHorizontal}
-              isMarked={markedValueSet.has(item.value)}
               isSelected={index === selectedIndex}
               label={item.label}
               onPress={() => selectOptionAtIndex(index, true)}
@@ -128,7 +121,7 @@ export function SheetWheel<TValue extends string | number>({
           )}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          snapToInterval={modalTheme.modalWheel.itemSize}
+          snapToInterval={activeItemSize}
         />
       </View>
     </View>
@@ -137,13 +130,11 @@ export function SheetWheel<TValue extends string | number>({
 
 function WheelItem({
   isHorizontal,
-  isMarked,
   isSelected,
   label,
   onPress,
 }: {
   readonly isHorizontal: boolean;
-  readonly isMarked: boolean;
   readonly isSelected: boolean;
   readonly label: string;
   readonly onPress: () => void;
@@ -157,7 +148,6 @@ function WheelItem({
           style={[
             styles.label,
             isSelected ? styles.selectedLabel : styles.unselectedLabel,
-            isMarked && styles.markedLabel,
             isSelected && styles.selectedWeight,
             pressed && styles.pressedLabel,
           ]}
@@ -170,19 +160,23 @@ function WheelItem({
 }
 
 const itemSize = modalTheme.modalWheel.itemSize;
+const horizontalItemSize = modalTheme.modalWheel.horizontalItemSize;
 const wheelSize = modalTheme.modalWheel.itemSize * modalTheme.modalWheel.visibleItemCount;
 const centerPadding = itemSize * Math.floor(modalTheme.modalWheel.visibleItemCount / 2);
 
 const styles = StyleSheet.create({
   horizontalItem: {
     height: "100%",
-    width: itemSize,
+    width: horizontalItemSize,
   },
   horizontalMarker: {
     borderLeftWidth: 1,
     borderRightWidth: 1,
     height: "100%",
-    width: itemSize,
+    width: horizontalItemSize,
+  },
+  horizontalRoot: {
+    marginHorizontal: -modalTheme.sheet.contentPaddingHorizontal,
   },
   horizontalWheel: {
     height: itemSize,
@@ -201,9 +195,6 @@ const styles = StyleSheet.create({
     borderColor: modalTheme.modalWheel.bar,
     position: "absolute",
     zIndex: 1,
-  },
-  markedLabel: {
-    color: modalTheme.modalWheel.markedText,
   },
   pressedLabel: {
     opacity: 0.72,
@@ -247,6 +238,7 @@ const styles = StyleSheet.create({
     color: modalTheme.modalWheel.labelText,
     fontSize: 12,
     fontWeight: "800",
+    marginLeft: modalTheme.sheet.contentPaddingHorizontal,
     textAlign: "left",
   },
 });

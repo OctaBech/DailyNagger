@@ -216,7 +216,7 @@ public sealed class NagRequestValidator
 
         Require(GetRequiredInt(root, "year") >= 0, "Date schedule rule Year must be 0 or later.");
         Require(GetRequiredInt(root, "month") is >= 0 and <= 12, "Date schedule rule Month must be between 0 and 12.");
-        Require(GetRequiredInt(root, "dayOfMonth") is >= 1 and <= 32, "Date schedule rule DayOfMonth must be between 1 and 32.");
+        Require(GetRequiredInt(root, "dayOfMonth") is >= 0 and <= 32, "Date schedule rule DayOfMonth must be between 0 and 32.");
     }
 
     private static void ValidateHolidayRuleBody(string ruleJson)

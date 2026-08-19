@@ -31,37 +31,7 @@ public sealed record NaggerDto(
     string? UpdatedByDeviceName,
     string? UpdatedByDeviceModel,
     ScheduleRuleDto[] ScheduleRules,
-    int Version)
-{
-    public NaggerDto(
-        Guid Id,
-        string Title,
-        DateOnly? ActiveLogDueOn,
-        DateOnly? ExpiresOn,
-        bool IsDeactivated,
-        DateTimeOffset UpdatedAt,
-        string? UpdatedByClientId,
-        string? UpdatedByDeviceName,
-        string? UpdatedByDeviceModel,
-        ScheduleRuleDto[] ScheduleRules,
-        int Version)
-        : this(
-            Id,
-            Title,
-            ActiveLogDueOn,
-            ExpiresOn,
-            TargetTime: null,
-            IsDeactivated,
-            NaggerPinnedByDto.None,
-            UpdatedAt,
-            UpdatedByClientId,
-            UpdatedByDeviceName,
-            UpdatedByDeviceModel,
-            ScheduleRules,
-            Version)
-    {
-    }
-}
+    int Version);
 
 public sealed record SaveNagRequest(
     Guid CommunityId,
@@ -78,37 +48,7 @@ public sealed record SaveNagRequest(
     int BaseVersion,
     [property: System.Text.Json.Serialization.JsonRequired]
     int NextVersion,
-    ClientIdentityDto? ClientIdentity = null)
-{
-    public SaveNagRequest(
-        Guid CommunityId,
-        Guid Id,
-        string Title,
-        DateOnly? ActiveLogDueOn,
-        DateOnly? ExpiresOn,
-        bool IsDeactivated,
-        ScheduleRuleDto[] ScheduleRules,
-        DateTimeOffset UpdatedAt,
-        int BaseVersion,
-        int NextVersion,
-        ClientIdentityDto? ClientIdentity = null)
-        : this(
-            CommunityId,
-            Id,
-            Title,
-            ActiveLogDueOn,
-            ExpiresOn,
-            TargetTime: null,
-            IsDeactivated,
-            NaggerPinnedByDto.None,
-            ScheduleRules,
-            UpdatedAt,
-            BaseVersion,
-            NextVersion,
-            ClientIdentity)
-    {
-    }
-}
+    ClientIdentityDto? ClientIdentity = null);
 
 public sealed record NagPlanDto(
     DateOnly Date,
@@ -155,46 +95,15 @@ public sealed record TaskLogDto(
     Guid NagId,
     Guid? CopiedFromTaskLogId,
     DateTimeOffset? ClosedOn,
-    string? Tag,
     DateTimeOffset UpdatedAt,
     string? UpdatedByClientId,
     string? UpdatedByDeviceName,
     string? UpdatedByDeviceModel,
     int Version,
     TaskItemDto[] TaskItems,
+    string? Tag = null,
     int DescendantTaskItemCount = 0,
-    int DoneDescendantTaskItemCount = 0)
-{
-    public TaskLogDto(
-        Guid Id,
-        Guid NagId,
-        Guid? CopiedFromTaskLogId,
-        DateTimeOffset? ClosedOn,
-        DateTimeOffset UpdatedAt,
-        string? UpdatedByClientId,
-        string? UpdatedByDeviceName,
-        string? UpdatedByDeviceModel,
-        int Version,
-        TaskItemDto[] TaskItems,
-        int DescendantTaskItemCount = 0,
-        int DoneDescendantTaskItemCount = 0)
-        : this(
-            Id,
-            NagId,
-            CopiedFromTaskLogId,
-            ClosedOn,
-            Tag: null,
-            UpdatedAt,
-            UpdatedByClientId,
-            UpdatedByDeviceName,
-            UpdatedByDeviceModel,
-            Version,
-            TaskItems,
-            DescendantTaskItemCount,
-            DoneDescendantTaskItemCount)
-    {
-    }
-}
+    int DoneDescendantTaskItemCount = 0);
 
 public sealed record SaveTaskLogRequest(
     Guid CommunityId,
@@ -203,58 +112,25 @@ public sealed record SaveTaskLogRequest(
     Guid NagId,
     Guid? CopiedFromTaskLogId,
     DateTimeOffset? ClosedOn,
-    string? Tag,
     TaskItemDto[] TaskItems,
     DateTimeOffset UpdatedAt,
     [property: System.Text.Json.Serialization.JsonRequired]
     int BaseVersion,
     [property: System.Text.Json.Serialization.JsonRequired]
     int NextVersion,
+    string? Tag = null,
     int DescendantTaskItemCount = 0,
     int DoneDescendantTaskItemCount = 0,
-    ClientIdentityDto? ClientIdentity = null)
-{
-    public SaveTaskLogRequest(
-        Guid CommunityId,
-        Guid UserId,
-        Guid Id,
-        Guid NagId,
-        Guid? CopiedFromTaskLogId,
-        DateTimeOffset? ClosedOn,
-        TaskItemDto[] TaskItems,
-        DateTimeOffset UpdatedAt,
-        int BaseVersion,
-        int NextVersion,
-        int DescendantTaskItemCount = 0,
-        int DoneDescendantTaskItemCount = 0,
-        ClientIdentityDto? ClientIdentity = null)
-        : this(
-            CommunityId,
-            UserId,
-            Id,
-            NagId,
-            CopiedFromTaskLogId,
-            ClosedOn,
-            Tag: null,
-            TaskItems,
-            UpdatedAt,
-            BaseVersion,
-            NextVersion,
-            DescendantTaskItemCount,
-            DoneDescendantTaskItemCount,
-            ClientIdentity)
-    {
-    }
-}
+    ClientIdentityDto? ClientIdentity = null);
 
 public sealed record TaskItemDto(
     Guid Id,
     Guid TaskLogId,
     Guid? ParentTaskItemId,
     string Name,
-    string? Tag,
     TaskEntryDto[] TaskEntries,
     TaskItemDto[] TaskItems,
+    string? Tag = null,
     bool IsDone = false,
     RolloverBehaviorDto RolloverBehavior = RolloverBehaviorDto.Keep,
     DateTimeOffset? InteractionAt = null,
@@ -263,44 +139,7 @@ public sealed record TaskItemDto(
     string? InteractionMood = null,
     DateTimeOffset? InteractionMoodAt = null,
     int DescendantTaskItemCount = 0,
-    int DoneDescendantTaskItemCount = 0)
-{
-    public TaskItemDto(
-        Guid id,
-        Guid taskLogId,
-        Guid? parentTaskItemId,
-        string name,
-        TaskEntryDto[] taskEntries,
-        TaskItemDto[] taskItems,
-        bool isDone = false,
-        RolloverBehaviorDto rolloverBehavior = RolloverBehaviorDto.Keep,
-        DateTimeOffset? interactionAt = null,
-        string? interactionTimeZone = null,
-        string? interactionLocale = null,
-        string? interactionMood = null,
-        DateTimeOffset? interactionMoodAt = null,
-        int descendantTaskItemCount = 0,
-        int doneDescendantTaskItemCount = 0)
-        : this(
-            id,
-            taskLogId,
-            parentTaskItemId,
-            name,
-            Tag: null,
-            taskEntries,
-            taskItems,
-            isDone,
-            rolloverBehavior,
-            interactionAt,
-            interactionTimeZone,
-            interactionLocale,
-            interactionMood,
-            interactionMoodAt,
-            descendantTaskItemCount,
-            doneDescendantTaskItemCount)
-    {
-    }
-}
+    int DoneDescendantTaskItemCount = 0);
 
 public enum RolloverBehaviorDto
 {

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import type { LayoutChangeEvent } from "react-native";
 import { modalTheme } from "./theme";
+import { SheetHeadline } from "./SheetHeadline";
 
 type SheetHeadingBeltOption<TValue extends string> = {
   readonly label: string;
@@ -39,7 +40,7 @@ export function SheetHeadingBelt<TValue extends string>({
 
     scrollViewRef.current?.scrollTo({
       animated,
-      x: Math.max(0, itemLayout.x - modalTheme.modalHeadingBelt.startPadding),
+      x: Math.max(0, itemLayout.x - modalTheme.sheet.contentPaddingHorizontal),
     });
   }, []);
 
@@ -76,7 +77,7 @@ export function SheetHeadingBelt<TValue extends string>({
         contentContainerStyle={[
           styles.content,
           {
-            paddingLeft: modalTheme.modalHeadingBelt.startPadding,
+            paddingLeft: modalTheme.sheet.contentPaddingHorizontal,
             paddingRight: Math.max(modalTheme.modalHeadingBelt.endPadding, viewportWidth),
           },
         ]}
@@ -116,13 +117,7 @@ function HeadingBeltItem({
       onPress={onPress}
       style={({ pressed }) => [styles.item, pressed && styles.pressed]}
     >
-      <Text
-        numberOfLines={1}
-        selectable={false}
-        style={[styles.label, isSelected ? styles.selectedLabel : styles.unselectedLabel]}
-      >
-        {label}
-      </Text>
+      <SheetHeadline text={label} tone={isSelected ? "active" : "inactive"} />
     </Pressable>
   );
 }
@@ -135,22 +130,11 @@ const styles = StyleSheet.create({
   item: {
     paddingHorizontal: modalTheme.modalHeadingBelt.itemPaddingHorizontal,
   },
-  label: {
-    fontSize: modalTheme.modalHeadingBelt.fontSize,
-    textAlign: "left",
-  },
   pressed: {
     opacity: 0.72,
   },
   root: {
+    marginHorizontal: -modalTheme.sheet.contentPaddingHorizontal,
     width: "100%",
-  },
-  selectedLabel: {
-    color: modalTheme.modalHeadingBelt.activeText,
-    fontWeight: "900",
-  },
-  unselectedLabel: {
-    color: modalTheme.modalHeadingBelt.inactiveText,
-    fontWeight: "800",
   },
 });

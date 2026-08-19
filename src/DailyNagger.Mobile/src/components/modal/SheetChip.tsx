@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { modalTheme } from "./theme";
 
-type SheetChipTone = "preview" | "selected";
+type SheetChipTone = "active" | "preview" | "selected";
 
 type SheetChipProps = {
   readonly label: string;
