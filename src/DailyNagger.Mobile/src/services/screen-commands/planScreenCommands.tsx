@@ -63,6 +63,9 @@ export function useCreatePlanScreenCommands({
         addQuickNote: (taskItem: TaskItem) => {
           dispatch("plan-input", "task-item/add-quick-note", { taskItem });
         },
+        deleteOnce: (taskItem: TaskItem) => {
+          dispatch("plan-input", "task-item/delete-once", { taskItem });
+        },
       },
       taskEntry: {
         decimalSeparator,

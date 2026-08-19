@@ -22,6 +22,7 @@ import {
   addTaskEntryToTaskItem as runAddTaskEntryToTaskItem,
   addTaskItemToTaskItem as runAddTaskItemToTaskItem,
   addTaskItemToTaskLog as runAddTaskItemToTaskLog,
+  deleteOnceTaskItem as runDeleteOnceTaskItem,
   type EditorSessionActionScope,
   naggerSetScheduleRules as runNaggerSetScheduleRules,
   naggerSetTargetTime as runNaggerSetTargetTime,
@@ -176,6 +177,10 @@ type TaskItemSetDoneAndSetFocusArgs = {
 };
 
 type TaskItemAddQuickNoteArgs = {
+  readonly taskItem: TaskItem;
+};
+
+type TaskItemDeleteOnceArgs = {
   readonly taskItem: TaskItem;
 };
 
@@ -377,6 +382,13 @@ function taskItemAddQuickNote(
   runTaskItemAddQuickNote(context, args.taskItem);
 }
 
+function taskItemDeleteOnce(
+  args: TaskItemDeleteOnceArgs,
+  context: CommandInputActionContext,
+): void {
+  runDeleteOnceTaskItem(context, args.taskItem);
+}
+
 function taskItemAddTaskEntry(
   args: TaskItemAddTaskEntryArgs,
   context: CommandEditorActionContext,
@@ -466,6 +478,7 @@ export const commandActions = {
   "task-item/set-focused": command("view", taskItemSetFocused),
   "task-item/set-done-and-set-focus": command("input", taskItemSetDoneAndSetFocus),
   "task-item/add-quick-note": command("input", taskItemAddQuickNote),
+  "task-item/delete-once": command("input", taskItemDeleteOnce),
   "task-item/add-task-entry": command("editor-action", taskItemAddTaskEntry),
   "task-item/add-task-item": command("editor-action", taskItemAddTaskItem),
   "task-item/set-name": command("input", taskItemSetName),

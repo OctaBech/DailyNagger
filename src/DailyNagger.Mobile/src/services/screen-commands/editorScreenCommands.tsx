@@ -84,6 +84,9 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
         addTaskItem: (taskItem: TaskItem) => {
           dispatch("editor-action", "task-item/add-task-item", { taskItem });
         },
+        deleteOnce: (taskItem: TaskItem) => {
+          dispatch("editor-input", "task-item/delete-once", { taskItem });
+        },
         setExpanded: (taskItem: TaskItem, isExpanded: boolean) => {
           dispatch("editor-view", "task-item/set-expanded", { taskItem, isExpanded });
         },

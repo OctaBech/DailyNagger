@@ -27,6 +27,18 @@ The plan screen may support simple local additions when the target is obvious,
 such as adding a log-root item or note to the current log. It should not become a
 general structure editor.
 
+Task steps have two different jobs:
+
+- `Once` is for one-off work, such as shopping-list items. It should be quick to
+  add and quick to undo. A once step is a leaf, not a branch: it should not
+  invite child steps or notes.
+- `Always` is for repeated routine structure. It may need notes, values, child
+  steps, and editor support because it becomes part of the reusable task tree.
+
+This keeps the daily path simple. Buying milk should not look like editing a
+small project plan. A fixed routine can still grow structure when the user
+actually needs it.
+
 The editor owns structural changes:
 
 - move nodes

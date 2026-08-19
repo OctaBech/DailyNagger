@@ -8,6 +8,7 @@ export {
   addTaskItemToTaskItem,
   addTaskItemToTaskLog,
 } from "./addTreeNodeActions";
+export { deleteOnceTaskItem } from "./deleteTreeNodeActions";
 export { importLoadedPlanToMemory } from "./loadedPlanImportActions";
 export { closeTaskLogForRollover, rolloverNagger } from "./rolloverActions";
 export {

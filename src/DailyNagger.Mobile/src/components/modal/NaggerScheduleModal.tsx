@@ -162,7 +162,6 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
   const [draftRules, setDraftRules] = useState<readonly ScheduleRule[]>(nagger.scheduleRules);
   const [activeRuleKey, setActiveRuleKey] = useState<string | null>(null);
   const previewDueOn = getPreviewDueOn(draftRules);
-  const displayRules = getDisplayRules(draftRules);
   const holidayOptions = useMemo<readonly SheetNarrowChipOption<string>[]>(
     () =>
       getHolidayDefinitions(selectedHolidayCountryCode).map((holiday) => {
@@ -364,11 +363,11 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
       }
     >
       <SheetSection>
-        <SheetChipRow>
+        <SheetChipRow scrollToEndOnChange>
           {draftRules.length === 0 ? (
             <SheetChip label="Never" tone="selected" />
           ) : (
-            displayRules.map((rule) => (
+            draftRules.map((rule) => (
               <SheetChip
                 key={rule.id}
                 label={getScheduleRuleText(rule)}
@@ -522,30 +521,6 @@ function resolveHolidayIdFromSearchText(
   );
 
   return exactHoliday?.value ?? matchingHolidays[0]?.value ?? "";
-}
-
-function getDisplayRules(draftRules: readonly ScheduleRule[]): readonly ScheduleRule[] {
-  const weekdayRulesV1 = draftRules
-    .filter(isWeekdayRule)
-    .sort((left, right) => getWeekdayRuleSortKey(left) - getWeekdayRuleSortKey(right));
-  const dateRulesV1 = draftRules
-    .filter(isDateRule)
-    .sort((left, right) => getDateRuleSortKey(left) - getDateRuleSortKey(right));
-  const holidayRules = draftRules.filter((rule) => rule.ruleType === "Holiday");
-
-  return [...weekdayRulesV1, ...dateRulesV1, ...holidayRules];
-}
-
-function getWeekdayRuleSortKey(rule: Extract<ScheduleRule, { ruleType: "Weekday" }>): number {
-  return rule.rule.month * 100 + rule.rule.position * 10 + rule.rule.weekday;
-}
-
-function isDateRule(rule: ScheduleRule): rule is Extract<ScheduleRule, { ruleType: "Date" }> {
-  return rule.ruleType === "Date";
-}
-
-function getDateRuleSortKey(rule: Extract<ScheduleRule, { ruleType: "Date" }>): number {
-  return rule.rule.year * 10000 + rule.rule.month * 100 + rule.rule.dayOfMonth;
 }
 
 function canDateRuleEverMatch(year: number, month: number, day: number): boolean {

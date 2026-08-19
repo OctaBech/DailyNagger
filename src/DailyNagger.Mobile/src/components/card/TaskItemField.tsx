@@ -21,6 +21,7 @@ type TaskItemFieldProps = {
   readonly onNameFocus?: () => void;
   readonly onNameCommit?: (name: string) => void;
   readonly onDonePress?: () => void;
+  readonly onDeletePress?: () => void;
   readonly onExpandPress: () => void;
   readonly onPressTag?: () => void;
 };
@@ -41,6 +42,7 @@ export const TaskItemField = ({
   onNameFocus,
   onNameCommit,
   onDonePress,
+  onDeletePress,
   onExpandPress,
   onPressTag,
 }: TaskItemFieldProps) => {
@@ -95,21 +97,32 @@ export const TaskItemField = ({
         />
       )}
 
-      <Pressable
-        onPress={() => focusAndRun(onExpandPress)}
-        style={styles.expandArea}
-      >
-        <Primitives.ProgressCount
-          color={nagPlanTheme.taskItem.progressText}
-          done={taskItem.doneDescendantTaskItemCount}
-          total={taskItem.descendantTaskItemCount}
-        />
-        <Primitives.ExpandIndicator
-          color={nagPlanTheme.taskItem.chevronText}
-          hasExpandableContent={hasChildren || forceExpandableIndicator}
-          isExpanded={isExpanded}
-        />
-      </Pressable>
+      {onDeletePress ? (
+        <Pressable
+          onPress={() => focusAndRun(onDeletePress)}
+          style={styles.deleteArea}
+        >
+          <Text selectable={false} style={styles.deleteText}>
+            x
+          </Text>
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={() => focusAndRun(onExpandPress)}
+          style={styles.expandArea}
+        >
+          <Primitives.ProgressCount
+            color={nagPlanTheme.taskItem.progressText}
+            done={taskItem.doneDescendantTaskItemCount}
+            total={taskItem.descendantTaskItemCount}
+          />
+          <Primitives.ExpandIndicator
+            color={nagPlanTheme.taskItem.chevronText}
+            hasExpandableContent={hasChildren || forceExpandableIndicator}
+            isExpanded={isExpanded}
+          />
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -147,5 +160,19 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     minWidth: 48,
     paddingHorizontal: nagPlanTheme.cardDensity.fieldPaddingHorizontal,
+  },
+  deleteArea: {
+    alignItems: "center",
+    alignSelf: "stretch",
+    borderRadius: nagPlanTheme.radius.control,
+    justifyContent: "center",
+    minWidth: 48,
+    paddingHorizontal: nagPlanTheme.cardDensity.fieldPaddingHorizontal,
+  },
+  deleteText: {
+    color: nagPlanTheme.taskItem.chevronText,
+    fontSize: nagPlanTheme.typography.taskItemTitleSize,
+    fontWeight: "900",
+    lineHeight: nagPlanTheme.typography.taskItemTitleSize,
   },
 });

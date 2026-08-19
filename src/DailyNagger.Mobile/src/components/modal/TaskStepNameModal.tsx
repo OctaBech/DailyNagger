@@ -1,7 +1,9 @@
 import { useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, type TextInput, View } from "react-native";
+import type { TextInput } from "react-native";
 import { appLimits } from "@/config";
 import type { TaskItem } from "@/models";
+import { SheetButton } from "./SheetButton";
+import { SheetFooterActions } from "./SheetFooterActions";
 import { type SheetNarrowChipOption } from "./SheetNarrowChips";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
 import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
@@ -61,11 +63,6 @@ function TaskStepNameModalContent({
     setDraftName(option.value.name);
   }
 
-  function clearDraft() {
-    setDraftName("");
-    nameInputRef.current?.focus();
-  }
-
   function chooseRollover(rolloverChoice: RolloverChoice) {
     const name = draftName.trim();
     if (name === "") {
@@ -86,23 +83,20 @@ function TaskStepNameModalContent({
       title="Add task step"
       onDismiss={onDismiss}
       footer={
-        <View style={styles.actions}>
-          <Pressable style={[styles.button, styles.secondaryButton]} onPress={clearDraft}>
-            <Text style={styles.secondaryButtonText}>Clear</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.button, styles.singleUseButton]}
-            onPress={() => chooseRollover("single-use")}
-          >
-            <Text style={styles.primaryButtonText}>Single use</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.button, styles.persistentButton]}
+        <SheetFooterActions layout="space-between">
+          <SheetButton
+            area="footer"
+            label="□ Always"
+            tone="secondary"
             onPress={() => chooseRollover("persistent")}
-          >
-            <Text style={styles.primaryButtonText}>Persistent</Text>
-          </Pressable>
-        </View>
+          />
+          <SheetButton
+            area="footer"
+            label="○ Once"
+            tone="primary"
+            onPress={() => chooseRollover("single-use")}
+          />
+        </SheetFooterActions>
       }
     >
       <KeyboardLiftRegion>
@@ -112,7 +106,6 @@ function TaskStepNameModalContent({
           emptyText="No matching names."
           value={draftName}
           onChangeText={setDraftName}
-          onClear={clearDraft}
           maxLength={appLimits.tags.nameMaxLength}
           autoFocus
           autoCapitalize="sentences"
@@ -125,40 +118,3 @@ function TaskStepNameModalContent({
     </SheetModal>
   );
 }
-
-const styles = StyleSheet.create({
-  actions: {
-    borderTopColor: "#e4ded7",
-    borderTopWidth: 1,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    justifyContent: "flex-end",
-    paddingTop: 12,
-  },
-  button: {
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  singleUseButton: {
-    backgroundColor: "#f2d66f",
-  },
-  persistentButton: {
-    backgroundColor: "#d97828",
-  },
-  primaryButtonText: {
-    color: "#1a1b1d",
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  secondaryButton: {
-    borderColor: "#d8d1c9",
-    borderWidth: 1,
-  },
-  secondaryButtonText: {
-    color: "#18242b",
-    fontSize: 15,
-    fontWeight: "900",
-  },
-});

@@ -20,10 +20,13 @@ const TaskItemCardComponent = ({
   taskItem,
   railTone,
 }: TaskItemCardProps) => {
-  const { setDoneAndSetFocus, setExpanded, setFocused } = usePlanScreenCommands().taskItem;
+  const { deleteOnce, setDoneAndSetFocus, setExpanded, setFocused } =
+    usePlanScreenCommands().taskItem;
   useDebugRenderFrameCounter("PlanTaskItemCard", taskItem.id);
 
+  const isOnceTaskItem = taskItem.rolloverBehavior === "RemoveWhenDone";
   const hasChildren = taskItem.taskItems.length + taskItem.taskEntries.length > 0;
+  const canDeleteOnce = isOnceTaskItem && !hasChildren;
   const isExpanded = taskItem.clientProps.isExpanded && hasChildren;
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
@@ -57,9 +60,10 @@ const TaskItemCardComponent = ({
           allowEditName={false}
           showComponentOutlines={false}
           muteCheckmark={false}
-          checkmarkShape={taskItem.rolloverBehavior === "RemoveWhenDone" ? "circle" : "square"}
+          checkmarkShape={isOnceTaskItem ? "circle" : "square"}
           onFocus={() => setFocused(taskItem)}
           onDonePress={() => setDoneAndSetFocus(taskItem, !taskItem.isDone)}
+          onDeletePress={canDeleteOnce ? () => deleteOnce(taskItem) : undefined}
           onNameCommit={() => undefined}
           onExpandPress={toggleExpanded}
         />

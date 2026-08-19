@@ -26,7 +26,9 @@ const TaskItemCardComponent = ({
   useDebugRenderFrameCounter("EditorTaskItemCard", taskItem.id);
   const [isTagModalVisible, setIsTagModalVisible] = useState(false);
 
+  const isOnceTaskItem = taskItem.rolloverBehavior === "RemoveWhenDone";
   const hasChildren = taskItem.taskItems.length + taskItem.taskEntries.length > 0;
+  const canDeleteOnce = isOnceTaskItem && !hasChildren;
   const isExpanded = taskItem.clientProps.isExpanded;
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
@@ -61,14 +63,15 @@ const TaskItemCardComponent = ({
           isTagPickerOpen={isTagModalVisible}
           showTag={false}
           showComponentOutlines
-          forceExpandableIndicator
+          forceExpandableIndicator={!canDeleteOnce}
           muteCheckmark
-          checkmarkShape={taskItem.rolloverBehavior === "RemoveWhenDone" ? "circle" : "square"}
+          checkmarkShape={isOnceTaskItem ? "circle" : "square"}
           onFocus={() => taskItemActions.setFocused(taskItem)}
           onNameFocus={() => taskItemActions.setFocused(taskItem)}
-          onDonePress={toggleExpanded}
+          onDonePress={canDeleteOnce ? () => taskItemActions.setFocused(taskItem) : toggleExpanded}
+          onDeletePress={canDeleteOnce ? () => taskItemActions.deleteOnce(taskItem) : undefined}
           onNameCommit={(newName) => taskItemActions.setName(taskItem, newName)}
-          onExpandPress={toggleExpanded}
+          onExpandPress={canDeleteOnce ? () => taskItemActions.setFocused(taskItem) : toggleExpanded}
           onPressTag={() => setIsTagModalVisible(true)}
         />
 
@@ -92,7 +95,7 @@ const TaskItemCardComponent = ({
           </View>
         </Activity>
 
-        {isExpanded && (
+        {!canDeleteOnce && isExpanded && (
           <TaskItemTail
             isTagPickerOpen={isTagModalVisible}
             onFocus={() => taskItemActions.setFocused(taskItem)}

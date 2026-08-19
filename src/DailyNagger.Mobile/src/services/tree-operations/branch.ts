@@ -10,6 +10,7 @@ export const branch = {
   addTaskEntryToTaskItem,
   addTaskItemToTaskLog,
   addTaskItemToTaskItem,
+  deleteTaskItemLeaf,
   replaceTaskItemAndUpdateDoneCounts,
   setFocusPath,
 } as const;
@@ -146,6 +147,65 @@ function addTaskItemToTaskItem(
   return {
     newTree: result.node as Tree,
     newPath: [newTaskItem, ...(result.recordedPath as TreePath)],
+  };
+}
+
+function deleteTaskItemLeaf(
+  freshTree: Tree,
+  taskItemToDelete: TaskItem,
+): BranchUpdateResult {
+  if (taskItemToDelete.taskEntries.length > 0 || taskItemToDelete.taskItems.length > 0) {
+    throw new Error(`TaskItem '${taskItemToDelete.id}' is not a leaf TaskItem.`);
+  }
+
+  const doneDelta = taskItemToDelete.isDone ? -1 : 0;
+
+  const result = targets.visitNode(freshTree, taskItemToDelete, {
+    visitTaskItem: (taskItem, context) => {
+      if (context.isTargetNode) return taskItem;
+
+      if (context.isTargetParent) {
+        return {
+          ...taskItem,
+          descendantTaskItemCount: taskItem.descendantTaskItemCount - 1,
+          doneDescendantTaskItemCount: taskItem.doneDescendantTaskItemCount + doneDelta,
+          taskItems: taskItem.taskItems.filter(
+            (childTaskItem) => childTaskItem.id !== taskItemToDelete.id,
+          ),
+        };
+      }
+
+      return {
+        ...taskItem,
+        descendantTaskItemCount: taskItem.descendantTaskItemCount - 1,
+        doneDescendantTaskItemCount: taskItem.doneDescendantTaskItemCount + doneDelta,
+      };
+    },
+    visitTaskLog: (taskLog, context) => {
+      const updatedTaskLog = {
+        ...taskLog,
+        descendantTaskItemCount: taskLog.descendantTaskItemCount - 1,
+        doneDescendantTaskItemCount: taskLog.doneDescendantTaskItemCount + doneDelta,
+      };
+
+      if (!context.isTargetParent) return updatedTaskLog;
+
+      return {
+        ...updatedTaskLog,
+        taskItems: taskLog.taskItems.filter(
+          (childTaskItem) => childTaskItem.id !== taskItemToDelete.id,
+        ),
+      };
+    },
+  });
+
+  if (result.kind === "not-found") {
+    throw new Error(`TaskItem '${taskItemToDelete.id}' was not found in the current tree.`);
+  }
+
+  return {
+    newTree: result.node as Tree,
+    newPath: result.recordedPath.slice(1) as TreePath,
   };
 }
 
