@@ -4,15 +4,21 @@ import { createBaseApiHeaders } from "./createBaseApiHeaders";
 type ApiRequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 export class ApiRequestError extends Error {
+  readonly requestId: string | null;
+
   constructor(
     readonly url: string,
     readonly request: RequestInit,
     readonly response: Response,
     readonly responseBody: string,
   ) {
+    const requestId = getRequestId(request);
+
     super(
-      `API request failed. ${request.method ?? "GET"} ${url}. Status: ${response.status}. Body: ${responseBody}`,
+      `API request failed. ${request.method ?? "GET"} ${url}. Status: ${response.status}. RequestId: ${requestId ?? "none"}. Body: ${responseBody}`,
     );
+
+    this.requestId = requestId;
   }
 }
 
@@ -93,4 +99,13 @@ function createJsonBody(body: unknown): string | undefined {
   }
 
   return JSON.stringify(body);
+}
+
+function getRequestId(request: RequestInit): string | null {
+  const headers = request.headers;
+  if (headers === undefined || headers instanceof Headers || Array.isArray(headers)) {
+    return null;
+  }
+
+  return headers["X-DailyNagger-Request-Id"] ?? null;
 }
