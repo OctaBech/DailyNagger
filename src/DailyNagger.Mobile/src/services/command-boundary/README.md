@@ -1,5 +1,8 @@
 # Command Boundary
 
+See `../../../../../docs/adr/0006-command-boundary.md` for the architecture
+decision behind this boundary.
+
 The command boundary exists to stop dependency domino.
 
 Without this folder, a simple button press can quickly pull half the app into
