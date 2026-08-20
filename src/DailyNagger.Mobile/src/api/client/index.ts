@@ -1,4 +1,4 @@
-export { apiJsonRequest, apiRequest, ApiRequestError } from "./apiRequest";
+export { apiJsonRequest, apiRequest, ApiConnectionError, ApiRequestError } from "./apiRequest";
 export { TodaysNagPlanPreparingError, fetchTodaysNagPlan } from "./fetchTodaysNagPlan";
 export { fetchTags } from "./fetchTags";
 export type { TagDto } from "./fetchTags";

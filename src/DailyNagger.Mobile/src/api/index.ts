@@ -1,4 +1,5 @@
 export {
+  ApiConnectionError,
   ApiRequestError,
   TodaysNagPlanPreparingError,
   fetchTaskStepNameSuggestions,

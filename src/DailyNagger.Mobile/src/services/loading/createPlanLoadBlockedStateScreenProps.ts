@@ -1,4 +1,4 @@
-import { ApiRequestError, TodaysNagPlanPreparingError } from "@/api";
+import { ApiConnectionError, ApiRequestError, TodaysNagPlanPreparingError } from "@/api";
 import type { StateScreenProps } from "@/components/primitives";
 import { appTiming } from "@/config";
 
@@ -30,7 +30,7 @@ export function createPlanLoadBlockedStateScreenProps(error: unknown): StateScre
     };
   }
 
-  if (error instanceof TypeError) {
+  if (error instanceof ApiConnectionError) {
     return {
       title: "Server unavailable",
       message:

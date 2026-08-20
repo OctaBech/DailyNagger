@@ -22,6 +22,24 @@ export class ApiRequestError extends Error {
   }
 }
 
+export class ApiConnectionError extends Error {
+  readonly requestId: string | null;
+
+  constructor(
+    readonly url: string,
+    readonly request: RequestInit,
+    readonly cause: unknown,
+  ) {
+    const requestId = getRequestId(request);
+
+    super(
+      `API request could not connect. ${request.method ?? "GET"} ${url}. RequestId: ${requestId ?? "none"}.`,
+    );
+
+    this.requestId = requestId;
+  }
+}
+
 type ApiRequestOptions = {
   readonly body?: unknown;
   readonly method: ApiRequestMethod;
@@ -49,7 +67,7 @@ export async function apiRequest<TResponse>(
   const url = createApiUrl(options.path);
   const request = createApiRequest(options);
 
-  const response = await fetch(url, request);
+  const response = await sendApiFetch(url, request);
 
   if (!response.ok) {
     const responseBody = await response.text();
@@ -65,6 +83,14 @@ export async function apiRequest<TResponse>(
   }
 
   return { kind: "ok", status: response.status, body: await response.json() };
+}
+
+async function sendApiFetch(url: string, request: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, request);
+  } catch (error) {
+    throw new ApiConnectionError(url, request, error);
+  }
 }
 
 function createApiRequest(options: ApiRequestOptions): RequestInit {
