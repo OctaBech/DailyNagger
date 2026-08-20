@@ -6,6 +6,7 @@ type SheetButtonTone = "choice" | "keep" | "primary" | "secondary";
 
 type SheetButtonProps = {
   readonly area: SheetButtonArea;
+  readonly disabled?: boolean;
   readonly label: string;
   readonly onPress: () => void;
   readonly selected?: boolean;
@@ -14,6 +15,7 @@ type SheetButtonProps = {
 
 export function SheetButton({
   area,
+  disabled = false,
   label,
   onPress,
   selected = false,
@@ -22,15 +24,17 @@ export function SheetButton({
   return (
     <Pressable
       accessibilityRole="button"
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
         area === "footer" ? styles.footerArea : styles.bodyArea,
         getToneStyle(tone, selected, area),
-        pressed && styles.pressed,
+        disabled && styles.disabled,
+        pressed && !disabled && styles.pressed,
       ]}
     >
-      <Text selectable={false} style={[styles.label, getTextStyle(tone)]}>
+      <Text selectable={false} style={[styles.label, getTextStyle(tone), disabled && styles.disabledText]}>
         {label}
       </Text>
     </Pressable>
@@ -74,6 +78,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     justifyContent: "center",
+  },
+  disabled: {
+    opacity: 0.42,
+  },
+  disabledText: {
+    color: modalTheme.modalText.status,
   },
   bodyPrimaryTone: {
     backgroundColor: modalTheme.sheet.background,

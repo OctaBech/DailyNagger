@@ -42,8 +42,11 @@ export function TaggingModal({
       })),
     [existingTags],
   );
+  const canSaveTag = !isLoadingExistingTags && !hasExistingTagLoadError;
 
   function saveTagName() {
+    if (!canSaveTag) return;
+
     const trimmedTagName = draftTagName.trim();
     const trimmedDescription = draftTagDescription.trim();
 
@@ -107,7 +110,13 @@ export function TaggingModal({
         <SheetFooterActions>
           <SheetButton area="footer" label="Clear" tone="secondary" onPress={clearDraft} />
           <SheetFooterSpacer />
-          <SheetButton area="footer" label="Done" tone="primary" onPress={saveTagName} />
+          <SheetButton
+            area="footer"
+            disabled={!canSaveTag}
+            label="Done"
+            tone="primary"
+            onPress={saveTagName}
+          />
         </SheetFooterActions>
       }
     >
