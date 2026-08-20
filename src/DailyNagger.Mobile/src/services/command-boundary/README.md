@@ -30,6 +30,24 @@ runs the action.
 
 Actions should only receive the context and data they need to do the work.
 
+## Observability
+
+This folder is a natural place for command breadcrumbs.
+
+A breadcrumb here can say: "the user asked the app to run this command from this
+screen scope." That is useful later when an error happens deeper in memory,
+sending, tree operations, or MCP work.
+
+Keep those breadcrumbs small and structural:
+
+- command name
+- command source
+- command scope
+- ids that are already part of the command contract
+
+Do not dump full task trees, notes, values, or modal text into breadcrumbs. The
+command boundary should explain the path of an action, not leak user content.
+
 ## Scopes
 
 Scopes are the guard rails. They describe what kind of runtime context an action
