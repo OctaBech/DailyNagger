@@ -1,11 +1,5 @@
 import { environment } from "@/config";
-import { createAuthHeaders } from "./createAuthHeaders";
-
-export class FetchTagsError extends Error {
-  constructor(readonly status: number) {
-    super(`Failed to fetch tags. Status: ${status}`);
-  }
-}
+import { apiRequest } from "./apiRequest";
 
 export type TagDto = {
   readonly name: string;
@@ -20,13 +14,5 @@ export async function fetchTags(tagType: string): Promise<readonly TagDto[]> {
     tagType,
   });
 
-  const response = await fetch(`${environment.apiBaseUrl}/api/tags?${query}`, {
-    headers: createAuthHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new FetchTagsError(response.status);
-  }
-
-  return await response.json();
+  return await apiRequest<readonly TagDto[]>({ method: "GET", path: `/api/tags?${query}` });
 }

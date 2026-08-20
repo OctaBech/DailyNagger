@@ -4,7 +4,7 @@ export {
   TodaysNagPlanPreparingError,
   fetchTodaysNagPlan,
 } from "./fetchTodaysNagPlan";
-export { FetchTagsError, fetchTags } from "./fetchTags";
+export { fetchTags } from "./fetchTags";
 export type { TagDto } from "./fetchTags";
 export { fetchTaskStepNameSuggestions } from "./fetchTaskStepNameSuggestions";
 export type { TaskStepNameSuggestionDto } from "./fetchTaskStepNameSuggestions";
