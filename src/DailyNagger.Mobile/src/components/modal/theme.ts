@@ -29,6 +29,11 @@ export const modalTheme = {
       border: "#d8d1c9",
       text: "#18242b",
     },
+    disabled: {
+      background: "transparent",
+      border: "#d8d1c9",
+      text: "#8a969d",
+    },
     choice: {
       background: "#fffdf8",
       border: "#d8d1c9",

@@ -43,6 +43,7 @@ export function TaggingModal({
     [existingTags],
   );
   const canSaveTag = !isLoadingExistingTags && !hasExistingTagLoadError;
+  const visibleTagOptions = hasExistingTagLoadError ? [] : tagOptions;
 
   function saveTagName() {
     if (!canSaveTag) return;
@@ -128,7 +129,7 @@ export function TaggingModal({
           loadingText="Loading tags..."
           loadErrorText={hasExistingTagLoadError ? "Could not load tags." : null}
           onPick={selectExistingTag}
-          options={tagOptions}
+          options={visibleTagOptions}
         />
 
         <SheetTextArea

@@ -80,10 +80,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   disabled: {
-    opacity: 0.42,
+    backgroundColor: modalTheme.modalButtonTone.disabled.background,
+    borderColor: modalTheme.modalButtonTone.disabled.border,
   },
   disabledText: {
-    color: modalTheme.modalText.status,
+    color: modalTheme.modalButtonTone.disabled.text,
   },
   bodyPrimaryTone: {
     backgroundColor: modalTheme.sheet.background,
