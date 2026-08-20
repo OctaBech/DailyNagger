@@ -1,12 +1,6 @@
 import { environment } from "@/config";
 import type { Guid } from "@/shared";
-import { createAuthHeaders } from "./createAuthHeaders";
-
-export class FetchTaskStepNameSuggestionsError extends Error {
-  constructor(readonly status: number) {
-    super(`Failed to fetch task step name suggestions. Status: ${status}`);
-  }
-}
+import { apiRequest } from "./apiRequest";
 
 export type TaskStepNameSuggestionDto = {
   readonly name: string;
@@ -20,16 +14,8 @@ export async function fetchTaskStepNameSuggestions(
     userId: environment.userId,
   });
 
-  const response = await fetch(
-    `${environment.apiBaseUrl}/api/naggers/${naggerId}/task-step-name-suggestions?${query}`,
-    {
-      headers: createAuthHeaders(),
-    },
-  );
-
-  if (!response.ok) {
-    throw new FetchTaskStepNameSuggestionsError(response.status);
-  }
-
-  return await response.json();
+  return apiRequest<readonly TaskStepNameSuggestionDto[]>({
+    method: "GET",
+    path: `/api/naggers/${naggerId}/task-step-name-suggestions?${query}`,
+  });
 }

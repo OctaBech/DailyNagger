@@ -1,3 +1,4 @@
+export { apiRequest, ApiRequestError } from "./apiRequest";
 export {
   FetchTodaysNagPlanError,
   TodaysNagPlanPreparingError,
@@ -5,10 +6,7 @@ export {
 } from "./fetchTodaysNagPlan";
 export { FetchTagsError, fetchTags } from "./fetchTags";
 export type { TagDto } from "./fetchTags";
-export {
-  FetchTaskStepNameSuggestionsError,
-  fetchTaskStepNameSuggestions,
-} from "./fetchTaskStepNameSuggestions";
+export { fetchTaskStepNameSuggestions } from "./fetchTaskStepNameSuggestions";
 export type { TaskStepNameSuggestionDto } from "./fetchTaskStepNameSuggestions";
 export { SaveTagError, saveTag } from "./saveTag";
 export { SendApiRequestError, sendApiRequest } from "./sendApiRequest";

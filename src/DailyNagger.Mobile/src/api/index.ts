@@ -2,7 +2,6 @@ export {
   FetchTodaysNagPlanError,
   TodaysNagPlanPreparingError,
   FetchTagsError,
-  FetchTaskStepNameSuggestionsError,
   SaveTagError,
   fetchTaskStepNameSuggestions,
   fetchTags,
