@@ -18,7 +18,11 @@ only to see more logs. The goal is to learn the tools, vocabulary, and tradeoffs
 that are common in production systems: structured logs, breadcrumbs, request
 context, trace ids, correlation ids, spans, and exporters.
 
-The client and server have different strengths:
+The client and server have different runtimes. We want the same observability
+story across both, but that does not mean the same library has to run in both
+places.
+
+The tools fit different parts of the system:
 
 - Expo React Native has mature Sentry support. Sentry is widely used for mobile
   apps, has an active ecosystem, and is good at the things a mobile client needs:
@@ -31,8 +35,10 @@ The client and server have different strengths:
   It is strongest on the server side, where HTTP middleware, exporters, and
   collectors are well supported.
 - OpenTelemetry directly inside React Native is still less straightforward than
-  it is on the server. It may become useful later, but it is not the best first
-  step for this app.
+  it is on the server. React Native is not a normal browser or Node.js runtime,
+  so direct OpenTelemetry setup can involve extra wiring, native constraints,
+  and more time spent on tooling than on learning the main observability flow.
+  It may become useful later, but it is not the best first step for this app.
 
 ## Decision
 
