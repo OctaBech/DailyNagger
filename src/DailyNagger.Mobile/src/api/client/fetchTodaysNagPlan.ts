@@ -1,12 +1,6 @@
 import type { NagPlanDto } from "@/api/dto";
 import { environment } from "@/config";
-import { createAuthHeaders } from "./createAuthHeaders";
-
-export class FetchTodaysNagPlanError extends Error {
-  constructor(readonly status: number) {
-    super(`Failed to fetch todays nagger plan. Status: ${status}`);
-  }
-}
+import { apiRequest } from "./apiRequest";
 
 export class TodaysNagPlanPreparingError extends Error {
   constructor() {
@@ -23,17 +17,18 @@ export async function fetchTodaysNagPlan(): Promise<NagPlanDto> {
     date: today,
   });
 
-  const response = await fetch(`${environment.apiBaseUrl}/api/todays-nag-plan?${query}`, {
-    headers: createAuthHeaders(),
+  const result = await apiRequest<NagPlanDto>({
+    method: "GET",
+    path: `/api/todays-nag-plan?${query}`,
   });
 
-  if (response.status === 202) {
+  if (result.kind === "accepted") {
     throw new TodaysNagPlanPreparingError();
   }
 
-  if (!response.ok) {
-    throw new FetchTodaysNagPlanError(response.status);
+  if (result.kind !== "ok") {
+    throw new Error("Todays nagger plan response had no JSON body.");
   }
 
-  return await response.json();
+  return result.body;
 }

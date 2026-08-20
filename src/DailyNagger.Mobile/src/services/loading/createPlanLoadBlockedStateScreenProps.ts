@@ -1,4 +1,4 @@
-import { FetchTodaysNagPlanError, TodaysNagPlanPreparingError } from "@/api";
+import { ApiRequestError, TodaysNagPlanPreparingError } from "@/api";
 import type { StateScreenProps } from "@/components/primitives";
 import { appTiming } from "@/config";
 
@@ -14,8 +14,8 @@ export function createPlanLoadBlockedStateScreenProps(error: unknown): StateScre
     };
   }
 
-  if (error instanceof FetchTodaysNagPlanError) {
-    if (error.status === 404) {
+  if (error instanceof ApiRequestError) {
+    if (error.response.status === 404) {
       return {
         title: "Plan not found",
         message: "DailyNagger could not find a plan for today.",

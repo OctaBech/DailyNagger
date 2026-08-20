@@ -1,6 +1,6 @@
 import { environment } from "@/config";
 import type { TagDto } from "./fetchTags";
-import { apiRequest } from "./apiRequest";
+import { apiJsonRequest } from "./apiRequest";
 
 export async function saveTag(
   tagType: string,
@@ -15,5 +15,5 @@ export async function saveTag(
     description,
   };
 
-  return await apiRequest<TagDto>({ method: "PUT", path: "/api/tags", body });
+  return await apiJsonRequest<TagDto>({ method: "PUT", path: "/api/tags", body });
 }

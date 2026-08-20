@@ -1,5 +1,5 @@
 import { environment } from "@/config";
-import { apiRequest } from "./apiRequest";
+import { apiJsonRequest } from "./apiRequest";
 
 export type TagDto = {
   readonly name: string;
@@ -14,5 +14,5 @@ export async function fetchTags(tagType: string): Promise<readonly TagDto[]> {
     tagType,
   });
 
-  return await apiRequest<readonly TagDto[]>({ method: "GET", path: `/api/tags?${query}` });
+  return await apiJsonRequest<readonly TagDto[]>({ method: "GET", path: `/api/tags?${query}` });
 }

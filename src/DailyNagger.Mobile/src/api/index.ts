@@ -1,5 +1,5 @@
 export {
-  FetchTodaysNagPlanError,
+  ApiRequestError,
   TodaysNagPlanPreparingError,
   fetchTaskStepNameSuggestions,
   fetchTags,

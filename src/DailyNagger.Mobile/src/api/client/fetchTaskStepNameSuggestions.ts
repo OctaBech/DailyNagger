@@ -1,6 +1,6 @@
 import { environment } from "@/config";
 import type { Guid } from "@/shared";
-import { apiRequest } from "./apiRequest";
+import { apiJsonRequest } from "./apiRequest";
 
 export type TaskStepNameSuggestionDto = {
   readonly name: string;
@@ -14,7 +14,7 @@ export async function fetchTaskStepNameSuggestions(
     userId: environment.userId,
   });
 
-  return apiRequest<readonly TaskStepNameSuggestionDto[]>({
+  return apiJsonRequest<readonly TaskStepNameSuggestionDto[]>({
     method: "GET",
     path: `/api/naggers/${naggerId}/task-step-name-suggestions?${query}`,
   });

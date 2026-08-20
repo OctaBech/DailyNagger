@@ -1,9 +1,5 @@
-export { apiRequest, ApiRequestError } from "./apiRequest";
-export {
-  FetchTodaysNagPlanError,
-  TodaysNagPlanPreparingError,
-  fetchTodaysNagPlan,
-} from "./fetchTodaysNagPlan";
+export { apiJsonRequest, apiRequest, ApiRequestError } from "./apiRequest";
+export { TodaysNagPlanPreparingError, fetchTodaysNagPlan } from "./fetchTodaysNagPlan";
 export { fetchTags } from "./fetchTags";
 export type { TagDto } from "./fetchTags";
 export { fetchTaskStepNameSuggestions } from "./fetchTaskStepNameSuggestions";

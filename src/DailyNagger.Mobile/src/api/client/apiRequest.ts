@@ -22,7 +22,24 @@ type ApiRequestOptions = {
   readonly path: string;
 };
 
-export async function apiRequest<TResponse>(options: ApiRequestOptions): Promise<TResponse> {
+export type ApiRequestResult<TResponse> =
+  | { readonly kind: "ok"; readonly status: number; readonly body: TResponse }
+  | { readonly kind: "accepted"; readonly status: 202; readonly body: null }
+  | { readonly kind: "no-content"; readonly status: 204; readonly body: null };
+
+export async function apiJsonRequest<TResponse>(options: ApiRequestOptions): Promise<TResponse> {
+  const result = await apiRequest<TResponse>(options);
+
+  if (result.kind !== "ok") {
+    throw new Error(`API request returned no JSON body. ${options.method} ${options.path}`);
+  }
+
+  return result.body;
+}
+
+export async function apiRequest<TResponse>(
+  options: ApiRequestOptions,
+): Promise<ApiRequestResult<TResponse>> {
   const url = createApiUrl(options.path);
   const request = createApiRequest(options);
 
@@ -33,7 +50,15 @@ export async function apiRequest<TResponse>(options: ApiRequestOptions): Promise
     throw new ApiRequestError(url, request, response, responseBody);
   }
 
-  return await response.json();
+  if (response.status === 202) {
+    return { kind: "accepted", status: 202, body: null };
+  }
+
+  if (response.status === 204) {
+    return { kind: "no-content", status: 204, body: null };
+  }
+
+  return { kind: "ok", status: response.status, body: await response.json() };
 }
 
 function createApiRequest(options: ApiRequestOptions): RequestInit {
