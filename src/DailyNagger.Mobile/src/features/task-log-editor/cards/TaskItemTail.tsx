@@ -27,16 +27,6 @@ export const TaskItemTail = ({
   return (
     <View style={styles.tail}>
       <View style={styles.actions}>
-        <Primitives.PillButton
-          label={tagText}
-          isEmpty={tagName === null}
-          showOutline={showComponentOutlines}
-          isActive={isTagPickerOpen}
-          onPress={() => {
-            onFocus();
-            onPressTag();
-          }}
-        />
         <Card.CardActionButton accessibilityLabel="Add child task step" onPress={onAddTaskItem}>
           <Text selectable={false} style={styles.plus}>
             +
@@ -53,6 +43,16 @@ export const TaskItemTail = ({
             <Icon source="note-outline" size={17} color={nagPlanTheme.taskItem.chevronText} />
           </View>
         </Card.CardActionButton>
+        <Primitives.PillButton
+          label={tagText}
+          isEmpty={tagName === null}
+          showOutline={showComponentOutlines}
+          isActive={isTagPickerOpen}
+          onPress={() => {
+            onFocus();
+            onPressTag();
+          }}
+        />
       </View>
       <Primitives.RowRemainderPressable
         accessibilityLabel="Select task item"

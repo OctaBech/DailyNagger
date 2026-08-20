@@ -29,18 +29,6 @@ export const TaskLogTail = ({
   return (
     <View style={styles.tail}>
       <View style={styles.actions}>
-        {shouldShowTag && (
-          <Primitives.PillButton
-            label={tagText}
-            isEmpty={taskLog.tag === null}
-            showOutline={showComponentOutlines}
-            isActive={isTagPickerOpen}
-            onPress={() => {
-              onFocus?.();
-              if (allowEditTag) onPressTag?.();
-            }}
-          />
-        )}
         {onAddTaskItem !== undefined && (
           <TailButton
             accessibilityLabel="Add task step to task log"
@@ -56,6 +44,18 @@ export const TaskLogTail = ({
               ✔
             </Text>
           </TailButton>
+        )}
+        {shouldShowTag && (
+          <Primitives.PillButton
+            label={tagText}
+            isEmpty={taskLog.tag === null}
+            showOutline={showComponentOutlines}
+            isActive={isTagPickerOpen}
+            onPress={() => {
+              onFocus?.();
+              if (allowEditTag) onPressTag?.();
+            }}
+          />
         )}
       </View>
       <Primitives.RowRemainderPressable
