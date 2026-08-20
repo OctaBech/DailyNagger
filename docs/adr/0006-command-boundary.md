@@ -32,6 +32,12 @@ The command boundary owns:
   operations
 - providing the natural place for command breadcrumbs
 
+Command names are strings on purpose. A command name such as
+`task-entry.value-changed` or `nagger.schedule-updated` is easy to read in code,
+logs, breadcrumbs, docs, and later MCP command proposals. The command name is a
+small shared language for "what happened" before the typed action arguments
+carry the details.
+
 Screens may say what happened. Actions may perform the work. The command
 boundary is the gate between those two worlds.
 
