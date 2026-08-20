@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform, StyleSheet } from "react-native";
 import { useCallback } from "react";
 import type { ReactNode } from "react";
@@ -20,12 +20,14 @@ import { SpeedDial } from "./speed-dial";
 import { appRoutes } from "@/navigation";
 import type { Guid } from "@/shared";
 import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
+import { appLayout } from "@/config";
 
 type AppShellProps = {
   children: ReactNode;
 };
 
 export const AppShell = ({ children }: AppShellProps) => {
+  const { bottom } = useSafeAreaInsets();
   const { appShell, assistantBubble } = useServices();
   const editorScreenCommands = useEditorScreenCommands();
   const planScreenCommands = usePlanScreenCommands();
@@ -33,7 +35,15 @@ export const AppShell = ({ children }: AppShellProps) => {
   const editorScreenData = useEditorScreenData();
   const path = usePathname();
   const router = useRouter();
-  const postOfficeStripBottomOffset = assistantBubble.hasMessage() ? 86 : 16;
+  const assistantBubbleBottomOffset = Math.max(
+    appLayout.assistantBubble.bottom,
+    bottom + appLayout.assistantBubble.safeAreaGap,
+  );
+  const postOfficeStripBottomOffset = assistantBubble.hasMessage()
+    ? assistantBubbleBottomOffset +
+      appLayout.assistantBubble.height +
+      appLayout.assistantBubble.stripGap
+    : Math.max(16, bottom + 12);
   const createNagger = useCallback(() => {
     router.replace(appRoutes.newTaskLogEditor);
   }, [router]);
@@ -77,7 +87,10 @@ export const AppShell = ({ children }: AppShellProps) => {
           bottomOffset={postOfficeStripBottomOffset}
         />
         <SpeedDial menu={speedDialMenu} />
-        <AssistantBubble />
+        <AssistantBubble
+          bottomOffset={assistantBubbleBottomOffset}
+          leftOffset={appLayout.assistantBubble.left}
+        />
       </SafeAreaView>
     </ModalKeyboardBoundaryProvider>
   );

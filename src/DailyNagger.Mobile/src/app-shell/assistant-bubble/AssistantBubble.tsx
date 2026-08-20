@@ -7,7 +7,12 @@ type AssistantBubbleLayout = "robot-outside" | "robot-inside";
 const assistantBubbleLayout = "robot-outside" as AssistantBubbleLayout;
 const robotEmoji = "\u{1F916}";
 
-export const AssistantBubble = () => {
+type AssistantBubbleProps = {
+  readonly bottomOffset: number;
+  readonly leftOffset: number;
+};
+
+export const AssistantBubble = ({ bottomOffset, leftOffset }: AssistantBubbleProps) => {
   const { assistantBubble } = useServices();
 
   useEffect(() => {
@@ -25,7 +30,7 @@ export const AssistantBubble = () => {
   ];
 
   return (
-    <View style={styles.assistantBubbleRow}>
+    <View style={[styles.assistantBubbleRow, { bottom: bottomOffset, left: leftOffset }]}>
       {assistantBubbleLayout === "robot-outside" && (
         <View style={styles.robotBadge}>
           <Text style={styles.robot}>{robotEmoji}</Text>
@@ -46,10 +51,8 @@ export const AssistantBubble = () => {
 const styles = StyleSheet.create({
   assistantBubbleRow: {
     alignItems: "flex-end",
-    bottom: 28,
     flexDirection: "row",
     gap: 8,
-    left: 28,
     maxWidth: "78%",
     position: "absolute",
   },
