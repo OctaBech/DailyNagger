@@ -19,6 +19,6 @@ export function useRemoteListQuery<TItem>({
   return {
     items: query.data ?? [],
     isLoading: query.isLoading,
-    hasLoadError: query.isError,
+    hasLoadError: query.isError || query.isRefetchError,
   };
 }
