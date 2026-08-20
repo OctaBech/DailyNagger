@@ -1,5 +1,5 @@
 import { environment } from "@/config";
-import { createAuthHeaders } from "./createAuthHeaders";
+import { createBaseApiHeaders } from "./createBaseApiHeaders";
 
 type ApiRequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -78,11 +78,11 @@ function createApiUrl(path: string): string {
 
 function createApiHeaders(body: unknown): Record<string, string> {
   if (body === undefined) {
-    return createAuthHeaders();
+    return createBaseApiHeaders();
   }
 
   return {
-    ...createAuthHeaders(),
+    ...createBaseApiHeaders(),
     "Content-Type": "application/json",
   };
 }
