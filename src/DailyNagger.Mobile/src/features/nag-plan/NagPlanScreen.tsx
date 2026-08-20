@@ -8,6 +8,7 @@ import { usePlanScreenData } from "@/services";
 
 export const NagPlanScreen = () => {
   const { mood, nags, scroll, startup } = usePlanScreenData();
+  const showMoodBar = !startup.hasBlockingState;
 
   return (
     <View style={styles.screen}>
@@ -22,15 +23,17 @@ export const NagPlanScreen = () => {
       ) : mood.selectedMood === null ? null : (
         <NagList nags={nags} getScrollOffset={scroll.getOffset} setScrollOffset={scroll.setOffset} />
       )}
-      <View pointerEvents="box-none" style={styles.moodBarOverlay}>
-        <MoodBar
-          visible
-          options={mood.options}
-          selected={mood.selectedMood}
-          selectedAt={mood.selectedAt}
-          onSelect={mood.select}
-        />
-      </View>
+      {showMoodBar ? (
+        <View pointerEvents="box-none" style={styles.moodBarOverlay}>
+          <MoodBar
+            visible
+            options={mood.options}
+            selected={mood.selectedMood}
+            selectedAt={mood.selectedAt}
+            onSelect={mood.select}
+          />
+        </View>
+      ) : null}
     </View>
   );
 };

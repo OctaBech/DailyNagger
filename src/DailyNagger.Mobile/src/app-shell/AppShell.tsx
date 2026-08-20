@@ -66,27 +66,34 @@ export const AppShell = ({ children }: AppShellProps) => {
     editorScreenData,
     onCloseEditor: closeEditor,
   });
-  const speedDialMenu =
-    path === appRoutes.plan
-      ? planScreenDialMenu
-      : path.startsWith(appRoutes.taskLogEditorBase)
-        ? editorScreenDialMenu
-        : emptySpeedDialMenu;
+  let speedDialMenu = emptySpeedDialMenu;
+
+  if (appShell.globalOverlaysAreEnabled) {
+    if (path === appRoutes.plan) {
+      speedDialMenu = planScreenDialMenu;
+    } else if (path.startsWith(appRoutes.taskLogEditorBase)) {
+      speedDialMenu = editorScreenDialMenu;
+    }
+  }
 
   return (
     <ModalKeyboardBoundaryProvider>
       <SafeAreaView style={styles.container}>
         {Platform.OS === "android" ? null : <StatusBar style="auto" />}
         {children}
-        <PostOfficeStrip
-          sendingEvents={appShell.sendingEvents}
-          bottomOffset={postOfficeStripBottomOffset}
-        />
+        {appShell.globalOverlaysAreEnabled ? (
+          <PostOfficeStrip
+            sendingEvents={appShell.sendingEvents}
+            bottomOffset={postOfficeStripBottomOffset}
+          />
+        ) : null}
         <SpeedDial menu={speedDialMenu} />
-        <AssistantBubble
-          bottomOffset={assistantBubbleBottomOffset}
-          leftOffset={appLayout.assistantBubble.left}
-        />
+        {appShell.globalOverlaysAreEnabled ? (
+          <AssistantBubble
+            bottomOffset={assistantBubbleBottomOffset}
+            leftOffset={appLayout.assistantBubble.left}
+          />
+        ) : null}
       </SafeAreaView>
     </ModalKeyboardBoundaryProvider>
   );

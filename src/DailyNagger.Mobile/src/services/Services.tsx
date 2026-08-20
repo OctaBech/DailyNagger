@@ -36,6 +36,7 @@ export type Services = Prettify<{
 }>;
 
 type AppShell = Prettify<{
+  readonly globalOverlaysAreEnabled: boolean;
   readonly sendingEvents: ReturnType<typeof useEventEmitter<SendingEventType, readonly Parcel[]>>;
 }>;
 
@@ -129,9 +130,10 @@ function useCreateServices(): {
   // Wiring jsx screen services
   const appShell = useMemo(
     () => ({
+      globalOverlaysAreEnabled: !startup.hasBlockingState,
       sendingEvents,
     }),
-    [sendingEvents],
+    [sendingEvents, startup.hasBlockingState],
   );
   const planScreenData = useCreatePlanScreenData({
     planMemory,
