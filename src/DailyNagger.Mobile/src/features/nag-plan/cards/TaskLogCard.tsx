@@ -21,7 +21,8 @@ const TaskLogCardComponent = ({
   useDebugRenderFrameCounter("PlanTaskLogCard", taskLog.id);
 
   const [isTaskStepNameModalVisible, setIsTaskStepNameModalVisible] = useState(false);
-  const { suggestions } = useTaskStepNameSuggestions(taskLog.nagId);
+  const { suggestions, isLoadingSuggestions, hasSuggestionLoadError } =
+    useTaskStepNameSuggestions(taskLog.nagId);
   const taskStepNameSuggestions = useMemo(
     () => mergeTaskStepNameSuggestions(suggestions, taskLog),
     [suggestions, taskLog],
@@ -53,6 +54,8 @@ const TaskLogCardComponent = ({
 
       <Modal.TaskStepNameModal
         visible={isTaskStepNameModalVisible}
+        hasSuggestionLoadError={hasSuggestionLoadError}
+        isLoadingSuggestions={isLoadingSuggestions}
         suggestions={taskStepNameSuggestions}
         onDismiss={() => setIsTaskStepNameModalVisible(false)}
         onAddTaskStep={(name, rolloverBehavior) => {

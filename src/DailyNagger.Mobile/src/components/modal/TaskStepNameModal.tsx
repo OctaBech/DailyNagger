@@ -18,6 +18,8 @@ const taskStepNameSortOptions = [{ label: "A-Z", value: "alphabetical" }] as con
 
 export type TaskStepNameModalProps = {
   readonly visible: boolean;
+  readonly hasSuggestionLoadError?: boolean;
+  readonly isLoadingSuggestions?: boolean;
   readonly suggestions?: readonly SuggestedTaskStepName[];
   readonly onAddTaskStep?: (name: string, rolloverBehavior: TaskItem["rolloverBehavior"]) => void;
   readonly onDismiss: () => void;
@@ -25,6 +27,8 @@ export type TaskStepNameModalProps = {
 
 export function TaskStepNameModal({
   visible,
+  hasSuggestionLoadError = false,
+  isLoadingSuggestions = false,
   suggestions = [],
   onAddTaskStep,
   onDismiss,
@@ -34,6 +38,8 @@ export function TaskStepNameModal({
   return (
     <TaskStepNameModalContent
       visible={visible}
+      hasSuggestionLoadError={hasSuggestionLoadError}
+      isLoadingSuggestions={isLoadingSuggestions}
       suggestions={suggestions}
       onAddTaskStep={onAddTaskStep}
       onDismiss={onDismiss}
@@ -43,6 +49,8 @@ export function TaskStepNameModal({
 
 function TaskStepNameModalContent({
   visible,
+  hasSuggestionLoadError = false,
+  isLoadingSuggestions = false,
   suggestions = [],
   onAddTaskStep,
   onDismiss,
@@ -111,6 +119,9 @@ function TaskStepNameModalContent({
           autoFocus
           autoCapitalize="sentences"
           autoCorrect
+          isLoading={isLoadingSuggestions}
+          loadingText="Loading names..."
+          loadErrorText={hasSuggestionLoadError ? "Could not load names." : null}
           onPick={selectExistingName}
           options={suggestionOptions}
           sortOptions={taskStepNameSortOptions}

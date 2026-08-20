@@ -2,7 +2,7 @@ import type { JsonValue } from "@/shared";
 import type { ClientIdentity } from "@/models/clientIdentity";
 import { environment } from "@/config";
 import type { ClientIdentityDto, VersionedResponseDto } from "@/api/dto";
-import { createAuthHeaders } from "./createAuthHeaders";
+import { apiRequest, ApiRequestError } from "./apiRequest";
 
 export class SendApiRequestError extends Error {
   readonly currentVersion: number | null;
@@ -32,35 +32,32 @@ export type SendApiRequest = {
 export async function sendApiRequest(request: SendApiRequest): Promise<VersionedResponseDto> {
   const { method, endpoint, payload, processing } = request;
 
-  const response = await fetch(createApiUrl(endpoint), {
-    method,
-    headers: {
-      ...createAuthHeaders(),
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      communityId: environment.communityId,
-      userId: environment.userId,
-      updatedAt: processing.queuedAt,
-      baseVersion: processing.baseVersion,
-      nextVersion: processing.nextVersion,
-      skipPayloadVersionValidation: processing.skipPayloadVersionValidation,
-      clientIdentity: toClientIdentityDto(processing.clientIdentity),
-      payload,
-    }),
-  });
-  if (!response.ok) {
-    throw new SendApiRequestError(response.status, await response.text());
+  const body = {
+    communityId: environment.communityId,
+    userId: environment.userId,
+    updatedAt: processing.queuedAt,
+    baseVersion: processing.baseVersion,
+    nextVersion: processing.nextVersion,
+    skipPayloadVersionValidation: processing.skipPayloadVersionValidation,
+    clientIdentity: toClientIdentityDto(processing.clientIdentity),
+    payload,
+  };
+
+  try {
+    const result = await apiRequest<VersionedResponseDto>({ method, path: endpoint, body });
+
+    if (result.kind !== "ok") {
+      throw new Error("Send API request response had no JSON body.");
+    }
+
+    return result.body;
+  } catch (error) {
+    if (error instanceof ApiRequestError) {
+      throw new SendApiRequestError(error.response.status, error.responseBody);
+    }
+
+    throw error;
   }
-
-  return await response.json();
-}
-
-function createApiUrl(endpoint: string): string {
-  const baseUrl = environment.apiBaseUrl.replace(/\/+$/, "");
-  const path = endpoint.replace(/^\/+/, "");
-
-  return `${baseUrl}/${path}`;
 }
 
 function toClientIdentityDto(clientIdentity: ClientIdentity): ClientIdentityDto {
