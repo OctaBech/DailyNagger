@@ -11,11 +11,12 @@ export class ApiRequestError extends Error {
     readonly request: RequestInit,
     readonly response: Response,
     readonly responseBody: string,
+    readonly durationMs: number,
   ) {
     const requestId = getRequestId(request);
 
     super(
-      `API request failed. ${request.method ?? "GET"} ${url}. Status: ${response.status}. RequestId: ${requestId ?? "none"}. Body: ${responseBody}`,
+      `API request failed. ${request.method ?? "GET"} ${url}. Status: ${response.status}. RequestId: ${requestId ?? "none"}. DurationMs: ${durationMs}. Body: ${responseBody}`,
     );
 
     this.requestId = requestId;
@@ -28,12 +29,13 @@ export class ApiConnectionError extends Error {
   constructor(
     readonly url: string,
     readonly request: RequestInit,
+    readonly durationMs: number,
     readonly cause: unknown,
   ) {
     const requestId = getRequestId(request);
 
     super(
-      `API request could not connect. ${request.method ?? "GET"} ${url}. RequestId: ${requestId ?? "none"}.`,
+      `API request could not connect. ${request.method ?? "GET"} ${url}. RequestId: ${requestId ?? "none"}. DurationMs: ${durationMs}.`,
     );
 
     this.requestId = requestId;
@@ -66,12 +68,19 @@ export async function apiRequest<TResponse>(
 ): Promise<ApiRequestResult<TResponse>> {
   const url = createApiUrl(options.path);
   const request = createApiRequest(options);
+  const startedAt = performance.now();
 
-  const response = await sendApiFetch(url, request);
+  const response = await sendApiFetch(url, request, startedAt);
 
   if (!response.ok) {
     const responseBody = await response.text();
-    throw new ApiRequestError(url, request, response, responseBody);
+    throw new ApiRequestError(
+      url,
+      request,
+      response,
+      responseBody,
+      getDurationMs(startedAt),
+    );
   }
 
   if (response.status === 202) {
@@ -85,11 +94,15 @@ export async function apiRequest<TResponse>(
   return { kind: "ok", status: response.status, body: await response.json() };
 }
 
-async function sendApiFetch(url: string, request: RequestInit): Promise<Response> {
+async function sendApiFetch(
+  url: string,
+  request: RequestInit,
+  startedAt: number,
+): Promise<Response> {
   try {
     return await fetch(url, request);
   } catch (error) {
-    throw new ApiConnectionError(url, request, error);
+    throw new ApiConnectionError(url, request, getDurationMs(startedAt), error);
   }
 }
 
@@ -134,4 +147,8 @@ function getRequestId(request: RequestInit): string | null {
   }
 
   return headers["X-DailyNagger-Request-Id"] ?? null;
+}
+
+function getDurationMs(startedAt: number): number {
+  return Math.round(performance.now() - startedAt);
 }
