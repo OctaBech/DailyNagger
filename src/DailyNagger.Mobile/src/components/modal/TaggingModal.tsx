@@ -79,12 +79,6 @@ export function TaggingModal({
     setDraftTagDescription(exactMatch.description ?? "");
   }
 
-  function clearDraft() {
-    setDraftTagName("");
-    setDraftTagDescription("");
-    tagNameInputRef.current?.focus();
-  }
-
   useEffect(() => {
     if (!visible) {
       hasInitializedOpenDraftRef.current = false;
@@ -108,7 +102,6 @@ export function TaggingModal({
       onDismiss={onDismiss}
       footer={
         <SheetFooterActions>
-          <SheetButton area="footer" label="Clear" tone="secondary" onPress={clearDraft} />
           <SheetFooterSpacer />
           <SheetButton
             area="footer"
