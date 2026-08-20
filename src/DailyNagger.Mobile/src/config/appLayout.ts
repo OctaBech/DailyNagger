@@ -1,10 +1,11 @@
 export const appLayout = {
   assistantBubble: {
     bottom: 28,
-    height: 48,
     left: 28,
     safeAreaGap: 12,
-    stripGap: 10,
+  },
+  postOfficeStrip: {
+    bottom: 0,
   },
   sheetModal: {
     minBottomPadding: 56,

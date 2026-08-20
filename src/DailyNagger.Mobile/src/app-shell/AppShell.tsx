@@ -28,7 +28,7 @@ type AppShellProps = {
 
 export const AppShell = ({ children }: AppShellProps) => {
   const { bottom } = useSafeAreaInsets();
-  const { appShell, assistantBubble } = useServices();
+  const { appShell } = useServices();
   const editorScreenCommands = useEditorScreenCommands();
   const planScreenCommands = usePlanScreenCommands();
   const planScreenData = usePlanScreenData();
@@ -39,11 +39,7 @@ export const AppShell = ({ children }: AppShellProps) => {
     appLayout.assistantBubble.bottom,
     bottom + appLayout.assistantBubble.safeAreaGap,
   );
-  const postOfficeStripBottomOffset = assistantBubble.hasMessage()
-    ? assistantBubbleBottomOffset +
-      appLayout.assistantBubble.height +
-      appLayout.assistantBubble.stripGap
-    : Math.max(16, bottom + 12);
+  const postOfficeStripBottomOffset = appLayout.postOfficeStrip.bottom;
   const createNagger = useCallback(() => {
     router.replace(appRoutes.newTaskLogEditor);
   }, [router]);
