@@ -30,7 +30,7 @@ The command boundary owns:
 - keeping React hook wiring out of actions
 - keeping screens from directly combining memory, sending, stamps, and tree
   operations
-- providing a natural place for future command breadcrumbs
+- providing the natural place for command breadcrumbs
 
 Screens may say what happened. Actions may perform the work. The command
 boundary is the gate between those two worlds.
@@ -46,5 +46,5 @@ Actions can stay easier to read because they do not own `useCallback`,
 The boundary should stay thin. If it starts containing task-tree behavior, that
 logic belongs in actions or lower-level tree operations.
 
-Future observability can add command breadcrumbs here without spreading logging
-calls through every button and modal.
+Command breadcrumbs belong here. That keeps telemetry at the action boundary
+instead of spreading logging calls through every button and modal.
