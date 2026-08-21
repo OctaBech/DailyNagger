@@ -56,7 +56,8 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
     app.UseHttpsRedirection();
 }
-app.UseMiddleware<ApiRequestIdMiddleware>();
+app.UseMiddleware<RequireApiRequestIdMiddleware>();
+app.UseMiddleware<UnhandledApiExceptionMiddleware>();
 app.UseCors("client");
 app.UseMiddleware<ApiTokenMiddleware>();
 
