@@ -1,5 +1,6 @@
 using DailyNagger.Server.Api;
 using DailyNagger.Server.Data;
+using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,7 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
     app.UseHttpsRedirection();
 }
+app.UseMiddleware<ApiRequestIdMiddleware>();
 app.UseCors("client");
 app.UseMiddleware<ApiTokenMiddleware>();
 
