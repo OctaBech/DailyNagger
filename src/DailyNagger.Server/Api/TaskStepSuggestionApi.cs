@@ -1,3 +1,4 @@
+using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Operations;
 
 namespace DailyNagger.Server.Api;
@@ -29,7 +30,9 @@ public static class TaskStepSuggestionApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("TaskStepSuggestions");
+        })
+            .WithTags("TaskStepSuggestions")
+            .Produces<TaskStepNameSuggestionDto[]>(StatusCodes.Status200OK);
 
         return app;
     }

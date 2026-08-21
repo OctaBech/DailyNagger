@@ -44,7 +44,9 @@ public static class NagApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("Nags");
+        })
+            .WithTags("Nags")
+            .Produces<NaggerDto[]>(StatusCodes.Status200OK);
 
         app.MapPut("/api/nags/{id:guid}", async (
             Guid id,
@@ -120,7 +122,10 @@ public static class NagApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("Nags");
+        })
+            .WithTags("Nags")
+            .Accepts<VersionedRequest<NaggerDto>>("application/json")
+            .Produces<NaggerDto>(StatusCodes.Status200OK);
 
         return app;
     }

@@ -9,10 +9,12 @@ public static class NagPlanApi
     public static IEndpointRouteBuilder MapNagPlanApi(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/todays-nag-plan", GetNagPlan)
-            .WithTags("NagPlan");
+            .WithTags("NagPlan")
+            .Produces<NagPlanDto>(StatusCodes.Status200OK);
 
         app.MapGet("/api/nag-plan", GetNagPlan)
-            .WithTags("NagPlan");
+            .WithTags("NagPlan")
+            .Produces<NagPlanDto>(StatusCodes.Status200OK);
 
         return app;
     }

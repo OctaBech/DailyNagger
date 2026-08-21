@@ -93,7 +93,10 @@ public static class TaskLogApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("TaskLogs");
+        })
+            .WithTags("TaskLogs")
+            .Accepts<VersionedRequest<TaskLogDto>>("application/json")
+            .Produces<TaskLogDto>(StatusCodes.Status200OK);
 
         app.MapPatch("/api/task-logs/{id:guid}/task-entries", async (
             Guid id,
@@ -148,7 +151,9 @@ public static class TaskLogApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("TaskLogs");
+        })
+            .WithTags("TaskLogs")
+            .Produces<TaskLogVersionDto>(StatusCodes.Status200OK);
 
         return app;
     }

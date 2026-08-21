@@ -38,7 +38,9 @@ public static class TagApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("Tags");
+        })
+            .WithTags("Tags")
+            .Produces<TagDto[]>(StatusCodes.Status200OK);
 
         app.MapPut("/api/tags", async (
             SaveTagRequest request,
@@ -80,7 +82,9 @@ public static class TagApi
                 return Results.Problem(
                     environment.IsDevelopment() ? exception.ToString() : exception.Message);
             }
-        }).WithTags("Tags");
+        })
+            .WithTags("Tags")
+            .Produces<TagDto>(StatusCodes.Status200OK);
 
         return app;
     }
