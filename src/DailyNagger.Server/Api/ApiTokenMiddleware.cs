@@ -8,7 +8,8 @@ public sealed class ApiTokenMiddleware(RequestDelegate next, IConfiguration conf
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (IsPublicEndpoint(context.Request.Path))
+        if (!context.Request.Path.StartsWithSegments("/api")
+            || IsPublicEndpoint(context.Request.Path))
         {
             await next(context);
             return;

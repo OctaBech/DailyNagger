@@ -6,13 +6,13 @@ public sealed class RequireApiRequestIdMiddleware(
 {
     public async Task InvokeAsync(HttpContext context)
     {
-        string requestId;
-
-        try
+        if (!context.Request.Path.StartsWithSegments("/api"))
         {
-            requestId = ApiRequestId.GetRequired(context);
+            await next(context);
+            return;
         }
-        catch (InvalidOperationException)
+
+        if (!ApiRequestId.TryGet(context, out var requestId))
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
 

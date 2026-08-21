@@ -2,15 +2,17 @@
 
 public static class ApiRequestId
 {
-    public static string GetRequired(HttpContext context)
+    public static bool TryGet(HttpContext context, out string requestId)
     {
         var headerValue = context.Request.Headers[ApiRequestHeaders.RequestId].ToString();
 
         if (Guid.TryParse(headerValue, out var parsedRequestId))
         {
-            return parsedRequestId.ToString("D");
+            requestId = parsedRequestId.ToString("D");
+            return true;
         }
 
-        throw new InvalidOperationException("Missing or invalid API request id.");
+        requestId = string.Empty;
+        return false;
     }
 }
