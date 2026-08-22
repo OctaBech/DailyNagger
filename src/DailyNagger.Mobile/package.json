@@ -47,5 +47,9 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check"
   },
-  "private": true
+  "private": true,
+  "allowScripts": {
+    "@sentry/cli@2.58.4": true,
+    "unrs-resolver@1.12.2": true
+  }
 }
