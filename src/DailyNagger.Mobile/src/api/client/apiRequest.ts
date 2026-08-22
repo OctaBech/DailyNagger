@@ -1,4 +1,6 @@
+import * as Sentry from "@sentry/react-native";
 import { environment } from "@/config";
+import { newGuid } from "@/shared";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
 import { apiRequestHeaders } from "./apiRequestHeaders";
 
@@ -68,25 +70,59 @@ export async function apiRequest<TResponse>(
   options: ApiRequestOptions,
 ): Promise<ApiRequestResult<TResponse>> {
   const url = createApiUrl(options.path);
-  const request = createApiRequest(options);
+  const requestId = newGuid();
+  const request = createApiRequest(options, requestId);
   const startedAt = performance.now();
 
-  const response = await sendApiFetch(url, request, startedAt);
+  const result = await Sentry.withScope<Promise<ApiRequestResult<TResponse>>>(async (scope) => {
+    scope.setTag("requestId", requestId);
+    scope.setContext("apiRequest", {
+      method: options.method,
+      path: options.path,
+      requestId,
+      url,
+    });
+    scope.addBreadcrumb({
+      category: "http",
+      data: {
+        method: options.method,
+        path: options.path,
+        requestId,
+        url,
+      },
+      level: "info",
+      message: `${options.method} ${options.path}`,
+      type: "http",
+    });
 
-  if (!response.ok) {
-    const responseBody = await response.text();
-    throw new ApiRequestError(url, request, response, responseBody, getDurationMs(startedAt));
+    try {
+      const response = await sendApiFetch(url, request, startedAt);
+
+      if (!response.ok) {
+        const responseBody = await response.text();
+        throw new ApiRequestError(url, request, response, responseBody, getDurationMs(startedAt));
+      }
+
+      if (response.status === 202) {
+        return { kind: "accepted", status: 202, body: null };
+      }
+
+      if (response.status === 204) {
+        return { kind: "no-content", status: 204, body: null };
+      }
+
+      return { kind: "ok", status: response.status, body: await response.json() };
+    } catch (error) {
+      Sentry.captureException(error);
+      throw error;
+    }
+  });
+
+  if (result === undefined) {
+    throw new Error(`Sentry scope returned no API request result. ${options.method} ${options.path}`);
   }
 
-  if (response.status === 202) {
-    return { kind: "accepted", status: 202, body: null };
-  }
-
-  if (response.status === 204) {
-    return { kind: "no-content", status: 204, body: null };
-  }
-
-  return { kind: "ok", status: response.status, body: await response.json() };
+  return result;
 }
 
 async function sendApiFetch(
@@ -101,10 +137,10 @@ async function sendApiFetch(
   }
 }
 
-function createApiRequest(options: ApiRequestOptions): RequestInit {
+function createApiRequest(options: ApiRequestOptions, requestId: string): RequestInit {
   return {
     method: options.method,
-    headers: createApiHeaders(options.body),
+    headers: createApiHeaders(options.body, requestId),
     body: createJsonBody(options.body),
   };
 }
@@ -116,13 +152,13 @@ function createApiUrl(path: string): string {
   return `${baseUrl}/${normalizedPath}`;
 }
 
-function createApiHeaders(body: unknown): Record<string, string> {
+function createApiHeaders(body: unknown, requestId: string): Record<string, string> {
   if (body === undefined) {
-    return createBaseApiHeaders();
+    return createBaseApiHeaders(requestId);
   }
 
   return {
-    ...createBaseApiHeaders(),
+    ...createBaseApiHeaders(requestId),
     "Content-Type": "application/json",
   };
 }
