@@ -5,8 +5,17 @@ import { PaperProvider } from "react-native-paper";
 import { ServiceProvider } from "@/services";
 import { AppErrorBoundary, AppShell } from "@/app-shell";
 import { ApiQueryProvider } from "@/api/react-query";
+import { environment } from "@/config";
 import { Stack } from "expo-router";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
+import * as Sentry from "@sentry/react-native";
+
+if (environment.sentryDsn !== undefined) {
+  Sentry.init({
+    dsn: environment.sentryDsn,
+    enableLogs: true,
+  });
+}
 
 const App = () => {
   return (
@@ -35,4 +44,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Sentry.wrap(App);
