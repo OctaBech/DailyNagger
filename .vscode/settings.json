@@ -1,0 +1,14 @@
+{
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+  "javascript.preferences.preferTypeOnlyAutoImports": true,
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.expo": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.turbo": true,
+    "**/.next": true,
+    "**/coverage": true
+  }
+}
