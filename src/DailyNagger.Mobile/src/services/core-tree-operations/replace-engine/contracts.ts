@@ -89,4 +89,3 @@ export type ReplaceResult<T> = {
   readonly found: boolean;
   readonly element: T;
 };
-

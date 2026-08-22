@@ -58,10 +58,7 @@ export const TaskLogTail = ({
           />
         )}
       </View>
-      <Primitives.RowRemainderPressable
-        accessibilityLabel="Select task log"
-        onPress={onFocus}
-      />
+      <Primitives.RowRemainderPressable accessibilityLabel="Select task log" onPress={onFocus} />
     </View>
   );
 };

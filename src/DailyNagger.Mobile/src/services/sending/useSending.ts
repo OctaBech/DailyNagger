@@ -20,9 +20,7 @@ import {
   useTimer,
 } from "@/shared";
 import type { Memory } from "../contracts";
-import {
-  updateExpectedVersion,
-} from "../actions";
+import { updateExpectedVersion } from "../actions";
 import { useClientIdentity } from "../clientIdentity";
 import type { Formula, OwnerType, Parcel, SendingEventType } from "./contracts";
 import { createNaggerFormula } from "./queueNagger";

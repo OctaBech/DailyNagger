@@ -54,10 +54,7 @@ export const TaskItemTail = ({
           }}
         />
       </View>
-      <Primitives.RowRemainderPressable
-        accessibilityLabel="Select task item"
-        onPress={onFocus}
-      />
+      <Primitives.RowRemainderPressable accessibilityLabel="Select task item" onPress={onFocus} />
     </View>
   );
 };

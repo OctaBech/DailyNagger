@@ -38,19 +38,24 @@ export function SheetWheel<TValue extends string | number>({
     return optionIndex === -1 ? 0 : optionIndex;
   }, [options, value]);
 
-  const scrollToOptionIndex = useCallback((optionIndex: number, animated: boolean): void => {
-    listRef.current?.scrollToOffset({
-      animated,
-      offset: optionIndex * activeItemSize,
-    });
-  }, [activeItemSize]);
+  const scrollToOptionIndex = useCallback(
+    (optionIndex: number, animated: boolean): void => {
+      listRef.current?.scrollToOffset({
+        animated,
+        offset: optionIndex * activeItemSize,
+      });
+    },
+    [activeItemSize],
+  );
 
   useEffect(() => {
     scrollToOptionIndex(selectedIndex, false);
   }, [scrollToOptionIndex, selectedIndex]);
 
   function selectOptionFromScroll(event: NativeSyntheticEvent<NativeScrollEvent>): void {
-    const offset = isHorizontal ? event.nativeEvent.contentOffset.x : event.nativeEvent.contentOffset.y;
+    const offset = isHorizontal
+      ? event.nativeEvent.contentOffset.x
+      : event.nativeEvent.contentOffset.y;
     const optionIndex = Math.round(offset / activeItemSize);
 
     selectOptionAtIndex(optionIndex, false);
@@ -69,7 +74,9 @@ export function SheetWheel<TValue extends string | number>({
   }
 
   function updateWheelViewportSize(event: LayoutChangeEvent): void {
-    const nextViewportSize = isHorizontal ? event.nativeEvent.layout.width : event.nativeEvent.layout.height;
+    const nextViewportSize = isHorizontal
+      ? event.nativeEvent.layout.width
+      : event.nativeEvent.layout.height;
 
     setWheelViewportSize(nextViewportSize);
   }
@@ -140,7 +147,10 @@ function WheelItem({
   readonly onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.item, isHorizontal ? styles.horizontalItem : styles.verticalItem]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.item, isHorizontal ? styles.horizontalItem : styles.verticalItem]}
+    >
       {({ pressed }) => (
         <Text
           numberOfLines={1}

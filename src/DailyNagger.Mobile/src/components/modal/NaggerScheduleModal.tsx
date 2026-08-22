@@ -405,12 +405,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
               value={selectedWeekday}
               onChange={changeSelectedWeekday}
             />
-            <SheetButton
-              area="body"
-              label="Add"
-              tone="primary"
-              onPress={addSelectedWeekdayRule}
-            />
+            <SheetButton area="body" label="Add" tone="primary" onPress={addSelectedWeekdayRule} />
           </>
         ) : selectedBuilderType === "Date" ? (
           <>
@@ -435,12 +430,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
               value={selectedDateDayOfMonth}
               onChange={changeSelectedDateDayOfMonth}
             />
-            <SheetButton
-              area="body"
-              label="Add"
-              tone="primary"
-              onPress={addSelectedDateRule}
-            />
+            <SheetButton area="body" label="Add" tone="primary" onPress={addSelectedDateRule} />
           </>
         ) : (
           <>
@@ -462,12 +452,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
               sortOptions={holidaySortOptions}
               value={holidaySearchText}
             />
-            <SheetButton
-              area="body"
-              label="Add"
-              tone="primary"
-              onPress={addSelectedHolidayRule}
-            />
+            <SheetButton area="body" label="Add" tone="primary" onPress={addSelectedHolidayRule} />
           </>
         )}
       </SheetSection>
@@ -479,7 +464,9 @@ function isWeekdayRule(rule: ScheduleRule): rule is Extract<ScheduleRule, { rule
   return rule.ruleType === "Weekday";
 }
 
-function isSimpleWeekdayRule(rule: ScheduleRule): rule is Extract<ScheduleRule, { ruleType: "Weekday" }> {
+function isSimpleWeekdayRule(
+  rule: ScheduleRule,
+): rule is Extract<ScheduleRule, { ruleType: "Weekday" }> {
   return (
     isWeekdayRule(rule) &&
     rule.rule.month === SCHEDULE_EVERY &&

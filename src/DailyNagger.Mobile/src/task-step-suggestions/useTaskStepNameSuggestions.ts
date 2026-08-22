@@ -6,9 +6,7 @@ type TaskStepNameSuggestion = {
   readonly name: string;
 };
 
-export type TaskStepNameSuggestions = Prettify<
-  ReturnType<typeof useTaskStepNameSuggestions>
->;
+export type TaskStepNameSuggestions = Prettify<ReturnType<typeof useTaskStepNameSuggestions>>;
 
 export function useTaskStepNameSuggestions(naggerId: Guid) {
   const suggestionsQuery = useRemoteListQuery({

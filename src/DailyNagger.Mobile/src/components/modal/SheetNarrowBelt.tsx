@@ -54,10 +54,7 @@ export function SheetNarrowBelt<TValue>({
 
     const sortedOptions = [...matchingOptions].sort((left, right) => {
       if (sortMode === "date") {
-        return (
-          compareNullableDate(left.date, right.date) ||
-          compareLabel(left.label, right.label)
-        );
+        return compareNullableDate(left.date, right.date) || compareLabel(left.label, right.label);
       }
 
       return compareLabel(left.label, right.label);

@@ -29,7 +29,8 @@ type PostOfficeStripState = {
 };
 
 const postBoxSlot = postOfficeStripConfig.queueSlotCount;
-const totalSlotCount = postOfficeStripConfig.queueSlotCount + postOfficeStripConfig.exitSlotCount + 1;
+const totalSlotCount =
+  postOfficeStripConfig.queueSlotCount + postOfficeStripConfig.exitSlotCount + 1;
 const slotWidth = postOfficeStripConfig.stripWidth / totalSlotCount;
 
 export const PostOfficeStrip = (props: PostOfficeStripProps) => {
@@ -64,10 +65,7 @@ function usePostOfficeStrip(
     const timer = setInterval(() => {
       setState((currentState) => ({
         ...currentState,
-        visualParcels: tickVisualParcels(
-          currentState.visualParcels,
-          currentState.postBoxIsClosed,
-        ),
+        visualParcels: tickVisualParcels(currentState.visualParcels, currentState.postBoxIsClosed),
       }));
     }, postOfficeStripConfig.tickMs);
 
@@ -90,7 +88,11 @@ function handleSendingEvent(
     case "batch-sent":
       return {
         ...state,
-        visualParcels: markBatchResult(state.visualParcels, parcels, postOfficeStripConfig.sentEmoji),
+        visualParcels: markBatchResult(
+          state.visualParcels,
+          parcels,
+          postOfficeStripConfig.sentEmoji,
+        ),
         postBoxIsClosed: false,
       };
     case "batch-rejected-current-version":
@@ -167,7 +169,8 @@ function placeNewVisualParcelsInWaitingLine(
   visualParcels: readonly VisualParcel[],
   newVisualParcels: readonly VisualParcel[],
 ): readonly VisualParcel[] {
-  const nextWaitingSlot = Math.min(0, ...visualParcels.map((visualParcel) => visualParcel.slot)) - 1;
+  const nextWaitingSlot =
+    Math.min(0, ...visualParcels.map((visualParcel) => visualParcel.slot)) - 1;
 
   return [
     ...visualParcels,
@@ -293,10 +296,7 @@ function tickVisualParcels(
   return nextVisualParcels;
 }
 
-function tickVisualParcel(
-  visualParcel: VisualParcel,
-  postBoxIsClosed: boolean,
-): VisualParcel {
+function tickVisualParcel(visualParcel: VisualParcel, postBoxIsClosed: boolean): VisualParcel {
   if (visualParcel.canPassPostBox) {
     return {
       ...visualParcel,

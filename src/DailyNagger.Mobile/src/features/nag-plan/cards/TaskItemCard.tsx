@@ -31,22 +31,13 @@ const TaskItemCardComponent = ({
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
   const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
-  const railSelectionTone = getRailSelectionTone(
-    railTone,
-    hasActiveRail,
-    isInsideFocusedTree,
-  );
+  const railSelectionTone = getRailSelectionTone(railTone, hasActiveRail, isInsideFocusedTree);
   const toggleExpanded = () => {
     setExpanded(taskItem, !isExpanded && hasChildren);
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        isSelected && styles.selectedCard,
-      ]}
-    >
+    <View style={[styles.card, isSelected && styles.selectedCard]}>
       <SelectionLane.SelectionLane
         accessibilityLabel="Select task item"
         onPress={() => setFocused(taskItem)}

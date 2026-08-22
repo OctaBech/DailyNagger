@@ -150,10 +150,7 @@ function addTaskItemToTaskItem(
   };
 }
 
-function deleteTaskItemLeaf(
-  freshTree: Tree,
-  taskItemToDelete: TaskItem,
-): BranchUpdateResult {
+function deleteTaskItemLeaf(freshTree: Tree, taskItemToDelete: TaskItem): BranchUpdateResult {
   if (taskItemToDelete.taskEntries.length > 0 || taskItemToDelete.taskItems.length > 0) {
     throw new Error(`TaskItem '${taskItemToDelete.id}' is not a leaf TaskItem.`);
   }
@@ -216,15 +213,15 @@ function replaceTaskItemAndUpdateDoneCounts(
   const doneDelta = updatedTaskItem.isDone ? 1 : -1;
 
   const result = targets.visitNode(freshTree, updatedTaskItem, {
-      visitTaskItem: (taskItem, context) => {
-        if (context.isTargetNode) {
-          if (updatedTaskItem.isDone === taskItem.isDone) {
-            throw new Error(
-              `TaskItem '${updatedTaskItem.id}' already has isDone '${updatedTaskItem.isDone}'.`,
-            );
-          }
-          return { ...updatedTaskItem };
+    visitTaskItem: (taskItem, context) => {
+      if (context.isTargetNode) {
+        if (updatedTaskItem.isDone === taskItem.isDone) {
+          throw new Error(
+            `TaskItem '${updatedTaskItem.id}' already has isDone '${updatedTaskItem.isDone}'.`,
+          );
         }
+        return { ...updatedTaskItem };
+      }
       return {
         ...taskItem,
         doneDescendantTaskItemCount: taskItem.doneDescendantTaskItemCount + doneDelta,
@@ -248,11 +245,7 @@ function replaceTaskItemAndUpdateDoneCounts(
   };
 }
 
-function setFocusPath(
-  freshTree: Tree,
-  node: TreeNode,
-  hasFocus: boolean,
-): BranchUpdateResult {
+function setFocusPath(freshTree: Tree, node: TreeNode, hasFocus: boolean): BranchUpdateResult {
   if (node.nodeType === "NagPlan") {
     throw new Error("NagPlan focus path is not supported.");
   }

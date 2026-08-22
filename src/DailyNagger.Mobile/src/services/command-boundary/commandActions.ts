@@ -1,10 +1,4 @@
-import type {
-  Nagger,
-  ScheduleRule,
-  TaskEntry,
-  TaskItem,
-  TaskLog,
-} from "@/models";
+import type { Nagger, ScheduleRule, TaskEntry, TaskItem, TaskLog } from "@/models";
 import type { TaskEntryValueType } from "@/api";
 import type { Guid } from "@/shared";
 import type { Memory } from "@/services/contracts";
@@ -258,10 +252,7 @@ function editorDeleteSelectedNode(
   runEditorDeleteSelectedNode(context);
 }
 
-function naggerSetExpanded(
-  args: NaggerSetExpandedArgs,
-  context: CommandViewActionContext,
-): void {
+function naggerSetExpanded(args: NaggerSetExpandedArgs, context: CommandViewActionContext): void {
   const tree = context.memory.read.getTree();
   const result = viewOperations.replaceNaggerViewProps(tree, args.nagger, {
     isExpanded: args.isExpanded,
@@ -270,27 +261,18 @@ function naggerSetExpanded(
   context.memory.write.setTreeAndSelectedPath(result.tree, result.treePath);
 }
 
-function naggerSetFocused(
-  args: NaggerSetFocusedArgs,
-  context: CommandViewActionContext,
-): void {
+function naggerSetFocused(args: NaggerSetFocusedArgs, context: CommandViewActionContext): void {
   const tree = context.memory.read.getTree();
   const treePath = selectedPathOperations.refreshPathToNode(tree, args.nagger);
 
   context.memory.write.setTreeAndSelectedPath(tree, treePath);
 }
 
-function naggerPinSelected(
-  _args: EmptyCommandArgs,
-  context: CommandSyncActionContext,
-): void {
+function naggerPinSelected(_args: EmptyCommandArgs, context: CommandSyncActionContext): void {
   runNaggerPinSelected(context);
 }
 
-function naggerUnpinSelected(
-  _args: EmptyCommandArgs,
-  context: CommandSyncActionContext,
-): void {
+function naggerUnpinSelected(_args: EmptyCommandArgs, context: CommandSyncActionContext): void {
   runNaggerUnpinSelected(context);
 }
 
@@ -308,27 +290,18 @@ function naggerSetTargetTime(
   runNaggerSetTargetTime(context, args.nagger, args.targetTime);
 }
 
-function naggerSetTitle(
-  args: NaggerSetTitleArgs,
-  context: CommandInputActionContext,
-): void {
+function naggerSetTitle(args: NaggerSetTitleArgs, context: CommandInputActionContext): void {
   runNaggerSetTitle(context, args.nagger, args.title);
 }
 
-function taskLogSetFocused(
-  args: TaskLogSetFocusedArgs,
-  context: CommandViewActionContext,
-): void {
+function taskLogSetFocused(args: TaskLogSetFocusedArgs, context: CommandViewActionContext): void {
   const tree = context.memory.read.getTree();
   const treePath = selectedPathOperations.refreshPathToNode(tree, args.taskLog);
 
   context.memory.write.setTreeAndSelectedPath(tree, treePath);
 }
 
-function taskLogSetTag(
-  args: TaskLogSetTagArgs,
-  context: CommandInputActionContext,
-): void {
+function taskLogSetTag(args: TaskLogSetTagArgs, context: CommandInputActionContext): void {
   runTaskLogSetTag(context, args.taskLog, args.tag);
 }
 
@@ -358,10 +331,7 @@ function taskItemSetExpanded(
   context.memory.write.setTreeAndSelectedPath(result.tree, result.treePath);
 }
 
-function taskItemSetFocused(
-  args: TaskItemSetFocusedArgs,
-  context: CommandViewActionContext,
-): void {
+function taskItemSetFocused(args: TaskItemSetFocusedArgs, context: CommandViewActionContext): void {
   const tree = context.memory.read.getTree();
   const treePath = selectedPathOperations.refreshPathToNode(tree, args.taskItem);
 
@@ -403,17 +373,11 @@ function taskItemAddTaskItem(
   runAddTaskItemToTaskItem(context, args.taskItem);
 }
 
-function taskItemSetName(
-  args: TaskItemSetNameArgs,
-  context: CommandInputActionContext,
-): void {
+function taskItemSetName(args: TaskItemSetNameArgs, context: CommandInputActionContext): void {
   runTaskItemSetName(context, args.taskItem, args.name);
 }
 
-function taskItemSetTag(
-  args: TaskItemSetTagArgs,
-  context: CommandInputActionContext,
-): void {
+function taskItemSetTag(args: TaskItemSetTagArgs, context: CommandInputActionContext): void {
   runTaskItemSetTag(context, args.taskItem, args.tag);
 }
 
@@ -427,24 +391,15 @@ function taskEntrySetFocused(
   context.memory.write.setTreeAndSelectedPath(tree, treePath);
 }
 
-function taskEntrySetValue(
-  args: TaskEntrySetValueArgs,
-  context: CommandInputActionContext,
-): void {
+function taskEntrySetValue(args: TaskEntrySetValueArgs, context: CommandInputActionContext): void {
   runTaskEntrySetValue(context, args.taskEntry, args.newValue);
 }
 
-function taskEntrySetLabel(
-  args: TaskEntrySetLabelArgs,
-  context: CommandInputActionContext,
-): void {
+function taskEntrySetLabel(args: TaskEntrySetLabelArgs, context: CommandInputActionContext): void {
   runTaskEntrySetLabel(context, args.taskEntry, args.label);
 }
 
-function taskEntrySetTag(
-  args: TaskEntrySetTagArgs,
-  context: CommandInputActionContext,
-): void {
+function taskEntrySetTag(args: TaskEntrySetTagArgs, context: CommandInputActionContext): void {
   runTaskEntrySetTag(context, args.taskEntry, args.tag);
 }
 

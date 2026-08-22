@@ -41,11 +41,7 @@ export type TaskEntryTarget = {
   };
 };
 
-export type TreeTarget =
-  | NaggerTarget
-  | TaskEntryTarget
-  | TaskItemTarget
-  | TaskLogTarget;
+export type TreeTarget = NaggerTarget | TaskEntryTarget | TaskItemTarget | TaskLogTarget;
 
 export type VisitRequest =
   | {

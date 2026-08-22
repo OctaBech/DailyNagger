@@ -6,10 +6,7 @@ type UseRemoteListQueryProps<TItem> = {
   readonly queryFn: () => Promise<readonly TItem[]>;
 };
 
-export function useRemoteListQuery<TItem>({
-  queryKey,
-  queryFn,
-}: UseRemoteListQueryProps<TItem>) {
+export function useRemoteListQuery<TItem>({ queryKey, queryFn }: UseRemoteListQueryProps<TItem>) {
   const query = useQuery({
     queryKey,
     queryFn,

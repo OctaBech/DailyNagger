@@ -15,18 +15,19 @@ export function useEventEmitter<TEventType extends string, TPayload>() {
     new Map<SubscriberKey<TEventType>, Set<EventListener<TEventType, TPayload>>>(),
   );
 
-  const getOrCreateSubscribers = useCallback((
-    subscriberKey: SubscriberKey<TEventType>,
-  ): Set<EventListener<TEventType, TPayload>> => {
-    const existingSubscribers = subscribersRef.current.get(subscriberKey);
-    if (existingSubscribers !== undefined) return existingSubscribers;
+  const getOrCreateSubscribers = useCallback(
+    (subscriberKey: SubscriberKey<TEventType>): Set<EventListener<TEventType, TPayload>> => {
+      const existingSubscribers = subscribersRef.current.get(subscriberKey);
+      if (existingSubscribers !== undefined) return existingSubscribers;
 
-    const newSubscribers = new Set<EventListener<TEventType, TPayload>>();
+      const newSubscribers = new Set<EventListener<TEventType, TPayload>>();
 
-    subscribersRef.current.set(subscriberKey, newSubscribers);
+      subscribersRef.current.set(subscriberKey, newSubscribers);
 
-    return newSubscribers;
-  }, []);
+      return newSubscribers;
+    },
+    [],
+  );
 
   const addSubscriber = useCallback(
     (
@@ -88,9 +89,8 @@ export function useEventEmitter<TEventType extends string, TPayload>() {
   );
 }
 
-export type EventEmitter<
-  TEventType extends string,
-  TPayload,
-> = Prettify<ReturnType<typeof useEventEmitter<TEventType, TPayload>>>;
+export type EventEmitter<TEventType extends string, TPayload> = Prettify<
+  ReturnType<typeof useEventEmitter<TEventType, TPayload>>
+>;
 
 export type { EventListener };

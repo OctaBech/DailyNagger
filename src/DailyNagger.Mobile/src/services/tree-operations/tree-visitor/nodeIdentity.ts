@@ -13,7 +13,9 @@ export function assertSameNodeIdentity(oldNode: TraversedNode, newNode: Traverse
     if (!(key in oldIdentityNode)) continue;
 
     if (!(key in newIdentityNode)) {
-      throw new Error(`Tree visitor changed node identity shape. Missing '${key}' on returned node.`);
+      throw new Error(
+        `Tree visitor changed node identity shape. Missing '${key}' on returned node.`,
+      );
     }
 
     if (oldIdentityNode[key] !== newIdentityNode[key]) {

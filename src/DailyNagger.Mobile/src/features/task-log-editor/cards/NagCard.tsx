@@ -110,10 +110,7 @@ function isCompletedTaskLog(taskLog: Nagger["taskLog"]): boolean {
   );
 }
 
-function getNaggerCardTone(
-  isSelected: boolean,
-  isCompleted: boolean,
-): NaggerFrameTone {
+function getNaggerCardTone(isSelected: boolean, isCompleted: boolean): NaggerFrameTone {
   if (isCompleted) return isSelected ? "completedSelected" : "completed";
   return isSelected ? "selected" : "active";
 }

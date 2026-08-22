@@ -57,22 +57,15 @@ type ServiceProviderProps = {
 };
 
 export const ServiceProvider = ({ children }: ServiceProviderProps) => {
-  const {
-    services,
-    editorScreenCommands,
-    planScreenCommands,
-    planScreenData,
-    editorScreenData,
-  } = useCreateServices();
+  const { services, editorScreenCommands, planScreenCommands, planScreenData, editorScreenData } =
+    useCreateServices();
 
   return (
     <ServiceContext.Provider value={services}>
       <PlanScreenCommandsProvider value={planScreenCommands}>
         <EditorScreenCommandsProvider value={editorScreenCommands}>
           <PlanScreenDataProvider value={planScreenData}>
-            <EditorScreenDataProvider value={editorScreenData}>
-              {children}
-            </EditorScreenDataProvider>
+            <EditorScreenDataProvider value={editorScreenData}>{children}</EditorScreenDataProvider>
           </PlanScreenDataProvider>
         </EditorScreenCommandsProvider>
       </PlanScreenCommandsProvider>
@@ -101,31 +94,25 @@ function useCreateServices(): {
   const getCurrentMood = useCallback(() => currentMoodRef.current, []);
   const interactionStamp = useInteractionStamp(cultureSettings, userMood);
 
-  const sending = useSending(
-    planMemory,
-    sendingEvents,
-    getCurrentMood,
-  );
-  const rollover = useRollover(
-    cultureSettings,
-    planMemory,
-    editorMemory,
-    sending,
-  );
+  const sending = useSending(planMemory, sendingEvents, getCurrentMood);
+  const rollover = useRollover(cultureSettings, planMemory, editorMemory, sending);
 
   const loading = useLoading(planMemory);
   const startup = useStartup(sending, loading, rollover);
-  const selectMood = useCallback((mood: UserMoodLabel) => {
-    const selection = userMood.create({
-      mood,
-      timeZone: cultureSettings.getUserTimeZone(),
-      locale: cultureSettings.getUserLocale(),
-    });
+  const selectMood = useCallback(
+    (mood: UserMoodLabel) => {
+      const selection = userMood.create({
+        mood,
+        timeZone: cultureSettings.getUserTimeZone(),
+        locale: cultureSettings.getUserLocale(),
+      });
 
-    currentMoodRef.current = selection.mood;
-    userMood.select(selection);
-    sending.queue(selection);
-  }, [cultureSettings, sending, userMood]);
+      currentMoodRef.current = selection.mood;
+      userMood.select(selection);
+      sending.queue(selection);
+    },
+    [cultureSettings, sending, userMood],
+  );
 
   // Wiring jsx screen services
   const appShell = useMemo(

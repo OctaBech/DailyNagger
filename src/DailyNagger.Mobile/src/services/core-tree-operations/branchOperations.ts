@@ -1,4 +1,11 @@
-import { isTaskItem, isTaskLog, type TaskItem, type TaskLog, type Tree, type TreePath } from "@/models";
+import {
+  isTaskItem,
+  isTaskLog,
+  type TaskItem,
+  type TaskLog,
+  type Tree,
+  type TreePath,
+} from "@/models";
 import { selectedPathOperations } from "./selectedPathOperations";
 import { treeMutationOperations } from "./treeMutationOperations";
 

@@ -12,9 +12,7 @@ type TimerDelay =
       readonly maxMs: number;
     };
 
-export function useTimer<TDelayName extends string>(
-  delays: Record<TDelayName, TimerDelay>,
-) {
+export function useTimer<TDelayName extends string>(delays: Record<TDelayName, TimerDelay>) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backoffMsRef = useRef<number>(0);
   const isDisabledRef = useRef(false);

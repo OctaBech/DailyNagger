@@ -19,11 +19,7 @@ export function addTaskEntryToTaskItem(
     parentTaskItemId: freshTaskItem.id,
   });
 
-  const { newTree, newPath } = branch.addTaskEntryToTaskItem(
-    freshTree,
-    freshTaskItem,
-    taskEntryV1,
-  );
+  const { newTree, newPath } = branch.addTaskEntryToTaskItem(freshTree, freshTaskItem, taskEntryV1);
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 }
@@ -41,11 +37,7 @@ export function addTaskItemToTaskLog(
     parentTaskItemId: null,
   });
 
-  const { newTree, newPath } = branch.addTaskItemToTaskLog(
-    freshTree,
-    freshTaskLog,
-    taskItemV1,
-  );
+  const { newTree, newPath } = branch.addTaskItemToTaskLog(freshTree, freshTaskLog, taskItemV1);
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 }
@@ -63,11 +55,7 @@ export function addTaskItemToTaskItem(
     parentTaskItemId: freshTaskItem.id,
   });
 
-  const { newTree, newPath } = branch.addTaskItemToTaskItem(
-    freshTree,
-    freshTaskItem,
-    taskItemV1,
-  );
+  const { newTree, newPath } = branch.addTaskItemToTaskItem(freshTree, freshTaskItem, taskItemV1);
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 }

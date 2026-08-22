@@ -1,11 +1,5 @@
 import type { Guid } from "@/shared";
-import {
-  type NagPlan,
-  type Nagger,
-  type TaskLog,
-  type Tree,
-  type TreePath,
-} from "@/models";
+import { type NagPlan, type Nagger, type TaskLog, type Tree, type TreePath } from "@/models";
 import {
   treeMutationOperations,
   selectedPathOperations,

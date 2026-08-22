@@ -25,9 +25,11 @@ export function getHolidayDefinition(
   countryCode: string,
   holidayId: string,
 ): HolidayDefinition | null {
-  return localHolidayDefinitions.find(
-    (holiday) => holiday.countryCode === countryCode && holiday.holidayId === holidayId,
-  ) ?? null;
+  return (
+    localHolidayDefinitions.find(
+      (holiday) => holiday.countryCode === countryCode && holiday.holidayId === holidayId,
+    ) ?? null
+  );
 }
 
 export function getHolidayProviderRuntimeVersion(): string {

@@ -4,4 +4,8 @@ export type {
   PlanScreenCommandArgs,
   PlanScreenCommandKind,
 } from "./commandModel";
-export { useCommandDispatcher, type CommandDispatcher, type CommandSource } from "./useCommandDispatcher";
+export {
+  useCommandDispatcher,
+  type CommandDispatcher,
+  type CommandSource,
+} from "./useCommandDispatcher";

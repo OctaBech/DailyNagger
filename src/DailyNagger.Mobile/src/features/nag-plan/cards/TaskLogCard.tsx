@@ -21,15 +21,15 @@ const TaskLogCardComponent = ({
   useDebugRenderFrameCounter("PlanTaskLogCard", taskLog.id);
 
   const [isTaskStepNameModalVisible, setIsTaskStepNameModalVisible] = useState(false);
-  const { suggestions, isLoadingSuggestions, hasSuggestionLoadError } =
-    useTaskStepNameSuggestions(taskLog.nagId);
+  const { suggestions, isLoadingSuggestions, hasSuggestionLoadError } = useTaskStepNameSuggestions(
+    taskLog.nagId,
+  );
   const taskStepNameSuggestions = useMemo(
     () => mergeTaskStepNameSuggestions(suggestions, taskLog),
     [suggestions, taskLog],
   );
   const isSelected = taskLog.clientProps.isSelected;
-  const isInsideFocusedTree =
-    parentNaggerHasFocus || taskLog.clientProps.hasFocus || isSelected;
+  const isInsideFocusedTree = parentNaggerHasFocus || taskLog.clientProps.hasFocus || isSelected;
 
   return (
     <>

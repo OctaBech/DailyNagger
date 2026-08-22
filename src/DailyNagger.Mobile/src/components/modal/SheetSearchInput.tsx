@@ -7,7 +7,10 @@ type SheetSearchInputProps = Omit<TextInputProps, "style"> & {
 };
 
 export const SheetSearchInput = forwardRef<TextInput, SheetSearchInputProps>(
-  function SheetSearchInput({ hasExactMatch = false, onChangeText, value, ...textInputProps }, ref) {
+  function SheetSearchInput(
+    { hasExactMatch = false, onChangeText, value, ...textInputProps },
+    ref,
+  ) {
     const hasValue = `${value ?? ""}`.length > 0;
 
     return (

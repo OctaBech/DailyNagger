@@ -15,12 +15,11 @@ import type {
 } from "@/models/clientModelExtensions";
 import type { Immutable } from "@/shared";
 
-type PartialClientModelExtension<
-  TExtension extends ClientModel<object, ClientNodeType>,
-> = Immutable<{
-  readonly nodeType?: TExtension["nodeType"];
-  readonly clientProps?: Partial<TExtension["clientProps"]>;
-}>;
+type PartialClientModelExtension<TExtension extends ClientModel<object, ClientNodeType>> =
+  Immutable<{
+    readonly nodeType?: TExtension["nodeType"];
+    readonly clientProps?: Partial<TExtension["clientProps"]>;
+  }>;
 
 export type TraversedNode =
   | NagPlanTraversedNode
@@ -43,10 +42,7 @@ export type TaskLogTraversedNode = Immutable<
   TaskLogDto<TaskItemTraversedNode> & PartialClientModelExtension<TaskLogClientModelExtension>
 >;
 
-export type TaskItemTraversedNode = TaskItemDto<
-  TaskItemTraversedNode,
-  TaskEntryTraversedNode
-> &
+export type TaskItemTraversedNode = TaskItemDto<TaskItemTraversedNode, TaskEntryTraversedNode> &
   PartialClientModelExtension<TaskItemClientModelExtension>;
 
 export type TaskEntryTraversedNode = Immutable<

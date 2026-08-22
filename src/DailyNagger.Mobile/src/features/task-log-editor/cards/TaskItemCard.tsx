@@ -33,22 +33,13 @@ const TaskItemCardComponent = ({
   const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
   const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
-  const railSelectionTone = getRailSelectionTone(
-    railTone,
-    hasActiveRail,
-    isInsideFocusedTree,
-  );
+  const railSelectionTone = getRailSelectionTone(railTone, hasActiveRail, isInsideFocusedTree);
   const toggleExpanded = () => {
     taskItemActions.setExpanded(taskItem, !isExpanded);
   };
 
   return (
-    <View
-      style={[
-        styles.card,
-        isSelected && styles.selectedCard,
-      ]}
-    >
+    <View style={[styles.card, isSelected && styles.selectedCard]}>
       <SelectionLane.SelectionLane
         accessibilityLabel="Select task item"
         onPress={() => taskItemActions.setFocused(taskItem)}
@@ -71,18 +62,16 @@ const TaskItemCardComponent = ({
           onDonePress={canDeleteOnce ? () => taskItemActions.setFocused(taskItem) : toggleExpanded}
           onDeletePress={canDeleteOnce ? () => taskItemActions.deleteOnce(taskItem) : undefined}
           onNameCommit={(newName) => taskItemActions.setName(taskItem, newName)}
-          onExpandPress={canDeleteOnce ? () => taskItemActions.setFocused(taskItem) : toggleExpanded}
+          onExpandPress={
+            canDeleteOnce ? () => taskItemActions.setFocused(taskItem) : toggleExpanded
+          }
           onPressTag={() => setIsTagModalVisible(true)}
         />
 
         <Activity mode={isExpanded ? "visible" : "hidden"}>
           <View style={styles.children}>
             {taskItem.taskEntries.map((taskEntry) => (
-              <TaskEntryCard
-                key={taskEntry.id}
-                taskEntry={taskEntry}
-                railTone={railTone}
-              />
+              <TaskEntryCard key={taskEntry.id} taskEntry={taskEntry} railTone={railTone} />
             ))}
             {taskItem.taskItems.map((childTaskItem) => (
               <TaskItemCard

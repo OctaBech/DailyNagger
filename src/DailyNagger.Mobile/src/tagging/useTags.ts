@@ -30,11 +30,10 @@ export function useTags(tagType: TagType) {
     getItemKey: (tag) => tag.name,
   });
 
-  const existingTags: readonly Tag[] =
-    tagsQuery.items.map((tag) => ({
-      ...tag,
-      lastUsedAt: tag.lastUsedAt === null ? null : new Date(tag.lastUsedAt),
-    }));
+  const existingTags: readonly Tag[] = tagsQuery.items.map((tag) => ({
+    ...tag,
+    lastUsedAt: tag.lastUsedAt === null ? null : new Date(tag.lastUsedAt),
+  }));
 
   return {
     existingTags,

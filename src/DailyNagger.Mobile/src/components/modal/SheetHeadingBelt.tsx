@@ -33,16 +33,19 @@ export function SheetHeadingBelt<TValue extends string>({
     return optionIndex === -1 ? 0 : optionIndex;
   }, [options, value]);
 
-  const scrollToOption = useCallback((option: SheetHeadingBeltOption<TValue>, animated: boolean): void => {
-    const itemLayout = itemLayoutsRef.current.get(option.value);
+  const scrollToOption = useCallback(
+    (option: SheetHeadingBeltOption<TValue>, animated: boolean): void => {
+      const itemLayout = itemLayoutsRef.current.get(option.value);
 
-    if (itemLayout === undefined) return;
+      if (itemLayout === undefined) return;
 
-    scrollViewRef.current?.scrollTo({
-      animated,
-      x: Math.max(0, itemLayout.x - modalTheme.sheet.contentPaddingHorizontal),
-    });
-  }, []);
+      scrollViewRef.current?.scrollTo({
+        animated,
+        x: Math.max(0, itemLayout.x - modalTheme.sheet.contentPaddingHorizontal),
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     const selectedOption = options[selectedIndex];

@@ -34,7 +34,10 @@ export function SheetButton({
         pressed && !disabled && styles.pressed,
       ]}
     >
-      <Text selectable={false} style={[styles.label, getTextStyle(tone), disabled && styles.disabledText]}>
+      <Text
+        selectable={false}
+        style={[styles.label, getTextStyle(tone), disabled && styles.disabledText]}
+      >
         {label}
       </Text>
     </Pressable>

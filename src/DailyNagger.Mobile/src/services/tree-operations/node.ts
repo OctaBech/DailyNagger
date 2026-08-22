@@ -40,10 +40,7 @@ function setTaskEntryValue(taskEntry: TaskEntry, value: string | null): TaskEntr
   };
 }
 
-function setTaskEntryValueType(
-  taskEntry: TaskEntry,
-  valueType: TaskEntry["valueType"],
-): TaskEntry {
+function setTaskEntryValueType(taskEntry: TaskEntry, valueType: TaskEntry["valueType"]): TaskEntry {
   if (taskEntry.valueType === valueType) return taskEntry;
 
   return {
@@ -77,7 +74,9 @@ function tryPrefillCarryOverTaskEntryValueFromHistory(taskEntry: TaskEntry): Tas
 
 function closeTaskLogForNaggerHistory(taskLog: TaskLog, nagger: Nagger): TaskLog {
   if (nagger.activeLogDueOn === null) {
-    throw new Error(`Cannot close TaskLog '${taskLog.id}' because Nagger '${nagger.id}' has no active log due date.`);
+    throw new Error(
+      `Cannot close TaskLog '${taskLog.id}' because Nagger '${nagger.id}' has no active log due date.`,
+    );
   }
 
   return {

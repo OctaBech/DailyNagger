@@ -104,10 +104,7 @@ function shouldVisitChildTaskItems(
   );
 }
 
-function requestTargetsTaskItem(
-  request: VisitRequest,
-  taskItem: TaskItemTraversedNode,
-): boolean {
+function requestTargetsTaskItem(request: VisitRequest, taskItem: TaskItemTraversedNode): boolean {
   if (request.kind !== "target") return false;
   if (request.target.kind !== "task-item") return false;
 

@@ -16,4 +16,3 @@ export function createPassingUpdateFunctions(): ReplaceFunctions {
     replaceTaskEntryNodeFn: (taskEntry: TaskEntryTraversedNode) => taskEntry,
   };
 }
-

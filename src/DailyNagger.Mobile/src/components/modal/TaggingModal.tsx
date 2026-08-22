@@ -17,13 +17,7 @@ export type TaggingModalProps = {
   readonly onSave: (tagName: string | null) => void;
 };
 
-export function TaggingModal({
-  visible,
-  tagType,
-  tagName,
-  onDismiss,
-  onSave,
-}: TaggingModalProps) {
+export function TaggingModal({ visible, tagType, tagName, onDismiss, onSave }: TaggingModalProps) {
   const [draftTagName, setDraftTagName] = useState(tagName ?? "");
   const [draftTagDescription, setDraftTagDescription] = useState("");
   const tagNameInputRef = useRef<TextInput>(null);

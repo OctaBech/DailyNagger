@@ -24,7 +24,11 @@ export async function trySendRequest(request: SendApiRequest): Promise<SendBatch
         return { kind: "server-rejected-unrepairable-update", error };
       }
 
-      return { kind: "server-rejected-current-version", error, serverVersion: error.currentVersion };
+      return {
+        kind: "server-rejected-current-version",
+        error,
+        serverVersion: error.currentVersion,
+      };
     }
 
     if (serverRejectedUnrepairableUpdate(error)) {

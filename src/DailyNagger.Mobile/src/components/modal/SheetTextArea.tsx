@@ -4,20 +4,21 @@ import { modalTheme } from "./theme";
 
 type SheetTextAreaProps = Omit<TextInputProps, "multiline" | "style">;
 
-export const SheetTextArea = forwardRef<TextInput, SheetTextAreaProps>(
-  function SheetTextArea({ placeholderTextColor, ...textInputProps }, ref) {
-    return (
-      <TextInput
-        ref={ref}
-        multiline
-        placeholderTextColor={placeholderTextColor ?? modalTheme.control.placeholderText}
-        style={styles.input}
-        textAlignVertical="top"
-        {...textInputProps}
-      />
-    );
-  },
-);
+export const SheetTextArea = forwardRef<TextInput, SheetTextAreaProps>(function SheetTextArea(
+  { placeholderTextColor, ...textInputProps },
+  ref,
+) {
+  return (
+    <TextInput
+      ref={ref}
+      multiline
+      placeholderTextColor={placeholderTextColor ?? modalTheme.control.placeholderText}
+      style={styles.input}
+      textAlignVertical="top"
+      {...textInputProps}
+    />
+  );
+});
 
 const styles = StyleSheet.create({
   input: {

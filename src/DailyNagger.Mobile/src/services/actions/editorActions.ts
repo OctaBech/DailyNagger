@@ -95,7 +95,10 @@ function moveSelectedNode({ memory }: EditorActionScope, direction: MoveDirectio
             currentTree,
           );
 
-  const refreshedPath = selectedPathOperations.refreshPathToNode(result.tree, moveContext.selectedNode);
+  const refreshedPath = selectedPathOperations.refreshPathToNode(
+    result.tree,
+    moveContext.selectedNode,
+  );
 
   memory.write.setTreeAndSelectedPath(result.tree, refreshedPath);
 }

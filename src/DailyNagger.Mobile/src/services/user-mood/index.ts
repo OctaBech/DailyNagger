@@ -1,4 +1,1 @@
-export {
-  useUserMoodState,
-  type UserMoodState,
-} from "./useUserMoodState";
+export { useUserMoodState, type UserMoodState } from "./useUserMoodState";

@@ -324,4 +324,3 @@ function replaceTaskEntry(
       assertNever(replaceContext.action);
   }
 }
-

@@ -28,7 +28,11 @@ export function SheetToggleGroup<TValue extends string>({
       nextSelectedValueSet.add(value);
     }
 
-    onChange(options.map((option) => option.value).filter((optionValue) => nextSelectedValueSet.has(optionValue)));
+    onChange(
+      options
+        .map((option) => option.value)
+        .filter((optionValue) => nextSelectedValueSet.has(optionValue)),
+    );
   }
 
   return (

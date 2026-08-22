@@ -7,10 +7,7 @@ type TaskLogFrameProps = {
   readonly isSelected?: boolean;
 };
 
-export const TaskLogFrame = ({
-  children,
-  isSelected = false,
-}: TaskLogFrameProps) => {
+export const TaskLogFrame = ({ children, isSelected = false }: TaskLogFrameProps) => {
   return (
     <View style={[styles.card, isSelected && styles.selectedCard]}>
       <View style={styles.content}>{children}</View>

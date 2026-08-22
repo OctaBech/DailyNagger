@@ -15,5 +15,11 @@ export const ExpandIndicator = ({
 }: ExpandIndicatorProps) => {
   if (!hasExpandableContent) return null;
 
-  return <MaterialDesignIcons color={color} name={isExpanded ? "chevron-down" : "chevron-right"} size={size} />;
+  return (
+    <MaterialDesignIcons
+      color={color}
+      name={isExpanded ? "chevron-down" : "chevron-right"}
+      size={size}
+    />
+  );
 };

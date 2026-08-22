@@ -1,8 +1,5 @@
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import {
-  editableFrame,
-  inactiveEditableFrame,
-} from "@/components/primitives/editableFrame";
+import { editableFrame, inactiveEditableFrame } from "@/components/primitives/editableFrame";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 
 type TaskEntryBooleanInputProps = {

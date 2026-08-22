@@ -21,7 +21,11 @@ export const NagPlanScreen = () => {
           showSpinner
         />
       ) : mood.selectedMood === null ? null : (
-        <NagList nags={nags} getScrollOffset={scroll.getOffset} setScrollOffset={scroll.setOffset} />
+        <NagList
+          nags={nags}
+          getScrollOffset={scroll.getOffset}
+          setScrollOffset={scroll.setOffset}
+        />
       )}
       {showMoodBar ? (
         <View pointerEvents="box-none" style={styles.moodBarOverlay}>

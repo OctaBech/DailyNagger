@@ -152,10 +152,7 @@ export const TaskItemField = ({
           </Pressable>
         )
       ) : (
-        <Pressable
-          onPress={() => focusAndRun(onExpandPress)}
-          style={styles.expandArea}
-        >
+        <Pressable onPress={() => focusAndRun(onExpandPress)} style={styles.expandArea}>
           <Primitives.ProgressCount
             color={nagPlanTheme.taskItem.progressText}
             done={taskItem.doneDescendantTaskItemCount}

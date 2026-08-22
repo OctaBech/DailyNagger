@@ -65,7 +65,10 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
           ) : null}
 
           {open ? (
-            <View pointerEvents="box-none" style={[styles.actionsGrid, { bottom: actionGridBottom }]}>
+            <View
+              pointerEvents="box-none"
+              style={[styles.actionsGrid, { bottom: actionGridBottom }]}
+            >
               {actionRows.map((row) => (
                 <View key={row.key} style={styles.actionRow}>
                   {row.actions.map((action) => (

@@ -40,13 +40,7 @@ export {
   taskItemClientModelExtensionDefaults,
   taskLogClientModelExtensionDefaults,
 } from "./clientModelExtensions";
-export {
-  isNagPlan,
-  isNagger,
-  isTaskLog,
-  isTaskItem,
-  isTaskEntry,
-} from "./nodeTypes";
+export { isNagPlan, isNagger, isTaskLog, isTaskItem, isTaskEntry } from "./nodeTypes";
 export type {
   RecordedPath,
   SelectedNodeType,

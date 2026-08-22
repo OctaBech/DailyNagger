@@ -8,4 +8,3 @@ export function createBaseApiHeaders(): Record<string, string> {
     [apiRequestHeaders.requestId]: newGuid(),
   };
 }
-

@@ -40,13 +40,15 @@ export type CommandDispatcher = <TKey extends CommandKind>(
 ) => void;
 
 export function useCommandDispatcher(memories: CommandMemories): CommandDispatcher {
-  return useStableCallback(<TKey extends CommandKind>(
-    source: SourceForScope<CommandScopeForKind<TKey>>,
-    kind: TKey,
-    args: CommandArgs<TKey>,
-  ): void => {
-    runCommand(source, kind, args, getCommandActionContext(source, memories));
-  });
+  return useStableCallback(
+    <TKey extends CommandKind>(
+      source: SourceForScope<CommandScopeForKind<TKey>>,
+      kind: TKey,
+      args: CommandArgs<TKey>,
+    ): void => {
+      runCommand(source, kind, args, getCommandActionContext(source, memories));
+    },
+  );
 }
 
 function getCommandActionContext(

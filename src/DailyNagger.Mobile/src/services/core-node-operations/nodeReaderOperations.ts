@@ -1,7 +1,4 @@
-import {
-  type SelectedNodes,
-  type TreePath,
-} from "@/models";
+import { type SelectedNodes, type TreePath } from "@/models";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import {
   selectedNodeContextOperations,

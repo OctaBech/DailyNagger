@@ -48,12 +48,8 @@ export function editorSaveEdit({
     throw new Error("Cannot save editor TaskLog because editor tree contains no nagger.");
   }
 
-  const {
-    getRootVersioning,
-    insertNaggerIntoTree,
-    insertRootVersioning,
-    getRefreshedPath,
-  } = editorSessionOperations;
+  const { getRootVersioning, insertNaggerIntoTree, insertRootVersioning, getRefreshedPath } =
+    editorSessionOperations;
 
   const { versionedNagger, versionedTaskLog } = getRootVersioning(planTree, editorNagger);
   const newPlanTree = insertNaggerIntoTree(editorNagger, planTree);

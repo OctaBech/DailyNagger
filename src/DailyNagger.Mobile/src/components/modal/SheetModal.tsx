@@ -77,7 +77,9 @@ export function SheetModal({
 
     const showSubscription = Keyboard.addListener("keyboardDidShow", showKeyboard);
     const frameSubscription = Keyboard.addListener("keyboardDidChangeFrame", showKeyboard);
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => animateSheetKeyboardLift(0));
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () =>
+      animateSheetKeyboardLift(0),
+    );
 
     return () => {
       showSubscription.remove();

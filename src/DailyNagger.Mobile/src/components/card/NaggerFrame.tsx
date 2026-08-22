@@ -2,11 +2,7 @@ import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, type ViewStyle } from "react-native";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 
-export type NaggerFrameTone =
-  | "active"
-  | "selected"
-  | "completed"
-  | "completedSelected";
+export type NaggerFrameTone = "active" | "selected" | "completed" | "completedSelected";
 
 type NaggerFrameProps = {
   readonly children: ReactNode;
@@ -32,21 +28,12 @@ export const NaggerFrame = ({
       : nagPlanTheme.rail.empty;
 
   return (
-    <View
-      style={[
-        styles.card,
-        toneStyles[tone],
-        !hasTaskItems && styles.emptyTaskListCard,
-      ]}
-    >
+    <View style={[styles.card, toneStyles[tone], !hasTaskItems && styles.emptyTaskListCard]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Select nagger"
         onPress={onRailPress}
-        style={[
-          styles.statusLane,
-          { backgroundColor: statusLaneColor },
-        ]}
+        style={[styles.statusLane, { backgroundColor: statusLaneColor }]}
       />
       {isPinned ? (
         <View style={styles.pinMarker}>

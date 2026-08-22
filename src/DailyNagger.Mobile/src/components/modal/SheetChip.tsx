@@ -21,7 +21,10 @@ export function SheetChip({ label, onPress, tone }: SheetChipProps) {
   }
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.chip, getToneChipStyle(tone), pressed && styles.pressed]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.chip, getToneChipStyle(tone), pressed && styles.pressed]}
+    >
       {content}
     </Pressable>
   );

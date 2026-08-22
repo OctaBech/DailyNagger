@@ -53,4 +53,3 @@ Use `node` for local immutable changes:
 
 Node operations should stay small and composable. Prefer two clear operations
 over one combined operation that hides intent.
-

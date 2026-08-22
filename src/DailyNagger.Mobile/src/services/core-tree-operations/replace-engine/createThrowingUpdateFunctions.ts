@@ -19,4 +19,3 @@ export function createThrowingUpdateFunctions(expectedAction: ReplaceAction): Re
     },
   };
 }
-

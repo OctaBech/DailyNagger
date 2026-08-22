@@ -47,7 +47,9 @@ export function SheetNarrowPicker<TValue>({
   value,
   ...textInputProps
 }: SheetNarrowPickerProps<TValue>) {
-  const [sortMode, setSortMode] = useState<SheetNarrowBeltSortMode>(sortOptions[0]?.value ?? "date");
+  const [sortMode, setSortMode] = useState<SheetNarrowBeltSortMode>(
+    sortOptions[0]?.value ?? "date",
+  );
   const activeSortMode = sortOptions.some((option) => option.value === sortMode)
     ? sortMode
     : (sortOptions[0]?.value ?? "date");

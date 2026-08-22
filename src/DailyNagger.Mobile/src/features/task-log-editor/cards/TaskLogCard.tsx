@@ -21,14 +21,11 @@ const TaskLogCardComponent = ({
   useDebugRenderFrameCounter("EditorTaskLogCard", taskLog.id);
   const [isTagModalVisible, setIsTagModalVisible] = useState(false);
   const isSelected = taskLog.clientProps.isSelected;
-  const isInsideFocusedTree =
-    parentNaggerHasFocus || taskLog.clientProps.hasFocus || isSelected;
+  const isInsideFocusedTree = parentNaggerHasFocus || taskLog.clientProps.hasFocus || isSelected;
 
   return (
     <>
-      <Card.TaskLogFrame
-        isSelected={isSelected}
-      >
+      <Card.TaskLogFrame isSelected={isSelected}>
         {taskLog.taskItems.map((taskItem) => (
           <TaskItemCard
             key={taskItem.id}

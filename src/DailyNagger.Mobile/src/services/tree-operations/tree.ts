@@ -88,10 +88,7 @@ function readTaskEntry(memory: TreeReader, staleTaskEntry: TaskEntry): ReadTaskE
   return { freshTree, freshTaskEntry };
 }
 
-function readTaskLog(
-  memory: TreeReader,
-  staleNode: TaskItem | TaskLog,
-): ReadTaskLogResult {
+function readTaskLog(memory: TreeReader, staleNode: TaskItem | TaskLog): ReadTaskLogResult {
   const freshTree = memory.read.getTree();
   let freshTaskLog: TaskLog | null = null;
 

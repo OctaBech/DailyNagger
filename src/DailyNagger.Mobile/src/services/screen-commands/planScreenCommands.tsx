@@ -1,19 +1,12 @@
-import type {
-  Nagger,
-  TaskEntry,
-  TaskItem,
-  TaskLog,
-} from "@/models";
+import type { Nagger, TaskEntry, TaskItem, TaskLog } from "@/models";
 import { createRequiredContext, type Prettify } from "@/shared";
 import type { CommandDispatcher } from "@/services/command-boundary";
 import { useMemo } from "react";
 
 export type PlanScreenCommands = Prettify<ReturnType<typeof useCreatePlanScreenCommands>>;
 
-export const {
-  Provider: PlanScreenCommandsProvider,
-  useRequiredContext: usePlanScreenCommands,
-} = createRequiredContext<PlanScreenCommands>("PlanScreenCommandsContext");
+export const { Provider: PlanScreenCommandsProvider, useRequiredContext: usePlanScreenCommands } =
+  createRequiredContext<PlanScreenCommands>("PlanScreenCommandsContext");
 
 type UseCreatePlanScreenCommandsProps = {
   readonly decimalSeparator: "." | ",";
@@ -43,7 +36,11 @@ export function useCreatePlanScreenCommands({
         },
       },
       taskLog: {
-        addTaskStep: (taskLog: TaskLog, name: string, rolloverBehavior: TaskItem["rolloverBehavior"]) => {
+        addTaskStep: (
+          taskLog: TaskLog,
+          name: string,
+          rolloverBehavior: TaskItem["rolloverBehavior"],
+        ) => {
           dispatch("plan-input", "task-log/add-task-step", { taskLog, name, rolloverBehavior });
         },
         setFocused: (taskLog: TaskLog) => {

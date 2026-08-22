@@ -69,10 +69,7 @@ export const NaggerField = (props: NaggerFieldProps) => {
             }}
             style={[cardRowLayout.textSlot, styles.titlePressable]}
           >
-            <Text
-              selectable={false}
-              style={[cardRowLayout.text, styles.title]}
-            >
+            <Text selectable={false} style={[cardRowLayout.text, styles.title]}>
               {nagger.title}
             </Text>
           </Pressable>
@@ -124,10 +121,7 @@ export const NaggerField = (props: NaggerFieldProps) => {
           />
           <Text
             selectable={false}
-            style={[
-              styles.scheduleText,
-              isCompleted && styles.completedScheduleText,
-            ]}
+            style={[styles.scheduleText, isCompleted && styles.completedScheduleText]}
           >
             {getNaggerScheduleText(nagger)}
           </Text>
@@ -185,10 +179,7 @@ export const NaggerField = (props: NaggerFieldProps) => {
             />
             <Text
               selectable={false}
-              style={[
-                styles.scheduleText,
-                isCompleted && styles.completedScheduleText,
-              ]}
+              style={[styles.scheduleText, isCompleted && styles.completedScheduleText]}
             >
               {getNaggerTargetTimeText(nagger)}
             </Text>

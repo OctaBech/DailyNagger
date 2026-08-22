@@ -31,10 +31,10 @@ export function useInteractionStamp(cultureSettings: CultureSettings, userMood: 
 
   const applyTo = useCallback(
     <TNode extends InteractionStampFields>(node: TNode): TNode => {
-    return {
-      ...node,
-      ...create(),
-    };
+      return {
+        ...node,
+        ...create(),
+      };
     },
     [create],
   );

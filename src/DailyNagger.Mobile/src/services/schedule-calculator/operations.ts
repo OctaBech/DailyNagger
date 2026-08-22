@@ -164,7 +164,10 @@ function addDays(date: Date, days: number): Date {
   return newDate;
 }
 
-function getNextMonth(year: number, month: number): { readonly year: number; readonly month: number } {
+function getNextMonth(
+  year: number,
+  month: number,
+): { readonly year: number; readonly month: number } {
   if (month < 12) {
     return { year, month: month + 1 };
   }

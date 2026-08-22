@@ -147,4 +147,3 @@ function getRequestId(request: RequestInit): string | null {
 function getDurationMs(startedAt: number): number {
   return Math.round(performance.now() - startedAt);
 }
-

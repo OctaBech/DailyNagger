@@ -1,11 +1,5 @@
 import type { TaskEntryValueType } from "@/api";
-import type {
-  Nagger,
-  ScheduleRule,
-  TaskEntry,
-  TaskItem,
-  TaskLog,
-} from "@/models";
+import type { Nagger, ScheduleRule, TaskEntry, TaskItem, TaskLog } from "@/models";
 import { NodeTemplates } from "@/services/core-node-templates";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { editorOperations, inputOperations } from "@/services/operations";
@@ -27,10 +21,7 @@ export function taskEntrySetValue(
 ): void {
   const { tree, node } = treeOperations;
   const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
-  const normalizedValue = inputOperations.normalizeInputValue(
-    freshTaskEntry.valueType,
-    newValue,
-  );
+  const normalizedValue = inputOperations.normalizeInputValue(freshTaskEntry.valueType, newValue);
 
   const taskEntryV1 = node.setTaskEntryValue(freshTaskEntry, normalizedValue);
   const stampedTaskEntry =
@@ -83,14 +74,9 @@ export function taskLogAddTaskStep(
   });
   const taskItemV2 = node.setTaskItemName(taskItemV1, name);
   const taskItemV3 = node.setTaskItemRolloverBehavior(taskItemV2, rolloverBehavior);
-  const newTaskItem =
-    interactionStamp === null ? taskItemV3 : interactionStamp.applyTo(taskItemV3);
+  const newTaskItem = interactionStamp === null ? taskItemV3 : interactionStamp.applyTo(taskItemV3);
 
-  const { newTree, newPath } = branch.addTaskItemToTaskLog(
-    freshTree,
-    freshTaskLog,
-    newTaskItem,
-  );
+  const { newTree, newPath } = branch.addTaskItemToTaskLog(freshTree, freshTaskLog, newTaskItem);
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 
@@ -173,11 +159,7 @@ export function taskItemSetTag(
   memory.write.setTreeAndSelectedPath(tree, treePath);
 }
 
-export function naggerSetTitle(
-  { memory }: InputActionScope,
-  nagger: Nagger,
-  title: string,
-): void {
+export function naggerSetTitle({ memory }: InputActionScope, nagger: Nagger, title: string): void {
   const currentTree = memory.read.getTree();
   const { tree } = editorOperations.setNaggerTitle(currentTree, nagger, title);
 
@@ -210,11 +192,7 @@ export function naggerSetTargetTime(
   targetTime: string | null,
 ): void {
   const currentTree = memory.read.getTree();
-  const { tree, treePath } = editorOperations.setNaggerTargetTime(
-    currentTree,
-    nagger,
-    targetTime,
-  );
+  const { tree, treePath } = editorOperations.setNaggerTargetTime(currentTree, nagger, targetTime);
 
   memory.write.setTreeAndSelectedPath(tree, treePath);
 }

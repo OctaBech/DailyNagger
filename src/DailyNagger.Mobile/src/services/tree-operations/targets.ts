@@ -151,7 +151,10 @@ function toTreeVisitor(visitor: TargetVisitor): TreeVisitor {
       visitor.visitTaskEntry === undefined
         ? undefined
         : (taskEntry, context) => {
-            return visitor.visitTaskEntry?.(taskEntry as TaskEntry, context) as TaskEntryTraversedNode;
+            return visitor.visitTaskEntry?.(
+              taskEntry as TaskEntry,
+              context,
+            ) as TaskEntryTraversedNode;
           },
   };
 }

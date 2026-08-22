@@ -1,7 +1,4 @@
-import {
-  HOLIDAY_PROVIDER_CONTRACT,
-  getHolidayProviderRuntimeVersion,
-} from "./holidayProvider";
+import { HOLIDAY_PROVIDER_CONTRACT, getHolidayProviderRuntimeVersion } from "./holidayProvider";
 
 export function assertHolidayProviderVersionContract(): void {
   const runtimeVersion = getHolidayProviderRuntimeVersion();
