@@ -98,6 +98,7 @@ This file tracks near-term work that should not be lost while the architecture i
 - Establish one DTO contract owner. The server should own the API DTO contract, and the mobile client should import or generate its TypeScript DTO types from that contract instead of manually maintaining a second shape.
 - Prepare the public Git foundation after the architecture is stable enough for feature-sized commits.
 - Learn CI/CD with Git and Docker, using DailyNagger as the real deployment pipeline example.
+- Add a commit-time formatter gate for the mobile project, likely Husky/lint-staged or the repo's chosen CI/CD equivalent, so Prettier runs automatically before commits and formatting noise stops stealing focus.
 - Learn frontend interaction testing with a small user-flow test around selecting, editing, and saving a task tree.
 - Add focused tree-operation tests for replace, selection refresh, rollover pruning, progress counts, and stale-node cases.
 - Make tree visitor identity changes opt-in: targeted visitors should throw when returned node ids change unless the operation explicitly allows identity replacement.
