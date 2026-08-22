@@ -1,8 +1,8 @@
+using Serilog.Context;
+
 namespace DailyNagger.Server.Observability;
 
-public sealed class RequireApiRequestIdMiddleware(
-    RequestDelegate next,
-    ILogger<RequireApiRequestIdMiddleware> logger)
+public sealed class RequireApiRequestIdMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -26,15 +26,9 @@ public sealed class RequireApiRequestIdMiddleware(
 
         context.Response.Headers[ApiRequestHeaders.RequestId] = requestId;
 
-        using var _ = logger.BeginScope(new Dictionary<string, object>
-        {
-            ["requestId"] = requestId
-        });
+        ApiRequestContext.Set(context, requestId);
 
-        logger.LogInformation(
-            "Accepted API request {Method} {Path}",
-            context.Request.Method,
-            context.Request.Path.Value);
+        using var _ = LogContext.PushProperty("requestId", requestId);
 
         await next(context);
     }

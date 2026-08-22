@@ -54,6 +54,11 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -63,6 +68,16 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
     app.UseHttpsRedirection();
 }
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        if (ApiRequestContext.TryGet(httpContext, out var requestId))
+        {
+            diagnosticContext.Set("requestId", requestId);
+        }
+    };
+});
 app.UseMiddleware<RequireApiRequestIdMiddleware>();
 app.UseCors("client");
 app.UseMiddleware<ApiTokenMiddleware>();
