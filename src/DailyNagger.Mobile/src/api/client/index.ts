@@ -7,3 +7,4 @@ export type { TaskStepNameSuggestionDto } from "./fetchTaskStepNameSuggestions";
 export { saveTag } from "./saveTag";
 export { SendApiRequestError, sendApiRequest } from "./sendApiRequest";
 export type { SendApiRequest } from "./sendApiRequest";
+export { apiRequestHeaders } from "./apiRequestHeaders";

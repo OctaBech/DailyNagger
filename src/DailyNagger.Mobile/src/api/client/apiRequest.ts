@@ -1,5 +1,6 @@
 import { environment } from "@/config";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
+import { apiRequestHeaders } from "./apiRequestHeaders";
 
 type ApiRequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -74,13 +75,7 @@ export async function apiRequest<TResponse>(
 
   if (!response.ok) {
     const responseBody = await response.text();
-    throw new ApiRequestError(
-      url,
-      request,
-      response,
-      responseBody,
-      getDurationMs(startedAt),
-    );
+    throw new ApiRequestError(url, request, response, responseBody, getDurationMs(startedAt));
   }
 
   if (response.status === 202) {
@@ -146,9 +141,10 @@ function getRequestId(request: RequestInit): string | null {
     return null;
   }
 
-  return headers["X-DailyNagger-Request-Id"] ?? null;
+  return headers[apiRequestHeaders.requestId] ?? null;
 }
 
 function getDurationMs(startedAt: number): number {
   return Math.round(performance.now() - startedAt);
 }
+
