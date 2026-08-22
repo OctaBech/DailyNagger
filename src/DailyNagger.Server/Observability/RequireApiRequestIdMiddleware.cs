@@ -1,4 +1,4 @@
-﻿namespace DailyNagger.Server.Observability;
+namespace DailyNagger.Server.Observability;
 
 public sealed class RequireApiRequestIdMiddleware(
     RequestDelegate next,
@@ -30,6 +30,11 @@ public sealed class RequireApiRequestIdMiddleware(
         {
             ["requestId"] = requestId
         });
+
+        logger.LogInformation(
+            "Accepted API request {Method} {Path}",
+            context.Request.Method,
+            context.Request.Path.Value);
 
         await next(context);
     }
