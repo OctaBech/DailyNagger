@@ -298,6 +298,12 @@ Start the local service stack from the repository root:
 docker compose up -d seq sqlserver sqlserver-init
 ```
 
+Validate the full local Docker stack, including the API container:
+
+```powershell
+.\scripts\validate-local-compose.ps1
+```
+
 Validate Docker:
 
 ```powershell
