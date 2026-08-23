@@ -1,6 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Primitives } from "@/components";
 import { router } from "expo-router";
+import { StateScreen } from "@/components/primitives";
 
 type AppErrorBoundaryProps = {
   readonly children: ReactNode;
@@ -38,7 +38,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
     if (error === null) return this.props.children;
 
     return (
-      <Primitives.StateScreen
+      <StateScreen
         title="Something broke"
         message="DailyNagger hit an unexpected screen error. You can retry the current view or go back to the plan."
         detail={error.message}

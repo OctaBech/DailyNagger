@@ -1,11 +1,13 @@
-import { useModalKeyboardBoundary } from "@/app-shell";
 import { appLayout, appMotion } from "@/config";
 import { useEffect, createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 import { Animated, Keyboard, Modal, Pressable, StyleSheet, View } from "react-native";
 import type { KeyboardEvent } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { ModalKeyboardBoundaryOwner } from "@/app-shell";
+import {
+  useModalKeyboardBoundary,
+  type ModalKeyboardBoundaryOwner,
+} from "@/app-shell/modal-keyboard-boundary";
 import { modalTheme } from "./theme";
 import { SheetHeader } from "./SheetHeader";
 

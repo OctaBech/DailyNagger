@@ -1,4 +1,4 @@
-import { useModalKeyboardBoundary } from "@/app-shell";
+import { useModalKeyboardBoundary } from "@/app-shell/modal-keyboard-boundary";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Keyboard, TextInput } from "react-native";
 import type { FlatList, KeyboardEvent } from "react-native";
