@@ -119,7 +119,9 @@ export async function apiRequest<TResponse>(
   });
 
   if (result === undefined) {
-    throw new Error(`Sentry scope returned no API request result. ${options.method} ${options.path}`);
+    throw new Error(
+      `Sentry scope returned no API request result. ${options.method} ${options.path}`,
+    );
   }
 
   return result;

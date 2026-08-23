@@ -34,7 +34,7 @@ function Assert-CommandAvailable {
         return
     }
 
-    throw "Missing required command: $CommandName"
+    throw "Missing required command in this shell: $CommandName. Open a new terminal after installing tools or rerun scripts\configure-dev-machine.ps1."
 }
 
 function Assert-PathExists {
