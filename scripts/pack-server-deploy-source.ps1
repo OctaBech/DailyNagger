@@ -1,5 +1,5 @@
 param(
-    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")),
+    [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path,
     [string]$OutputPath = (Join-Path $RepoRoot "dailynagger-source.tar.gz")
 )
 
@@ -16,6 +16,8 @@ try {
         --exclude=artifacts `
         --exclude='**/bin' `
         --exclude='**/obj' `
+        --exclude='**/*.csproj.user' `
+        --exclude='**/appsettings.Local.json' `
         --exclude=src/DailyNagger.Mobile/node_modules `
         --exclude=src/DailyNagger.Client/node_modules `
         -czf $OutputPath `

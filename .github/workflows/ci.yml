@@ -90,7 +90,9 @@ jobs:
 
       - name: Pack server deploy source
         shell: pwsh
-        run: .\scripts\pack-server-deploy-source.ps1 -OutputPath "$env:RUNNER_TEMP\dailynagger-source.tar.gz"
+        run: |
+          $archivePath = Join-Path $env:RUNNER_TEMP "dailynagger-source.tar.gz"
+          .\scripts\pack-server-deploy-source.ps1 -OutputPath $archivePath
 
       - name: Build server image
         run: docker build -f src/DailyNagger.Server/Dockerfile -t dailynagger-server:ci .
