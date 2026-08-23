@@ -72,6 +72,31 @@ function Assert-LastExitCode {
     }
 }
 
+function Assert-WindowsLongPathsEnabled {
+    $longPathsValue = Get-ItemPropertyValue `
+        -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+        -Name "LongPathsEnabled" `
+        -ErrorAction SilentlyContinue
+
+    if ($longPathsValue -eq 1) {
+        Write-Host "[ok] Windows long paths enabled"
+        return
+    }
+
+    throw "Windows long paths are disabled. Run scripts\configure-dev-machine.ps1 as Administrator."
+}
+
+function Assert-GitLongPathsEnabled {
+    $gitLongPaths = (& git config --global --get core.longpaths)
+
+    if ($gitLongPaths -eq "true") {
+        Write-Host "[ok] git core.longpaths=true"
+        return
+    }
+
+    throw "Expected git core.longpaths=true, but found '$gitLongPaths'."
+}
+
 $repoRoot = if ([string]::IsNullOrWhiteSpace($RepoRootPath)) {
     (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 }
@@ -81,12 +106,14 @@ else {
 
 $mobileProject = Join-Path $repoRoot "src\DailyNagger.Mobile"
 $androidSdkPath = "E:\Android\Sdk"
+$ninjaPath = "E:\Programs\ninja\ninja.exe"
 
 Write-Host "Validating DailyNagger development machine..."
 Write-Host "Repo root: $repoRoot"
 
 Assert-PathExists "E:\DailyNagger"
 Assert-PathExists "E:\Programs"
+Assert-PathExists "E:\Programs\ninja"
 Assert-PathExists "E:\Secrets"
 Assert-PathExists "E:\Caches"
 Assert-PathExists "E:\Caches\npm"
@@ -100,6 +127,7 @@ Assert-EnvPath "GRADLE_USER_HOME" "E:\Caches\gradle"
 Assert-EnvPath "ANDROID_HOME" $androidSdkPath
 Assert-EnvPath "ANDROID_SDK_ROOT" $androidSdkPath
 Assert-EnvPath "ANDROID_AVD_HOME" "E:\Android\Avd"
+Assert-EnvPath "DAILY_NAGGER_NINJA" $ninjaPath
 
 Assert-CommandAvailable "git"
 Assert-CommandAvailable "node"
@@ -109,9 +137,14 @@ Assert-CommandAvailable "java"
 Assert-CommandAvailable "javac"
 Assert-CommandAvailable "adb"
 Assert-CommandAvailable "sdkmanager"
+Assert-CommandAvailable "ninja"
+
+Assert-WindowsLongPathsEnabled
+Assert-GitLongPathsEnabled
 
 Assert-PathExists "E:\Android\Sdk\platform-tools\adb.exe"
 Assert-PathExists "E:\Android\Sdk\cmdline-tools\latest\bin\sdkmanager.bat"
+Assert-PathExists $ninjaPath
 
 $npmCache = (& npm config get cache).Trim()
 if ($npmCache -ne "E:\Caches\npm") {
@@ -119,6 +152,13 @@ if ($npmCache -ne "E:\Caches\npm") {
 }
 
 Write-Host "[ok] npm cache=$npmCache"
+
+$ninjaVersion = (& $ninjaPath --version).Trim()
+if ([version]$ninjaVersion -lt [version]"1.12.0") {
+    throw "Expected Ninja 1.12.0 or newer, but found $ninjaVersion."
+}
+
+Write-Host "[ok] ninja $ninjaVersion"
 
 if ($SkipProjectChecks) {
     Write-Host "Skipping project checks."

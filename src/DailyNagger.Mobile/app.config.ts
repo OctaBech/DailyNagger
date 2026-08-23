@@ -24,7 +24,7 @@ const config: ExpoConfig = {
   web: {
     favicon: "./assets/favicon.png",
   },
-  plugins: ["expo-localization", "@sentry/react-native"],
+  plugins: ["expo-localization", "@sentry/react-native", "./plugins/withWindowsNinja"],
 };
 
 export default config;

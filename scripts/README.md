@@ -25,6 +25,8 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
   - `-DeviceId`: target a specific device.
   - `-SkipInstall`: build APK only.
   - `-Notify`: play a sound when done.
+- `start-mobile-android.ps1` sets E: drive Android/Gradle/Ninja paths, then runs `npx expo run:android`.
+  - `-RepoRootPath`: repo path override.
 
 ## Server
 
