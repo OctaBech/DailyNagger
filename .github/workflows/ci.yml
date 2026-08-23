@@ -77,5 +77,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate production compose
+        run: |
+          printf '%s\n' \
+            'MSSQL_SA_PASSWORD=DailyNagger_Ci_12345' \
+            'DAILY_NAGGER_SQL_APP_PASSWORD=DailyNagger_Ci_12345' \
+            'DAILY_NAGGER_IMAGE_TAG=ci' \
+            'DAILY_NAGGER_API_TOKEN=ci-api-token' \
+            'DAILY_NAGGER_PUBLIC_HOST=localhost' \
+            > .env.ci
+          docker compose --env-file .env.ci -f compose.prod.yaml config --quiet
+
+      - name: Pack server deploy source
+        shell: pwsh
+        run: .\scripts\pack-server-deploy-source.ps1 -OutputPath "$env:RUNNER_TEMP\dailynagger-source.tar.gz"
+
       - name: Build server image
         run: docker build -f src/DailyNagger.Server/Dockerfile -t dailynagger-server:ci .

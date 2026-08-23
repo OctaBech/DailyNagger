@@ -19,9 +19,14 @@ try {
         --exclude=src/DailyNagger.Mobile/node_modules `
         --exclude=src/DailyNagger.Client/node_modules `
         -czf $OutputPath `
+        compose.prod.yaml `
+        deploy `
         global.json `
         Directory.Build.props `
-        src/DailyNagger.Server
+        src/DailyNagger.Server `
+        scripts/run-vps-ef-migration.sh `
+        scripts/run-vps-production-minimum-seed.sh `
+        scripts/seed-production-minimum.sql
 }
 finally {
     Pop-Location

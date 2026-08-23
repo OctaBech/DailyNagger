@@ -130,7 +130,6 @@ try {
 
     $archivePath = Join-Path $repoRoot "dailynagger-source.tar.gz"
     $packScript = Join-Path $repoRoot "scripts\pack-server-deploy-source.ps1"
-    $migrationScript = Join-Path $repoRoot "scripts\run-vps-ef-migration.sh"
     $destination = "${VpsUser}@${VpsHost}"
 
     Write-Host "Deploying DailyNagger server..."
@@ -142,12 +141,13 @@ try {
     & $packScript -RepoRoot $repoRoot -OutputPath $archivePath
     Assert-LastExitCode "pack-server-deploy-source.ps1"
 
-    Write-Host "Uploading deploy archive and migration script..."
+    Write-Host "Preparing remote deploy folder..."
+    & ssh -i $SshKeyPath $destination "mkdir -p '$RemotePath'"
+    Assert-LastExitCode "ssh prepare remote deploy folder"
+
+    Write-Host "Uploading deploy archive..."
     & scp -i $SshKeyPath $archivePath "${destination}:${RemotePath}/dailynagger-source.tar.gz"
     Assert-LastExitCode "scp deploy archive"
-
-    & scp -i $SshKeyPath $migrationScript "${destination}:${RemotePath}/run-vps-ef-migration.sh"
-    Assert-LastExitCode "scp migration script"
 
     Write-Host "Extracting source on VPS..."
     Invoke-RemoteBash -Arguments @($RemotePath) -Script @'
@@ -160,14 +160,20 @@ test "$(pwd)" = "$remote_path"
 
 rm -rf "$remote_path/src/DailyNagger.Server"
 tar -xzf dailynagger-source.tar.gz
+cp "$remote_path/scripts/run-vps-ef-migration.sh" "$remote_path/run-vps-ef-migration.sh"
+cp "$remote_path/scripts/run-vps-production-minimum-seed.sh" "$remote_path/run-vps-production-minimum-seed.sh"
+cp "$remote_path/scripts/seed-production-minimum.sql" "$remote_path/seed-production-minimum.sql"
 
 find "$remote_path/src/DailyNagger.Server" -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
 find "$remote_path" -type d -exec chmod 755 {} +
 find "$remote_path" -type f -exec chmod 644 {} +
 chmod 600 "$remote_path/.env"
 chmod 755 "$remote_path/run-vps-ef-migration.sh"
+chmod 755 "$remote_path/run-vps-production-minimum-seed.sh"
 
 test -f "$remote_path/src/DailyNagger.Server/DailyNagger.Server.csproj"
+test -f "$remote_path/compose.prod.yaml"
+test -f "$remote_path/deploy/Caddyfile"
 '@
 
     Write-Host "Building server image on VPS..."
