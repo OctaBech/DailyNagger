@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  server:
     runs-on: ubuntu-latest
 
     services:
@@ -25,8 +25,10 @@ jobs:
           --health-retries 10
 
     env:
-      ConnectionStrings__DailyNaggerData: Server=localhost,1433;Database=DailyNaggerData;User Id=sa;Password=DailyNagger_Ci_12345;TrustServerCertificate=True
-      ConnectionStrings__DailyNaggerControl: Server=localhost,1433;Database=DailyNaggerControl;User Id=sa;Password=DailyNagger_Ci_12345;TrustServerCertificate=True
+      ConnectionStrings__DailyNaggerData: Server=localhost,1433;Database=DailyNaggerData;User Id=sa;Password=DailyNagger_Ci_12345;Encrypt=True;TrustServerCertificate=True
+      ConnectionStrings__DailyNaggerControl: Server=localhost,1433;Database=DailyNaggerControl;User Id=sa;Password=DailyNagger_Ci_12345;Encrypt=True;TrustServerCertificate=True
+      DailyNaggerData__Password: DailyNagger_Ci_12345
+      DailyNagger__ApiToken: ci-api-token
 
     steps:
       - name: Checkout
@@ -37,38 +39,43 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Build backend
-        run: dotnet build DailyNagger.sln --configuration Release
+      - name: Restore
+        run: dotnet restore DailyNagger.sln
 
-      - name: Restore .NET tools
-        run: dotnet tool restore
+      - name: Build
+        run: dotnet build DailyNagger.sln --configuration Release --no-restore
 
-      - name: Apply control database migrations
-        run: dotnet tool run dotnet-ef database update --project src/DailyNagger.Server --context DailyNaggerControlDbContext
-
-      - name: Apply data database migrations
-        run: dotnet tool run dotnet-ef database update --project src/DailyNagger.Server --context DailyNaggerDbContext
-
-      - name: Test backend
+      - name: Test
         run: dotnet test DailyNagger.sln --configuration Release --no-build
+
+  mobile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
           cache: npm
-          cache-dependency-path: src/DailyNagger.Client/package-lock.json
+          cache-dependency-path: src/DailyNagger.Mobile/package-lock.json
 
-      - name: Install frontend dependencies
-        working-directory: src/DailyNagger.Client
+      - name: Install dependencies
+        working-directory: src/DailyNagger.Mobile
         run: npm ci
 
-      - name: Build frontend
-        working-directory: src/DailyNagger.Client
-        run: npm run build
+      - name: Typecheck
+        working-directory: src/DailyNagger.Mobile
+        run: npm run typecheck
+
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Build server image
         run: docker build -f src/DailyNagger.Server/Dockerfile -t dailynagger-server:ci .
-
-      - name: Build client image
-        run: docker build -f src/DailyNagger.Client/Dockerfile -t dailynagger-client:ci .

@@ -215,6 +215,7 @@ public sealed class NagRequestValidator
         var root = document.RootElement;
 
         Require(GetRequiredInt(root, "year") >= 0, "Date schedule rule Year must be 0 or later.");
+        Require(root.TryGetProperty("month", out _), "Date schedule rules require month.");
         Require(GetRequiredInt(root, "month") is >= 0 and <= 12, "Date schedule rule Month must be between 0 and 12.");
         Require(GetRequiredInt(root, "dayOfMonth") is >= 0 and <= 32, "Date schedule rule DayOfMonth must be between 0 and 32.");
     }
@@ -357,6 +358,7 @@ public sealed class NagRequestValidator
             throw new NagValidationException("TaskEntry Id values must be unique.");
         }
 
+        TaskEntryValueValidator.Validate(input.ValueType, input.Value);
     }
 
     private static void Require(bool condition, string message)

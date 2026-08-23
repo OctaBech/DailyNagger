@@ -66,9 +66,8 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
                     task_log.done_descendant_task_item_count
                 from task_log
                 where task_log.nag_id = nag.id
+                    and task_log.closed_on is null
                 order by
-                    case when task_log.closed_on is null then 0 else 1 end,
-                    task_log.closed_on desc,
                     task_log.id desc
             ) task_log
             where nag.is_deactivated = 0

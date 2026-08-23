@@ -580,8 +580,17 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             throw new NagValidationException("All TaskEntry updates must belong to the requested TaskLog.");
         }
 
+        var valueTypes = await GetTaskEntryValueTypesAsync(
+            connection,
+            transaction,
+            taskLogId,
+            taskEntries.Select(input => input.Id).ToArray(),
+            cancellationToken);
+
         foreach (var input in taskEntries)
         {
+            TaskEntryValueValidator.Validate(valueTypes[input.Id], input.Value);
+
             await using var command = new SqlCommand(
                 """
                 update task_entry
@@ -976,6 +985,50 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         }
 
         return (int)await command.ExecuteScalarAsync(cancellationToken);
+    }
+
+    private static async Task<Dictionary<Guid, string>> GetTaskEntryValueTypesAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        Guid taskLogId,
+        IReadOnlyList<Guid> taskEntryIds,
+        CancellationToken cancellationToken)
+    {
+        if (taskEntryIds.Count == 0)
+        {
+            return [];
+        }
+
+        var parameterNames = taskEntryIds
+            .Select((_, index) => $"@inputId{index}")
+            .ToArray();
+
+        await using var command = new SqlCommand(
+            $"""
+            select id, value_type
+            from task_entry
+            where task_entry.task_log_id = @taskLogId
+                and task_entry.id in ({string.Join(", ", parameterNames)})
+            """,
+            connection,
+            transaction);
+
+        command.Parameters.AddWithValue("@taskLogId", taskLogId);
+
+        for (var i = 0; i < taskEntryIds.Count; i++)
+        {
+            command.Parameters.AddWithValue(parameterNames[i], taskEntryIds[i]);
+        }
+
+        var valueTypes = new Dictionary<Guid, string>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            valueTypes.Add(reader.GetGuid(0), reader.GetString(1));
+        }
+
+        return valueTypes;
     }
 
     private static async Task DeleteTaskEntriesAsync(
