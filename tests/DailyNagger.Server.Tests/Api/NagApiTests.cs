@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Domain;
+using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Tests;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -17,6 +18,8 @@ namespace DailyNagger.Server.Tests.Api;
 [Collection(SqlServerTestCollection.Name)]
 public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
+    private const string TestApiToken = "test-api-token";
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter() }
@@ -2391,10 +2394,20 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         Environment.SetEnvironmentVariable(
             "DailyNaggerData__Password",
             GetDataPassword());
+        Environment.SetEnvironmentVariable(
+            "DailyNagger__ApiToken",
+            TestApiToken);
 
         var factory = new WebApplicationFactory<Program>();
 
-        return factory.CreateClient();
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", TestApiToken);
+        client.DefaultRequestHeaders.Add(
+            ApiRequestHeaders.RequestId,
+            Guid.NewGuid().ToString("D"));
+
+        return client;
     }
 
     private static async Task DeleteRoutedNagAsync(

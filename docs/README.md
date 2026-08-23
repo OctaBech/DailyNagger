@@ -6,6 +6,8 @@ DailyNagger documentation is intentionally small and close to current work.
 
 - `adr/` contains accepted architecture, product direction, and UI interaction
   decisions.
+- `development-environment.md` describes the local machine layout and setup
+  conventions for DailyNagger development.
 
 ## Local READMEs
 

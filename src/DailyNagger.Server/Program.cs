@@ -64,7 +64,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
+if (!app.Environment.IsDevelopment()
+    && Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
     app.UseHttpsRedirection();
 }
