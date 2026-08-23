@@ -1,7 +1,7 @@
 param(
     [string]$RepoRootPath,
     [string]$MobileProjectPath,
-    [string]$DevCacheRootPath = "E:\DevCache",
+    [string]$DevCacheRootPath = "E:\Caches",
     [string]$AndroidSdkPath,
     [string]$DeviceId,
     [switch]$SkipInstall,
@@ -156,8 +156,31 @@ function Clear-AndroidGeneratedBuildState {
         -ChildRelativePath "android\app\build"
 }
 
+function Get-InstalledAndroidCMakeVersion {
+    param([string]$AndroidSdk)
+
+    $cmakeRoot = Join-Path $AndroidSdk "cmake"
+    if (!(Test-Path $cmakeRoot)) {
+        throw "Android SDK CMake directory does not exist: $cmakeRoot"
+    }
+
+    $cmakeVersion = Get-ChildItem $cmakeRoot -Directory |
+        Where-Object { Test-Path (Join-Path $_.FullName "bin\cmake.exe") } |
+        Sort-Object { [version]$_.Name } -Descending |
+        Select-Object -First 1
+
+    if ($null -eq $cmakeVersion) {
+        throw "No Android SDK CMake installation found under $cmakeRoot."
+    }
+
+    return $cmakeVersion.Name
+}
+
 function Ensure-ExpoModulesCoreCMakeVersion {
-    param([string]$MobileProject)
+    param(
+        [string]$MobileProject,
+        [string]$CMakeVersion
+    )
 
     $buildGradlePath = Join-Path $MobileProject "node_modules\expo\node_modules\expo-modules-core\android\build.gradle"
     if (!(Test-Path $buildGradlePath)) {
@@ -165,8 +188,16 @@ function Ensure-ExpoModulesCoreCMakeVersion {
     }
 
     $buildGradle = Get-Content $buildGradlePath -Raw
-    if ($buildGradle -match 'version\s+"4\.1\.2"') {
+    if ($buildGradle -match "version\s+`"$([regex]::Escape($CMakeVersion))`"") {
         return $false
+    }
+
+    if ($buildGradle -match 'version\s+"[^"]+"') {
+        Write-Host "Pinning expo-modules-core to Android SDK CMake $CMakeVersion..."
+        $buildGradle -replace 'version\s+"[^"]+"', "version `"$CMakeVersion`"" |
+            Set-Content -Path $buildGradlePath -NoNewline
+
+        return $true
     }
 
     $needle = @'
@@ -181,7 +212,7 @@ function Ensure-ExpoModulesCoreCMakeVersion {
   externalNativeBuild {
     cmake {
       path "CMakeLists.txt"
-      version "4.1.2"
+      version "__CMAKE_VERSION__"
     }
   }
 '@
@@ -190,8 +221,8 @@ function Ensure-ExpoModulesCoreCMakeVersion {
         throw "Could not patch expo-modules-core CMake version. Expected Gradle block was not found."
     }
 
-    Write-Host "Pinning expo-modules-core to Android SDK CMake 4.1.2..."
-    $buildGradle.Replace($needle, $replacement) |
+    Write-Host "Pinning expo-modules-core to Android SDK CMake $CMakeVersion..."
+    $buildGradle.Replace($needle, $replacement.Replace("__CMAKE_VERSION__", $CMakeVersion)) |
         Set-Content -Path $buildGradlePath -NoNewline
 
     return $true
@@ -277,9 +308,10 @@ $envPath = Join-Path $mobileProject ".env"
 $gradlePath = Join-Path $mobileProject "android\gradlew.bat"
 $apkOutputPath = Join-Path $mobileProject "android\app\build\outputs\apk\release"
 $devCacheRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DevCacheRootPath)
-$gradleUserHome = Join-Path $devCacheRoot "Gradle"
-$buildTempPath = Join-Path $devCacheRoot "Temp\mobile-release-apk"
+$gradleUserHome = Join-Path $devCacheRoot "gradle"
+$buildTempPath = Join-Path $devCacheRoot "temp\mobile-release-apk"
 $androidSdk = Get-AndroidSdkPath $AndroidSdkPath
+$androidCMakeVersion = Get-InstalledAndroidCMakeVersion $androidSdk
 
 $mobileProjectDrive = [System.IO.Path]::GetPathRoot($mobileProject)
 $androidSdkDrive = [System.IO.Path]::GetPathRoot($androidSdk)
@@ -311,6 +343,15 @@ $env:ANDROID_SDK_ROOT = $androidSdk
 $env:TEMP = $buildTempPath
 $env:TMP = $buildTempPath
 
+if (
+    [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("SENTRY_AUTH_TOKEN")) -or
+    [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("SENTRY_ORG")) -or
+    [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("SENTRY_PROJECT"))
+) {
+    Write-Host "Sentry upload credentials are not fully configured. Disabling source map upload for this local APK build."
+    $env:SENTRY_DISABLE_AUTO_UPLOAD = "true"
+}
+
 if ($apiBaseUrl -match "localhost|127\.0\.0\.1") {
     throw "Release build refused: API base URL points to local machine: $apiBaseUrl"
 }
@@ -327,6 +368,7 @@ Write-Host "API token: configured"
 Write-Host "Build log: $buildLogPath"
 Write-Host "Gradle user home: $gradleUserHome"
 Write-Host "Android SDK: $androidSdk"
+Write-Host "Android SDK CMake: $androidCMakeVersion"
 Write-Host "Build temp: $buildTempPath"
 
 New-Item -ItemType Directory -Force -Path $buildLogDirectory | Out-Null
@@ -337,7 +379,7 @@ if (!(Test-Path $androidSdk)) {
 }
 Remove-Item $buildLogPath -ErrorAction SilentlyContinue
 
-$patchedExpoModulesCore = Ensure-ExpoModulesCoreCMakeVersion $mobileProject
+$patchedExpoModulesCore = Ensure-ExpoModulesCoreCMakeVersion $mobileProject $androidCMakeVersion
 if ($patchedExpoModulesCore) {
     Clear-KnownDirtyCMakeCache $mobileProject
 }
