@@ -33,6 +33,10 @@ $env:NUGET_PACKAGES = "E:\Caches\nuget"
 $env:DAILY_NAGGER_NINJA = $ninjaPath
 $env:Path = "E:\Programs\ninja;E:\Programs\nodejs;$androidSdkPath\platform-tools;$androidSdkPath\cmdline-tools\latest\bin;$env:Path"
 
+Write-Host "Android SDK: $env:ANDROID_HOME"
+Write-Host "Gradle user home: $env:GRADLE_USER_HOME"
+Write-Host "Ninja: $env:DAILY_NAGGER_NINJA"
+
 Push-Location $mobileProject
 try {
     & npx expo run:android
