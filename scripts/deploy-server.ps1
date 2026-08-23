@@ -25,6 +25,10 @@ Deployment folder on the VPS.
 .PARAMETER ImageTag
 Docker image tag to build and run. Defaults to server-yyyyMMdd-HHmm.
 
+.PARAMETER KnownHostsPath
+SSH known_hosts file used to verify the VPS host. Can also be supplied with
+DAILY_NAGGER_DEPLOY_KNOWN_HOSTS.
+
 .PARAMETER SkipMigrations
 Skips EF database migrations. Use this only when the target database schema is already up to date
 and you only want to rebuild/restart the server image.
@@ -52,6 +56,7 @@ param(
     [string]$VpsUser = "root",
     [string]$RemotePath = "/opt/dailynagger",
     [string]$ImageTag = ("server-" + (Get-Date -Format "yyyyMMdd-HHmm")),
+    [string]$KnownHostsPath = $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS,
     [switch]$SkipMigrations,
     [switch]$Notify
 )
@@ -92,14 +97,19 @@ function Invoke-RemoteBash {
     $tempScriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("dailynagger-remote-" + [Guid]::NewGuid().ToString("N") + ".sh")
     $remoteScriptPath = "/tmp/" + [System.IO.Path]::GetFileName($tempScriptPath)
     $destination = "${VpsUser}@${VpsHost}"
+    $sshOptions = @("-i", $SshKeyPath)
+
+    if (![string]::IsNullOrWhiteSpace($KnownHostsPath)) {
+        $sshOptions += @("-o", "UserKnownHostsFile=$KnownHostsPath")
+    }
 
     try {
         $Script | Set-Content -Path $tempScriptPath -NoNewline
 
-        & scp -i $SshKeyPath $tempScriptPath "${destination}:${remoteScriptPath}"
+        & scp @sshOptions $tempScriptPath "${destination}:${remoteScriptPath}"
         Assert-LastExitCode "scp remote bash script"
 
-        $sshArguments = @("-i", $SshKeyPath, $destination, "bash", $remoteScriptPath) + $Arguments
+        $sshArguments = $sshOptions + @($destination, "bash", $remoteScriptPath) + $Arguments
         & ssh @sshArguments
         Assert-LastExitCode "ssh remote bash"
     }
@@ -108,7 +118,7 @@ function Invoke-RemoteBash {
             Remove-Item $tempScriptPath -Force
         }
 
-        & ssh -i $SshKeyPath $destination "rm -f $remoteScriptPath" > $null 2>&1
+        & ssh @sshOptions $destination "rm -f $remoteScriptPath" > $null 2>&1
     }
 }
 
@@ -131,6 +141,11 @@ try {
     $archivePath = Join-Path $repoRoot "dailynagger-source.tar.gz"
     $packScript = Join-Path $repoRoot "scripts\pack-server-deploy-source.ps1"
     $destination = "${VpsUser}@${VpsHost}"
+    $sshOptions = @("-i", $SshKeyPath)
+
+    if (![string]::IsNullOrWhiteSpace($KnownHostsPath)) {
+        $sshOptions += @("-o", "UserKnownHostsFile=$KnownHostsPath")
+    }
 
     Write-Host "Deploying DailyNagger server..."
     Write-Host "Repo root: $repoRoot"
@@ -142,11 +157,11 @@ try {
     Assert-LastExitCode "pack-server-deploy-source.ps1"
 
     Write-Host "Preparing remote deploy folder..."
-    & ssh -i $SshKeyPath $destination "mkdir -p '$RemotePath'"
+    & ssh @sshOptions $destination "mkdir -p '$RemotePath'"
     Assert-LastExitCode "ssh prepare remote deploy folder"
 
     Write-Host "Uploading deploy archive..."
-    & scp -i $SshKeyPath $archivePath "${destination}:${RemotePath}/dailynagger-source.tar.gz"
+    & scp @sshOptions $archivePath "${destination}:${RemotePath}/dailynagger-source.tar.gz"
     Assert-LastExitCode "scp deploy archive"
 
     Write-Host "Extracting source on VPS..."

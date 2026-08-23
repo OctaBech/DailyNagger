@@ -32,13 +32,13 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 - `reset-local-db.ps1` drops, recreates, migrates, and seeds the local SQL Server databases.
   - `-SqlServer`, `-SqlUser`, `-SqlPassword`: SQL connection overrides.
 - `deploy-server.ps1` uploads server source to the VPS, builds a tagged Docker image, migrates, restarts, and smoke-tests production.
-  - `-RepoRootPath`, `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-ImageTag`: deploy overrides.
+  - `-RepoRootPath`, `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-ImageTag`, `-KnownHostsPath`: deploy overrides.
   - `-SkipMigrations`: deploy without EF migrations.
   - `-Notify`: play a sound when done.
 - `deploy-production.ps1` runs the safe production chain: backup first, deploy only if backup succeeds.
   - Same deploy connection parameters, plus `-LocalBackupRootPath`.
 - `backup-production-db.ps1` backs up production SQL Server databases on the VPS and downloads them locally.
-  - `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-LocalBackupRootPath`, `-BackupStamp`: backup overrides.
+  - `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-LocalBackupRootPath`, `-KnownHostsPath`, `-BackupStamp`: backup overrides.
 - `pack-server-deploy-source.ps1` creates the server source archive used by deploy.
   - `-RepoRoot`, `-OutputPath`: archive path overrides.
 - `run-vps-ef-migration.sh` runs EF migrations from a .NET SDK container on the VPS.

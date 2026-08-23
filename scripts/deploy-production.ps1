@@ -13,6 +13,7 @@ param(
     [string]$VpsUser = "root",
     [string]$RemotePath = "/opt/dailynagger",
     [string]$LocalBackupRootPath = "E:\Backups\DailyNagger\server-db",
+    [string]$KnownHostsPath = $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS,
     [string]$ImageTag = ("server-" + (Get-Date -Format "yyyyMMdd-HHmm")),
     [switch]$SkipMigrations,
     [switch]$Notify
@@ -41,6 +42,7 @@ Write-Host "Backup stamp: $backupStamp"
     -VpsUser $VpsUser `
     -RemotePath $RemotePath `
     -LocalBackupRootPath $LocalBackupRootPath `
+    -KnownHostsPath $KnownHostsPath `
     -BackupStamp $backupStamp `
     -Notify:$Notify
 
@@ -51,6 +53,7 @@ Write-Host "Backup stamp: $backupStamp"
     -VpsUser $VpsUser `
     -RemotePath $RemotePath `
     -ImageTag $ImageTag `
+    -KnownHostsPath $KnownHostsPath `
     -SkipMigrations:$SkipMigrations `
     -Notify:$Notify
 

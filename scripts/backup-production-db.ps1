@@ -18,6 +18,10 @@ Deployment folder on the VPS.
 .PARAMETER LocalBackupRootPath
 Local folder where the downloaded backup folder is created.
 
+.PARAMETER KnownHostsPath
+SSH known_hosts file used to verify the VPS host. Can also be supplied with
+DAILY_NAGGER_DEPLOY_KNOWN_HOSTS.
+
 .PARAMETER BackupStamp
 Timestamp/name used for the backup folder.
 
@@ -31,6 +35,7 @@ param(
     [string]$VpsUser = "root",
     [string]$RemotePath = "/opt/dailynagger",
     [string]$LocalBackupRootPath = "E:\Backups\DailyNagger\server-db",
+    [string]$KnownHostsPath = $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS,
     [string]$BackupStamp = (Get-Date -Format "yyyyMMdd-HHmmss"),
     [switch]$Notify
 )
@@ -69,14 +74,19 @@ function Invoke-RemoteBash {
     $tempScriptPath = Join-Path ([System.IO.Path]::GetTempPath()) ("dailynagger-backup-" + [Guid]::NewGuid().ToString("N") + ".sh")
     $remoteScriptPath = "/tmp/" + [System.IO.Path]::GetFileName($tempScriptPath)
     $destination = "${VpsUser}@${VpsHost}"
+    $sshOptions = @("-i", $SshKeyPath)
+
+    if (![string]::IsNullOrWhiteSpace($KnownHostsPath)) {
+        $sshOptions += @("-o", "UserKnownHostsFile=$KnownHostsPath")
+    }
 
     try {
         $Script | Set-Content -Path $tempScriptPath -NoNewline
 
-        & scp -i $SshKeyPath $tempScriptPath "${destination}:${remoteScriptPath}"
+        & scp @sshOptions $tempScriptPath "${destination}:${remoteScriptPath}"
         Assert-LastExitCode "scp remote backup script"
 
-        $sshArguments = @("-i", $SshKeyPath, $destination, "bash", $remoteScriptPath) + $Arguments
+        $sshArguments = $sshOptions + @($destination, "bash", $remoteScriptPath) + $Arguments
         & ssh @sshArguments
         Assert-LastExitCode "ssh remote backup script"
     }
@@ -85,7 +95,7 @@ function Invoke-RemoteBash {
             Remove-Item $tempScriptPath -Force
         }
 
-        & ssh -i $SshKeyPath $destination "rm -f $remoteScriptPath" > $null 2>&1
+        & ssh @sshOptions $destination "rm -f $remoteScriptPath" > $null 2>&1
     }
 }
 
@@ -108,6 +118,11 @@ try {
     Write-Host "VPS: $destination"
     Write-Host "Remote backup path: $remoteBackupPath"
     Write-Host "Local backup path: $localBackupPath"
+    $sshOptions = @("-i", $SshKeyPath)
+
+    if (![string]::IsNullOrWhiteSpace($KnownHostsPath)) {
+        $sshOptions += @("-o", "UserKnownHostsFile=$KnownHostsPath")
+    }
 
     Invoke-RemoteBash -Arguments @($RemotePath, $BackupStamp) -Script @'
 set -euo pipefail
@@ -146,7 +161,7 @@ ls -lh "$remote_backup_path"
 '@
 
     Write-Host "Downloading database backups..."
-    & scp -i $SshKeyPath "${destination}:${remoteBackupPath}/*" $localBackupPath
+    & scp @sshOptions "${destination}:${remoteBackupPath}/*" $localBackupPath
     Assert-LastExitCode "scp production database backups"
 
     Get-ChildItem $localBackupPath | Select-Object Name, Length, LastWriteTime
