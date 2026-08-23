@@ -35,6 +35,8 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
   - `-RepoRootPath`, `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-ImageTag`: deploy overrides.
   - `-SkipMigrations`: deploy without EF migrations.
   - `-Notify`: play a sound when done.
+- `backup-production-db.ps1` backs up production SQL Server databases on the VPS and downloads them locally.
+  - `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-LocalBackupRootPath`, `-BackupStamp`: backup overrides.
 - `pack-server-deploy-source.ps1` creates the server source archive used by deploy.
   - `-RepoRoot`, `-OutputPath`: archive path overrides.
 - `run-vps-ef-migration.sh` runs EF migrations from a .NET SDK container on the VPS.
