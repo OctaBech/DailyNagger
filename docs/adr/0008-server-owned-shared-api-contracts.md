@@ -52,6 +52,11 @@ Use `npm run contracts:update` against a running local API when the server
 contract changes. Use `npm run contracts:check` to verify that generated
 TypeScript still matches the committed OpenAPI document.
 
+The contract check compares the generated TypeScript file before and after
+generation by content hash. This keeps the check useful while other contract
+files are already modified in the working tree, and prevents `git status` noise
+from being mistaken for stale generated output.
+
 Hand-written client API boundary code may still exist. Its job is to use the
 generated DTOs, not to redefine the server contract.
 
