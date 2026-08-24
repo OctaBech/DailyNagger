@@ -1,5 +1,7 @@
-import type { NagPlanDto, NaggerDto, TaskEntryDto } from "@/api/dto";
+import type { TaskEntryDto } from "@/api/dto";
 import type {
+  NagPlanDto as GeneratedNagPlanDto,
+  NagPlanNaggerDto as GeneratedNagPlanNaggerDto,
   TaskItemDto as GeneratedTaskItemDto,
   TaskLogDto as GeneratedTaskLogDto,
 } from "@api-contracts";
@@ -15,13 +17,22 @@ import type { Immutable } from "@/shared";
 
 export type ScheduleRule = ScheduleRuleModel;
 
-export type NagPlan = Immutable<NagPlanDto<Nagger> & NagPlanClientModelExtension>;
-
-export type Nagger = Immutable<
-  Omit<NaggerDto<TaskLog>, "scheduleRules"> & {
-    readonly scheduleRules: readonly ScheduleRule[];
-  } & NaggerClientModelExtension
+export type NagPlanNode<TNagger> = Immutable<
+  Omit<GeneratedNagPlanDto, "nags"> & {
+    readonly nags: readonly TNagger[];
+  }
 >;
+
+export type NagPlan = Immutable<NagPlanNode<Nagger> & NagPlanClientModelExtension>;
+
+export type NaggerNode<TTaskLog, TScheduleRule> = Immutable<
+  Omit<GeneratedNagPlanNaggerDto, "scheduleRules" | "taskLog"> & {
+    readonly scheduleRules: readonly TScheduleRule[];
+    readonly taskLog: TTaskLog;
+  }
+>;
+
+export type Nagger = Immutable<NaggerNode<TaskLog, ScheduleRule> & NaggerClientModelExtension>;
 
 export type TaskLogNode<TTaskItem> = Immutable<
   Omit<GeneratedTaskLogDto, "taskItems"> & {

@@ -1,11 +1,11 @@
 export type {
-  NagPlanDto,
   NaggerDto,
   VersionedResponseDto,
   DtoNode,
 } from "./nagPlanContracts";
 export type {
   ClientIdentityDto,
+  NagPlanDto,
   NaggerPinnedBy,
   ScheduleRuleDto,
   ScheduleRuleType,

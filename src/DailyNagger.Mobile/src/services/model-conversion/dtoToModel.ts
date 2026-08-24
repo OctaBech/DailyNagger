@@ -19,9 +19,7 @@ export function nagPlanDtoToTree(nagPlanDto: NagPlanDto) {
       return extendDtoNode(
         {
           ...naggerDtoConvert,
-          scheduleRules: (naggerDtoConvert.scheduleRules as readonly ScheduleRuleDto[]).map(
-            scheduleRuleDtoToModel,
-          ),
+          scheduleRules: naggerDtoConvert.scheduleRules.map(scheduleRuleToModel),
         },
         naggerClientModelExtensionDefaults,
       );
@@ -51,4 +49,12 @@ function extendDtoNode<TDtoNode extends object, TClientExtension extends { clien
         : {}),
     },
   };
+}
+
+function scheduleRuleToModel(
+  scheduleRule: ScheduleRuleDto | ReturnType<typeof scheduleRuleDtoToModel>,
+) {
+  if ("rule" in scheduleRule) return scheduleRule;
+
+  return scheduleRuleDtoToModel(scheduleRule);
 }
