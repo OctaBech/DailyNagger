@@ -4,7 +4,6 @@ export type {
   VersionedResponseDto,
   TaskLogDto,
   TaskItemDto,
-  TaskEntryDto,
   DtoNode,
 } from "./nagPlanContracts";
 export type {
@@ -12,6 +11,7 @@ export type {
   NaggerPinnedBy,
   ScheduleRuleDto,
   ScheduleRuleType,
+  TaskEntryDto,
   TaskEntryValueUpdateDto,
   TaskEntryValueType,
   TaskLogVersionDto,
