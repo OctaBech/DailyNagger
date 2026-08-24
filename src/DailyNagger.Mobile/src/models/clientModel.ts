@@ -22,13 +22,12 @@ export type Nagger = Immutable<
 
 export type TaskLog = Immutable<TaskLogDto<TaskItem> & TaskLogClientModelExtension>;
 
-export type TaskItemNode<TTaskItem, TTaskEntry> = Omit<
-  GeneratedTaskItemDto,
-  "taskItems" | "taskEntries"
-> & {
-  readonly taskItems: readonly TTaskItem[];
-  readonly taskEntries: readonly TTaskEntry[];
-};
+export type TaskItemNode<TTaskItem, TTaskEntry> = Immutable<
+  Omit<GeneratedTaskItemDto, "taskItems" | "taskEntries"> & {
+    readonly taskItems: readonly TTaskItem[];
+    readonly taskEntries: readonly TTaskEntry[];
+  }
+>;
 
 export interface TaskItem extends TaskItemNode<TaskItem, TaskEntry>, TaskItemClientModelExtension {}
 
