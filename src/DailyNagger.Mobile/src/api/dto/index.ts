@@ -3,7 +3,6 @@ export type {
   NaggerDto,
   VersionedResponseDto,
   TaskLogDto,
-  TaskItemDto,
   DtoNode,
 } from "./nagPlanContracts";
 export type {
@@ -14,5 +13,6 @@ export type {
   TaskEntryDto,
   TaskEntryValueUpdateDto,
   TaskEntryValueType,
+  TaskItemDto,
   TaskLogVersionDto,
 } from "@api-contracts";

@@ -2,8 +2,9 @@
 // They are allowed to be between DTO and client model.
 // Visitors are responsible for returning a fully valid output node.
 
-import type { NagPlanDto, NaggerDto, TaskLogDto, TaskItemDto, TaskEntryDto } from "@/api";
+import type { NagPlanDto, NaggerDto, TaskLogDto, TaskEntryDto } from "@/api";
 import type { ScheduleRule } from "@/models";
+import type { TaskItemNode } from "@/models/clientModel";
 import type {
   ClientModel,
   ClientNodeType,
@@ -42,8 +43,9 @@ export type TaskLogTraversedNode = Immutable<
   TaskLogDto<TaskItemTraversedNode> & PartialClientModelExtension<TaskLogClientModelExtension>
 >;
 
-export type TaskItemTraversedNode = TaskItemDto<TaskItemTraversedNode, TaskEntryTraversedNode> &
-  PartialClientModelExtension<TaskItemClientModelExtension>;
+export interface TaskItemTraversedNode
+  extends TaskItemNode<TaskItemTraversedNode, TaskEntryTraversedNode>,
+    PartialClientModelExtension<TaskItemClientModelExtension> {}
 
 export type TaskEntryTraversedNode = Immutable<
   TaskEntryDto & PartialClientModelExtension<TaskEntryClientModelExtension>
