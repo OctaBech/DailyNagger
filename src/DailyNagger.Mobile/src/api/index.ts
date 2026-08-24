@@ -22,4 +22,5 @@ export type {
   TaskEntryValueUpdateDto,
   TaskLogVersionDto,
   ClientIdentityDto,
+  NagPlanNaggerDto,
 } from "./dto";

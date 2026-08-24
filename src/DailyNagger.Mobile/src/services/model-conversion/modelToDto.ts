@@ -1,4 +1,4 @@
-import type { NagPlanDto, NaggerDto, TaskLogDto } from "@/api";
+import type { NagPlanDto, NaggerDto, NagPlanNaggerDto, TaskLogDto } from "@/api";
 import type { NagPlan, Nagger, ScheduleRule, TaskLog } from "@/models";
 import { scheduleRuleModelToDto } from "@/models";
 import {
@@ -52,7 +52,17 @@ export function naggerToDto(nagger: Nagger): NaggerDto {
 }
 
 export function taskLogToDto(taskLog: TaskLog): TaskLogDto {
-  return naggerToDto({
+  const nagPlanDto = nagPlanToDto({
+    date: "",
+    nags: [createTaskLogNagger(taskLog)],
+    ...nagPlanClientModelExtensionDefaults,
+  });
+
+  return treeReadOperations.requireSingleNagger<NagPlanNaggerDto>(nagPlanDto).taskLog;
+}
+
+function createTaskLogNagger(taskLog: TaskLog): Nagger {
+  return {
     id: taskLog.nagId,
     title: "",
     updatedAt: "",
@@ -68,7 +78,7 @@ export function taskLogToDto(taskLog: TaskLog): TaskLogDto {
     taskLog,
     version: 0,
     ...naggerClientModelExtensionDefaults,
-  }).taskLog;
+  };
 }
 
 function stripClientModelExtension<TDtoNode extends object>(
