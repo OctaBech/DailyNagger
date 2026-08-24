@@ -530,8 +530,6 @@ export interface components {
             /** Format: int32 */
             version: number;
         };
-        /** @enum {unknown} */
-        RolloverBehaviorDto: "Keep" | "Remove" | "RemoveWhenDone" | "MoveValueToHistory" | "CarryOverValue";
         SaveTagRequest: {
             /** Format: uuid */
             communityId: string;
@@ -585,7 +583,7 @@ export interface components {
             tag: null | string;
             value: null | string;
             lastTaskRunReferenceValue: null | string;
-            rolloverBehavior: components["schemas"]["RolloverBehaviorDto"];
+            rolloverBehavior: components["schemas"]["TaskEntryRolloverBehaviorDto"];
             /** Format: date-time */
             interactionAt: null | string;
             interactionTimeZone: null | string;
@@ -594,6 +592,8 @@ export interface components {
             /** Format: date-time */
             interactionMoodAt: null | string;
         };
+        /** @enum {unknown} */
+        TaskEntryRolloverBehaviorDto: "Remove" | "MoveValueToHistory" | "CarryOverValue";
         /** @enum {unknown} */
         TaskEntryValueTypeDto: "Text" | "Integer" | "Decimal" | "Boolean";
         TaskEntryValueUpdateDto: {
@@ -620,7 +620,7 @@ export interface components {
             taskItems: components["schemas"]["TaskItemDto"][];
             tag: null | string;
             isDone: boolean;
-            rolloverBehavior: components["schemas"]["RolloverBehaviorDto"];
+            rolloverBehavior: components["schemas"]["TaskItemRolloverBehaviorDto"];
             /** Format: date-time */
             interactionAt: null | string;
             interactionTimeZone: null | string;
@@ -633,6 +633,8 @@ export interface components {
             /** Format: int32 */
             doneDescendantTaskItemCount: number;
         };
+        /** @enum {unknown} */
+        TaskItemRolloverBehaviorDto: "Keep" | "RemoveWhenDone";
         TaskLogDto: {
             /** Format: uuid */
             id: string;

@@ -239,7 +239,7 @@ public static class TaskLogApi
                 .ToArray(),
             Tag: node.Tag,
             IsDone: node.IsDone,
-            RolloverBehavior: ToDto(node.RolloverBehavior),
+            RolloverBehavior: ToTaskItemRolloverBehaviorDto(node.RolloverBehavior),
             InteractionAt: node.InteractionAt,
             InteractionTimeZone: node.InteractionTimeZone,
             InteractionLocale: node.InteractionLocale,
@@ -259,7 +259,7 @@ public static class TaskLogApi
             input.Tag,
             input.Value,
             input.LastTaskRunReferenceValue,
-            ToDto(input.RolloverBehavior),
+            ToTaskEntryRolloverBehaviorDto(input.RolloverBehavior),
             input.InteractionAt,
             input.InteractionTimeZone,
             input.InteractionLocale,
@@ -354,25 +354,37 @@ public static class TaskLogApi
             _ => throw new ArgumentOutOfRangeException(nameof(valueType), valueType, null)
         };
 
-    private static RolloverBehaviorDto ToDto(RolloverBehavior rolloverBehavior) =>
+    private static TaskItemRolloverBehaviorDto ToTaskItemRolloverBehaviorDto(RolloverBehavior rolloverBehavior) =>
         rolloverBehavior switch
         {
-            RolloverBehavior.Keep => RolloverBehaviorDto.Keep,
-            RolloverBehavior.Remove => RolloverBehaviorDto.Remove,
-            RolloverBehavior.RemoveWhenDone => RolloverBehaviorDto.RemoveWhenDone,
-            RolloverBehavior.MoveValueToHistory => RolloverBehaviorDto.MoveValueToHistory,
-            RolloverBehavior.CarryOverValue => RolloverBehaviorDto.CarryOverValue,
+            RolloverBehavior.Keep => TaskItemRolloverBehaviorDto.Keep,
+            RolloverBehavior.RemoveWhenDone => TaskItemRolloverBehaviorDto.RemoveWhenDone,
             _ => throw new ArgumentOutOfRangeException(nameof(rolloverBehavior), rolloverBehavior, null)
         };
 
-    private static RolloverBehavior ToDomain(RolloverBehaviorDto rolloverBehavior) =>
+    private static TaskEntryRolloverBehaviorDto ToTaskEntryRolloverBehaviorDto(RolloverBehavior rolloverBehavior) =>
         rolloverBehavior switch
         {
-            RolloverBehaviorDto.Keep => RolloverBehavior.Keep,
-            RolloverBehaviorDto.Remove => RolloverBehavior.Remove,
-            RolloverBehaviorDto.RemoveWhenDone => RolloverBehavior.RemoveWhenDone,
-            RolloverBehaviorDto.MoveValueToHistory => RolloverBehavior.MoveValueToHistory,
-            RolloverBehaviorDto.CarryOverValue => RolloverBehavior.CarryOverValue,
+            RolloverBehavior.Remove => TaskEntryRolloverBehaviorDto.Remove,
+            RolloverBehavior.MoveValueToHistory => TaskEntryRolloverBehaviorDto.MoveValueToHistory,
+            RolloverBehavior.CarryOverValue => TaskEntryRolloverBehaviorDto.CarryOverValue,
+            _ => throw new ArgumentOutOfRangeException(nameof(rolloverBehavior), rolloverBehavior, null)
+        };
+
+    private static RolloverBehavior ToDomain(TaskItemRolloverBehaviorDto rolloverBehavior) =>
+        rolloverBehavior switch
+        {
+            TaskItemRolloverBehaviorDto.Keep => RolloverBehavior.Keep,
+            TaskItemRolloverBehaviorDto.RemoveWhenDone => RolloverBehavior.RemoveWhenDone,
+            _ => throw new ArgumentOutOfRangeException(nameof(rolloverBehavior), rolloverBehavior, null)
+        };
+
+    private static RolloverBehavior ToDomain(TaskEntryRolloverBehaviorDto rolloverBehavior) =>
+        rolloverBehavior switch
+        {
+            TaskEntryRolloverBehaviorDto.Remove => RolloverBehavior.Remove,
+            TaskEntryRolloverBehaviorDto.MoveValueToHistory => RolloverBehavior.MoveValueToHistory,
+            TaskEntryRolloverBehaviorDto.CarryOverValue => RolloverBehavior.CarryOverValue,
             _ => throw new ArgumentOutOfRangeException(nameof(rolloverBehavior), rolloverBehavior, null)
         };
 

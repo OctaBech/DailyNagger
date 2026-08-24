@@ -713,15 +713,6 @@
           }
         }
       },
-      "RolloverBehaviorDto": {
-        "enum": [
-          "Keep",
-          "Remove",
-          "RemoveWhenDone",
-          "MoveValueToHistory",
-          "CarryOverValue"
-        ]
-      },
       "SaveTagRequest": {
         "required": [
           "communityId",
@@ -934,7 +925,7 @@
             ]
           },
           "rolloverBehavior": {
-            "$ref": "#/components/schemas/RolloverBehaviorDto"
+            "$ref": "#/components/schemas/TaskEntryRolloverBehaviorDto"
           },
           "interactionAt": {
             "type": [
@@ -969,6 +960,13 @@
             "format": "date-time"
           }
         }
+      },
+      "TaskEntryRolloverBehaviorDto": {
+        "enum": [
+          "Remove",
+          "MoveValueToHistory",
+          "CarryOverValue"
+        ]
       },
       "TaskEntryValueTypeDto": {
         "enum": [
@@ -1095,7 +1093,7 @@
             "type": "boolean"
           },
           "rolloverBehavior": {
-            "$ref": "#/components/schemas/RolloverBehaviorDto"
+            "$ref": "#/components/schemas/TaskItemRolloverBehaviorDto"
           },
           "interactionAt": {
             "type": [
@@ -1138,6 +1136,12 @@
             "format": "int32"
           }
         }
+      },
+      "TaskItemRolloverBehaviorDto": {
+        "enum": [
+          "Keep",
+          "RemoveWhenDone"
+        ]
       },
       "TaskLogDto": {
         "required": [

@@ -126,7 +126,7 @@ public static class NagPlanApi
                 .ToArray(),
             Tag: node.Tag,
             IsDone: node.IsDone,
-            RolloverBehavior: ToDto(node.RolloverBehavior),
+            RolloverBehavior: ToTaskItemRolloverBehaviorDto(node.RolloverBehavior),
             InteractionAt: node.InteractionAt,
             InteractionTimeZone: node.InteractionTimeZone,
             InteractionLocale: node.InteractionLocale,
@@ -146,7 +146,7 @@ public static class NagPlanApi
             input.Tag,
             input.Value,
             input.LastTaskRunReferenceValue,
-            ToDto(input.RolloverBehavior),
+            ToTaskEntryRolloverBehaviorDto(input.RolloverBehavior),
             input.InteractionAt,
             input.InteractionTimeZone,
             input.InteractionLocale,
@@ -178,14 +178,20 @@ public static class NagPlanApi
             _ => throw new ArgumentOutOfRangeException(nameof(valueType), valueType, null)
         };
 
-    private static RolloverBehaviorDto ToDto(RolloverBehavior rolloverBehavior) =>
+    private static TaskItemRolloverBehaviorDto ToTaskItemRolloverBehaviorDto(RolloverBehavior rolloverBehavior) =>
         rolloverBehavior switch
         {
-            RolloverBehavior.Keep => RolloverBehaviorDto.Keep,
-            RolloverBehavior.Remove => RolloverBehaviorDto.Remove,
-            RolloverBehavior.RemoveWhenDone => RolloverBehaviorDto.RemoveWhenDone,
-            RolloverBehavior.MoveValueToHistory => RolloverBehaviorDto.MoveValueToHistory,
-            RolloverBehavior.CarryOverValue => RolloverBehaviorDto.CarryOverValue,
+            RolloverBehavior.Keep => TaskItemRolloverBehaviorDto.Keep,
+            RolloverBehavior.RemoveWhenDone => TaskItemRolloverBehaviorDto.RemoveWhenDone,
+            _ => throw new ArgumentOutOfRangeException(nameof(rolloverBehavior), rolloverBehavior, null)
+        };
+
+    private static TaskEntryRolloverBehaviorDto ToTaskEntryRolloverBehaviorDto(RolloverBehavior rolloverBehavior) =>
+        rolloverBehavior switch
+        {
+            RolloverBehavior.Remove => TaskEntryRolloverBehaviorDto.Remove,
+            RolloverBehavior.MoveValueToHistory => TaskEntryRolloverBehaviorDto.MoveValueToHistory,
+            RolloverBehavior.CarryOverValue => TaskEntryRolloverBehaviorDto.CarryOverValue,
             _ => throw new ArgumentOutOfRangeException(nameof(rolloverBehavior), rolloverBehavior, null)
         };
 }

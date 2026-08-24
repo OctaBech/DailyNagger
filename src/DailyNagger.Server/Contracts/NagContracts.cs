@@ -132,7 +132,7 @@ public sealed record TaskItemDto(
     TaskItemDto[] TaskItems,
     string? Tag = null,
     bool IsDone = false,
-    RolloverBehaviorDto RolloverBehavior = RolloverBehaviorDto.Keep,
+    TaskItemRolloverBehaviorDto RolloverBehavior = TaskItemRolloverBehaviorDto.Keep,
     DateTimeOffset? InteractionAt = null,
     string? InteractionTimeZone = null,
     string? InteractionLocale = null,
@@ -141,11 +141,15 @@ public sealed record TaskItemDto(
     int DescendantTaskItemCount = 0,
     int DoneDescendantTaskItemCount = 0);
 
-public enum RolloverBehaviorDto
+public enum TaskItemRolloverBehaviorDto
 {
     Keep,
+    RemoveWhenDone
+}
+
+public enum TaskEntryRolloverBehaviorDto
+{
     Remove,
-    RemoveWhenDone,
     MoveValueToHistory,
     CarryOverValue
 }
@@ -160,7 +164,7 @@ public sealed record TaskEntryDto(
     string? Tag,
     string? Value,
     string? LastTaskRunReferenceValue = null,
-    RolloverBehaviorDto RolloverBehavior = RolloverBehaviorDto.Keep,
+    TaskEntryRolloverBehaviorDto RolloverBehavior = TaskEntryRolloverBehaviorDto.MoveValueToHistory,
     DateTimeOffset? InteractionAt = null,
     string? InteractionTimeZone = null,
     string? InteractionLocale = null,
