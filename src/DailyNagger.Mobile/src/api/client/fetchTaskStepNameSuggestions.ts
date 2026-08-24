@@ -1,10 +1,7 @@
 import { environment } from "@/config";
 import type { Guid } from "@/shared";
 import { apiJsonRequest } from "./apiRequest";
-
-export type TaskStepNameSuggestionDto = {
-  readonly name: string;
-};
+import type { TaskStepNameSuggestionDto } from "@api-contracts";
 
 export async function fetchTaskStepNameSuggestions(
   naggerId: Guid,

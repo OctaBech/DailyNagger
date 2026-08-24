@@ -21,3 +21,7 @@ export type NaggerPinnedByDto = components["schemas"]["NaggerPinnedByDto"];
 export type ScheduleRuleTypeDto = components["schemas"]["ScheduleRuleTypeDto"];
 export type RolloverBehaviorDto = components["schemas"]["RolloverBehaviorDto"];
 export type TaskEntryValueTypeDto = components["schemas"]["TaskEntryValueTypeDto"];
+
+export type NaggerPinnedBy = NaggerPinnedByDto;
+export type ScheduleRuleType = ScheduleRuleTypeDto;
+export type TaskEntryValueType = TaskEntryValueTypeDto;
