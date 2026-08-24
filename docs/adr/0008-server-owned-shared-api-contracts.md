@@ -29,15 +29,22 @@ DTOs.
 
 The server C# contracts are the source of truth.
 
-The server exposes an OpenAPI document.
+The server exposes an OpenAPI document using the built-in ASP.NET Core OpenAPI
+support.
 
-NSwag is used to generate TypeScript DTO/client code from that OpenAPI document.
+The mobile client uses `openapi-typescript` to generate TypeScript contract
+types from that OpenAPI document.
+
+Generated code should be pure contract types. DailyNagger should not generate a
+second HTTP client. The handwritten mobile API boundary owns request creation,
+headers, observability, error handling, React Query wiring, and app-specific
+adaptation.
 
 Generated TypeScript files must not be edited by hand. If the generated code is
 wrong, fix the C# contract or the generator configuration.
 
-Hand-written client API boundary code may still exist. Its job is to adapt the
-generated DTOs to DailyNagger app code, not to redefine the server contract.
+Hand-written client API boundary code may still exist. Its job is to use the
+generated DTOs, not to redefine the server contract.
 
 ## Consequences
 
@@ -53,3 +60,6 @@ path and compare generated contracts with the current hand-written mobile DTOs.
 
 Once the generated contracts are stable, mobile imports can be moved over in
 small slices.
+
+CI should fail when generated contracts are stale. A server DTO change should be
+visible as a C# contract diff and a generated TypeScript contract diff.
