@@ -17,6 +17,8 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
   - `-Notify`: play a sound when done.
 - `validate-local-observability.ps1` checks local SQL Server, Seq, server health, and request-id logging.
 - `validate-local-compose.ps1` builds and starts the local Docker stack, then checks server, database, and Seq request-id logging.
+- `update-api-contracts.ps1` fetches OpenAPI from a running local API and regenerates TypeScript contracts.
+  - `-OpenApiUrl`: OpenAPI endpoint override, default `http://localhost:5010/openapi/v1.json`.
 
 ## Mobile
 

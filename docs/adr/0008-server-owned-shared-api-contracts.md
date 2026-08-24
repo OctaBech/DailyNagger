@@ -43,6 +43,15 @@ adaptation.
 Generated TypeScript files must not be edited by hand. If the generated code is
 wrong, fix the C# contract or the generator configuration.
 
+OpenAPI customization belongs on the server side. Use a central schema
+transformer for project-wide contract rules, such as removing JSON-number string
+fallbacks from integer fields or marking always-present nullable fields as
+required.
+
+Use `npm run contracts:update` against a running local API when the server
+contract changes. Use `npm run contracts:check` to verify that generated
+TypeScript still matches the committed OpenAPI document.
+
 Hand-written client API boundary code may still exist. Its job is to use the
 generated DTOs, not to redefine the server contract.
 

@@ -424,7 +424,7 @@ export interface paths {
                     userId: string;
                     from?: string;
                     to?: string;
-                    take?: number | string;
+                    take?: number;
                 };
                 header?: never;
                 path?: never;
@@ -499,7 +499,7 @@ export interface components {
             updatedByDeviceModel: null | string;
             scheduleRules: components["schemas"]["ScheduleRuleDto"][];
             /** Format: int32 */
-            version: number | string;
+            version: number;
         };
         /** @enum {unknown} */
         NaggerPinnedByDto: "None" | "User" | "Llm" | "Community";
@@ -528,12 +528,9 @@ export interface components {
             scheduleRules: components["schemas"]["ScheduleRuleDto"][];
             taskLog: components["schemas"]["TaskLogDto"];
             /** Format: int32 */
-            version: number | string;
+            version: number;
         };
-        /**
-         * @default Keep
-         * @enum {unknown}
-         */
+        /** @enum {unknown} */
         RolloverBehaviorDto: "Keep" | "Remove" | "RemoveWhenDone" | "MoveValueToHistory" | "CarryOverValue";
         SaveTagRequest: {
             /** Format: uuid */
@@ -587,15 +584,15 @@ export interface components {
             valueType: components["schemas"]["TaskEntryValueTypeDto"];
             tag: null | string;
             value: null | string;
-            lastTaskRunReferenceValue?: null | string;
-            rolloverBehavior?: components["schemas"]["RolloverBehaviorDto"];
+            lastTaskRunReferenceValue: null | string;
+            rolloverBehavior: components["schemas"]["RolloverBehaviorDto"];
             /** Format: date-time */
-            interactionAt?: null | string;
-            interactionTimeZone?: null | string;
-            interactionLocale?: null | string;
-            interactionMood?: null | string;
+            interactionAt: null | string;
+            interactionTimeZone: null | string;
+            interactionLocale: null | string;
+            interactionMood: null | string;
             /** Format: date-time */
-            interactionMoodAt?: null | string;
+            interactionMoodAt: null | string;
         };
         /** @enum {unknown} */
         TaskEntryValueTypeDto: "Text" | "Integer" | "Decimal" | "Boolean";
@@ -604,12 +601,12 @@ export interface components {
             id: string;
             value: null | string;
             /** Format: date-time */
-            interactionAt?: null | string;
-            interactionTimeZone?: null | string;
-            interactionLocale?: null | string;
-            interactionMood?: null | string;
+            interactionAt: null | string;
+            interactionTimeZone: null | string;
+            interactionLocale: null | string;
+            interactionMood: null | string;
             /** Format: date-time */
-            interactionMoodAt?: null | string;
+            interactionMoodAt: null | string;
         };
         TaskItemDto: {
             /** Format: uuid */
@@ -621,27 +618,20 @@ export interface components {
             name: string;
             taskEntries: components["schemas"]["TaskEntryDto"][];
             taskItems: components["schemas"]["TaskItemDto"][];
-            tag?: null | string;
-            /** @default false */
+            tag: null | string;
             isDone: boolean;
-            rolloverBehavior?: components["schemas"]["RolloverBehaviorDto"];
+            rolloverBehavior: components["schemas"]["RolloverBehaviorDto"];
             /** Format: date-time */
-            interactionAt?: null | string;
-            interactionTimeZone?: null | string;
-            interactionLocale?: null | string;
-            interactionMood?: null | string;
+            interactionAt: null | string;
+            interactionTimeZone: null | string;
+            interactionLocale: null | string;
+            interactionMood: null | string;
             /** Format: date-time */
-            interactionMoodAt?: null | string;
-            /**
-             * Format: int32
-             * @default 0
-             */
-            descendantTaskItemCount: number | string;
-            /**
-             * Format: int32
-             * @default 0
-             */
-            doneDescendantTaskItemCount: number | string;
+            interactionMoodAt: null | string;
+            /** Format: int32 */
+            descendantTaskItemCount: number;
+            /** Format: int32 */
+            doneDescendantTaskItemCount: number;
         };
         TaskLogDto: {
             /** Format: uuid */
@@ -658,23 +648,17 @@ export interface components {
             updatedByDeviceName: null | string;
             updatedByDeviceModel: null | string;
             /** Format: int32 */
-            version: number | string;
+            version: number;
             taskItems: components["schemas"]["TaskItemDto"][];
-            tag?: null | string;
-            /**
-             * Format: int32
-             * @default 0
-             */
-            descendantTaskItemCount: number | string;
-            /**
-             * Format: int32
-             * @default 0
-             */
-            doneDescendantTaskItemCount: number | string;
+            tag: null | string;
+            /** Format: int32 */
+            descendantTaskItemCount: number;
+            /** Format: int32 */
+            doneDescendantTaskItemCount: number;
         };
         TaskLogVersionDto: {
             /** Format: int32 */
-            version: number | string;
+            version: number;
             /** Format: date-time */
             updatedAt: string;
         };
@@ -690,9 +674,9 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             /** Format: int32 */
-            baseVersion: number | string;
+            baseVersion: number;
             /** Format: int32 */
-            nextVersion: number | string;
+            nextVersion: number;
             clientIdentity?: null | components["schemas"]["ClientIdentityDto"];
         };
     };

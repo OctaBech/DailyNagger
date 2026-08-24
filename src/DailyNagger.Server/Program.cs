@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using DailyNagger.Server.Api;
+using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
@@ -18,7 +19,10 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
         .ReadFrom.Services(services)
         .Enrich.FromLogContext();
 }, writeToProviders: false);
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddSchemaTransformer<OpenApiContractSchemaTransformer>();
+});
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
