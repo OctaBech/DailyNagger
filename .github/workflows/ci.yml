@@ -48,6 +48,30 @@ jobs:
       - name: Test
         run: dotnet test DailyNagger.sln --configuration Release --no-build
 
+  api-contracts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: src/api-contracts/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/api-contracts
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run contracts:typecheck
+
+      - name: Check generated contracts
+        run: npm run contracts:check
+
   mobile:
     runs-on: ubuntu-latest
 
