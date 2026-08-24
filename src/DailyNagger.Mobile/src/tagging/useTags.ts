@@ -1,4 +1,5 @@
-import { fetchTags, saveTag, type TagDto } from "@/api";
+import { fetchTags, saveTag } from "@/api";
+import type { TagDto } from "@api-contracts";
 import { useRemoteListQuery, useRemoteListUpsertMutation } from "@/api/react-query";
 import type { Prettify } from "@/shared";
 import type { TagType } from "./tagTypes";

@@ -1,11 +1,6 @@
 import { environment } from "@/config";
 import { apiJsonRequest } from "./apiRequest";
-
-export type TagDto = {
-  readonly name: string;
-  readonly description: string | null;
-  readonly lastUsedAt: string | null;
-};
+import type { TagDto } from "@api-contracts";
 
 export async function fetchTags(tagType: string): Promise<readonly TagDto[]> {
   const query = new URLSearchParams({

@@ -1,5 +1,5 @@
 import { environment } from "@/config";
-import type { TagDto } from "./fetchTags";
+import type { TagDto } from "@api-contracts";
 import { apiJsonRequest } from "./apiRequest";
 
 export async function saveTag(

@@ -1,0 +1,1359 @@
+{
+    "openapi":  "3.1.1",
+    "info":  {
+                 "title":  "DailyNagger.Server | v1",
+                 "version":  "1.0.0"
+             },
+    "servers":  [
+                    {
+                        "url":  "http://localhost:5007/"
+                    }
+                ],
+    "paths":  {
+                  "/api/health":  {
+                                      "get":  {
+                                                  "tags":  [
+                                                               "System"
+                                                           ],
+                                                  "responses":  {
+                                                                    "200":  {
+                                                                                "description":  "OK"
+                                                                            }
+                                                                }
+                                              }
+                                  },
+                  "/api/health/database":  {
+                                               "get":  {
+                                                           "tags":  [
+                                                                        "System"
+                                                                    ],
+                                                           "responses":  {
+                                                                             "200":  {
+                                                                                         "description":  "OK"
+                                                                                     }
+                                                                         }
+                                                       }
+                                           },
+                  "/api/nags":  {
+                                    "get":  {
+                                                "tags":  [
+                                                             "Nags"
+                                                         ],
+                                                "parameters":  [
+                                                                   {
+                                                                       "name":  "communityId",
+                                                                       "in":  "query",
+                                                                       "required":  true,
+                                                                       "schema":  {
+                                                                                      "type":  "string",
+                                                                                      "format":  "uuid"
+                                                                                  }
+                                                                   }
+                                                               ],
+                                                "responses":  {
+                                                                  "200":  {
+                                                                              "description":  "OK",
+                                                                              "content":  {
+                                                                                              "application/json":  {
+                                                                                                                       "schema":  {
+                                                                                                                                      "type":  "array",
+                                                                                                                                      "items":  {
+                                                                                                                                                    "$ref":  "#/components/schemas/NaggerDto"
+                                                                                                                                                }
+                                                                                                                                  }
+                                                                                                                   }
+                                                                                          }
+                                                                          }
+                                                              }
+                                            }
+                                },
+                  "/api/nags/{id}":  {
+                                         "put":  {
+                                                     "tags":  [
+                                                                  "Nags"
+                                                              ],
+                                                     "parameters":  [
+                                                                        {
+                                                                            "name":  "id",
+                                                                            "in":  "path",
+                                                                            "required":  true,
+                                                                            "schema":  {
+                                                                                           "type":  "string",
+                                                                                           "format":  "uuid"
+                                                                                       }
+                                                                        }
+                                                                    ],
+                                                     "requestBody":  {
+                                                                         "content":  {
+                                                                                         "application/json":  {
+                                                                                                                  "schema":  {
+                                                                                                                                 "$ref":  "#/components/schemas/JsonElement"
+                                                                                                                             }
+                                                                                                              }
+                                                                                     },
+                                                                         "required":  true
+                                                                     },
+                                                     "responses":  {
+                                                                       "200":  {
+                                                                                   "description":  "OK",
+                                                                                   "content":  {
+                                                                                                   "application/json":  {
+                                                                                                                            "schema":  {
+                                                                                                                                           "$ref":  "#/components/schemas/NaggerDto"
+                                                                                                                                       }
+                                                                                                                        }
+                                                                                               }
+                                                                               }
+                                                                   }
+                                                 }
+                                     },
+                  "/api/todays-nag-plan":  {
+                                               "get":  {
+                                                           "tags":  [
+                                                                        "NagPlan"
+                                                                    ],
+                                                           "parameters":  [
+                                                                              {
+                                                                                  "name":  "communityId",
+                                                                                  "in":  "query",
+                                                                                  "required":  true,
+                                                                                  "schema":  {
+                                                                                                 "type":  "string",
+                                                                                                 "format":  "uuid"
+                                                                                             }
+                                                                              },
+                                                                              {
+                                                                                  "name":  "userId",
+                                                                                  "in":  "query",
+                                                                                  "required":  true,
+                                                                                  "schema":  {
+                                                                                                 "type":  "string",
+                                                                                                 "format":  "uuid"
+                                                                                             }
+                                                                              },
+                                                                              {
+                                                                                  "name":  "date",
+                                                                                  "in":  "query",
+                                                                                  "required":  true,
+                                                                                  "schema":  {
+                                                                                                 "type":  "string",
+                                                                                                 "format":  "date"
+                                                                                             }
+                                                                              }
+                                                                          ],
+                                                           "responses":  {
+                                                                             "200":  {
+                                                                                         "description":  "OK",
+                                                                                         "content":  {
+                                                                                                         "application/json":  {
+                                                                                                                                  "schema":  {
+                                                                                                                                                 "$ref":  "#/components/schemas/NagPlanDto"
+                                                                                                                                             }
+                                                                                                                              }
+                                                                                                     }
+                                                                                     }
+                                                                         }
+                                                       }
+                                           },
+                  "/api/nag-plan":  {
+                                        "get":  {
+                                                    "tags":  [
+                                                                 "NagPlan"
+                                                             ],
+                                                    "parameters":  [
+                                                                       {
+                                                                           "name":  "communityId",
+                                                                           "in":  "query",
+                                                                           "required":  true,
+                                                                           "schema":  {
+                                                                                          "type":  "string",
+                                                                                          "format":  "uuid"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "userId",
+                                                                           "in":  "query",
+                                                                           "required":  true,
+                                                                           "schema":  {
+                                                                                          "type":  "string",
+                                                                                          "format":  "uuid"
+                                                                                      }
+                                                                       },
+                                                                       {
+                                                                           "name":  "date",
+                                                                           "in":  "query",
+                                                                           "required":  true,
+                                                                           "schema":  {
+                                                                                          "type":  "string",
+                                                                                          "format":  "date"
+                                                                                      }
+                                                                       }
+                                                                   ],
+                                                    "responses":  {
+                                                                      "200":  {
+                                                                                  "description":  "OK",
+                                                                                  "content":  {
+                                                                                                  "application/json":  {
+                                                                                                                           "schema":  {
+                                                                                                                                          "$ref":  "#/components/schemas/NagPlanDto"
+                                                                                                                                      }
+                                                                                                                       }
+                                                                                              }
+                                                                              }
+                                                                  }
+                                                }
+                                    },
+                  "/api/task-logs/{id}":  {
+                                              "put":  {
+                                                          "tags":  [
+                                                                       "TaskLogs"
+                                                                   ],
+                                                          "parameters":  [
+                                                                             {
+                                                                                 "name":  "id",
+                                                                                 "in":  "path",
+                                                                                 "required":  true,
+                                                                                 "schema":  {
+                                                                                                "type":  "string",
+                                                                                                "format":  "uuid"
+                                                                                            }
+                                                                             }
+                                                                         ],
+                                                          "requestBody":  {
+                                                                              "content":  {
+                                                                                              "application/json":  {
+                                                                                                                       "schema":  {
+                                                                                                                                      "$ref":  "#/components/schemas/JsonElement"
+                                                                                                                                  }
+                                                                                                                   }
+                                                                                          },
+                                                                              "required":  true
+                                                                          },
+                                                          "responses":  {
+                                                                            "200":  {
+                                                                                        "description":  "OK",
+                                                                                        "content":  {
+                                                                                                        "application/json":  {
+                                                                                                                                 "schema":  {
+                                                                                                                                                "$ref":  "#/components/schemas/TaskLogDto"
+                                                                                                                                            }
+                                                                                                                             }
+                                                                                                    }
+                                                                                    }
+                                                                        }
+                                                      }
+                                          },
+                  "/api/task-logs/{id}/task-entries":  {
+                                                           "patch":  {
+                                                                         "tags":  [
+                                                                                      "TaskLogs"
+                                                                                  ],
+                                                                         "parameters":  [
+                                                                                            {
+                                                                                                "name":  "id",
+                                                                                                "in":  "path",
+                                                                                                "required":  true,
+                                                                                                "schema":  {
+                                                                                                               "type":  "string",
+                                                                                                               "format":  "uuid"
+                                                                                                           }
+                                                                                            }
+                                                                                        ],
+                                                                         "requestBody":  {
+                                                                                             "content":  {
+                                                                                                             "application/json":  {
+                                                                                                                                      "schema":  {
+                                                                                                                                                     "$ref":  "#/components/schemas/UpdateTaskEntryValuesRequest"
+                                                                                                                                                 }
+                                                                                                                                  }
+                                                                                                         },
+                                                                                             "required":  true
+                                                                                         },
+                                                                         "responses":  {
+                                                                                           "200":  {
+                                                                                                       "description":  "OK",
+                                                                                                       "content":  {
+                                                                                                                       "application/json":  {
+                                                                                                                                                "schema":  {
+                                                                                                                                                               "$ref":  "#/components/schemas/TaskLogVersionDto"
+                                                                                                                                                           }
+                                                                                                                                            }
+                                                                                                                   }
+                                                                                                   }
+                                                                                       }
+                                                                     }
+                                                       },
+                  "/api/tags":  {
+                                    "get":  {
+                                                "tags":  [
+                                                             "Tags"
+                                                         ],
+                                                "parameters":  [
+                                                                   {
+                                                                       "name":  "communityId",
+                                                                       "in":  "query",
+                                                                       "required":  true,
+                                                                       "schema":  {
+                                                                                      "type":  "string",
+                                                                                      "format":  "uuid"
+                                                                                  }
+                                                                   },
+                                                                   {
+                                                                       "name":  "userId",
+                                                                       "in":  "query",
+                                                                       "required":  true,
+                                                                       "schema":  {
+                                                                                      "type":  "string",
+                                                                                      "format":  "uuid"
+                                                                                  }
+                                                                   },
+                                                                   {
+                                                                       "name":  "tagType",
+                                                                       "in":  "query",
+                                                                       "required":  true,
+                                                                       "schema":  {
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                   }
+                                                               ],
+                                                "responses":  {
+                                                                  "200":  {
+                                                                              "description":  "OK",
+                                                                              "content":  {
+                                                                                              "application/json":  {
+                                                                                                                       "schema":  {
+                                                                                                                                      "type":  "array",
+                                                                                                                                      "items":  {
+                                                                                                                                                    "$ref":  "#/components/schemas/TagDto"
+                                                                                                                                                }
+                                                                                                                                  }
+                                                                                                                   }
+                                                                                          }
+                                                                          }
+                                                              }
+                                            },
+                                    "put":  {
+                                                "tags":  [
+                                                             "Tags"
+                                                         ],
+                                                "requestBody":  {
+                                                                    "content":  {
+                                                                                    "application/json":  {
+                                                                                                             "schema":  {
+                                                                                                                            "$ref":  "#/components/schemas/SaveTagRequest"
+                                                                                                                        }
+                                                                                                         }
+                                                                                },
+                                                                    "required":  true
+                                                                },
+                                                "responses":  {
+                                                                  "200":  {
+                                                                              "description":  "OK",
+                                                                              "content":  {
+                                                                                              "application/json":  {
+                                                                                                                       "schema":  {
+                                                                                                                                      "$ref":  "#/components/schemas/TagDto"
+                                                                                                                                  }
+                                                                                                                   }
+                                                                                          }
+                                                                          }
+                                                              }
+                                            }
+                                },
+                  "/api/naggers/{naggerId}/task-step-name-suggestions":  {
+                                                                             "get":  {
+                                                                                         "tags":  [
+                                                                                                      "TaskStepSuggestions"
+                                                                                                  ],
+                                                                                         "parameters":  [
+                                                                                                            {
+                                                                                                                "name":  "communityId",
+                                                                                                                "in":  "query",
+                                                                                                                "required":  true,
+                                                                                                                "schema":  {
+                                                                                                                               "type":  "string",
+                                                                                                                               "format":  "uuid"
+                                                                                                                           }
+                                                                                                            },
+                                                                                                            {
+                                                                                                                "name":  "userId",
+                                                                                                                "in":  "query",
+                                                                                                                "required":  true,
+                                                                                                                "schema":  {
+                                                                                                                               "type":  "string",
+                                                                                                                               "format":  "uuid"
+                                                                                                                           }
+                                                                                                            },
+                                                                                                            {
+                                                                                                                "name":  "naggerId",
+                                                                                                                "in":  "path",
+                                                                                                                "required":  true,
+                                                                                                                "schema":  {
+                                                                                                                               "type":  "string",
+                                                                                                                               "format":  "uuid"
+                                                                                                                           }
+                                                                                                            }
+                                                                                                        ],
+                                                                                         "responses":  {
+                                                                                                           "200":  {
+                                                                                                                       "description":  "OK",
+                                                                                                                       "content":  {
+                                                                                                                                       "application/json":  {
+                                                                                                                                                                "schema":  {
+                                                                                                                                                                               "type":  "array",
+                                                                                                                                                                               "items":  {
+                                                                                                                                                                                             "$ref":  "#/components/schemas/TaskStepNameSuggestionDto"
+                                                                                                                                                                                         }
+                                                                                                                                                                           }
+                                                                                                                                                            }
+                                                                                                                                   }
+                                                                                                                   }
+                                                                                                       }
+                                                                                     }
+                                                                         },
+                  "/api/user-moods":  {
+                                          "get":  {
+                                                      "tags":  [
+                                                                   "UserMoods"
+                                                               ],
+                                                      "parameters":  [
+                                                                         {
+                                                                             "name":  "communityId",
+                                                                             "in":  "query",
+                                                                             "required":  true,
+                                                                             "schema":  {
+                                                                                            "type":  "string",
+                                                                                            "format":  "uuid"
+                                                                                        }
+                                                                         },
+                                                                         {
+                                                                             "name":  "userId",
+                                                                             "in":  "query",
+                                                                             "required":  true,
+                                                                             "schema":  {
+                                                                                            "type":  "string",
+                                                                                            "format":  "uuid"
+                                                                                        }
+                                                                         },
+                                                                         {
+                                                                             "name":  "from",
+                                                                             "in":  "query",
+                                                                             "schema":  {
+                                                                                            "type":  "string",
+                                                                                            "format":  "date-time"
+                                                                                        }
+                                                                         },
+                                                                         {
+                                                                             "name":  "to",
+                                                                             "in":  "query",
+                                                                             "schema":  {
+                                                                                            "type":  "string",
+                                                                                            "format":  "date-time"
+                                                                                        }
+                                                                         },
+                                                                         {
+                                                                             "name":  "take",
+                                                                             "in":  "query",
+                                                                             "schema":  {
+                                                                                            "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                            "type":  [
+                                                                                                         "integer",
+                                                                                                         "string"
+                                                                                                     ],
+                                                                                            "format":  "int32"
+                                                                                        }
+                                                                         }
+                                                                     ],
+                                                      "responses":  {
+                                                                        "200":  {
+                                                                                    "description":  "OK"
+                                                                                }
+                                                                    }
+                                                  },
+                                          "post":  {
+                                                       "tags":  [
+                                                                    "UserMoods"
+                                                                ],
+                                                       "requestBody":  {
+                                                                           "content":  {
+                                                                                           "application/json":  {
+                                                                                                                    "schema":  {
+                                                                                                                                   "$ref":  "#/components/schemas/SaveUserMoodRequest"
+                                                                                                                               }
+                                                                                                                }
+                                                                                       },
+                                                                           "required":  true
+                                                                       },
+                                                       "responses":  {
+                                                                         "200":  {
+                                                                                     "description":  "OK"
+                                                                                 }
+                                                                     }
+                                                   }
+                                      }
+              },
+    "components":  {
+                       "schemas":  {
+                                       "ClientIdentityDto":  {
+                                                                 "required":  [
+                                                                                  "clientId",
+                                                                                  "deviceName",
+                                                                                  "deviceModel"
+                                                                              ],
+                                                                 "type":  "object",
+                                                                 "properties":  {
+                                                                                    "clientId":  {
+                                                                                                     "type":  "string"
+                                                                                                 },
+                                                                                    "deviceName":  {
+                                                                                                       "type":  "string"
+                                                                                                   },
+                                                                                    "deviceModel":  {
+                                                                                                        "type":  "string"
+                                                                                                    }
+                                                                                }
+                                                             },
+                                       "JsonElement":  {
+
+                                                       },
+                                       "NaggerDto":  {
+                                                         "required":  [
+                                                                          "id",
+                                                                          "title",
+                                                                          "activeLogDueOn",
+                                                                          "expiresOn",
+                                                                          "targetTime",
+                                                                          "isDeactivated",
+                                                                          "pinnedBy",
+                                                                          "updatedAt",
+                                                                          "updatedByClientId",
+                                                                          "updatedByDeviceName",
+                                                                          "updatedByDeviceModel",
+                                                                          "scheduleRules",
+                                                                          "version"
+                                                                      ],
+                                                         "type":  "object",
+                                                         "properties":  {
+                                                                            "id":  {
+                                                                                       "type":  "string",
+                                                                                       "format":  "uuid"
+                                                                                   },
+                                                                            "title":  {
+                                                                                          "type":  "string"
+                                                                                      },
+                                                                            "activeLogDueOn":  {
+                                                                                                   "type":  [
+                                                                                                                "null",
+                                                                                                                "string"
+                                                                                                            ],
+                                                                                                   "format":  "date"
+                                                                                               },
+                                                                            "expiresOn":  {
+                                                                                              "type":  [
+                                                                                                           "null",
+                                                                                                           "string"
+                                                                                                       ],
+                                                                                              "format":  "date"
+                                                                                          },
+                                                                            "targetTime":  {
+                                                                                               "type":  [
+                                                                                                            "null",
+                                                                                                            "string"
+                                                                                                        ],
+                                                                                               "format":  "time"
+                                                                                           },
+                                                                            "isDeactivated":  {
+                                                                                                  "type":  "boolean"
+                                                                                              },
+                                                                            "pinnedBy":  {
+                                                                                             "$ref":  "#/components/schemas/NaggerPinnedByDto"
+                                                                                         },
+                                                                            "updatedAt":  {
+                                                                                              "type":  "string",
+                                                                                              "format":  "date-time"
+                                                                                          },
+                                                                            "updatedByClientId":  {
+                                                                                                      "type":  [
+                                                                                                                   "null",
+                                                                                                                   "string"
+                                                                                                               ]
+                                                                                                  },
+                                                                            "updatedByDeviceName":  {
+                                                                                                        "type":  [
+                                                                                                                     "null",
+                                                                                                                     "string"
+                                                                                                                 ]
+                                                                                                    },
+                                                                            "updatedByDeviceModel":  {
+                                                                                                         "type":  [
+                                                                                                                      "null",
+                                                                                                                      "string"
+                                                                                                                  ]
+                                                                                                     },
+                                                                            "scheduleRules":  {
+                                                                                                  "type":  "array",
+                                                                                                  "items":  {
+                                                                                                                "$ref":  "#/components/schemas/ScheduleRuleDto"
+                                                                                                            }
+                                                                                              },
+                                                                            "version":  {
+                                                                                            "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                            "type":  [
+                                                                                                         "integer",
+                                                                                                         "string"
+                                                                                                     ],
+                                                                                            "format":  "int32"
+                                                                                        }
+                                                                        }
+                                                     },
+                                       "NaggerPinnedByDto":  {
+                                                                 "enum":  [
+                                                                              "None",
+                                                                              "User",
+                                                                              "Llm",
+                                                                              "Community"
+                                                                          ]
+                                                             },
+                                       "NagPlanDto":  {
+                                                          "required":  [
+                                                                           "date",
+                                                                           "nags"
+                                                                       ],
+                                                          "type":  "object",
+                                                          "properties":  {
+                                                                             "date":  {
+                                                                                          "type":  "string",
+                                                                                          "format":  "date"
+                                                                                      },
+                                                                             "nags":  {
+                                                                                          "type":  "array",
+                                                                                          "items":  {
+                                                                                                        "$ref":  "#/components/schemas/NagPlanNaggerDto"
+                                                                                                    }
+                                                                                      }
+                                                                         }
+                                                      },
+                                       "NagPlanNaggerDto":  {
+                                                                "required":  [
+                                                                                 "id",
+                                                                                 "title",
+                                                                                 "activeLogDueOn",
+                                                                                 "expiresOn",
+                                                                                 "targetTime",
+                                                                                 "isDeactivated",
+                                                                                 "pinnedBy",
+                                                                                 "updatedAt",
+                                                                                 "updatedByClientId",
+                                                                                 "updatedByDeviceName",
+                                                                                 "updatedByDeviceModel",
+                                                                                 "scheduleRules",
+                                                                                 "taskLog",
+                                                                                 "version"
+                                                                             ],
+                                                                "type":  "object",
+                                                                "properties":  {
+                                                                                   "id":  {
+                                                                                              "type":  "string",
+                                                                                              "format":  "uuid"
+                                                                                          },
+                                                                                   "title":  {
+                                                                                                 "type":  "string"
+                                                                                             },
+                                                                                   "activeLogDueOn":  {
+                                                                                                          "type":  [
+                                                                                                                       "null",
+                                                                                                                       "string"
+                                                                                                                   ],
+                                                                                                          "format":  "date"
+                                                                                                      },
+                                                                                   "expiresOn":  {
+                                                                                                     "type":  [
+                                                                                                                  "null",
+                                                                                                                  "string"
+                                                                                                              ],
+                                                                                                     "format":  "date"
+                                                                                                 },
+                                                                                   "targetTime":  {
+                                                                                                      "type":  [
+                                                                                                                   "null",
+                                                                                                                   "string"
+                                                                                                               ],
+                                                                                                      "format":  "time"
+                                                                                                  },
+                                                                                   "isDeactivated":  {
+                                                                                                         "type":  "boolean"
+                                                                                                     },
+                                                                                   "pinnedBy":  {
+                                                                                                    "$ref":  "#/components/schemas/NaggerPinnedByDto"
+                                                                                                },
+                                                                                   "updatedAt":  {
+                                                                                                     "type":  "string",
+                                                                                                     "format":  "date-time"
+                                                                                                 },
+                                                                                   "updatedByClientId":  {
+                                                                                                             "type":  [
+                                                                                                                          "null",
+                                                                                                                          "string"
+                                                                                                                      ]
+                                                                                                         },
+                                                                                   "updatedByDeviceName":  {
+                                                                                                               "type":  [
+                                                                                                                            "null",
+                                                                                                                            "string"
+                                                                                                                        ]
+                                                                                                           },
+                                                                                   "updatedByDeviceModel":  {
+                                                                                                                "type":  [
+                                                                                                                             "null",
+                                                                                                                             "string"
+                                                                                                                         ]
+                                                                                                            },
+                                                                                   "scheduleRules":  {
+                                                                                                         "type":  "array",
+                                                                                                         "items":  {
+                                                                                                                       "$ref":  "#/components/schemas/ScheduleRuleDto"
+                                                                                                                   }
+                                                                                                     },
+                                                                                   "taskLog":  {
+                                                                                                   "$ref":  "#/components/schemas/TaskLogDto"
+                                                                                               },
+                                                                                   "version":  {
+                                                                                                   "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                   "type":  [
+                                                                                                                "integer",
+                                                                                                                "string"
+                                                                                                            ],
+                                                                                                   "format":  "int32"
+                                                                                               }
+                                                                               }
+                                                            },
+                                       "RolloverBehaviorDto":  {
+                                                                   "enum":  [
+                                                                                "Keep",
+                                                                                "Remove",
+                                                                                "RemoveWhenDone",
+                                                                                "MoveValueToHistory",
+                                                                                "CarryOverValue"
+                                                                            ],
+                                                                   "default":  "Keep"
+                                                               },
+                                       "SaveTagRequest":  {
+                                                              "required":  [
+                                                                               "communityId",
+                                                                               "userId",
+                                                                               "tagType",
+                                                                               "name",
+                                                                               "description"
+                                                                           ],
+                                                              "type":  "object",
+                                                              "properties":  {
+                                                                                 "communityId":  {
+                                                                                                     "type":  "string",
+                                                                                                     "format":  "uuid"
+                                                                                                 },
+                                                                                 "userId":  {
+                                                                                                "type":  "string",
+                                                                                                "format":  "uuid"
+                                                                                            },
+                                                                                 "tagType":  {
+                                                                                                 "type":  "string"
+                                                                                             },
+                                                                                 "name":  {
+                                                                                              "type":  "string"
+                                                                                          },
+                                                                                 "description":  {
+                                                                                                     "type":  [
+                                                                                                                  "null",
+                                                                                                                  "string"
+                                                                                                              ]
+                                                                                                 }
+                                                                             }
+                                                          },
+                                       "SaveUserMoodPayload":  {
+                                                                   "required":  [
+                                                                                    "id",
+                                                                                    "mood",
+                                                                                    "recordedAt"
+                                                                                ],
+                                                                   "type":  "object",
+                                                                   "properties":  {
+                                                                                      "id":  {
+                                                                                                 "type":  "string",
+                                                                                                 "format":  "uuid"
+                                                                                             },
+                                                                                      "mood":  {
+                                                                                                   "type":  "string"
+                                                                                               },
+                                                                                      "recordedAt":  {
+                                                                                                         "type":  "string",
+                                                                                                         "format":  "date-time"
+                                                                                                     },
+                                                                                      "timeZone":  {
+                                                                                                       "type":  [
+                                                                                                                    "null",
+                                                                                                                    "string"
+                                                                                                                ]
+                                                                                                   },
+                                                                                      "locale":  {
+                                                                                                     "type":  [
+                                                                                                                  "null",
+                                                                                                                  "string"
+                                                                                                              ]
+                                                                                                 }
+                                                                                  }
+                                                               },
+                                       "SaveUserMoodRequest":  {
+                                                                   "required":  [
+                                                                                    "communityId",
+                                                                                    "userId",
+                                                                                    "payload"
+                                                                                ],
+                                                                   "type":  "object",
+                                                                   "properties":  {
+                                                                                      "communityId":  {
+                                                                                                          "type":  "string",
+                                                                                                          "format":  "uuid"
+                                                                                                      },
+                                                                                      "userId":  {
+                                                                                                     "type":  "string",
+                                                                                                     "format":  "uuid"
+                                                                                                 },
+                                                                                      "payload":  {
+                                                                                                      "$ref":  "#/components/schemas/SaveUserMoodPayload"
+                                                                                                  },
+                                                                                      "clientIdentity":  {
+                                                                                                             "oneOf":  [
+                                                                                                                           {
+                                                                                                                               "type":  "null"
+                                                                                                                           },
+                                                                                                                           {
+                                                                                                                               "$ref":  "#/components/schemas/ClientIdentityDto"
+                                                                                                                           }
+                                                                                                                       ]
+                                                                                                         }
+                                                                                  }
+                                                               },
+                                       "ScheduleRuleDto":  {
+                                                               "required":  [
+                                                                                "id",
+                                                                                "ruleType",
+                                                                                "ruleJson"
+                                                                            ],
+                                                               "type":  "object",
+                                                               "properties":  {
+                                                                                  "id":  {
+                                                                                             "type":  "string",
+                                                                                             "format":  "uuid"
+                                                                                         },
+                                                                                  "ruleType":  {
+                                                                                                   "$ref":  "#/components/schemas/ScheduleRuleTypeDto"
+                                                                                               },
+                                                                                  "ruleJson":  {
+                                                                                                   "type":  "string"
+                                                                                               }
+                                                                              }
+                                                           },
+                                       "ScheduleRuleTypeDto":  {
+                                                                   "enum":  [
+                                                                                "Weekday",
+                                                                                "Date",
+                                                                                "Holiday"
+                                                                            ]
+                                                               },
+                                       "TagDto":  {
+                                                      "required":  [
+                                                                       "name",
+                                                                       "description",
+                                                                       "lastUsedAt"
+                                                                   ],
+                                                      "type":  "object",
+                                                      "properties":  {
+                                                                         "name":  {
+                                                                                      "type":  "string"
+                                                                                  },
+                                                                         "description":  {
+                                                                                             "type":  [
+                                                                                                          "null",
+                                                                                                          "string"
+                                                                                                      ]
+                                                                                         },
+                                                                         "lastUsedAt":  {
+                                                                                            "type":  [
+                                                                                                         "null",
+                                                                                                         "string"
+                                                                                                     ],
+                                                                                            "format":  "date-time"
+                                                                                        }
+                                                                     }
+                                                  },
+                                       "TaskEntryDto":  {
+                                                            "required":  [
+                                                                             "id",
+                                                                             "taskLogId",
+                                                                             "parentTaskItemId",
+                                                                             "label",
+                                                                             "description",
+                                                                             "valueType",
+                                                                             "tag",
+                                                                             "value"
+                                                                         ],
+                                                            "type":  "object",
+                                                            "properties":  {
+                                                                               "id":  {
+                                                                                          "type":  "string",
+                                                                                          "format":  "uuid"
+                                                                                      },
+                                                                               "taskLogId":  {
+                                                                                                 "type":  "string",
+                                                                                                 "format":  "uuid"
+                                                                                             },
+                                                                               "parentTaskItemId":  {
+                                                                                                        "type":  "string",
+                                                                                                        "format":  "uuid"
+                                                                                                    },
+                                                                               "label":  {
+                                                                                             "type":  "string"
+                                                                                         },
+                                                                               "description":  {
+                                                                                                   "type":  [
+                                                                                                                "null",
+                                                                                                                "string"
+                                                                                                            ]
+                                                                                               },
+                                                                               "valueType":  {
+                                                                                                 "$ref":  "#/components/schemas/TaskEntryValueTypeDto"
+                                                                                             },
+                                                                               "tag":  {
+                                                                                           "type":  [
+                                                                                                        "null",
+                                                                                                        "string"
+                                                                                                    ]
+                                                                                       },
+                                                                               "value":  {
+                                                                                             "type":  [
+                                                                                                          "null",
+                                                                                                          "string"
+                                                                                                      ]
+                                                                                         },
+                                                                               "lastTaskRunReferenceValue":  {
+                                                                                                                 "type":  [
+                                                                                                                              "null",
+                                                                                                                              "string"
+                                                                                                                          ]
+                                                                                                             },
+                                                                               "rolloverBehavior":  {
+                                                                                                        "$ref":  "#/components/schemas/RolloverBehaviorDto"
+                                                                                                    },
+                                                                               "interactionAt":  {
+                                                                                                     "type":  [
+                                                                                                                  "null",
+                                                                                                                  "string"
+                                                                                                              ],
+                                                                                                     "format":  "date-time"
+                                                                                                 },
+                                                                               "interactionTimeZone":  {
+                                                                                                           "type":  [
+                                                                                                                        "null",
+                                                                                                                        "string"
+                                                                                                                    ]
+                                                                                                       },
+                                                                               "interactionLocale":  {
+                                                                                                         "type":  [
+                                                                                                                      "null",
+                                                                                                                      "string"
+                                                                                                                  ]
+                                                                                                     },
+                                                                               "interactionMood":  {
+                                                                                                       "type":  [
+                                                                                                                    "null",
+                                                                                                                    "string"
+                                                                                                                ]
+                                                                                                   },
+                                                                               "interactionMoodAt":  {
+                                                                                                         "type":  [
+                                                                                                                      "null",
+                                                                                                                      "string"
+                                                                                                                  ],
+                                                                                                         "format":  "date-time"
+                                                                                                     }
+                                                                           }
+                                                        },
+                                       "TaskEntryValueTypeDto":  {
+                                                                     "enum":  [
+                                                                                  "Text",
+                                                                                  "Integer",
+                                                                                  "Decimal",
+                                                                                  "Boolean"
+                                                                              ]
+                                                                 },
+                                       "TaskEntryValueUpdateDto":  {
+                                                                       "required":  [
+                                                                                        "id",
+                                                                                        "value"
+                                                                                    ],
+                                                                       "type":  "object",
+                                                                       "properties":  {
+                                                                                          "id":  {
+                                                                                                     "type":  "string",
+                                                                                                     "format":  "uuid"
+                                                                                                 },
+                                                                                          "value":  {
+                                                                                                        "type":  [
+                                                                                                                     "null",
+                                                                                                                     "string"
+                                                                                                                 ]
+                                                                                                    },
+                                                                                          "interactionAt":  {
+                                                                                                                "type":  [
+                                                                                                                             "null",
+                                                                                                                             "string"
+                                                                                                                         ],
+                                                                                                                "format":  "date-time"
+                                                                                                            },
+                                                                                          "interactionTimeZone":  {
+                                                                                                                      "type":  [
+                                                                                                                                   "null",
+                                                                                                                                   "string"
+                                                                                                                               ]
+                                                                                                                  },
+                                                                                          "interactionLocale":  {
+                                                                                                                    "type":  [
+                                                                                                                                 "null",
+                                                                                                                                 "string"
+                                                                                                                             ]
+                                                                                                                },
+                                                                                          "interactionMood":  {
+                                                                                                                  "type":  [
+                                                                                                                               "null",
+                                                                                                                               "string"
+                                                                                                                           ]
+                                                                                                              },
+                                                                                          "interactionMoodAt":  {
+                                                                                                                    "type":  [
+                                                                                                                                 "null",
+                                                                                                                                 "string"
+                                                                                                                             ],
+                                                                                                                    "format":  "date-time"
+                                                                                                                }
+                                                                                      }
+                                                                   },
+                                       "TaskItemDto":  {
+                                                           "required":  [
+                                                                            "id",
+                                                                            "taskLogId",
+                                                                            "parentTaskItemId",
+                                                                            "name",
+                                                                            "taskEntries",
+                                                                            "taskItems"
+                                                                        ],
+                                                           "type":  "object",
+                                                           "properties":  {
+                                                                              "id":  {
+                                                                                         "type":  "string",
+                                                                                         "format":  "uuid"
+                                                                                     },
+                                                                              "taskLogId":  {
+                                                                                                "type":  "string",
+                                                                                                "format":  "uuid"
+                                                                                            },
+                                                                              "parentTaskItemId":  {
+                                                                                                       "type":  [
+                                                                                                                    "null",
+                                                                                                                    "string"
+                                                                                                                ],
+                                                                                                       "format":  "uuid"
+                                                                                                   },
+                                                                              "name":  {
+                                                                                           "type":  "string"
+                                                                                       },
+                                                                              "taskEntries":  {
+                                                                                                  "type":  "array",
+                                                                                                  "items":  {
+                                                                                                                "$ref":  "#/components/schemas/TaskEntryDto"
+                                                                                                            }
+                                                                                              },
+                                                                              "taskItems":  {
+                                                                                                "type":  "array",
+                                                                                                "items":  {
+                                                                                                              "$ref":  "#/components/schemas/TaskItemDto"
+                                                                                                          }
+                                                                                            },
+                                                                              "tag":  {
+                                                                                          "type":  [
+                                                                                                       "null",
+                                                                                                       "string"
+                                                                                                   ]
+                                                                                      },
+                                                                              "isDone":  {
+                                                                                             "type":  "boolean",
+                                                                                             "default":  false
+                                                                                         },
+                                                                              "rolloverBehavior":  {
+                                                                                                       "$ref":  "#/components/schemas/RolloverBehaviorDto"
+                                                                                                   },
+                                                                              "interactionAt":  {
+                                                                                                    "type":  [
+                                                                                                                 "null",
+                                                                                                                 "string"
+                                                                                                             ],
+                                                                                                    "format":  "date-time"
+                                                                                                },
+                                                                              "interactionTimeZone":  {
+                                                                                                          "type":  [
+                                                                                                                       "null",
+                                                                                                                       "string"
+                                                                                                                   ]
+                                                                                                      },
+                                                                              "interactionLocale":  {
+                                                                                                        "type":  [
+                                                                                                                     "null",
+                                                                                                                     "string"
+                                                                                                                 ]
+                                                                                                    },
+                                                                              "interactionMood":  {
+                                                                                                      "type":  [
+                                                                                                                   "null",
+                                                                                                                   "string"
+                                                                                                               ]
+                                                                                                  },
+                                                                              "interactionMoodAt":  {
+                                                                                                        "type":  [
+                                                                                                                     "null",
+                                                                                                                     "string"
+                                                                                                                 ],
+                                                                                                        "format":  "date-time"
+                                                                                                    },
+                                                                              "descendantTaskItemCount":  {
+                                                                                                              "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                              "type":  [
+                                                                                                                           "integer",
+                                                                                                                           "string"
+                                                                                                                       ],
+                                                                                                              "format":  "int32",
+                                                                                                              "default":  0
+                                                                                                          },
+                                                                              "doneDescendantTaskItemCount":  {
+                                                                                                                  "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                                  "type":  [
+                                                                                                                               "integer",
+                                                                                                                               "string"
+                                                                                                                           ],
+                                                                                                                  "format":  "int32",
+                                                                                                                  "default":  0
+                                                                                                              }
+                                                                          }
+                                                       },
+                                       "TaskLogDto":  {
+                                                          "required":  [
+                                                                           "id",
+                                                                           "nagId",
+                                                                           "copiedFromTaskLogId",
+                                                                           "closedOn",
+                                                                           "updatedAt",
+                                                                           "updatedByClientId",
+                                                                           "updatedByDeviceName",
+                                                                           "updatedByDeviceModel",
+                                                                           "version",
+                                                                           "taskItems"
+                                                                       ],
+                                                          "type":  "object",
+                                                          "properties":  {
+                                                                             "id":  {
+                                                                                        "type":  "string",
+                                                                                        "format":  "uuid"
+                                                                                    },
+                                                                             "nagId":  {
+                                                                                           "type":  "string",
+                                                                                           "format":  "uuid"
+                                                                                       },
+                                                                             "copiedFromTaskLogId":  {
+                                                                                                         "type":  [
+                                                                                                                      "null",
+                                                                                                                      "string"
+                                                                                                                  ],
+                                                                                                         "format":  "uuid"
+                                                                                                     },
+                                                                             "closedOn":  {
+                                                                                              "type":  [
+                                                                                                           "null",
+                                                                                                           "string"
+                                                                                                       ],
+                                                                                              "format":  "date-time"
+                                                                                          },
+                                                                             "updatedAt":  {
+                                                                                               "type":  "string",
+                                                                                               "format":  "date-time"
+                                                                                           },
+                                                                             "updatedByClientId":  {
+                                                                                                       "type":  [
+                                                                                                                    "null",
+                                                                                                                    "string"
+                                                                                                                ]
+                                                                                                   },
+                                                                             "updatedByDeviceName":  {
+                                                                                                         "type":  [
+                                                                                                                      "null",
+                                                                                                                      "string"
+                                                                                                                  ]
+                                                                                                     },
+                                                                             "updatedByDeviceModel":  {
+                                                                                                          "type":  [
+                                                                                                                       "null",
+                                                                                                                       "string"
+                                                                                                                   ]
+                                                                                                      },
+                                                                             "version":  {
+                                                                                             "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                             "type":  [
+                                                                                                          "integer",
+                                                                                                          "string"
+                                                                                                      ],
+                                                                                             "format":  "int32"
+                                                                                         },
+                                                                             "taskItems":  {
+                                                                                               "type":  "array",
+                                                                                               "items":  {
+                                                                                                             "$ref":  "#/components/schemas/TaskItemDto"
+                                                                                                         }
+                                                                                           },
+                                                                             "tag":  {
+                                                                                         "type":  [
+                                                                                                      "null",
+                                                                                                      "string"
+                                                                                                  ]
+                                                                                     },
+                                                                             "descendantTaskItemCount":  {
+                                                                                                             "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                             "type":  [
+                                                                                                                          "integer",
+                                                                                                                          "string"
+                                                                                                                      ],
+                                                                                                             "format":  "int32",
+                                                                                                             "default":  0
+                                                                                                         },
+                                                                             "doneDescendantTaskItemCount":  {
+                                                                                                                 "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                                 "type":  [
+                                                                                                                              "integer",
+                                                                                                                              "string"
+                                                                                                                          ],
+                                                                                                                 "format":  "int32",
+                                                                                                                 "default":  0
+                                                                                                             }
+                                                                         }
+                                                      },
+                                       "TaskLogVersionDto":  {
+                                                                 "required":  [
+                                                                                  "version",
+                                                                                  "updatedAt"
+                                                                              ],
+                                                                 "type":  "object",
+                                                                 "properties":  {
+                                                                                    "version":  {
+                                                                                                    "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                    "type":  [
+                                                                                                                 "integer",
+                                                                                                                 "string"
+                                                                                                             ],
+                                                                                                    "format":  "int32"
+                                                                                                },
+                                                                                    "updatedAt":  {
+                                                                                                      "type":  "string",
+                                                                                                      "format":  "date-time"
+                                                                                                  }
+                                                                                }
+                                                             },
+                                       "TaskStepNameSuggestionDto":  {
+                                                                         "required":  [
+                                                                                          "name"
+                                                                                      ],
+                                                                         "type":  "object",
+                                                                         "properties":  {
+                                                                                            "name":  {
+                                                                                                         "type":  "string"
+                                                                                                     }
+                                                                                        }
+                                                                     },
+                                       "UpdateTaskEntryValuesRequest":  {
+                                                                            "required":  [
+                                                                                             "communityId",
+                                                                                             "userId",
+                                                                                             "payload",
+                                                                                             "updatedAt",
+                                                                                             "baseVersion",
+                                                                                             "nextVersion"
+                                                                                         ],
+                                                                            "type":  "object",
+                                                                            "properties":  {
+                                                                                               "communityId":  {
+                                                                                                                   "type":  "string",
+                                                                                                                   "format":  "uuid"
+                                                                                                               },
+                                                                                               "userId":  {
+                                                                                                              "type":  "string",
+                                                                                                              "format":  "uuid"
+                                                                                                          },
+                                                                                               "payload":  {
+                                                                                                               "type":  "array",
+                                                                                                               "items":  {
+                                                                                                                             "$ref":  "#/components/schemas/TaskEntryValueUpdateDto"
+                                                                                                                         }
+                                                                                                           },
+                                                                                               "updatedAt":  {
+                                                                                                                 "type":  "string",
+                                                                                                                 "format":  "date-time"
+                                                                                                             },
+                                                                                               "baseVersion":  {
+                                                                                                                   "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                                   "type":  [
+                                                                                                                                "integer",
+                                                                                                                                "string"
+                                                                                                                            ],
+                                                                                                                   "format":  "int32"
+                                                                                                               },
+                                                                                               "nextVersion":  {
+                                                                                                                   "pattern":  "^-?(?:0|[1-9]\\d*)$",
+                                                                                                                   "type":  [
+                                                                                                                                "integer",
+                                                                                                                                "string"
+                                                                                                                            ],
+                                                                                                                   "format":  "int32"
+                                                                                                               },
+                                                                                               "clientIdentity":  {
+                                                                                                                      "oneOf":  [
+                                                                                                                                    {
+                                                                                                                                        "type":  "null"
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                        "$ref":  "#/components/schemas/ClientIdentityDto"
+                                                                                                                                    }
+                                                                                                                                ]
+                                                                                                                  }
+                                                                                           }
+                                                                        }
+                                   }
+                   },
+    "tags":  [
+                 {
+                     "name":  "System"
+                 },
+                 {
+                     "name":  "Nags"
+                 },
+                 {
+                     "name":  "NagPlan"
+                 },
+                 {
+                     "name":  "TaskLogs"
+                 },
+                 {
+                     "name":  "Tags"
+                 },
+                 {
+                     "name":  "TaskStepSuggestions"
+                 },
+                 {
+                     "name":  "UserMoods"
+                 }
+             ]
+}

@@ -9,7 +9,7 @@ export {
   sendApiRequest,
   SendApiRequestError,
 } from "./client";
-export type { SendApiRequest, TagDto, TaskStepNameSuggestionDto } from "./client";
+export type { SendApiRequest, TaskStepNameSuggestionDto } from "./client";
 export type {
   NagPlanDto,
   NaggerDto,
