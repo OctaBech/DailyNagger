@@ -1,5 +1,8 @@
-import type { NagPlanDto, NaggerDto, TaskLogDto, TaskEntryDto } from "@/api/dto";
-import type { TaskItemDto as GeneratedTaskItemDto } from "@api-contracts";
+import type { NagPlanDto, NaggerDto, TaskEntryDto } from "@/api/dto";
+import type {
+  TaskItemDto as GeneratedTaskItemDto,
+  TaskLogDto as GeneratedTaskLogDto,
+} from "@api-contracts";
 import type {
   NaggerClientModelExtension,
   NagPlanClientModelExtension,
@@ -20,7 +23,13 @@ export type Nagger = Immutable<
   } & NaggerClientModelExtension
 >;
 
-export type TaskLog = Immutable<TaskLogDto<TaskItem> & TaskLogClientModelExtension>;
+export type TaskLogNode<TTaskItem> = Immutable<
+  Omit<GeneratedTaskLogDto, "taskItems"> & {
+    readonly taskItems: readonly TTaskItem[];
+  }
+>;
+
+export type TaskLog = Immutable<TaskLogNode<TaskItem> & TaskLogClientModelExtension>;
 
 export type TaskItemNode<TTaskItem, TTaskEntry> = Immutable<
   Omit<GeneratedTaskItemDto, "taskItems" | "taskEntries"> & {
