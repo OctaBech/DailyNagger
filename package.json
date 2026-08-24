@@ -11,6 +11,7 @@
     "mobile:format:check": "npm run format:check --prefix src/DailyNagger.Mobile",
     "contracts:generate": "npm run generate --prefix src/api-contracts",
     "contracts:typecheck": "npm run typecheck --prefix src/api-contracts",
+    "contracts:check": "powershell -ExecutionPolicy Bypass -File scripts/check-api-contracts.ps1",
     "api:dev": "powershell -ExecutionPolicy Bypass -File scripts/start-local-api.ps1",
     "db:reset": "powershell -ExecutionPolicy Bypass -File scripts/reset-local-db.ps1",
     "client:dev": "npm run dev --prefix src/DailyNagger.Client",
