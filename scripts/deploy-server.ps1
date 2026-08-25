@@ -244,15 +244,23 @@ remote_path="$1"
 cd "$remote_path"
 public_host="$(grep '^DAILY_NAGGER_PUBLIC_HOST=' .env | cut -d= -f2-)"
 api_token="$(grep '^DAILY_NAGGER_API_TOKEN=' .env | cut -d= -f2-)"
+request_id="$(cat /proc/sys/kernel/random/uuid)"
 
-curl -fsS "https://${public_host}/api/health" > /dev/null
-curl -fsS "https://${public_host}/api/health/database" > /dev/null
-curl -fsS --oauth2-bearer "$api_token" -G "https://${public_host}/api/todays-nag-plan" \
+curl -fsS \
+  -H "X-DailyNagger-Request-Id: ${request_id}" \
+  "https://${public_host}/api/health" > /dev/null
+curl -fsS \
+  -H "X-DailyNagger-Request-Id: ${request_id}" \
+  "https://${public_host}/api/health/database" > /dev/null
+curl -fsS \
+  -H "X-DailyNagger-Request-Id: ${request_id}" \
+  --oauth2-bearer "$api_token" \
+  -G "https://${public_host}/api/todays-nag-plan" \
   --data-urlencode communityId=22222222-2222-2222-2222-222222222222 \
   --data-urlencode userId=11111111-1111-1111-1111-111111111111 \
   --data-urlencode date="$(date +%F)" > /dev/null
 
-printf 'Smoke checks passed for https://%s\n' "$public_host"
+printf 'Smoke checks passed for https://%s with request id %s\n' "$public_host" "$request_id"
 '@
 
     Write-Host "Server deploy completed: $ImageTag"
