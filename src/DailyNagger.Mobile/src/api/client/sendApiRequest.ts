@@ -1,7 +1,7 @@
 import type { JsonValue } from "@/shared";
 import type { ClientIdentity } from "@/models/clientIdentity";
 import { environment } from "@/config";
-import type { ClientIdentityDto, VersionedResponseDto } from "@/api/dto";
+import type { ClientIdentityDto, VersionedMutationResponse } from "@/api/dto";
 import { apiRequest, ApiRequestError } from "./apiRequest";
 
 export class SendApiRequestError extends Error {
@@ -29,7 +29,7 @@ export type SendApiRequest = {
   };
 };
 
-export async function sendApiRequest(request: SendApiRequest): Promise<VersionedResponseDto> {
+export async function sendApiRequest(request: SendApiRequest): Promise<VersionedMutationResponse> {
   const { method, endpoint, payload, processing } = request;
 
   const body = {
@@ -44,7 +44,7 @@ export async function sendApiRequest(request: SendApiRequest): Promise<Versioned
   };
 
   try {
-    const result = await apiRequest<VersionedResponseDto>({ method, path: endpoint, body });
+    const result = await apiRequest<VersionedMutationResponse>({ method, path: endpoint, body });
 
     if (result.kind !== "ok") {
       throw new Error("Send API request response had no JSON body.");

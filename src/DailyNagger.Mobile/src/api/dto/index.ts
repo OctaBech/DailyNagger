@@ -1,4 +1,4 @@
-export type { VersionedResponseDto } from "./versionedResponse";
+export type { VersionedMutationResponse } from "./versionedMutationResponse";
 export type {
   ClientIdentityDto,
   DtoNode,

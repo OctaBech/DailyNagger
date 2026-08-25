@@ -1,4 +1,4 @@
-export type VersionedResponseDto = {
+export type VersionedMutationResponse = {
   readonly version: number;
   readonly updatedAt?: string;
 };
