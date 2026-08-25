@@ -68,4 +68,5 @@ jobs:
         with:
           name: production-db-backup-${{ env.BACKUP_STAMP }}
           path: ${{ env.BACKUP_PATH }}
+          retention-days: 14
           if-no-files-found: error
