@@ -36,6 +36,24 @@ GitHub production workflows require these `production` environment secrets:
 `DAILY_NAGGER_DEPLOY_HOST`, `DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY`, and
 `DAILY_NAGGER_DEPLOY_KNOWN_HOSTS`.
 
+Production deploy chain:
+
+1. `deploy-production.ps1` backs up both production databases first.
+2. `deploy-server.ps1` packages server source, uploads it to `/opt/dailynagger`, and builds a tagged Docker image on the VPS.
+3. EF migrations run unless `-SkipMigrations` is set.
+4. `server` and `reverse-proxy` containers restart.
+5. Production smoke checks verify health, database health, and today's plan.
+
+Manual production rollback:
+
+1. Identify the previous stable image tag from VPS `.env.backup-server-*` files or `docker image ls dailynagger-server`.
+2. On the VPS, edit `/opt/dailynagger/.env` and set `DAILY_NAGGER_IMAGE_TAG` to that stable tag.
+3. From `/opt/dailynagger`, run `docker compose -f compose.prod.yaml up -d server reverse-proxy`.
+4. Run `docker compose -f compose.prod.yaml ps` and `docker compose -f compose.prod.yaml logs --tail=80 server`.
+5. Run production smoke checks before declaring rollback complete.
+
+Database backups are for catastrophic recovery. Do not restore a database backup for ordinary code bugs. Prefer backward-compatible migrations; restore DB only when a harmful migration corrupted data and newer production data can be discarded.
+
 - `start-local-api.ps1` stops any local `DailyNagger.Server` process and starts the API on `http://localhost:5010`.
 - `test-server.ps1` starts SQL Server, waits for `sqlserver-init`, then runs `dotnet test`.
   - `-RepoRootPath`: repo path override.
