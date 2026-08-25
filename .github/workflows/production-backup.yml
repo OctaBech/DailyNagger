@@ -34,10 +34,14 @@ jobs:
           $keyPath = Join-Path $sshDir "deploy_key"
           $knownHostsPath = Join-Path $sshDir "known_hosts"
 
-          Set-Content -Path $keyPath -Value $env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY -NoNewline
+          [System.IO.File]::WriteAllText(
+            $keyPath,
+            $env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY.Trim() + "`n",
+            [System.Text.UTF8Encoding]::new($false))
           Set-Content -Path $knownHostsPath -Value $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS -NoNewline
           chmod 600 $keyPath
           chmod 600 $knownHostsPath
+          ssh-keygen -y -f $keyPath | Out-Null
 
           "DAILY_NAGGER_DEPLOY_HOST=$($env:DAILY_NAGGER_DEPLOY_HOST)" >> $env:GITHUB_ENV
           "DAILY_NAGGER_DEPLOY_SSH_KEY=$keyPath" >> $env:GITHUB_ENV
