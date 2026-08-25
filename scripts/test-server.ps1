@@ -35,7 +35,7 @@ try {
     Assert-LastExitCode "docker compose up sqlserver"
 
     Write-Host "Waiting for SQL Server initialization..."
-    & docker compose up sqlserver-init
+    & docker compose up --force-recreate --exit-code-from sqlserver-init sqlserver-init
     Assert-LastExitCode "docker compose up sqlserver-init"
 
     Write-Host "Running server tests..."

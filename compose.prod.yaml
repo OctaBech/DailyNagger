@@ -24,6 +24,12 @@ services:
       done;
       /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"IF DB_ID('DailyNaggerData') IS NULL CREATE DATABASE DailyNaggerData\";
       /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"IF DB_ID('DailyNaggerControl') IS NULL CREATE DATABASE DailyNaggerControl\";
+      until /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -d DailyNaggerData -Q \"SELECT 1\"; do
+        sleep 2;
+      done;
+      until /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -d DailyNaggerControl -Q \"SELECT 1\"; do
+        sleep 2;
+      done;
       /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"IF EXISTS (SELECT 1 FROM sys.sql_logins WHERE name = 'DailyNaggerApp') ALTER LOGIN DailyNaggerApp WITH PASSWORD = '$${DAILY_NAGGER_SQL_APP_PASSWORD}' ELSE CREATE LOGIN DailyNaggerApp WITH PASSWORD = '$${DAILY_NAGGER_SQL_APP_PASSWORD}'\";
       /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -d DailyNaggerData -Q \"IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'DailyNaggerApp') CREATE USER DailyNaggerApp FOR LOGIN DailyNaggerApp; IF IS_ROLEMEMBER('db_datareader', 'DailyNaggerApp') = 0 ALTER ROLE db_datareader ADD MEMBER DailyNaggerApp; IF IS_ROLEMEMBER('db_datawriter', 'DailyNaggerApp') = 0 ALTER ROLE db_datawriter ADD MEMBER DailyNaggerApp\";
       /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -d DailyNaggerControl -Q \"IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'DailyNaggerApp') CREATE USER DailyNaggerApp FOR LOGIN DailyNaggerApp; IF IS_ROLEMEMBER('db_datareader', 'DailyNaggerApp') = 0 ALTER ROLE db_datareader ADD MEMBER DailyNaggerApp; IF IS_ROLEMEMBER('db_datawriter', 'DailyNaggerApp') = 0 ALTER ROLE db_datawriter ADD MEMBER DailyNaggerApp\";

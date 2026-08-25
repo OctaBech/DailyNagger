@@ -67,7 +67,13 @@ try {
     $seqEvent = $null
 
     for ($attempt = 1; $attempt -le 30; $attempt++) {
-        $seqEvent = Invoke-RestMethod $seqEventsUrl | Select-Object -First 1
+        try {
+            $seqEvent = Invoke-RestMethod $seqEventsUrl | Select-Object -First 1
+        }
+        catch {
+            $seqEvent = $null
+        }
+
         if ($seqEvent) {
             break
         }
