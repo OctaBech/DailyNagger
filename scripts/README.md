@@ -33,6 +33,8 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 ## Server
 
 - `start-local-api.ps1` stops any local `DailyNagger.Server` process and starts the API on `http://localhost:5010`.
+- `test-server.ps1` starts SQL Server, waits for `sqlserver-init`, then runs `dotnet test`.
+  - `-RepoRootPath`: repo path override.
 - `reset-local-db.ps1` drops, recreates, migrates, and seeds the local SQL Server databases.
   - `-SqlServer`, `-SqlUser`, `-SqlPassword`: SQL connection overrides.
 - `deploy-server.ps1` uploads server source to the VPS, builds a tagged Docker image, migrates, restarts, and smoke-tests production.

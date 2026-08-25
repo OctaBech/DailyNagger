@@ -258,11 +258,11 @@ From the repo root:
 ```powershell
 dotnet restore
 dotnet build
+npm run server:test
 ```
 
-`dotnet test` requires the expected SQL Server dependency. If SQL Server is not
-running, server tests may fail even when the .NET toolchain is installed
-correctly.
+`npm run server:test` starts the Docker SQL Server dependency, waits for
+`sqlserver-init`, and then runs `dotnet test`.
 
 ### Visual Studio
 

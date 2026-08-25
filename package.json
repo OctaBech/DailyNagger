@@ -17,6 +17,7 @@
     "contracts:check": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/check-api-contracts.ps1",
     "server:format": "dotnet format DailyNagger.sln --no-restore",
     "server:format:check": "dotnet format DailyNagger.sln --verify-no-changes --no-restore",
+    "server:test": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/test-server.ps1",
     "api:dev": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/start-local-api.ps1",
     "db:reset": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/reset-local-db.ps1",
     "client:dev": "npm run dev --prefix src/DailyNagger.Client",
