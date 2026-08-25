@@ -23,6 +23,7 @@ builder.Services.AddOpenApi(options =>
 {
     options.AddSchemaTransformer<OpenApiContractSchemaTransformer>();
 });
+builder.Services.AddProblemDetails();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
