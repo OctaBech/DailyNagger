@@ -1,0 +1,67 @@
+name: Production Backup
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_stamp:
+        description: "Optional backup stamp. Defaults to UTC yyyyMMdd-HHmmss."
+        required: false
+        type: string
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Prepare SSH
+        shell: pwsh
+        env:
+          DAILY_NAGGER_DEPLOY_HOST: ${{ secrets.DAILY_NAGGER_DEPLOY_HOST }}
+          DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY }}
+          DAILY_NAGGER_DEPLOY_KNOWN_HOSTS: ${{ secrets.DAILY_NAGGER_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_HOST)) { throw "Missing DAILY_NAGGER_DEPLOY_HOST secret." }
+          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY)) { throw "Missing DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY secret." }
+          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS)) { throw "Missing DAILY_NAGGER_DEPLOY_KNOWN_HOSTS secret." }
+
+          $sshDir = Join-Path $env:RUNNER_TEMP "dailynagger-ssh"
+          New-Item -ItemType Directory -Force $sshDir | Out-Null
+
+          $keyPath = Join-Path $sshDir "deploy_key"
+          $knownHostsPath = Join-Path $sshDir "known_hosts"
+
+          Set-Content -Path $keyPath -Value $env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY -NoNewline
+          Set-Content -Path $knownHostsPath -Value $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS -NoNewline
+          chmod 600 $keyPath
+          chmod 600 $knownHostsPath
+
+          "DAILY_NAGGER_DEPLOY_HOST=$($env:DAILY_NAGGER_DEPLOY_HOST)" >> $env:GITHUB_ENV
+          "DAILY_NAGGER_DEPLOY_SSH_KEY=$keyPath" >> $env:GITHUB_ENV
+          "DAILY_NAGGER_DEPLOY_KNOWN_HOSTS=$knownHostsPath" >> $env:GITHUB_ENV
+
+      - name: Back up production databases
+        shell: pwsh
+        run: |
+          $backupStamp = "${{ inputs.backup_stamp }}"
+          if ([string]::IsNullOrWhiteSpace($backupStamp)) {
+            $backupStamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
+          }
+
+          $backupRoot = Join-Path $env:RUNNER_TEMP "dailynagger-db-backups"
+          .\scripts\backup-production-db.ps1 `
+            -LocalBackupRootPath $backupRoot `
+            -BackupStamp $backupStamp
+
+          "BACKUP_STAMP=$backupStamp" >> $env:GITHUB_ENV
+          "BACKUP_PATH=$(Join-Path $backupRoot $backupStamp)" >> $env:GITHUB_ENV
+
+      - name: Upload database backup artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: production-db-backup-${{ env.BACKUP_STAMP }}
+          path: ${{ env.BACKUP_PATH }}
+          if-no-files-found: error

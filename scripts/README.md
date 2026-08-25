@@ -32,6 +32,10 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 
 ## Server
 
+GitHub production workflows require these `production` environment secrets:
+`DAILY_NAGGER_DEPLOY_HOST`, `DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY`, and
+`DAILY_NAGGER_DEPLOY_KNOWN_HOSTS`.
+
 - `start-local-api.ps1` stops any local `DailyNagger.Server` process and starts the API on `http://localhost:5010`.
 - `test-server.ps1` starts SQL Server, waits for `sqlserver-init`, then runs `dotnet test`.
   - `-RepoRootPath`: repo path override.
@@ -45,6 +49,8 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
   - Same deploy connection parameters, plus `-LocalBackupRootPath`.
 - `backup-production-db.ps1` backs up production SQL Server databases on the VPS and downloads them locally.
   - `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-LocalBackupRootPath`, `-KnownHostsPath`, `-BackupStamp`: backup overrides.
+- `smoke-production.ps1` runs production health, database health, and today's plan smoke checks through the VPS.
+  - `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-KnownHostsPath`: connection overrides.
 - `pack-server-deploy-source.ps1` creates the server source archive used by deploy.
   - `-RepoRoot`, `-OutputPath`: archive path overrides.
 - `run-vps-ef-migration.sh` runs EF migrations from a .NET SDK container on the VPS.

@@ -1,0 +1,82 @@
+name: Production Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Optional server image tag. Defaults to server-yyyyMMdd-HHmm."
+        required: false
+        type: string
+      skip_migrations:
+        description: "Skip EF migrations."
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Prepare SSH
+        shell: pwsh
+        env:
+          DAILY_NAGGER_DEPLOY_HOST: ${{ secrets.DAILY_NAGGER_DEPLOY_HOST }}
+          DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY }}
+          DAILY_NAGGER_DEPLOY_KNOWN_HOSTS: ${{ secrets.DAILY_NAGGER_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_HOST)) { throw "Missing DAILY_NAGGER_DEPLOY_HOST secret." }
+          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY)) { throw "Missing DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY secret." }
+          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS)) { throw "Missing DAILY_NAGGER_DEPLOY_KNOWN_HOSTS secret." }
+
+          $sshDir = Join-Path $env:RUNNER_TEMP "dailynagger-ssh"
+          New-Item -ItemType Directory -Force $sshDir | Out-Null
+
+          $keyPath = Join-Path $sshDir "deploy_key"
+          $knownHostsPath = Join-Path $sshDir "known_hosts"
+
+          Set-Content -Path $keyPath -Value $env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY -NoNewline
+          Set-Content -Path $knownHostsPath -Value $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS -NoNewline
+          chmod 600 $keyPath
+          chmod 600 $knownHostsPath
+
+          "DAILY_NAGGER_DEPLOY_HOST=$($env:DAILY_NAGGER_DEPLOY_HOST)" >> $env:GITHUB_ENV
+          "DAILY_NAGGER_DEPLOY_SSH_KEY=$keyPath" >> $env:GITHUB_ENV
+          "DAILY_NAGGER_DEPLOY_KNOWN_HOSTS=$knownHostsPath" >> $env:GITHUB_ENV
+
+      - name: Deploy production server
+        shell: pwsh
+        run: |
+          $imageTag = "${{ inputs.image_tag }}"
+          if ([string]::IsNullOrWhiteSpace($imageTag)) {
+            $imageTag = "server-" + (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmm")
+          }
+          $skipMigrations = [System.Convert]::ToBoolean("${{ inputs.skip_migrations }}")
+
+          $backupRoot = Join-Path $env:RUNNER_TEMP "dailynagger-db-backups"
+          .\scripts\deploy-production.ps1 `
+            -LocalBackupRootPath $backupRoot `
+            -ImageTag $imageTag `
+            -SkipMigrations:$skipMigrations
+
+          $backupPath = Get-ChildItem $backupRoot -Directory |
+            Sort-Object LastWriteTime -Descending |
+            Select-Object -First 1
+
+          if (!$backupPath) {
+            throw "Deploy completed without a local database backup artifact."
+          }
+
+          "BACKUP_STAMP=$($backupPath.Name)" >> $env:GITHUB_ENV
+          "BACKUP_PATH=$($backupPath.FullName)" >> $env:GITHUB_ENV
+
+      - name: Upload deploy database backup artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: production-deploy-db-backup-${{ env.BACKUP_STAMP }}
+          path: ${{ env.BACKUP_PATH }}
+          if-no-files-found: error
