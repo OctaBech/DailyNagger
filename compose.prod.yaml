@@ -1,6 +1,17 @@
 name: dailynagger
 
 services:
+  seq:
+    image: datalust/seq:latest
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+    ports:
+      - "127.0.0.1:5341:80"
+    volumes:
+      - seq-data:/data
+    restart: unless-stopped
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
@@ -48,7 +59,10 @@ services:
       ConnectionStrings__DailyNaggerData: "Server=sqlserver,1433;Database=DailyNaggerData;User Id=DailyNaggerApp;Password=${DAILY_NAGGER_SQL_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       ConnectionStrings__DailyNaggerControl: "Server=sqlserver,1433;Database=DailyNaggerControl;User Id=DailyNaggerApp;Password=${DAILY_NAGGER_SQL_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       DailyNaggerData__Password: "${DAILY_NAGGER_SQL_APP_PASSWORD:?Set DAILY_NAGGER_SQL_APP_PASSWORD in production .env}"
+      Serilog__WriteTo__1__Args__serverUrl: "http://seq"
     depends_on:
+      seq:
+        condition: service_started
       sqlserver-init:
         condition: service_completed_successfully
     restart: unless-stopped
@@ -69,6 +83,7 @@ services:
     restart: unless-stopped
 
 volumes:
+  seq-data:
   sqlserver-data:
   caddy-data:
   caddy-config:
