@@ -37,7 +37,7 @@ Seq runs on the VPS as a Docker Compose service and is bound to VPS localhost on
 Open it through an SSH tunnel:
 
 ```powershell
-ssh -i E:\Secrets\DailyNagger\ssh\dailynagger_hetzner -L 5341:127.0.0.1:5341 root@46.225.130.77
+.\scripts\open-production-seq.ps1 -VpsHost 46.225.130.77
 ```
 
 Then open `http://localhost:5341`.

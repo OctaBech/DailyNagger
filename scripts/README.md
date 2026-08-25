@@ -49,6 +49,8 @@ Production deploy, backup, smoke checks, and rollback are documented in `docs/ru
   - `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-LocalBackupRootPath`, `-KnownHostsPath`, `-BackupStamp`: backup overrides.
 - `smoke-production.ps1` runs production health, database health, and today's plan smoke checks through the VPS.
   - `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-KnownHostsPath`: connection overrides.
+- `open-production-seq.ps1` opens an SSH tunnel to production Seq and opens `http://localhost:5341`.
+  - `-VpsHost`, `-VpsUser`, `-SshKeyPath`, `-KnownHostsPath`, `-LocalPort`: tunnel overrides.
 - `pack-server-deploy-source.ps1` creates the server source archive used by deploy.
   - `-RepoRoot`, `-OutputPath`: archive path overrides.
 - `run-vps-ef-migration.sh` runs EF migrations from a .NET SDK container on the VPS.
