@@ -15,13 +15,12 @@ type GeneratedNagPlanNaggerDto = components["schemas"]["NagPlanNaggerDto"];
 type GeneratedTaskItemDto = components["schemas"]["TaskItemDto"];
 type GeneratedTaskLogDto = components["schemas"]["TaskLogDto"];
 export type TaskEntryDto = Immutable<components["schemas"]["TaskEntryDto"]>;
-export interface TaskItemDto
-  extends Immutable<
-    Omit<GeneratedTaskItemDto, "taskItems" | "taskEntries"> & {
-      readonly taskItems: readonly TaskItemDto[];
-      readonly taskEntries: readonly TaskEntryDto[];
-    }
-  > {}
+export interface TaskItemDto extends Immutable<
+  Omit<GeneratedTaskItemDto, "taskItems" | "taskEntries"> & {
+    readonly taskItems: readonly TaskItemDto[];
+    readonly taskEntries: readonly TaskEntryDto[];
+  }
+> {}
 export type TaskLogDto = Immutable<
   Omit<GeneratedTaskLogDto, "taskItems"> & {
     readonly taskItems: readonly TaskItemDto[];
@@ -43,19 +42,24 @@ export type NagPlanDto = Immutable<
     readonly nags: readonly NagPlanNaggerDto[];
   }
 >;
-export type DtoNode = NagPlanDto | NagPlanNaggerDto | TaskLogDto | TaskItemDto | TaskEntryDto;
-export type TaskEntryValueUpdateDto = components["schemas"]["TaskEntryValueUpdateDto"];
+export type DtoNode =
+  NagPlanDto | NagPlanNaggerDto | TaskLogDto | TaskItemDto | TaskEntryDto;
+export type TaskEntryValueUpdateDto =
+  components["schemas"]["TaskEntryValueUpdateDto"];
 export type TaskLogVersionDto = components["schemas"]["TaskLogVersionDto"];
 export type ClientIdentityDto = components["schemas"]["ClientIdentityDto"];
 export type TagDto = components["schemas"]["TagDto"];
-export type TaskStepNameSuggestionDto = components["schemas"]["TaskStepNameSuggestionDto"];
+export type TaskStepNameSuggestionDto =
+  components["schemas"]["TaskStepNameSuggestionDto"];
 
 export type NaggerPinnedByDto = components["schemas"]["NaggerPinnedByDto"];
 export type ScheduleRuleTypeDto = components["schemas"]["ScheduleRuleTypeDto"];
 export type TaskEntryRolloverBehaviorDto =
   components["schemas"]["TaskEntryRolloverBehaviorDto"];
-export type TaskItemRolloverBehaviorDto = components["schemas"]["TaskItemRolloverBehaviorDto"];
-export type TaskEntryValueTypeDto = components["schemas"]["TaskEntryValueTypeDto"];
+export type TaskItemRolloverBehaviorDto =
+  components["schemas"]["TaskItemRolloverBehaviorDto"];
+export type TaskEntryValueTypeDto =
+  components["schemas"]["TaskEntryValueTypeDto"];
 
 export type NaggerPinnedBy = NaggerPinnedByDto;
 export type ScheduleRuleType = ScheduleRuleTypeDto;

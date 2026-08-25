@@ -81,10 +81,10 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(nag => new
-                {
-                    nag.IsDeactivated,
-                    nag.ActiveLogDueOn
-                })
+            {
+                nag.IsDeactivated,
+                nag.ActiveLogDueOn
+            })
                 .HasDatabaseName("IX_nag_is_deactivated_active_log_due_on");
 
         });
@@ -185,11 +185,11 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
             entity.HasIndex(taskLog => taskLog.NagId);
             entity.HasIndex(taskLog => taskLog.CopiedFromTaskLogId);
             entity.HasIndex(taskLog => new
-                {
-                    taskLog.NagId,
-                    taskLog.ClosedOn,
-                    taskLog.UpdatedAt
-                })
+            {
+                taskLog.NagId,
+                taskLog.ClosedOn,
+                taskLog.UpdatedAt
+            })
                 .HasDatabaseName("IX_task_log_nag_id_closed_on_updated_at");
         });
 
@@ -434,10 +434,10 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
                 .HasMaxLength(200);
 
             entity.HasIndex(mood => new
-                {
-                    mood.UserId,
-                    mood.RecordedAt
-                })
+            {
+                mood.UserId,
+                mood.RecordedAt
+            })
                 .HasDatabaseName("IX_user_mood_user_id_recorded_at");
         });
 

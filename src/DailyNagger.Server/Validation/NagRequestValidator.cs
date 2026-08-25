@@ -1,5 +1,5 @@
-using DailyNagger.Server.Contracts;
 using System.Text.Json;
+using DailyNagger.Server.Contracts;
 
 namespace DailyNagger.Server.Validation;
 

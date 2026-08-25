@@ -39,12 +39,12 @@ export type NaggerTraversedNode = Immutable<
 >;
 
 export type TaskLogTraversedNode = Immutable<
-  TaskLogNode<TaskItemTraversedNode> &
-    PartialClientModelExtension<TaskLogClientModelExtension>
+  TaskLogNode<TaskItemTraversedNode> & PartialClientModelExtension<TaskLogClientModelExtension>
 >;
 
 export interface TaskItemTraversedNode
-  extends TaskItemNode<TaskItemTraversedNode, TaskEntryTraversedNode>,
+  extends
+    TaskItemNode<TaskItemTraversedNode, TaskEntryTraversedNode>,
     PartialClientModelExtension<TaskItemClientModelExtension> {}
 
 export type TaskEntryTraversedNode = Immutable<

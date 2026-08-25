@@ -1,6 +1,6 @@
-﻿using DailyNagger.Server.Observability;
-using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
+using DailyNagger.Server.Observability;
+using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace DailyNagger.Server.Tests.Observability;
 

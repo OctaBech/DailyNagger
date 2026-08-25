@@ -48,6 +48,13 @@ transformer for project-wide contract rules, such as removing JSON-number string
 fallbacks from integer fields or marking always-present nullable fields as
 required.
 
+DTO enums should describe the API shape that callers actually use. When two
+fields happen to share a domain enum but have different valid API values, expose
+separate DTO enums. DailyNagger does this for task item rollover behavior and
+task entry rollover behavior, because item rollover allows `Keep` and
+`RemoveWhenDone`, while entry rollover allows `Remove`, `MoveValueToHistory`,
+and `CarryOverValue`.
+
 Use `npm run contracts:update` against a running local API when the server
 contract changes. Use `npm run contracts:check` to verify that generated
 TypeScript still matches the committed OpenAPI document.

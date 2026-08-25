@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-"scripts": {
-  "generate": "openapi-typescript ./openapi.json -o ./src/schema.ts",
-  "typecheck": "tsc --noEmit"
-},
+  "scripts": {
+    "generate": "openapi-typescript ./openapi.json -o ./src/schema.ts",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
   "devDependencies": {
     "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.6",
     "typescript": "^5.0.0"
   }
 }

@@ -1,4 +1,4 @@
-﻿namespace DailyNagger.Server.Observability;
+namespace DailyNagger.Server.Observability;
 
 public static class ApiRequestHeaders
 {

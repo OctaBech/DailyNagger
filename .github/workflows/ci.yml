@@ -43,6 +43,9 @@ jobs:
       - name: Restore
         run: dotnet restore DailyNagger.sln
 
+      - name: Check formatting
+        run: dotnet format DailyNagger.sln --verify-no-changes --no-restore
+
       - name: Build
         run: dotnet build DailyNagger.sln --configuration Release --no-restore
 
@@ -70,6 +73,9 @@ jobs:
       - name: Typecheck
         run: npm run contracts:typecheck
 
+      - name: Check formatting
+        run: npm run contracts:format:check
+
       - name: Check generated contracts
         run: npm run contracts:check
 
@@ -94,6 +100,10 @@ jobs:
       - name: Typecheck
         working-directory: src/DailyNagger.Mobile
         run: npm run typecheck
+
+      - name: Check formatting
+        working-directory: src/DailyNagger.Mobile
+        run: npm run format:check
 
   docker:
     runs-on: ubuntu-latest
