@@ -14,6 +14,15 @@ if (environment.sentryDsn !== undefined) {
   Sentry.init({
     dsn: environment.sentryDsn,
     enableLogs: true,
+    tracePropagationTargets: [environment.apiBaseUrl],
+    tracesSampleRate: 1.0,
+  });
+
+  Sentry.setUser({ id: environment.userId });
+  Sentry.setTag("communityId", environment.communityId);
+  Sentry.setContext("dailyNagger", {
+    communityId: environment.communityId,
+    userId: environment.userId,
   });
 }
 

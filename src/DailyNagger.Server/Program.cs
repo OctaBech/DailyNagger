@@ -7,17 +7,38 @@ using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 builder.Configuration.AddEnvironmentVariables();
+var sentryDsn = builder.Configuration["Sentry:Dsn"];
+var sentryTracesSampleRate = builder.Configuration.GetValue<double?>("Sentry:TracesSampleRate") ?? 1.0;
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(options =>
+    {
+        options.Dsn = sentryDsn;
+        options.TracesSampleRate = sentryTracesSampleRate;
+    });
+}
 builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 {
     loggerConfiguration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext();
+
+    if (!string.IsNullOrWhiteSpace(sentryDsn))
+    {
+        loggerConfiguration.WriteTo.Sentry(options =>
+        {
+            options.Dsn = sentryDsn;
+            options.MinimumBreadcrumbLevel = LogEventLevel.Information;
+            options.MinimumEventLevel = LogEventLevel.Error;
+        });
+    }
 }, writeToProviders: false);
 builder.Services.AddOpenApi(options =>
 {

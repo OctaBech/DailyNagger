@@ -59,6 +59,7 @@ services:
       ConnectionStrings__DailyNaggerData: "Server=sqlserver,1433;Database=DailyNaggerData;User Id=DailyNaggerApp;Password=${DAILY_NAGGER_SQL_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       ConnectionStrings__DailyNaggerControl: "Server=sqlserver,1433;Database=DailyNaggerControl;User Id=DailyNaggerApp;Password=${DAILY_NAGGER_SQL_APP_PASSWORD};Encrypt=True;TrustServerCertificate=True"
       DailyNaggerData__Password: "${DAILY_NAGGER_SQL_APP_PASSWORD:?Set DAILY_NAGGER_SQL_APP_PASSWORD in production .env}"
+      Sentry__Dsn: "${DAILY_NAGGER_SENTRY_DSN:-}"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq"
     depends_on:
       seq:
