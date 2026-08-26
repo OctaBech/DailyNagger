@@ -18,7 +18,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($VpsHost)) {
-    throw "Missing VPS host. Pass -VpsHost or set DAILY_NAGGER_DEPLOY_HOST."
+    $VpsHost = "46.225.130.77"
 }
 
 if (!(Test-Path $SshKeyPath)) {
