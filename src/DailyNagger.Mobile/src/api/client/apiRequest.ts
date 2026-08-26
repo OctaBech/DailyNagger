@@ -71,7 +71,6 @@ export async function apiRequest<TResponse>(
 ): Promise<ApiRequestResult<TResponse>> {
   const url = createApiUrl(options.path);
   const requestId = newGuid();
-  const request = createApiRequest(options, requestId);
   const startedAt = performance.now();
 
   const result = await Sentry.withScope<Promise<ApiRequestResult<TResponse>>>(async (scope) => {
@@ -95,27 +94,49 @@ export async function apiRequest<TResponse>(
       type: "http",
     });
 
-    try {
-      const response = await sendApiFetch(url, request, startedAt);
+    return Sentry.startSpan(
+      {
+        attributes: {
+          "http.method": options.method,
+          "http.url": url,
+          requestId,
+        },
+        forceTransaction: true,
+        name: `${options.method} ${options.path}`,
+        op: "http.client",
+      },
+      async () => {
+        const request = createApiRequest(options, requestId);
 
-      if (!response.ok) {
-        const responseBody = await response.text();
-        throw new ApiRequestError(url, request, response, responseBody, getDurationMs(startedAt));
-      }
+        try {
+          const response = await sendApiFetch(url, request, startedAt);
 
-      if (response.status === 202) {
-        return { kind: "accepted", status: 202, body: null };
-      }
+          if (!response.ok) {
+            const responseBody = await response.text();
+            throw new ApiRequestError(
+              url,
+              request,
+              response,
+              responseBody,
+              getDurationMs(startedAt),
+            );
+          }
 
-      if (response.status === 204) {
-        return { kind: "no-content", status: 204, body: null };
-      }
+          if (response.status === 202) {
+            return { kind: "accepted", status: 202, body: null };
+          }
 
-      return { kind: "ok", status: response.status, body: await response.json() };
-    } catch (error) {
-      Sentry.captureException(error);
-      throw error;
-    }
+          if (response.status === 204) {
+            return { kind: "no-content", status: 204, body: null };
+          }
+
+          return { kind: "ok", status: response.status, body: await response.json() };
+        } catch (error) {
+          Sentry.captureException(error);
+          throw error;
+        }
+      },
+    );
   });
 
   if (result === undefined) {
