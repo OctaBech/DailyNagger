@@ -176,14 +176,30 @@ function createApiUrl(path: string): string {
 }
 
 function createApiHeaders(body: unknown, requestId: string): Record<string, string> {
-  if (body === undefined) {
-    return createBaseApiHeaders(requestId);
+  const headers = {
+    ...createBaseApiHeaders(requestId),
+    ...createSentryTraceHeaders(),
+  };
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
   }
 
-  return {
-    ...createBaseApiHeaders(requestId),
-    "Content-Type": "application/json",
-  };
+  return headers;
+}
+
+function createSentryTraceHeaders(): Record<string, string> {
+  const span = Sentry.getActiveSpan();
+  const headers: Record<string, string> = {};
+
+  if (span !== undefined) {
+    const spanContext = span.spanContext();
+    const sampled = spanContext.traceFlags === 1 ? "1" : "0";
+    headers[apiRequestHeaders.sentryTrace] =
+      `${spanContext.traceId}-${spanContext.spanId}-${sampled}`;
+  }
+
+  return headers;
 }
 
 function createJsonBody(body: unknown): string | undefined {
