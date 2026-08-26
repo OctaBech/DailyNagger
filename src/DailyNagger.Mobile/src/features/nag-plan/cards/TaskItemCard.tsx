@@ -1,4 +1,4 @@
-import { Activity, memo } from "react";
+import { memo } from "react";
 import { StyleSheet, View } from "react-native";
 import { Card, SelectionLane } from "@/components";
 import { type TaskItem } from "@/models";
@@ -59,7 +59,7 @@ const TaskItemCardComponent = ({
           onExpandPress={toggleExpanded}
         />
 
-        <Activity mode={isExpanded ? "visible" : "hidden"}>
+        {isExpanded ? (
           <View style={styles.children}>
             {taskItem.taskEntries.map((taskEntry) => (
               <TaskEntryCard key={taskEntry.id} taskEntry={taskEntry} railTone={railTone} />
@@ -73,7 +73,7 @@ const TaskItemCardComponent = ({
               />
             ))}
           </View>
-        </Activity>
+        ) : null}
       </Card.TaskItemFrame>
     </View>
   );

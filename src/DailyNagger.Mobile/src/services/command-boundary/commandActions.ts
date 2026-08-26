@@ -7,6 +7,7 @@ import { viewOperations } from "@/services/operations";
 import type { Sending } from "../sending";
 import {
   editorDeleteSelectedNode as runEditorDeleteSelectedNode,
+  editorCancelEdit as runEditorCancelEdit,
   editorMoveSelectedNodeDown as runEditorMoveSelectedNodeDown,
   editorMoveSelectedNodeUp as runEditorMoveSelectedNodeUp,
   editorSaveEdit as runEditorSaveEdit,
@@ -223,6 +224,10 @@ function editorSave(_args: EmptyCommandArgs, context: CommandEditorSessionAction
   runEditorSaveEdit(context);
 }
 
+function editorCancel(_args: EmptyCommandArgs, context: CommandEditorSessionActionContext): void {
+  runEditorCancelEdit(context);
+}
+
 function editorTaskEntryAdd(_args: EmptyCommandArgs, context: CommandEditorActionContext): void {
   runEditorTaskEntryAdd(context);
 }
@@ -411,6 +416,7 @@ function taskEntrySetValueType(
 }
 
 export const commandActions = {
+  "editor/cancel": command("editor-session", editorCancel),
   "editor/delete-selected-node": command("editor-action", editorDeleteSelectedNode),
   "editor/move-selected-node-down": command("editor-action", editorMoveSelectedNodeDown),
   "editor/move-selected-node-up": command("editor-action", editorMoveSelectedNodeUp),

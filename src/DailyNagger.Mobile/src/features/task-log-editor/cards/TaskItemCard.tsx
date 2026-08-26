@@ -1,4 +1,4 @@
-import { Activity, memo, useState } from "react";
+import { memo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Card, Modal, SelectionLane } from "@/components";
 import { type TaskItem } from "@/models";
@@ -68,7 +68,7 @@ const TaskItemCardComponent = ({
           onPressTag={() => setIsTagModalVisible(true)}
         />
 
-        <Activity mode={isExpanded ? "visible" : "hidden"}>
+        {isExpanded ? (
           <View style={styles.children}>
             {taskItem.taskEntries.map((taskEntry) => (
               <TaskEntryCard key={taskEntry.id} taskEntry={taskEntry} railTone={railTone} />
@@ -82,7 +82,7 @@ const TaskItemCardComponent = ({
               />
             ))}
           </View>
-        </Activity>
+        ) : null}
 
         {!canDeleteOnce && isExpanded && (
           <TaskItemTail

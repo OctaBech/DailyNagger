@@ -81,3 +81,7 @@ export function editorSaveEdit({
   sending.queue(updatedNagger);
   sending.queue(updatedTaskLog);
 }
+
+export function editorCancelEdit({ editorMemory }: EditorSessionActionScope): void {
+  editorMemory.write.clear();
+}

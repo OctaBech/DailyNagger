@@ -19,6 +19,7 @@ export const TaskItemCheckmark = ({
   if (onPress !== undefined) {
     return (
       <Pressable
+        hitSlop={10}
         onPress={onPress}
         style={({ pressed }) => [
           styles.box,

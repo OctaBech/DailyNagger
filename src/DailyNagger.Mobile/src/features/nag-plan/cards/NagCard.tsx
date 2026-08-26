@@ -1,4 +1,4 @@
-import { Activity, memo } from "react";
+import { memo } from "react";
 import { StyleSheet, View } from "react-native";
 import { type Nagger } from "@/models";
 import { Card } from "@/components";
@@ -50,7 +50,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
         />
       </Card.NaggerFrame>
 
-      <Activity mode={nagger.clientProps.isExpanded ? "visible" : "hidden"}>
+      {nagger.clientProps.isExpanded ? (
         <View style={styles.taskLogPanel}>
           <TaskLogCard
             key={nagger.taskLog.id}
@@ -59,7 +59,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
             railTone={railTone}
           />
         </View>
-      </Activity>
+      ) : null}
     </View>
   );
 };

@@ -1,4 +1,5 @@
 export {
+  editorCancelEdit,
   editorSaveEdit,
   editorStartEdit,
   type EditorSessionActionScope,

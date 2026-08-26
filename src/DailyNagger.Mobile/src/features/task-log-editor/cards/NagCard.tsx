@@ -1,5 +1,5 @@
 import { StyleSheet, View } from "react-native";
-import { Activity, memo, useState } from "react";
+import { memo, useState } from "react";
 import { type Nagger } from "@/models";
 import { useEditorScreenCommands, useEditorScreenData } from "@/services";
 import { TaskLogCard } from "./TaskLogCard";
@@ -61,7 +61,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
           />
         </Card.NaggerFrame>
 
-        <Activity mode={isExpanded ? "visible" : "hidden"}>
+        {isExpanded ? (
           <View style={styles.taskLogPanel}>
             <TaskLogCard
               key={nagger.taskLog.id}
@@ -70,7 +70,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
               railTone={railTone}
             />
           </View>
-        </Activity>
+        ) : null}
       </View>
 
       <Modal.NaggerScheduleModal

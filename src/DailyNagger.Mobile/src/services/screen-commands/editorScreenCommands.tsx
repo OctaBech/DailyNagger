@@ -24,6 +24,9 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
         },
       },
       dial: {
+        cancelEdit: () => {
+          dispatch("editor-session", "editor/cancel", {});
+        },
         deleteSelectedNode: () => {
           dispatch("editor-action", "editor/delete-selected-node", {});
         },

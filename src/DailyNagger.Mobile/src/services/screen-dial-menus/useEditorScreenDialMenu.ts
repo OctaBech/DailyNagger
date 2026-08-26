@@ -17,6 +17,7 @@ export function useCreateEditorScreenDialMenu({
 }: UseCreateEditorScreenDialMenuProps): SpeedDialMenu {
   const { selectedPath } = editorScreenData;
   const {
+    cancelEdit,
     deleteSelectedNode,
     moveSelectedNodeDown,
     moveSelectedNodeUp,
@@ -119,11 +120,15 @@ export function useCreateEditorScreenDialMenu({
           icon: "close",
           label: "Cancel",
           row: 0,
-          onSelect: onCloseEditor,
+          onSelect: () => {
+            cancelEdit();
+            onCloseEditor();
+          },
         },
       ],
     }),
     [
+      cancelEdit,
       deleteSelectedNode,
       moveSelectedNodeDown,
       moveSelectedNodeUp,
