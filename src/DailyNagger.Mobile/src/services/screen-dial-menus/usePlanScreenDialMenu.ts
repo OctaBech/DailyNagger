@@ -20,6 +20,7 @@ export function useCreatePlanScreenDialMenu({
 }: UseCreatePlanScreenDialMenuProps): SpeedDialMenu {
   const { selectedNodes, selectedPath, startup, mood } = planScreenData;
   const { nagger, taskItem } = selectedNodes;
+  const { pinSelectedNagger, unpinSelectedNagger } = planCommands.dial;
 
   return useMemo(() => {
     if (!startup.isReady) return { items: [] };
@@ -43,7 +44,7 @@ export function useCreatePlanScreenDialMenu({
         icon: "pin",
         label: "Pin",
         showLabel: true,
-        onSelect: planCommands.dial.pinSelectedNagger,
+        onSelect: () => pinSelectedNagger(nagger),
       });
     }
 
@@ -53,7 +54,7 @@ export function useCreatePlanScreenDialMenu({
         icon: "pin-off",
         label: "Unpin",
         showLabel: true,
-        onSelect: planCommands.dial.unpinSelectedNagger,
+        onSelect: () => unpinSelectedNagger(nagger),
       });
     }
 
@@ -86,11 +87,11 @@ export function useCreatePlanScreenDialMenu({
     nagger,
     onCreateNagger,
     onEditNagger,
-    planCommands.dial.pinSelectedNagger,
-    planCommands.dial.unpinSelectedNagger,
     planCommands.taskItem,
+    pinSelectedNagger,
     selectedPath,
     startup.isReady,
     taskItem,
+    unpinSelectedNagger,
   ]);
 }

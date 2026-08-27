@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { nodeReaderOperations } from "../core-node-operations";
+import { nodeReaderOperations, selectedNodeContextOperations } from "../core-node-operations";
 import type { EditorScreenCommands } from "../screen-commands";
 import type { EditorScreenData } from "../screen-data";
 import type { SpeedDialMenu } from "./SpeedDialMenu";
@@ -15,7 +15,8 @@ export function useCreateEditorScreenDialMenu({
   editorScreenData,
   onCloseEditor,
 }: UseCreateEditorScreenDialMenuProps): SpeedDialMenu {
-  const { selectedPath } = editorScreenData;
+  const { selectedNodes, selectedPath } = editorScreenData;
+  const { nagger, taskItem, taskLog } = selectedNodes;
   const {
     cancelEdit,
     deleteSelectedNode,
@@ -28,8 +29,11 @@ export function useCreateEditorScreenDialMenu({
     unpinSelectedNagger,
   } = editorCommands.dial;
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const moveContext = selectedNodeContextOperations.tryReadMoveContext(selectedPath);
+    const deleteContext = selectedNodeContextOperations.tryReadDeleteContext(selectedPath);
+
+    return {
       items: [
         {
           key: "editor.add-comment",
@@ -38,8 +42,11 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 4,
           keepOpenAfterPress: true,
-          isDisabled: !nodeReaderOperations.canAddTaskEntryToSelectedNode(selectedPath),
-          onSelect: taskEntryAdd,
+          isDisabled: taskLog === null || taskItem === null,
+          onSelect: () => {
+            if (taskLog === null || taskItem === null) return;
+            taskEntryAdd(taskLog, taskItem);
+          },
         },
         {
           key: "editor.add-task-step",
@@ -48,7 +55,11 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 5,
           keepOpenAfterPress: true,
-          onSelect: taskItemAdd,
+          isDisabled: taskLog === null,
+          onSelect: () => {
+            if (taskLog === null) return;
+            taskItemAdd(taskLog, taskItem);
+          },
         },
         {
           key: "editor.move-selected-up",
@@ -57,8 +68,12 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 1,
           keepOpenAfterPress: true,
-          isDisabled: !nodeReaderOperations.canMoveSelectedNodeUp(selectedPath),
-          onSelect: moveSelectedNodeUp,
+          isDisabled: !nodeReaderOperations.canMoveSelectedContextUp(moveContext),
+          onSelect: () => {
+            if (moveContext === null) return;
+            if (!nodeReaderOperations.canMoveSelectedContextUp(moveContext)) return;
+            moveSelectedNodeUp(moveContext);
+          },
         },
         {
           key: "editor.move-selected-down",
@@ -66,10 +81,14 @@ export function useCreateEditorScreenDialMenu({
           label: "Move down",
           row: 1,
           keepOpenAfterPress: true,
-          isDisabled: !nodeReaderOperations.canMoveSelectedNodeDown(selectedPath),
-          onSelect: moveSelectedNodeDown,
+          isDisabled: !nodeReaderOperations.canMoveSelectedContextDown(moveContext),
+          onSelect: () => {
+            if (moveContext === null) return;
+            if (!nodeReaderOperations.canMoveSelectedContextDown(moveContext)) return;
+            moveSelectedNodeDown(moveContext);
+          },
         },
-        ...(nodeReaderOperations.canBePinned(selectedPath)
+        ...(nodeReaderOperations.canSelectedNaggerBePinned(selectedNodes) && nagger !== null
           ? [
               {
                 key: "editor.pin-selected-nagger",
@@ -78,11 +97,11 @@ export function useCreateEditorScreenDialMenu({
                 showLabel: true,
                 row: 3,
                 keepOpenAfterPress: true,
-                onSelect: pinSelectedNagger,
+                onSelect: () => pinSelectedNagger(nagger),
               },
             ]
           : []),
-        ...(nodeReaderOperations.canBeUnpinned(selectedPath)
+        ...(nodeReaderOperations.canSelectedNaggerBeUnpinned(selectedNodes) && nagger !== null
           ? [
               {
                 key: "editor.unpin-selected-nagger",
@@ -91,7 +110,7 @@ export function useCreateEditorScreenDialMenu({
                 showLabel: true,
                 row: 3,
                 keepOpenAfterPress: true,
-                onSelect: unpinSelectedNagger,
+                onSelect: () => unpinSelectedNagger(nagger),
               },
             ]
           : []),
@@ -102,16 +121,21 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 2,
           keepOpenAfterPress: true,
-          isDisabled: !nodeReaderOperations.canDeleteSelectedNode(selectedPath),
-          onSelect: deleteSelectedNode,
+          isDisabled: deleteContext === null,
+          onSelect: () => {
+            if (deleteContext === null) return;
+            deleteSelectedNode(deleteContext);
+          },
         },
         {
           key: "editor.save",
           icon: "content-save",
           label: "Save",
           row: 0,
+          isDisabled: nagger === null,
           onSelect: () => {
-            saveEdit();
+            if (nagger === null) return;
+            saveEdit(nagger);
             onCloseEditor();
           },
         },
@@ -120,25 +144,30 @@ export function useCreateEditorScreenDialMenu({
           icon: "close",
           label: "Cancel",
           row: 0,
+          isDisabled: nagger === null,
           onSelect: () => {
-            cancelEdit();
+            if (nagger === null) return;
+            cancelEdit(nagger);
             onCloseEditor();
           },
         },
       ],
-    }),
-    [
-      cancelEdit,
-      deleteSelectedNode,
-      moveSelectedNodeDown,
-      moveSelectedNodeUp,
-      onCloseEditor,
-      pinSelectedNagger,
-      saveEdit,
-      selectedPath,
-      taskEntryAdd,
-      taskItemAdd,
-      unpinSelectedNagger,
-    ],
-  );
+    };
+  }, [
+    cancelEdit,
+    deleteSelectedNode,
+    moveSelectedNodeDown,
+    moveSelectedNodeUp,
+    onCloseEditor,
+    pinSelectedNagger,
+    saveEdit,
+    selectedNodes,
+    selectedPath,
+    nagger,
+    taskEntryAdd,
+    taskItem,
+    taskItemAdd,
+    taskLog,
+    unpinSelectedNagger,
+  ]);
 }

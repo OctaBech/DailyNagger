@@ -1,6 +1,7 @@
 import type { TaskEntryValueType } from "@/api";
 import type { Nagger, ScheduleRule, TaskEntry, TaskItem, TaskLog } from "@/models";
 import { createRequiredContext, type Guid, type Prettify } from "@/shared";
+import type { SelectedDeleteContext, SelectedMoveContext } from "@/services/core-node-operations";
 import type { CommandDispatcher } from "@/services/command-boundary";
 import { useMemo } from "react";
 
@@ -24,32 +25,32 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
         },
       },
       dial: {
-        cancelEdit: () => {
-          dispatch("editor-session", "editor/cancel", {});
+        cancelEdit: (nagger: Nagger) => {
+          dispatch("editor-session", "editor/cancel", { nagger });
         },
-        deleteSelectedNode: () => {
-          dispatch("editor-action", "editor/delete-selected-node", {});
+        deleteSelectedNode: (deleteContext: SelectedDeleteContext) => {
+          dispatch("editor-action", "editor/delete-selected-node", { deleteContext });
         },
-        moveSelectedNodeDown: () => {
-          dispatch("editor-action", "editor/move-selected-node-down", {});
+        moveSelectedNodeDown: (moveContext: SelectedMoveContext) => {
+          dispatch("editor-action", "editor/move-selected-node-down", { moveContext });
         },
-        moveSelectedNodeUp: () => {
-          dispatch("editor-action", "editor/move-selected-node-up", {});
+        moveSelectedNodeUp: (moveContext: SelectedMoveContext) => {
+          dispatch("editor-action", "editor/move-selected-node-up", { moveContext });
         },
-        pinSelectedNagger: () => {
-          dispatch("editor-sync", "nagger/pin-selected", {});
+        pinSelectedNagger: (nagger: Nagger) => {
+          dispatch("editor-sync", "nagger/pin-selected", { nagger });
         },
-        saveEdit: () => {
-          dispatch("editor-session", "editor/save", {});
+        saveEdit: (nagger: Nagger) => {
+          dispatch("editor-session", "editor/save", { nagger });
         },
-        taskEntryAdd: () => {
-          dispatch("editor-action", "editor/task-entry-add", {});
+        taskEntryAdd: (taskLog: TaskLog, taskItem: TaskItem) => {
+          dispatch("editor-action", "editor/task-entry-add", { taskLog, taskItem });
         },
-        taskItemAdd: () => {
-          dispatch("editor-action", "editor/task-item-add", {});
+        taskItemAdd: (taskLog: TaskLog, taskItem: TaskItem | null) => {
+          dispatch("editor-action", "editor/task-item-add", { taskLog, taskItem });
         },
-        unpinSelectedNagger: () => {
-          dispatch("editor-sync", "nagger/unpin-selected", {});
+        unpinSelectedNagger: (nagger: Nagger) => {
+          dispatch("editor-sync", "nagger/unpin-selected", { nagger });
         },
       },
       nagger: {

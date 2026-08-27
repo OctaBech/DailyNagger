@@ -1,5 +1,6 @@
+import type { TaskItem, TaskLog } from "@/models";
 import { NodeTemplates } from "@/services/core-node-templates";
-import { selectedNodeContextOperations } from "@/services/core-node-operations";
+import type { SelectedDeleteContext, SelectedMoveContext } from "@/services/core-node-operations";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { editorOperations, inputOperations } from "@/services/operations";
 import type { Memory } from "../memory";
@@ -10,13 +11,11 @@ type EditorActionScope = {
 
 type MoveDirection = "up" | "down";
 
-export function editorTaskEntryAdd({ memory }: EditorActionScope): void {
-  const currentPath = memory.read.getSelectedPath();
-  const { taskLog, taskItem } = selectedPathOperations.deriveSelectedNodes(currentPath);
-
-  if (taskLog === null) return;
-  if (taskItem === null) return;
-
+export function editorTaskEntryAdd(
+  { memory }: EditorActionScope,
+  taskLog: TaskLog,
+  taskItem: TaskItem,
+): void {
   const newTaskEntry = NodeTemplates.getTaskEntry(taskLog, taskItem);
 
   const currentTree = memory.read.getTree();
@@ -30,16 +29,14 @@ export function editorTaskEntryAdd({ memory }: EditorActionScope): void {
   memory.write.setTree(treeWithNewTaskEntry);
 }
 
-export function editorTaskItemAdd({ memory }: EditorActionScope): void {
-  const currentPath = memory.read.getSelectedPath();
-  const { taskLog, taskItem } = selectedPathOperations.deriveSelectedNodes(currentPath);
-
-  if (taskLog === null) {
-    throw new Error("Cannot add TaskItem because no TaskLog is selected in editor memory.");
-  }
-
+export function editorTaskItemAdd(
+  { memory }: EditorActionScope,
+  taskLog: TaskLog,
+  taskItem: TaskItem | null,
+): void {
   const newTaskItem = NodeTemplates.getTaskItem(taskLog, taskItem);
   const currentTree = memory.read.getTree();
+  const targetPath = selectedPathOperations.refreshPathToNode(currentTree, taskItem ?? taskLog);
 
   const treeWithNewTaskItem =
     taskItem !== null
@@ -48,26 +45,32 @@ export function editorTaskItemAdd({ memory }: EditorActionScope): void {
 
   const treeWithUpdatedDescendantCount = editorOperations.updateDescendantTaskItemCount(
     treeWithNewTaskItem,
-    currentPath,
+    targetPath,
     +1,
   );
 
   memory.write.setTree(treeWithUpdatedDescendantCount);
 }
 
-export function editorMoveSelectedNodeUp(scope: EditorActionScope): void {
-  moveSelectedNode(scope, "up");
+export function editorMoveSelectedNodeUp(
+  scope: EditorActionScope,
+  moveContext: SelectedMoveContext,
+): void {
+  moveSelectedNode(scope, moveContext, "up");
 }
 
-export function editorMoveSelectedNodeDown(scope: EditorActionScope): void {
-  moveSelectedNode(scope, "down");
+export function editorMoveSelectedNodeDown(
+  scope: EditorActionScope,
+  moveContext: SelectedMoveContext,
+): void {
+  moveSelectedNode(scope, moveContext, "down");
 }
 
-function moveSelectedNode({ memory }: EditorActionScope, direction: MoveDirection): void {
-  const currentPath = memory.read.getSelectedPath();
-  const moveContext = selectedNodeContextOperations.tryReadMoveContext(currentPath);
-
-  if (moveContext === null) return;
+function moveSelectedNode(
+  { memory }: EditorActionScope,
+  moveContext: SelectedMoveContext,
+  direction: MoveDirection,
+): void {
   if (direction === "up" && moveContext.selectedIndex === 0) return;
   if (direction === "down" && moveContext.selectedIndex === moveContext.siblingCount - 1) return;
 
@@ -103,12 +106,10 @@ function moveSelectedNode({ memory }: EditorActionScope, direction: MoveDirectio
   memory.write.setTreeAndSelectedPath(result.tree, refreshedPath);
 }
 
-export function editorDeleteSelectedNode({ memory }: EditorActionScope): void {
-  const currentPath = memory.read.getSelectedPath();
-  const deleteContext = selectedNodeContextOperations.tryReadDeleteContext(currentPath);
-
-  if (deleteContext === null) return;
-
+export function editorDeleteSelectedNode(
+  { memory }: EditorActionScope,
+  deleteContext: SelectedDeleteContext,
+): void {
   const currentTree = memory.read.getTree();
 
   if (deleteContext.kind === "task-entry-in-task-item") {
@@ -122,14 +123,18 @@ export function editorDeleteSelectedNode({ memory }: EditorActionScope): void {
     return;
   }
 
+  const selectedPath = selectedPathOperations.refreshPathToNode(
+    currentTree,
+    deleteContext.selectedNode,
+  );
   const treeWithDoneCountAdjusted =
     deleteContext.selectedNode.isDone === false
       ? currentTree
-      : inputOperations.updateDoneDescendantTaskItemCount(currentTree, currentPath, -1);
+      : inputOperations.updateDoneDescendantTaskItemCount(currentTree, selectedPath, -1);
 
   const treeWithReducedTaskItemDoneCount = editorOperations.updateDescendantTaskItemCount(
     treeWithDoneCountAdjusted,
-    currentPath,
+    selectedPath,
     -1,
   );
 

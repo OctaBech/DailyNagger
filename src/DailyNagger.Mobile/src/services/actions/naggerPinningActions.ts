@@ -1,4 +1,4 @@
-import { nodeReaderOperations } from "@/services/core-node-operations";
+import type { Nagger } from "@/models";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { pinNaggerOperations } from "@/services/operations";
 import type { Memory } from "../memory";
@@ -9,12 +9,12 @@ type NaggerPinningActionScope = {
   readonly sending: Sending;
 };
 
-export function naggerPinSelected({ memory, sending }: NaggerPinningActionScope): void {
-  const selectedPath = memory.read.getSelectedPath();
+export function naggerPinSelected(
+  { memory, sending }: NaggerPinningActionScope,
+  nagger: Nagger,
+): void {
+  if (nagger.pinnedBy !== "None") return;
 
-  if (!nodeReaderOperations.canBePinned(selectedPath)) return;
-
-  const nagger = selectedPathOperations.requireSelectedNagger(selectedPath);
   const tree = memory.read.getTree();
   const newTree = pinNaggerOperations.setNaggerPinnedBy("User", nagger, tree);
   const updatedNagger = selectedPathOperations.requireSelectedNagger(
@@ -25,12 +25,12 @@ export function naggerPinSelected({ memory, sending }: NaggerPinningActionScope)
   sending.queue(updatedNagger);
 }
 
-export function naggerUnpinSelected({ memory, sending }: NaggerPinningActionScope): void {
-  const selectedPath = memory.read.getSelectedPath();
+export function naggerUnpinSelected(
+  { memory, sending }: NaggerPinningActionScope,
+  nagger: Nagger,
+): void {
+  if (nagger.pinnedBy === "None") return;
 
-  if (!nodeReaderOperations.canBeUnpinned(selectedPath)) return;
-
-  const nagger = selectedPathOperations.requireSelectedNagger(selectedPath);
   const tree = memory.read.getTree();
   const newTree = pinNaggerOperations.setNaggerPinnedBy("None", nagger, tree);
   const updatedNagger = selectedPathOperations.requireSelectedNagger(

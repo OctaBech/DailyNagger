@@ -2,6 +2,7 @@ import type { Nagger, ScheduleRule, TaskEntry, TaskItem, TaskLog } from "@/model
 import type { TaskEntryValueType } from "@/api";
 import type { Guid } from "@/shared";
 import type { Memory } from "@/services/contracts";
+import type { SelectedDeleteContext, SelectedMoveContext } from "@/services/core-node-operations";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { viewOperations } from "@/services/operations";
 import type { Sending } from "../sending";
@@ -99,10 +100,30 @@ function command<TScope extends CommandScope, TArgs>(
   return { scope, run };
 }
 
-type EmptyCommandArgs = Record<string, never>;
-
 type EditorStartEditArgs = {
   readonly naggerId: Guid | null;
+};
+
+type EditorNaggerSessionArgs = {
+  readonly nagger: Nagger;
+};
+
+type EditorTaskEntryAddArgs = {
+  readonly taskLog: TaskLog;
+  readonly taskItem: TaskItem;
+};
+
+type EditorTaskItemAddArgs = {
+  readonly taskLog: TaskLog;
+  readonly taskItem: TaskItem | null;
+};
+
+type EditorMoveSelectedNodeArgs = {
+  readonly moveContext: SelectedMoveContext;
+};
+
+type EditorDeleteSelectedNodeArgs = {
+  readonly deleteContext: SelectedDeleteContext;
 };
 
 type TaskEntrySetFocusedArgs = {
@@ -136,6 +157,10 @@ type NaggerSetTargetTimeArgs = {
 type NaggerSetTitleArgs = {
   readonly nagger: Nagger;
   readonly title: string;
+};
+
+type NaggerPinningArgs = {
+  readonly nagger: Nagger;
 };
 
 type TaskLogSetFocusedArgs = {
@@ -220,41 +245,50 @@ function editorStartEdit(
   runEditorStartEdit(context, args.naggerId);
 }
 
-function editorSave(_args: EmptyCommandArgs, context: CommandEditorSessionActionContext): void {
+function editorSave(
+  _args: EditorNaggerSessionArgs,
+  context: CommandEditorSessionActionContext,
+): void {
   runEditorSaveEdit(context);
 }
 
-function editorCancel(_args: EmptyCommandArgs, context: CommandEditorSessionActionContext): void {
+function editorCancel(
+  _args: EditorNaggerSessionArgs,
+  context: CommandEditorSessionActionContext,
+): void {
   runEditorCancelEdit(context);
 }
 
-function editorTaskEntryAdd(_args: EmptyCommandArgs, context: CommandEditorActionContext): void {
-  runEditorTaskEntryAdd(context);
+function editorTaskEntryAdd(
+  args: EditorTaskEntryAddArgs,
+  context: CommandEditorActionContext,
+): void {
+  runEditorTaskEntryAdd(context, args.taskLog, args.taskItem);
 }
 
-function editorTaskItemAdd(_args: EmptyCommandArgs, context: CommandEditorActionContext): void {
-  runEditorTaskItemAdd(context);
+function editorTaskItemAdd(args: EditorTaskItemAddArgs, context: CommandEditorActionContext): void {
+  runEditorTaskItemAdd(context, args.taskLog, args.taskItem);
 }
 
 function editorMoveSelectedNodeUp(
-  _args: EmptyCommandArgs,
+  args: EditorMoveSelectedNodeArgs,
   context: CommandEditorActionContext,
 ): void {
-  runEditorMoveSelectedNodeUp(context);
+  runEditorMoveSelectedNodeUp(context, args.moveContext);
 }
 
 function editorMoveSelectedNodeDown(
-  _args: EmptyCommandArgs,
+  args: EditorMoveSelectedNodeArgs,
   context: CommandEditorActionContext,
 ): void {
-  runEditorMoveSelectedNodeDown(context);
+  runEditorMoveSelectedNodeDown(context, args.moveContext);
 }
 
 function editorDeleteSelectedNode(
-  _args: EmptyCommandArgs,
+  args: EditorDeleteSelectedNodeArgs,
   context: CommandEditorActionContext,
 ): void {
-  runEditorDeleteSelectedNode(context);
+  runEditorDeleteSelectedNode(context, args.deleteContext);
 }
 
 function naggerSetExpanded(args: NaggerSetExpandedArgs, context: CommandViewActionContext): void {
@@ -273,12 +307,12 @@ function naggerSetFocused(args: NaggerSetFocusedArgs, context: CommandViewAction
   context.memory.write.setTreeAndSelectedPath(tree, treePath);
 }
 
-function naggerPinSelected(_args: EmptyCommandArgs, context: CommandSyncActionContext): void {
-  runNaggerPinSelected(context);
+function naggerPinSelected(args: NaggerPinningArgs, context: CommandSyncActionContext): void {
+  runNaggerPinSelected(context, args.nagger);
 }
 
-function naggerUnpinSelected(_args: EmptyCommandArgs, context: CommandSyncActionContext): void {
-  runNaggerUnpinSelected(context);
+function naggerUnpinSelected(args: NaggerPinningArgs, context: CommandSyncActionContext): void {
+  runNaggerUnpinSelected(context, args.nagger);
 }
 
 function naggerSetScheduleRules(

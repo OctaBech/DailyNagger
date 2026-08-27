@@ -19,13 +19,35 @@ export function buildCommandTraceKey<TKey extends CommandKind>(
 function buildCommandRootKey(args: unknown): string | null {
   if (!isRecord(args)) return null;
 
-  if ("taskEntry" in args) return buildTaskEntryKey(args.taskEntry);
-  if ("taskItem" in args) return buildTaskItemKey(args.taskItem);
-  if ("taskLog" in args) return buildTaskLogKey(args.taskLog);
-  if ("nagger" in args) return buildNaggerKey(args.nagger);
-  if ("naggerId" in args) return buildNaggerIdKey(args.naggerId);
+  const moveContextKey =
+    "moveContext" in args ? buildSelectedNodeContextKey(args.moveContext) : null;
+  if (moveContextKey !== null) return moveContextKey;
+
+  const deleteContextKey =
+    "deleteContext" in args ? buildSelectedNodeContextKey(args.deleteContext) : null;
+  if (deleteContextKey !== null) return deleteContextKey;
+
+  const taskEntryKey = "taskEntry" in args ? buildTaskEntryKey(args.taskEntry) : null;
+  if (taskEntryKey !== null) return taskEntryKey;
+
+  const taskItemKey = "taskItem" in args ? buildTaskItemKey(args.taskItem) : null;
+  if (taskItemKey !== null) return taskItemKey;
+
+  const taskLogKey = "taskLog" in args ? buildTaskLogKey(args.taskLog) : null;
+  if (taskLogKey !== null) return taskLogKey;
+
+  const naggerKey = "nagger" in args ? buildNaggerKey(args.nagger) : null;
+  if (naggerKey !== null) return naggerKey;
+
+  const naggerIdKey = "naggerId" in args ? buildNaggerIdKey(args.naggerId) : null;
+  if (naggerIdKey !== null) return naggerIdKey;
 
   return null;
+}
+
+function buildSelectedNodeContextKey(value: unknown): string | null {
+  if (!isRecord(value)) return null;
+  return buildTaskEntryKey(value.selectedNode) ?? buildTaskItemKey(value.selectedNode);
 }
 
 function buildTaskEntryKey(value: unknown): string | null {
