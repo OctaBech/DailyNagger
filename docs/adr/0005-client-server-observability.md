@@ -59,6 +59,12 @@ server black box: it is for searchable operational logs, raw request logs,
 startup logs, and production diagnosis when we need the detailed server side
 record. Seq is not the primary UI for distributed trace timelines.
 
+Sentry should do the work it is built for: trace ids, span timing, waterfalls,
+errors, device context, release context, and client-server trace propagation.
+DailyNagger should do the work only DailyNagger can know: which command the
+user triggered, which domain entity it targeted, which memory changed, which
+parcel was queued, and why a later request exists.
+
 Client API calls should carry correlation data to the server. At minimum, the
 client should create a request id for each API call and send it in a header. The
 server should log that id and include it in the request context.

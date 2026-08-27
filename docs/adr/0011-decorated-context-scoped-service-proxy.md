@@ -50,9 +50,11 @@ are good long-term directions, but they are larger architecture changes.
 DailyNagger will preserve command causality by using decorated action scopes,
 also known as scoped service proxies.
 
-At command dispatch time, the command boundary may compute a stable
-`commandTraceKey` from the command kind and command arguments. It may then wrap
-the injected capabilities before calling the action:
+At command dispatch time, the command boundary may create an observability
+context from the command kind and command arguments. That context includes the
+stable `commandTraceKey` and any Sentry trace context that needs to survive the
+persistent queue. The boundary may then wrap the injected capabilities before
+calling the action:
 
 - `memory.write` can be decorated so memory mutations record the active
   `commandTraceKey`
@@ -125,6 +127,11 @@ not depend on React Native supporting reliable async-local context.
 The send queue persists `commandTraceKeys` with parcel metadata. That keeps the
 causal identity available after debounce, coalescing, batching, backoff, app
 restart, and offline retries.
+
+When queued work is sent later, the queue should use the persisted
+observability context instead of inventing a new explanation. Sentry can still
+own the technical trace, but DailyNagger must carry the domain cause through
+the queue because Sentry cannot infer it from delayed local state.
 
 The pattern has some hidden-wrapper risk. To keep it understandable, decorated
 capabilities must stay narrow and transparent. They may add metadata; they must
