@@ -1,11 +1,11 @@
 import type { TaskItem, TaskLog, TreeNode } from "@/models";
 import type { Memory } from "@/services/contracts";
 import { treeOperations } from "@/services/tree-operations";
-import type { Sending } from "../sending";
+import type { ActionSending } from "../sending";
 
 type DeleteTreeNodeActionScope = {
   readonly memory: Memory;
-  readonly sending: Sending;
+  readonly sending: ActionSending;
 };
 
 export function deleteOnceTaskItem(

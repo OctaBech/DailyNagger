@@ -41,6 +41,7 @@ export const stampSchema = z.object({
   parcelId: z.string() as z.ZodType<Guid>,
   queuedAt: z.iso.datetime(),
   mood: z.union([z.string() as z.ZodType<UserMoodLabel>, z.null()]).optional(),
+  commandTraceKeys: z.array(z.string()),
   baseVersion: z.number().optional(),
   nextVersion: z.number().optional(),
   clientIdentity: clientIdentitySchema,

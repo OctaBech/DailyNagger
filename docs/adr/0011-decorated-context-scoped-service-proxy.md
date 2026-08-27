@@ -73,6 +73,12 @@ sending.queue(taskLog)
 
 They should not receive observability parameters only to pass them onward.
 
+Raw sending and action sending are intentionally different capabilities.
+`Sending.queue` requires a `commandTraceKey` because every persisted parcel must
+have a causal identity. `ActionSending.queue` does not expose that parameter
+because the command boundary has already stamped the capability before the
+action receives it.
+
 The decorator must not change business behavior. It may attach trace metadata
 and create observability spans. It must not change payloads, endpoint selection,
 versioning, coalescing, retry behavior, or error handling.
@@ -109,9 +115,9 @@ every action.
 The pattern uses normal TypeScript closures and dependency injection. It does
 not depend on React Native supporting reliable async-local context.
 
-The send queue can persist `commandTraceKey` with parcel metadata. That keeps
-the causal identity available after debounce, backoff, app restart, and offline
-retries.
+The send queue persists `commandTraceKeys` with parcel metadata. That keeps the
+causal identity available after debounce, coalescing, batching, backoff, app
+restart, and offline retries.
 
 The pattern has some hidden-wrapper risk. To keep it understandable, decorated
 capabilities must stay narrow and transparent. They may add metadata; they must

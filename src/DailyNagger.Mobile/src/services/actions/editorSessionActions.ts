@@ -4,12 +4,12 @@ import { NodeTemplates } from "@/services/core-node-templates";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { editorSessionOperations, orderNaggersByDate } from "@/services/operations";
 import type { Memory } from "../memory";
-import type { Sending } from "../sending";
+import type { ActionSending } from "../sending";
 
 export type EditorSessionActionScope = {
   readonly editorMemory: Memory;
   readonly planMemory: Memory;
-  readonly sending: Sending;
+  readonly sending: ActionSending;
 };
 
 export function editorStartEdit(

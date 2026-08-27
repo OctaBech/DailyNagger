@@ -22,6 +22,7 @@ export type SendApiRequest = {
   readonly payload: JsonValue;
   readonly processing: {
     readonly queuedAt: string;
+    readonly commandTraceKeys: readonly string[];
     readonly baseVersion?: number;
     readonly nextVersion?: number;
     readonly clientIdentity: ClientIdentity;
@@ -44,7 +45,14 @@ export async function sendApiRequest(request: SendApiRequest): Promise<Versioned
   };
 
   try {
-    const result = await apiRequest<VersionedMutationResponse>({ method, path: endpoint, body });
+    const result = await apiRequest<VersionedMutationResponse>({
+      method,
+      path: endpoint,
+      body,
+      observability: {
+        commandTraceKeys: processing.commandTraceKeys,
+      },
+    });
 
     if (result.kind !== "ok") {
       throw new Error("Send API request response had no JSON body.");

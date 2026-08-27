@@ -1,6 +1,7 @@
 import type { SendApiRequest } from "@/api/client/sendApiRequest";
 import type { Parcel, Stamp } from "../contracts";
 import { logSendingRequest } from "../logging/logSendingRequest";
+import { mergeCommandTraceKeys } from "@/observability/commandTraceKeyList";
 
 export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
   const { ownerType, ownerId, sendMethod, endpointPath, canBatch } = batch[0].formula;
@@ -28,8 +29,11 @@ function mergeBatchStamps(batch: readonly Parcel[]): Stamp {
   let baseVersion = firstStamp.baseVersion;
   let nextVersion = firstStamp.nextVersion;
   let skipPayloadVersionValidation = firstStamp.skipPayloadVersionValidation === true;
+  let commandTraceKeys = firstStamp.commandTraceKeys;
 
   for (const parcel of batch.slice(1)) {
+    commandTraceKeys = mergeCommandTraceKeys(commandTraceKeys, parcel.stamp.commandTraceKeys);
+
     if (parcel.stamp.baseVersion !== undefined) {
       baseVersion =
         baseVersion === undefined
@@ -50,6 +54,7 @@ function mergeBatchStamps(batch: readonly Parcel[]): Stamp {
     parcelId: firstStamp.parcelId,
     queuedAt: firstStamp.queuedAt,
     clientIdentity: firstStamp.clientIdentity,
+    commandTraceKeys,
     ...(baseVersion === undefined ? {} : { baseVersion }),
     ...(nextVersion === undefined ? {} : { nextVersion }),
     ...(skipPayloadVersionValidation ? { skipPayloadVersionValidation } : {}),

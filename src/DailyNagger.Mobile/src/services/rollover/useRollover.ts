@@ -6,6 +6,7 @@ import type { Sending } from "@/services/sending";
 import { useEffect } from "react";
 import { appTiming } from "@/config";
 import { useRefLatestValue } from "@/shared";
+import { createCommandScopedSending } from "@/observability";
 
 export type Rollover = ReturnType<typeof useRollover>;
 
@@ -58,8 +59,28 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
     // Do not rollover a nagger if its TaskLog has pending server updates
     if (sending.hasUpdateBelongingTo("task-log", nagger.taskLog.id)) continue;
 
-    closeTaskLogForRollover({ cultureSettings, planMemory, sending }, nagger);
-    rolloverNagger({ cultureSettings, planMemory, sending }, nagger);
+    closeTaskLogForRollover(
+      {
+        cultureSettings,
+        planMemory,
+        sending: createCommandScopedSending({
+          commandTraceKey: `task-log:${nagger.taskLog.id}/rollover-close`,
+          sending,
+        }),
+      },
+      nagger,
+    );
+    rolloverNagger(
+      {
+        cultureSettings,
+        planMemory,
+        sending: createCommandScopedSending({
+          commandTraceKey: `nagger:${nagger.id}/rollover`,
+          sending,
+        }),
+      },
+      nagger,
+    );
 
     await yieldToUi();
   }

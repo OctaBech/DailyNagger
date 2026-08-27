@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { Parcel, OwnerType } from "../contracts";
 import type { Guid } from "@/shared";
 import { sendQueueStorage } from "./sendQueueStorage";
+import { mergeCommandTraceKeys } from "@/observability/commandTraceKeyList";
 
 export function useSendQueue() {
   const [loadedQueue] = useState(() => sendQueueStorage.load());
@@ -33,6 +34,10 @@ export function useSendQueue() {
       stamp: {
         ...newParcel.stamp,
         baseVersion: oldParcel.stamp.baseVersion,
+        commandTraceKeys: mergeCommandTraceKeys(
+          oldParcel.stamp.commandTraceKeys,
+          newParcel.stamp.commandTraceKeys,
+        ),
       },
     };
   }

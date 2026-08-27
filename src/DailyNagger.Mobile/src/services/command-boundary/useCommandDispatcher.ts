@@ -2,6 +2,7 @@ import { useStableCallback } from "@/shared";
 import {
   buildCommandTraceKey,
   createCommandScopedMemory,
+  createCommandScopedSending,
   recordCommandOperation,
   type CommandTraceKey,
 } from "@/observability";
@@ -72,6 +73,10 @@ function getCommandActionContext(
     memory: memories.editorMemory,
     memoryName: "editorMemory",
   });
+  const sending = createCommandScopedSending({
+    commandTraceKey,
+    sending: memories.sending,
+  });
 
   switch (source) {
     case "plan-view":
@@ -81,14 +86,14 @@ function getCommandActionContext(
       return {
         cultureSettings: memories.cultureSettings,
         memory: planMemory,
-        sending: memories.sending,
+        sending,
         interactionStamp: memories.planInteractionStamp,
       } satisfies CommandInputActionContext;
 
     case "plan-sync":
       return {
         memory: planMemory,
-        sending: memories.sending,
+        sending,
       } satisfies CommandSyncActionContext;
 
     case "editor-action":
@@ -101,21 +106,21 @@ function getCommandActionContext(
       return {
         cultureSettings: memories.cultureSettings,
         memory: editorMemory,
-        sending: memories.sending,
+        sending,
         interactionStamp: null,
       } satisfies CommandInputActionContext;
 
     case "editor-sync":
       return {
         memory: editorMemory,
-        sending: memories.sending,
+        sending,
       } satisfies CommandSyncActionContext;
 
     case "editor-session":
       return {
         editorMemory,
         planMemory,
-        sending: memories.sending,
+        sending,
       } satisfies CommandEditorSessionActionContext;
   }
 }

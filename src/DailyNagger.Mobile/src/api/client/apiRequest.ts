@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/react-native";
 import { environment } from "@/config";
 import { newGuid } from "@/shared";
+import { createCommandTraceKeyAttributes } from "@/observability/commandTraceKeyList";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
 import { apiRequestHeaders } from "./apiRequestHeaders";
 
@@ -48,6 +49,9 @@ export class ApiConnectionError extends Error {
 type ApiRequestOptions = {
   readonly body?: unknown;
   readonly method: ApiRequestMethod;
+  readonly observability?: {
+    readonly commandTraceKeys?: readonly string[];
+  };
   readonly path: string;
 };
 
@@ -76,6 +80,7 @@ export async function apiRequest<TResponse>(
   const result = await Sentry.withScope<Promise<ApiRequestResult<TResponse>>>(async (scope) => {
     scope.setTag("requestId", requestId);
     scope.setContext("apiRequest", {
+      commandTraceKeys: options.observability?.commandTraceKeys,
       method: options.method,
       path: options.path,
       requestId,
@@ -84,6 +89,7 @@ export async function apiRequest<TResponse>(
     scope.addBreadcrumb({
       category: "http",
       data: {
+        commandTraceKeys: options.observability?.commandTraceKeys,
         method: options.method,
         path: options.path,
         requestId,
@@ -97,6 +103,7 @@ export async function apiRequest<TResponse>(
     return Sentry.startSpan(
       {
         attributes: {
+          ...createCommandTraceKeyAttributes(options.observability?.commandTraceKeys),
           "http.method": options.method,
           "http.url": url,
           requestId,

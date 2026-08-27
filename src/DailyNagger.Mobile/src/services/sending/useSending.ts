@@ -37,8 +37,13 @@ import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from 
 import { restampBatchForForcedSend } from "./forced-send";
 import { isVersionedFormula } from "./isVersionedFormula";
 import { sendTimerConfig } from "./sendTimerConfig";
+import type { CommandTraceKey } from "@/observability";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
+
+export type SendingQueueOptions = {
+  readonly commandTraceKey: CommandTraceKey;
+};
 
 export function useSending(
   versionMemory: Memory,
@@ -53,7 +58,7 @@ export function useSending(
 
   const queue = useStableCallback(toPostOffice);
 
-  function postOffice(content: SendableContent) {
+  function postOffice(content: SendableContent, options: SendingQueueOptions) {
     const queuedAt = new Date().toISOString();
 
     const formula = getFormulaForContent(content);
@@ -68,6 +73,7 @@ export function useSending(
         parcelId: newGuid(),
         queuedAt,
         mood: getCurrentMood(),
+        commandTraceKeys: [options.commandTraceKey],
         clientIdentity,
         ...versionStamp,
       },
@@ -210,8 +216,8 @@ export function useSending(
     return sendQueue.hasUpdateBelongingTo(versionOwnerType, versionOwnerId);
   }
 
-  function toPostOffice(content: SendableContent): void {
-    postOffice(content);
+  function toPostOffice(content: SendableContent, options: SendingQueueOptions): void {
+    postOffice(content, options);
   }
 
   return {
@@ -229,3 +235,9 @@ export function useSending(
 type FlushQueueResult = { readonly kind: "flushed" } | { readonly kind: "server-unreachable" };
 
 export type Sending = Prettify<ReturnType<typeof useSending>>;
+
+export type ActionSending = Prettify<
+  Omit<Sending, "queue"> & {
+    readonly queue: (content: SendableContent) => void;
+  }
+>;

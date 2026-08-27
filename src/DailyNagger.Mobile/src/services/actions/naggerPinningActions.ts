@@ -2,11 +2,11 @@ import type { Nagger } from "@/models";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { pinNaggerOperations } from "@/services/operations";
 import type { Memory } from "../memory";
-import type { Sending } from "../sending";
+import type { ActionSending } from "../sending";
 
 type NaggerPinningActionScope = {
   readonly memory: Memory;
-  readonly sending: Sending;
+  readonly sending: ActionSending;
 };
 
 export function naggerPinSelected(

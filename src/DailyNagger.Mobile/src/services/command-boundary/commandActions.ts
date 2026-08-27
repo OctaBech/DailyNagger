@@ -5,7 +5,7 @@ import type { Memory } from "@/services/contracts";
 import type { SelectedDeleteContext, SelectedMoveContext } from "@/services/core-node-operations";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { viewOperations } from "@/services/operations";
-import type { Sending } from "../sending";
+import type { ActionSending } from "../sending";
 import {
   editorDeleteSelectedNode as runEditorDeleteSelectedNode,
   editorCancelEdit as runEditorCancelEdit,
@@ -44,7 +44,7 @@ export type CommandViewActionContext = {
 
 export type CommandSyncActionContext = {
   readonly memory: Memory;
-  readonly sending: Sending;
+  readonly sending: ActionSending;
 };
 
 export type CommandEditorActionContext = {

@@ -5,12 +5,12 @@ import { selectedPathOperations } from "@/services/core-tree-operations";
 import { editorOperations, inputOperations } from "@/services/operations";
 import { scheduleCalculator } from "@/services/schedule-calculator";
 import { treeOperations } from "@/services/tree-operations";
-import type { CultureSettings, InteractionStamp, Memory, Sending } from "../contracts";
+import type { ActionSending, CultureSettings, InteractionStamp, Memory } from "../contracts";
 
 export type InputActionScope = {
   readonly cultureSettings: CultureSettings;
   readonly memory: Memory;
-  readonly sending: Sending;
+  readonly sending: ActionSending;
   readonly interactionStamp: InteractionStamp | null;
 };
 

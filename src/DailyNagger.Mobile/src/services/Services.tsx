@@ -109,7 +109,7 @@ function useCreateServices(): {
 
       currentMoodRef.current = selection.mood;
       userMood.select(selection);
-      sending.queue(selection);
+      sending.queue(selection, { commandTraceKey: `user-mood:${selection.id}/select` });
     },
     [cultureSettings, sending, userMood],
   );
