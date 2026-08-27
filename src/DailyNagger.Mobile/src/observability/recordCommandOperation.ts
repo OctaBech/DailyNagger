@@ -13,6 +13,17 @@ export function recordCommandOperation<TResult>(
   input: CommandOperationInput,
   run: () => TResult,
 ): TResult {
+  Sentry.addBreadcrumb({
+    category: "command",
+    data: {
+      commandKind: input.commandKind,
+      commandSource: input.commandSource,
+      commandTraceKey: input.commandTraceKey,
+    },
+    level: "info",
+    message: input.commandKind,
+  });
+
   if (Sentry.getActiveSpan() === undefined) {
     return run();
   }

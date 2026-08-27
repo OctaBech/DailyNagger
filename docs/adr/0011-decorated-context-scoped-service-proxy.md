@@ -79,13 +79,20 @@ have a causal identity. `ActionSending.queue` does not expose that parameter
 because the command boundary has already stamped the capability before the
 action receives it.
 
-The decorator must not change business behavior. It may attach trace metadata
-and create observability spans. It must not change payloads, endpoint selection,
+The decorator must not change business behavior. It may attach trace metadata,
+create observability spans, and add breadcrumbs that explain the user-visible
+cause of later work. It must not change payloads, endpoint selection,
 versioning, coalescing, retry behavior, or error handling.
 
 `commandTraceKey` is DailyNagger's stable causal identity for the domain object
 or command surface that started the operation. It is not the same as Sentry or
 OpenTelemetry `traceId`, and it is not an HTTP `requestId`.
+
+Trace keys are join data. Breadcrumbs are the readable story. A trace key that
+only appears as a span attribute is not enough, because the developer still has
+to hunt for the cause. Command, memory, and sending boundaries should therefore
+record breadcrumbs with the active `commandTraceKey` and the domain operation
+that just happened.
 
 The preferred key format is compact and readable:
 

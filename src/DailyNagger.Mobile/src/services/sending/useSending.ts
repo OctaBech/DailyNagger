@@ -37,7 +37,7 @@ import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from 
 import { restampBatchForForcedSend } from "./forced-send";
 import { isVersionedFormula } from "./isVersionedFormula";
 import { sendTimerConfig } from "./sendTimerConfig";
-import type { CommandTraceKey } from "@/observability";
+import { recordSendingOperation, type CommandTraceKey } from "@/observability";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
 
@@ -83,9 +83,11 @@ export function useSending(
 
     switch (addResult.kind) {
       case "added":
+        recordQueuedParcel("parcel-queued", addResult.parcel);
         sendingEvents.emit("parcel-queued", [addResult.parcel]);
         break;
       case "coalesced":
+        recordQueuedParcel("parcel-coalesced", addResult.newParcel);
         sendingEvents.emit("parcel-coalesced", [addResult.oldParcel, addResult.newParcel]);
         break;
     }
@@ -103,6 +105,21 @@ export function useSending(
     if (isUserMood(content)) return createUserMoodFormula(content);
 
     throw new Error("Cannot queue content because no sending formula matches it.");
+  }
+
+  function recordQueuedParcel(
+    operation: "parcel-queued" | "parcel-coalesced",
+    parcel: Parcel,
+  ): void {
+    recordSendingOperation({
+      coalesceKey: parcel.formula.coalesceKey ?? null,
+      commandTraceKeys: parcel.stamp.commandTraceKeys,
+      formulaType: parcel.formula.type,
+      operation,
+      ownerId: parcel.formula.ownerId ?? null,
+      ownerType: parcel.formula.ownerType ?? null,
+      parcelId: parcel.stamp.parcelId,
+    });
   }
 
   async function processSendQueue(): Promise<boolean> {

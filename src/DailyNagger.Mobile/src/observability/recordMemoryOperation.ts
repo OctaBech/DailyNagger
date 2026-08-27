@@ -18,6 +18,17 @@ export function recordMemoryOperation<TResult>(
   input: MemoryOperationInput,
   run: () => TResult,
 ): TResult {
+  Sentry.addBreadcrumb({
+    category: "memory",
+    data: {
+      commandTraceKey: input.commandTraceKey,
+      memoryName: input.memoryName,
+      operation: input.operation,
+    },
+    level: "info",
+    message: `${input.memoryName}.${input.operation}`,
+  });
+
   if (Sentry.getActiveSpan() === undefined) {
     return run();
   }
