@@ -15,6 +15,7 @@ import {
   type SourceForScope,
 } from "./commandActions";
 import type { CommandArgs, CommandKind, CommandScopeForKind } from "./commandModel";
+import { createCommandScopedActionContext } from "./createCommandScopedActionContext";
 
 export type CommandSource =
   | "plan-input"
@@ -113,16 +114,17 @@ function runCommand<TKey extends CommandKind>(
 
   recordCommandOperation({ commandKind: kind, commandSource: source, commandTraceKey }, () => {
     const action = commandActions[kind];
+    const actionContext = createCommandScopedActionContext(source, context, commandTraceKey);
 
     assertSourceMatchesScope(source, action.scope);
-    assertContextMatchesScope(context, action.scope);
+    assertContextMatchesScope(actionContext, action.scope);
 
     const run = action.run as (
       args: CommandArgs<TKey>,
       context: ContextForScope<CommandScopeForKind<TKey>>,
     ) => void;
 
-    run(args, context as ContextForScope<CommandScopeForKind<TKey>>);
+    run(args, actionContext as ContextForScope<CommandScopeForKind<TKey>>);
   });
 }
 

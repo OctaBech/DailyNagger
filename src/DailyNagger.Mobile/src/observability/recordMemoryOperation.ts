@@ -9,6 +9,7 @@ export type MemoryOperation =
   | "setTreeAndFocusPath";
 
 type MemoryOperationInput = {
+  readonly commandTraceKey: string;
   readonly memoryName: string;
   readonly operation: MemoryOperation;
 };
@@ -24,6 +25,7 @@ export function recordMemoryOperation<TResult>(
   return Sentry.startSpan(
     {
       attributes: {
+        commandTraceKey: input.commandTraceKey,
         "memory.name": input.memoryName,
         "memory.operation": input.operation,
       },
