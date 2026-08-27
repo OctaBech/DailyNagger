@@ -6,7 +6,7 @@ import type { CommandTraceKey } from "./commandTraceKey";
 type CommandOperationInput = {
   readonly commandKind: CommandKind;
   readonly commandSource: CommandSource;
-  readonly commandTraceKey: CommandTraceKey | null;
+  readonly commandTraceKey: CommandTraceKey;
 };
 
 export function recordCommandOperation<TResult>(
@@ -22,7 +22,7 @@ export function recordCommandOperation<TResult>(
       attributes: {
         "command.kind": input.commandKind,
         "command.source": input.commandSource,
-        ...(input.commandTraceKey === null ? {} : { commandTraceKey: input.commandTraceKey }),
+        commandTraceKey: input.commandTraceKey,
       },
       name: input.commandKind,
       op: "command.execute",

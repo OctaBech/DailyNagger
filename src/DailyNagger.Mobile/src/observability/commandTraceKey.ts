@@ -8,9 +8,11 @@ export type CommandTraceKey = string;
 export function buildCommandTraceKey<TKey extends CommandKind>(
   kind: TKey,
   args: CommandArgs<TKey>,
-): CommandTraceKey | null {
+): CommandTraceKey {
   const rootKey = buildCommandRootKey(args);
-  if (rootKey === null) return null;
+  if (rootKey === null) {
+    throw new Error(`Cannot build command trace key for command "${kind}".`);
+  }
 
   const surface = getCommandSurface(kind);
   return surface === null ? rootKey : `${rootKey}/${surface}`;

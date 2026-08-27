@@ -1,5 +1,10 @@
 import { useStableCallback } from "@/shared";
-import { buildCommandTraceKey, recordCommandOperation } from "@/observability";
+import {
+  buildCommandTraceKey,
+  createCommandScopedMemory,
+  recordCommandOperation,
+  type CommandTraceKey,
+} from "@/observability";
 import type { CultureSettings, InteractionStamp, Memory } from "@/services/contracts";
 import type { Sending } from "../sending";
 import {
@@ -15,7 +20,6 @@ import {
   type SourceForScope,
 } from "./commandActions";
 import type { CommandArgs, CommandKind, CommandScopeForKind } from "./commandModel";
-import { createCommandScopedActionContext } from "./createCommandScopedActionContext";
 
 export type CommandSource =
   | "plan-input"
@@ -48,7 +52,7 @@ export function useCommandDispatcher(memories: CommandMemories): CommandDispatch
       kind: TKey,
       args: CommandArgs<TKey>,
     ): void => {
-      runCommand(source, kind, args, getCommandActionContext(source, memories));
+      runCommand(source, kind, args, memories);
     },
   );
 }
@@ -56,49 +60,61 @@ export function useCommandDispatcher(memories: CommandMemories): CommandDispatch
 function getCommandActionContext(
   source: CommandSource,
   memories: CommandMemories,
+  commandTraceKey: CommandTraceKey,
 ): CommandActionContext {
+  const planMemory = createCommandScopedMemory({
+    commandTraceKey,
+    memory: memories.planMemory,
+    memoryName: "planMemory",
+  });
+  const editorMemory = createCommandScopedMemory({
+    commandTraceKey,
+    memory: memories.editorMemory,
+    memoryName: "editorMemory",
+  });
+
   switch (source) {
     case "plan-view":
-      return { memory: memories.planMemory } satisfies CommandViewActionContext;
+      return { memory: planMemory } satisfies CommandViewActionContext;
 
     case "plan-input":
       return {
         cultureSettings: memories.cultureSettings,
-        memory: memories.planMemory,
+        memory: planMemory,
         sending: memories.sending,
         interactionStamp: memories.planInteractionStamp,
       } satisfies CommandInputActionContext;
 
     case "plan-sync":
       return {
-        memory: memories.planMemory,
+        memory: planMemory,
         sending: memories.sending,
       } satisfies CommandSyncActionContext;
 
     case "editor-action":
-      return { memory: memories.editorMemory } satisfies CommandEditorActionContext;
+      return { memory: editorMemory } satisfies CommandEditorActionContext;
 
     case "editor-view":
-      return { memory: memories.editorMemory } satisfies CommandViewActionContext;
+      return { memory: editorMemory } satisfies CommandViewActionContext;
 
     case "editor-input":
       return {
         cultureSettings: memories.cultureSettings,
-        memory: memories.editorMemory,
+        memory: editorMemory,
         sending: memories.sending,
         interactionStamp: null,
       } satisfies CommandInputActionContext;
 
     case "editor-sync":
       return {
-        memory: memories.editorMemory,
+        memory: editorMemory,
         sending: memories.sending,
       } satisfies CommandSyncActionContext;
 
     case "editor-session":
       return {
-        editorMemory: memories.editorMemory,
-        planMemory: memories.planMemory,
+        editorMemory,
+        planMemory,
         sending: memories.sending,
       } satisfies CommandEditorSessionActionContext;
   }
@@ -108,23 +124,23 @@ function runCommand<TKey extends CommandKind>(
   source: CommandSource,
   kind: TKey,
   args: CommandArgs<TKey>,
-  context: CommandActionContext,
+  memories: CommandMemories,
 ): void {
   const commandTraceKey = buildCommandTraceKey(kind, args);
+  const context = getCommandActionContext(source, memories, commandTraceKey);
 
   recordCommandOperation({ commandKind: kind, commandSource: source, commandTraceKey }, () => {
     const action = commandActions[kind];
-    const actionContext = createCommandScopedActionContext(source, context, commandTraceKey);
 
     assertSourceMatchesScope(source, action.scope);
-    assertContextMatchesScope(actionContext, action.scope);
+    assertContextMatchesScope(context, action.scope);
 
     const run = action.run as (
       args: CommandArgs<TKey>,
       context: ContextForScope<CommandScopeForKind<TKey>>,
     ) => void;
 
-    run(args, actionContext as ContextForScope<CommandScopeForKind<TKey>>);
+    run(args, context as ContextForScope<CommandScopeForKind<TKey>>);
   });
 }
 
