@@ -54,10 +54,15 @@ At command dispatch time, the command boundary may compute a stable
 `commandTraceKey` from the command kind and command arguments. It may then wrap
 the injected capabilities before calling the action:
 
-- `memory` can be decorated so memory operations record the active
+- `memory.write` can be decorated so memory mutations record the active
   `commandTraceKey`
 - `sending` can be decorated so queued parcels are stamped with the active
   `commandTraceKey`
+
+Decorators should be applied only around side-effect capabilities. For memory,
+`state` and `read` pass through unchanged; `write` is the meaningful boundary
+because it changes application state. Recording reads would mostly create noise
+and make the wrapper look more magical than it is.
 
 Actions should keep using the same scope shape:
 
