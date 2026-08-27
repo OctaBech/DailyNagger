@@ -72,6 +72,29 @@ keep DailyNagger code tidy. Those wrappers should adapt the chosen tools to the
 app's boundaries. They should not become a separate observability product inside
 DailyNagger.
 
+Observability events must carry the domain identity needed to explain why work
+happened, not only where code executed. Technical labels such as component names,
+method names, and URLs are useful, but they are not enough when investigating a
+user-facing flow.
+
+Client observability should be added by following the same boundary recipe:
+
+1. Find an existing app boundary.
+2. Give that boundary a small typed recorder call.
+3. Send domain identity, not random debug details.
+4. Let Sentry own timing, trace linking, and transport.
+5. Keep recorder functions narrow and named after the domain.
+
+Domain observability should use stable field groups:
+
+- Command boundary: `command.kind` and `command.source`.
+- Memory: `memory.name` and `memory.operation`.
+- Send queue: `parcel.id`, `parcel.type`, `parcel.ownerType`, `parcel.ownerId`,
+  `parcel.coalesceKey`, `parcel.baseVersion`, `parcel.nextVersion`,
+  `batch.size`, and `batch.result`.
+- Render: `render.frame`, `render.trigger`, `render.component`, and
+  `render.count`.
+
 ## Consequences
 
 Client observability starts with a tool that is already strong in Expo and React

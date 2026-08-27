@@ -1,4 +1,5 @@
 import { useStableCallback } from "@/shared";
+import { buildCommandTraceKey, recordCommandOperation } from "@/observability";
 import type { CultureSettings, InteractionStamp, Memory } from "@/services/contracts";
 import type { Sending } from "../sending";
 import {
@@ -108,17 +109,21 @@ function runCommand<TKey extends CommandKind>(
   args: CommandArgs<TKey>,
   context: CommandActionContext,
 ): void {
-  const action = commandActions[kind];
+  const commandTraceKey = buildCommandTraceKey(kind, args);
 
-  assertSourceMatchesScope(source, action.scope);
-  assertContextMatchesScope(context, action.scope);
+  recordCommandOperation({ commandKind: kind, commandSource: source, commandTraceKey }, () => {
+    const action = commandActions[kind];
 
-  const run = action.run as (
-    args: CommandArgs<TKey>,
-    context: ContextForScope<CommandScopeForKind<TKey>>,
-  ) => void;
+    assertSourceMatchesScope(source, action.scope);
+    assertContextMatchesScope(context, action.scope);
 
-  run(args, context as ContextForScope<CommandScopeForKind<TKey>>);
+    const run = action.run as (
+      args: CommandArgs<TKey>,
+      context: ContextForScope<CommandScopeForKind<TKey>>,
+    ) => void;
+
+    run(args, context as ContextForScope<CommandScopeForKind<TKey>>);
+  });
 }
 
 function assertSourceMatchesScope<TScope extends CommandScope>(
