@@ -379,6 +379,8 @@ if (!(Test-Path $androidSdk)) {
 }
 Remove-Item $buildLogPath -ErrorAction SilentlyContinue
 
+& (Join-Path $PSScriptRoot "bump-mobile-build.ps1") -RepoRootPath $repoRoot
+
 $patchedExpoModulesCore = Ensure-ExpoModulesCoreCMakeVersion $mobileProject $androidCMakeVersion
 if ($patchedExpoModulesCore) {
     Clear-KnownDirtyCMakeCache $mobileProject

@@ -9,6 +9,7 @@
     "mobile:lint:fix": "npm run lint:fix --prefix src/DailyNagger.Mobile",
     "mobile:format": "npm run format --prefix src/DailyNagger.Mobile",
     "mobile:format:check": "npm run format:check --prefix src/DailyNagger.Mobile",
+    "mobile:bump-build": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/bump-mobile-build.ps1",
     "contracts:format": "npm run format --prefix src/api-contracts",
     "contracts:format:check": "npm run format:check --prefix src/api-contracts",
     "contracts:update": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/update-api-contracts.ps1",

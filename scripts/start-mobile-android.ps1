@@ -37,6 +37,8 @@ Write-Host "Android SDK: $env:ANDROID_HOME"
 Write-Host "Gradle user home: $env:GRADLE_USER_HOME"
 Write-Host "Ninja: $env:DAILY_NAGGER_NINJA"
 
+& (Join-Path $PSScriptRoot "bump-mobile-build.ps1") -RepoRootPath $repoRoot
+
 Push-Location $mobileProject
 try {
     & npx expo run:android

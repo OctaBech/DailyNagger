@@ -13,6 +13,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: "com.dailynagger.mobile",
+    versionCode: 2,
     adaptiveIcon: {
       backgroundColor: "#E6F4FE",
       foregroundImage: "./assets/android-icon-foreground.png",
