@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/react-native";
 import { environment } from "@/config";
 import { newGuid } from "@/shared";
-import { createCommandTraceKeyAttributes } from "@/observability/commandTraceKeyList";
+import { createCausalityKeyAttributes } from "@/observability/causalityKeyList";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
 import { apiRequestHeaders } from "./apiRequestHeaders";
 
@@ -50,7 +50,7 @@ type ApiRequestOptions = {
   readonly body?: unknown;
   readonly method: ApiRequestMethod;
   readonly observability?: {
-    readonly commandTraceKeys?: readonly string[];
+    readonly causalityKeys?: readonly string[];
   };
   readonly path: string;
 };
@@ -80,7 +80,7 @@ export async function apiRequest<TResponse>(
   const result = await Sentry.withScope<Promise<ApiRequestResult<TResponse>>>(async (scope) => {
     scope.setTag("requestId", requestId);
     scope.setContext("apiRequest", {
-      commandTraceKeys: options.observability?.commandTraceKeys,
+      causalityKeys: options.observability?.causalityKeys,
       method: options.method,
       path: options.path,
       requestId,
@@ -89,7 +89,7 @@ export async function apiRequest<TResponse>(
     scope.addBreadcrumb({
       category: "http",
       data: {
-        commandTraceKeys: options.observability?.commandTraceKeys,
+        causalityKeys: options.observability?.causalityKeys,
         method: options.method,
         path: options.path,
         requestId,
@@ -103,7 +103,7 @@ export async function apiRequest<TResponse>(
     return Sentry.startSpan(
       {
         attributes: {
-          ...createCommandTraceKeyAttributes(options.observability?.commandTraceKeys),
+          ...createCausalityKeyAttributes(options.observability?.causalityKeys),
           "http.method": options.method,
           "http.url": url,
           requestId,

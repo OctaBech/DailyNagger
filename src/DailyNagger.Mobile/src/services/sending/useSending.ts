@@ -37,12 +37,12 @@ import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from 
 import { restampBatchForForcedSend } from "./forced-send";
 import { isVersionedFormula } from "./isVersionedFormula";
 import { sendTimerConfig } from "./sendTimerConfig";
-import { recordSendingOperation, type CommandTraceKey } from "@/observability";
+import { recordSendingOperation, type ObservabilityContext } from "@/observability";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
 
 export type SendingQueueOptions = {
-  readonly commandTraceKey: CommandTraceKey;
+  readonly observabilityContext: ObservabilityContext;
 };
 
 export function useSending(
@@ -73,7 +73,7 @@ export function useSending(
         parcelId: newGuid(),
         queuedAt,
         mood: getCurrentMood(),
-        commandTraceKeys: [options.commandTraceKey],
+        causalityKeys: [options.observabilityContext.causality.key],
         clientIdentity,
         ...versionStamp,
       },
@@ -83,11 +83,11 @@ export function useSending(
 
     switch (addResult.kind) {
       case "added":
-        recordQueuedParcel("parcel-queued", addResult.parcel);
+        recordQueuedParcel(options.observabilityContext, "parcel-queued", addResult.parcel);
         sendingEvents.emit("parcel-queued", [addResult.parcel]);
         break;
       case "coalesced":
-        recordQueuedParcel("parcel-coalesced", addResult.newParcel);
+        recordQueuedParcel(options.observabilityContext, "parcel-coalesced", addResult.newParcel);
         sendingEvents.emit("parcel-coalesced", [addResult.oldParcel, addResult.newParcel]);
         break;
     }
@@ -108,12 +108,12 @@ export function useSending(
   }
 
   function recordQueuedParcel(
+    observabilityContext: ObservabilityContext,
     operation: "parcel-queued" | "parcel-coalesced",
     parcel: Parcel,
   ): void {
-    recordSendingOperation({
+    recordSendingOperation(observabilityContext, {
       coalesceKey: parcel.formula.coalesceKey ?? null,
-      commandTraceKeys: parcel.stamp.commandTraceKeys,
       formulaType: parcel.formula.type,
       operation,
       ownerId: parcel.formula.ownerId ?? null,

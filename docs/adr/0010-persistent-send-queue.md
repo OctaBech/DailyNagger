@@ -27,7 +27,7 @@ queued parcels. Each parcel contains:
 - a `formula`, describing what should be sent and where
 - a `stamp`, describing when and by which client/device the parcel was queued
 - a `parcelId`, used for traceability and visual feedback
-- `commandTraceKeys`, used to preserve the user/system causes that created the
+- `causalityKeys`, used to preserve the user/system causes that created the
   parcel even after coalescing and batching
 
 The queue owns delivery behavior:
@@ -63,5 +63,5 @@ be discarded during development, but compatible production changes need an
 explicit migration or discard strategy.
 
 Observability should treat the send queue as a first-class boundary. `parcelId`,
-`queuedAt`, `commandTraceKeys`, version fields, client identity, and send result
+`queuedAt`, `causalityKeys`, version fields, client identity, and send result
 events are part of understanding what happened.

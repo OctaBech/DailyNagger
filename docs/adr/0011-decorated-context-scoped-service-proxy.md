@@ -70,14 +70,14 @@ attributes, breadcrumbs, and propagation rules in one place.
 
 At command dispatch time, the command boundary may create an observability
 context from the command kind and command arguments. That context includes the
-stable `commandTraceKey` and any Sentry trace context that needs to survive the
+stable causality key and any Sentry trace context that needs to survive the
 persistent queue. The boundary may then wrap the injected capabilities before
 calling the action:
 
 - `memory.write` can be decorated so memory mutations record the active
-  `commandTraceKey`
+  causality
 - `sending` can be decorated so queued parcels are stamped with the active
-  `commandTraceKey`
+  causality
 
 Decorators should be applied only around side-effect capabilities. For memory,
 `state` and `read` pass through unchanged; `write` is the meaningful boundary
@@ -94,24 +94,24 @@ sending.queue(taskLog)
 They should not receive observability parameters only to pass them onward.
 
 Raw sending and action sending are intentionally different capabilities.
-`Sending.queue` requires a `commandTraceKey` because every persisted parcel must
-have a causal identity. `ActionSending.queue` does not expose that parameter
-because the command boundary has already stamped the capability before the
-action receives it.
+`Sending.queue` requires an observability context because every persisted
+parcel must have a causal identity. `ActionSending.queue` does not expose that
+parameter because the command boundary has already stamped the capability
+before the action receives it.
 
 The decorator must not change business behavior. It may attach trace metadata,
 create observability spans, and add breadcrumbs that explain the user-visible
 cause of later work. It must not change payloads, endpoint selection,
 versioning, coalescing, retry behavior, or error handling.
 
-`commandTraceKey` is DailyNagger's stable causal identity for the domain object
-or command surface that started the operation. It is not the same as Sentry or
-OpenTelemetry `traceId`, and it is not an HTTP `requestId`.
+Causality is DailyNagger's stable causal identity for the domain object or
+command surface that started the operation. Its `key` is not the same as Sentry
+or OpenTelemetry `traceId`, and it is not an HTTP `requestId`.
 
-Trace keys are join data. Breadcrumbs are the readable story. A trace key that
-only appears as a span attribute is not enough, because the developer still has
-to hunt for the cause. Command, memory, and sending boundaries should therefore
-record breadcrumbs with the active `commandTraceKey` and the domain operation
+Causality keys are join data. Breadcrumbs are the readable story. A causality
+key that only appears as a span attribute is not enough, because the developer
+still has to hunt for the cause. Command, memory, and sending boundaries should
+therefore record breadcrumbs with the active causality and the domain operation
 that just happened.
 
 The preferred key format is compact and readable:
@@ -131,8 +131,8 @@ The key format uses:
 - `/` for command surface or field
 
 The command surface should reuse the command boundary name where possible. A
-trace key should be searchable back into the codebase without requiring a hidden
-translation table between telemetry names and command names.
+causality key should be searchable back into the codebase without requiring a
+hidden translation table between telemetry names and command names.
 
 ## Consequences
 
@@ -142,7 +142,7 @@ every action.
 The pattern uses normal TypeScript closures and dependency injection. It does
 not depend on React Native supporting reliable async-local context.
 
-The send queue persists `commandTraceKeys` with parcel metadata. That keeps the
+The send queue persists `causalityKeys` with parcel metadata. That keeps the
 causal identity available after debounce, coalescing, batching, backoff, app
 restart, and offline retries.
 
@@ -156,5 +156,5 @@ capabilities must stay narrow and transparent. They may add metadata; they must
 not change the meaning of the capability.
 
 Stable command target tokens remain a useful future direction. When command
-arguments move from stale model nodes to stable tokens, `commandTraceKey` should
-be built from those tokens instead of from full model objects.
+arguments move from stale model nodes to stable tokens, causality keys should be
+built from those tokens instead of from full model objects.

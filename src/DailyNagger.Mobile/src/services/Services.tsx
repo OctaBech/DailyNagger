@@ -29,6 +29,7 @@ import {
   type PlanScreenData,
   type EditorScreenData,
 } from "./screen-data";
+import { buildObservabilityContext } from "@/observability";
 
 export type Services = Prettify<{
   readonly appShell: AppShell;
@@ -109,7 +110,14 @@ function useCreateServices(): {
 
       currentMoodRef.current = selection.mood;
       userMood.select(selection);
-      sending.queue(selection, { commandTraceKey: `user-mood:${selection.id}/select` });
+      sending.queue(selection, {
+        observabilityContext: buildObservabilityContext({
+          key: `user-mood:${selection.id}/select`,
+          kind: "user-mood/select",
+          label: "Selected user mood",
+          source: "user-mood",
+        }),
+      });
     },
     [cultureSettings, sending, userMood],
   );

@@ -1,17 +1,17 @@
 import type { ActionSending, Sending } from "@/services/sending";
-import type { CommandTraceKey } from "./commandTraceKey";
+import type { ObservabilityContext } from "./observabilityContext";
 
 type CreateCommandScopedSendingInput = {
-  readonly commandTraceKey: CommandTraceKey;
+  readonly observabilityContext: ObservabilityContext;
   readonly sending: Sending;
 };
 
 export function createCommandScopedSending({
-  commandTraceKey,
+  observabilityContext,
   sending,
 }: CreateCommandScopedSendingInput): ActionSending {
   return {
     ...sending,
-    queue: (content) => sending.queue(content, { commandTraceKey }),
+    queue: (content) => sending.queue(content, { observabilityContext }),
   };
 }

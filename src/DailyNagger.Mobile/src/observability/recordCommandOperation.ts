@@ -1,27 +1,23 @@
 import * as Sentry from "@sentry/react-native";
-import type { CommandKind } from "@/services/command-boundary/commandModel";
-import type { CommandSource } from "@/services/command-boundary/useCommandDispatcher";
-import type { CommandTraceKey } from "./commandTraceKey";
-
-type CommandOperationInput = {
-  readonly commandKind: CommandKind;
-  readonly commandSource: CommandSource;
-  readonly commandTraceKey: CommandTraceKey;
-};
+import type { ObservabilityContext } from "./observabilityContext";
 
 export function recordCommandOperation<TResult>(
-  input: CommandOperationInput,
+  observabilityContext: ObservabilityContext,
   run: () => TResult,
 ): TResult {
+  const { causality } = observabilityContext;
+
   Sentry.addBreadcrumb({
     category: "command",
     data: {
-      commandKind: input.commandKind,
-      commandSource: input.commandSource,
-      commandTraceKey: input.commandTraceKey,
+      "dn.causality.id": causality.id,
+      "dn.causality.key": causality.key,
+      "dn.causality.kind": causality.kind,
+      "dn.causality.source": causality.source,
+      "dn.causality.occurredAt": causality.occurredAt,
     },
     level: "info",
-    message: input.commandKind,
+    message: causality.label,
   });
 
   if (Sentry.getActiveSpan() === undefined) {
@@ -31,12 +27,14 @@ export function recordCommandOperation<TResult>(
   return Sentry.startSpan(
     {
       attributes: {
-        "command.kind": input.commandKind,
-        "command.source": input.commandSource,
-        commandTraceKey: input.commandTraceKey,
+        "dn.causality.id": causality.id,
+        "dn.causality.key": causality.key,
+        "dn.causality.kind": causality.kind,
+        "dn.causality.source": causality.source,
+        "dn.causality.occurredAt": causality.occurredAt,
       },
-      name: input.commandKind,
-      op: "command.execute",
+      name: causality.label,
+      op: "dn.command",
     },
     run,
   );

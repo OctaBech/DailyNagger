@@ -37,16 +37,22 @@ export const formulaSchema = z.object({
   payload: jsonValueSchema,
 });
 
-export const stampSchema = z.object({
-  parcelId: z.string() as z.ZodType<Guid>,
-  queuedAt: z.iso.datetime(),
-  mood: z.union([z.string() as z.ZodType<UserMoodLabel>, z.null()]).optional(),
-  commandTraceKeys: z.array(z.string()),
-  baseVersion: z.number().optional(),
-  nextVersion: z.number().optional(),
-  clientIdentity: clientIdentitySchema,
-  skipPayloadVersionValidation: z.boolean().optional(),
-});
+export const stampSchema = z
+  .object({
+    parcelId: z.string() as z.ZodType<Guid>,
+    queuedAt: z.iso.datetime(),
+    mood: z.union([z.string() as z.ZodType<UserMoodLabel>, z.null()]).optional(),
+    causalityKeys: z.array(z.string()).optional(),
+    commandTraceKeys: z.array(z.string()).optional(),
+    baseVersion: z.number().optional(),
+    nextVersion: z.number().optional(),
+    clientIdentity: clientIdentitySchema,
+    skipPayloadVersionValidation: z.boolean().optional(),
+  })
+  .transform(({ commandTraceKeys, causalityKeys, ...stamp }) => ({
+    ...stamp,
+    causalityKeys: causalityKeys ?? commandTraceKeys ?? [],
+  }));
 
 export const parcelSchema = z.object({
   formula: formulaSchema,

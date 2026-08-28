@@ -1,46 +1,46 @@
 import type { Memory } from "@/services/memory";
-import type { CommandTraceKey } from "./commandTraceKey";
+import type { ObservabilityContext } from "./observabilityContext";
 import { recordMemoryOperation } from "./recordMemoryOperation";
 
 type CreateCommandScopedMemoryInput = {
-  readonly commandTraceKey: CommandTraceKey;
   readonly memory: Memory;
   readonly memoryName: string;
+  readonly observabilityContext: ObservabilityContext;
 };
 
 export function createCommandScopedMemory({
-  commandTraceKey,
   memory,
   memoryName,
+  observabilityContext,
 }: CreateCommandScopedMemoryInput): Memory {
   return {
     ...memory,
     write: {
       clear: () =>
-        recordMemoryOperation({ commandTraceKey, memoryName, operation: "clear" }, () =>
+        recordMemoryOperation(observabilityContext, memoryName, "clear", () =>
           memory.write.clear(),
         ),
       setSelectedPath: (path) =>
-        recordMemoryOperation({ commandTraceKey, memoryName, operation: "setSelectedPath" }, () =>
+        recordMemoryOperation(observabilityContext, memoryName, "setSelectedPath", () =>
           memory.write.setSelectedPath(path),
         ),
       setTree: (tree) =>
-        recordMemoryOperation({ commandTraceKey, memoryName, operation: "setTree" }, () =>
+        recordMemoryOperation(observabilityContext, memoryName, "setTree", () =>
           memory.write.setTree(tree),
         ),
       setTreeAndFocusPath: (tree, path) =>
-        recordMemoryOperation(
-          { commandTraceKey, memoryName, operation: "setTreeAndFocusPath" },
-          () => memory.write.setTreeAndFocusPath(tree, path),
+        recordMemoryOperation(observabilityContext, memoryName, "setTreeAndFocusPath", () =>
+          memory.write.setTreeAndFocusPath(tree, path),
         ),
       setTreeAndSelectedPath: (tree, path) =>
-        recordMemoryOperation(
-          { commandTraceKey, memoryName, operation: "setTreeAndSelectedPath" },
-          () => memory.write.setTreeAndSelectedPath(tree, path),
+        recordMemoryOperation(observabilityContext, memoryName, "setTreeAndSelectedPath", () =>
+          memory.write.setTreeAndSelectedPath(tree, path),
         ),
       setTreeWithoutSelectionRefresh: (tree) =>
         recordMemoryOperation(
-          { commandTraceKey, memoryName, operation: "setTreeWithoutSelectionRefresh" },
+          observabilityContext,
+          memoryName,
+          "setTreeWithoutSelectionRefresh",
           () => memory.write.setTreeWithoutSelectionRefresh(tree),
         ),
     },

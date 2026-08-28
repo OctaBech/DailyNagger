@@ -1,11 +1,10 @@
 import * as Sentry from "@sentry/react-native";
-import type { CommandTraceKey } from "./commandTraceKey";
+import type { ObservabilityContext } from "./observabilityContext";
 
 type SendingOperation = "parcel-queued" | "parcel-coalesced";
 
 type RecordSendingOperationInput = {
   readonly coalesceKey: string | null;
-  readonly commandTraceKeys: readonly CommandTraceKey[];
   readonly formulaType: string;
   readonly operation: SendingOperation;
   readonly ownerId: string | null;
@@ -13,13 +12,18 @@ type RecordSendingOperationInput = {
   readonly parcelId: string;
 };
 
-export function recordSendingOperation(input: RecordSendingOperationInput): void {
+export function recordSendingOperation(
+  observabilityContext: ObservabilityContext,
+  input: RecordSendingOperationInput,
+): void {
+  const { causality } = observabilityContext;
+
   Sentry.addBreadcrumb({
     category: "sending",
     data: {
       coalesceKey: input.coalesceKey,
-      commandTraceKey: input.commandTraceKeys[0],
-      commandTraceKeys: input.commandTraceKeys.join(","),
+      "dn.causality.id": causality.id,
+      "dn.causality.key": causality.key,
       formulaType: input.formulaType,
       ownerId: input.ownerId,
       ownerType: input.ownerType,

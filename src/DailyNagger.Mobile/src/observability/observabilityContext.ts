@@ -1,24 +1,73 @@
-import { isNagger, isTaskEntry, isTaskItem, isTaskLog } from "@/models";
 import type { Nagger, TaskEntry, TaskItem, TaskLog } from "@/models";
+import { isNagger, isTaskEntry, isTaskItem, isTaskLog } from "@/models";
 import type { CommandArgs, CommandKind } from "@/services/command-boundary/commandModel";
 import type { Guid } from "@/shared";
+import { newGuid } from "@/shared";
 
-export type CommandTraceKey = string;
+export type Causality = {
+  readonly id: Guid;
+  readonly key: string;
+  readonly kind: string;
+  readonly label: string;
+  readonly occurredAt: string;
+  readonly source: string;
+};
 
-export function buildCommandTraceKey<TKey extends CommandKind>(
+export type ObservabilityContext = {
+  readonly causality: Causality;
+};
+
+type BuildObservabilityContextInput = {
+  readonly key: string;
+  readonly kind: string;
+  readonly label: string;
+  readonly source: string;
+};
+
+export function buildObservabilityContext({
+  key,
+  kind,
+  label,
+  source,
+}: BuildObservabilityContextInput): ObservabilityContext {
+  return {
+    causality: {
+      id: newGuid(),
+      key,
+      kind,
+      label,
+      occurredAt: new Date().toISOString(),
+      source,
+    },
+  };
+}
+
+export function buildCommandObservabilityContext<TKey extends CommandKind>(
+  source: string,
   kind: TKey,
   args: CommandArgs<TKey>,
-): CommandTraceKey {
-  const rootKey = buildCommandRootKey(args);
+): ObservabilityContext {
+  const key = buildCausalityKey(kind, args);
+
+  return buildObservabilityContext({
+    key,
+    kind,
+    label: kind,
+    source,
+  });
+}
+
+function buildCausalityKey<TKey extends CommandKind>(kind: TKey, args: CommandArgs<TKey>): string {
+  const rootKey = buildCausalityRootKey(args);
   if (rootKey === null) {
-    throw new Error(`Cannot build command trace key for command "${kind}".`);
+    throw new Error(`Cannot build causality key for command "${kind}".`);
   }
 
   const surface = getCommandSurface(kind);
   return surface === null ? rootKey : `${rootKey}/${surface}`;
 }
 
-function buildCommandRootKey(args: unknown): string | null {
+function buildCausalityRootKey(args: unknown): string | null {
   if (!isRecord(args)) return null;
 
   const moveContextKey =
@@ -54,22 +103,22 @@ function buildSelectedNodeContextKey(value: unknown): string | null {
 
 function buildTaskEntryKey(value: unknown): string | null {
   if (!isTreeNode(value) || !isTaskEntry(value)) return null;
-  return formatTaskEntryKey(value);
+  return `task-entry:${value.id}@task-log:${value.taskLogId}`;
 }
 
 function buildTaskItemKey(value: unknown): string | null {
   if (!isTreeNode(value) || !isTaskItem(value)) return null;
-  return formatTaskItemKey(value);
+  return `task-item:${value.id}@task-log:${value.taskLogId}`;
 }
 
 function buildTaskLogKey(value: unknown): string | null {
   if (!isTreeNode(value) || !isTaskLog(value)) return null;
-  return formatTaskLogKey(value);
+  return `task-log:${value.id}`;
 }
 
 function buildNaggerKey(value: unknown): string | null {
   if (!isTreeNode(value) || !isNagger(value)) return null;
-  return formatNaggerKey(value);
+  return `nagger:${value.id}`;
 }
 
 function buildNaggerIdKey(value: unknown): string | null {
@@ -80,22 +129,6 @@ function buildNaggerIdKey(value: unknown): string | null {
 
 function getCommandSurface(kind: CommandKind): string | null {
   return kind.split("/").slice(1).join("/") || null;
-}
-
-function formatTaskEntryKey(taskEntry: TaskEntry): string {
-  return `task-entry:${taskEntry.id}@task-log:${taskEntry.taskLogId}`;
-}
-
-function formatTaskItemKey(taskItem: TaskItem): string {
-  return `task-item:${taskItem.id}@task-log:${taskItem.taskLogId}`;
-}
-
-function formatTaskLogKey(taskLog: TaskLog): string {
-  return `task-log:${taskLog.id}`;
-}
-
-function formatNaggerKey(nagger: Nagger): string {
-  return `nagger:${nagger.id}`;
 }
 
 function isTreeNode(value: unknown): value is Nagger | TaskEntry | TaskItem | TaskLog {

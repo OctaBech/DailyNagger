@@ -1,7 +1,7 @@
 import type { SendApiRequest } from "@/api/client/sendApiRequest";
 import type { Parcel, Stamp } from "../contracts";
 import { logSendingRequest } from "../logging/logSendingRequest";
-import { mergeCommandTraceKeys } from "@/observability/commandTraceKeyList";
+import { mergeCausalityKeys } from "@/observability/causalityKeyList";
 
 export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
   const { ownerType, ownerId, sendMethod, endpointPath, canBatch } = batch[0].formula;
@@ -29,10 +29,10 @@ function mergeBatchStamps(batch: readonly Parcel[]): Stamp {
   let baseVersion = firstStamp.baseVersion;
   let nextVersion = firstStamp.nextVersion;
   let skipPayloadVersionValidation = firstStamp.skipPayloadVersionValidation === true;
-  let commandTraceKeys = firstStamp.commandTraceKeys;
+  let causalityKeys = firstStamp.causalityKeys;
 
   for (const parcel of batch.slice(1)) {
-    commandTraceKeys = mergeCommandTraceKeys(commandTraceKeys, parcel.stamp.commandTraceKeys);
+    causalityKeys = mergeCausalityKeys(causalityKeys, parcel.stamp.causalityKeys);
 
     if (parcel.stamp.baseVersion !== undefined) {
       baseVersion =
@@ -54,7 +54,7 @@ function mergeBatchStamps(batch: readonly Parcel[]): Stamp {
     parcelId: firstStamp.parcelId,
     queuedAt: firstStamp.queuedAt,
     clientIdentity: firstStamp.clientIdentity,
-    commandTraceKeys,
+    causalityKeys,
     ...(baseVersion === undefined ? {} : { baseVersion }),
     ...(nextVersion === undefined ? {} : { nextVersion }),
     ...(skipPayloadVersionValidation ? { skipPayloadVersionValidation } : {}),

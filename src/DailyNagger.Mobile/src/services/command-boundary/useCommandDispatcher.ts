@@ -1,10 +1,10 @@
 import { useStableCallback } from "@/shared";
 import {
-  buildCommandTraceKey,
+  buildCommandObservabilityContext,
   createCommandScopedMemory,
   createCommandScopedSending,
   recordCommandOperation,
-  type CommandTraceKey,
+  type ObservabilityContext,
 } from "@/observability";
 import type { CultureSettings, InteractionStamp, Memory } from "@/services/contracts";
 import type { Sending } from "../sending";
@@ -61,20 +61,20 @@ export function useCommandDispatcher(memories: CommandMemories): CommandDispatch
 function getCommandActionContext(
   source: CommandSource,
   memories: CommandMemories,
-  commandTraceKey: CommandTraceKey,
+  observabilityContext: ObservabilityContext,
 ): CommandActionContext {
   const planMemory = createCommandScopedMemory({
-    commandTraceKey,
     memory: memories.planMemory,
     memoryName: "planMemory",
+    observabilityContext,
   });
   const editorMemory = createCommandScopedMemory({
-    commandTraceKey,
     memory: memories.editorMemory,
     memoryName: "editorMemory",
+    observabilityContext,
   });
   const sending = createCommandScopedSending({
-    commandTraceKey,
+    observabilityContext,
     sending: memories.sending,
   });
 
@@ -131,10 +131,10 @@ function runCommand<TKey extends CommandKind>(
   args: CommandArgs<TKey>,
   memories: CommandMemories,
 ): void {
-  const commandTraceKey = buildCommandTraceKey(kind, args);
-  const context = getCommandActionContext(source, memories, commandTraceKey);
+  const observabilityContext = buildCommandObservabilityContext(source, kind, args);
+  const context = getCommandActionContext(source, memories, observabilityContext);
 
-  recordCommandOperation({ commandKind: kind, commandSource: source, commandTraceKey }, () => {
+  recordCommandOperation(observabilityContext, () => {
     const action = commandActions[kind];
 
     assertSourceMatchesScope(source, action.scope);

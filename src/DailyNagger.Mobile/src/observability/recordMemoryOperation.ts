@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/react-native";
+import type { ObservabilityContext } from "./observabilityContext";
 
 export type MemoryOperation =
   | "clear"
@@ -8,25 +9,24 @@ export type MemoryOperation =
   | "setTreeAndSelectedPath"
   | "setTreeAndFocusPath";
 
-type MemoryOperationInput = {
-  readonly commandTraceKey: string;
-  readonly memoryName: string;
-  readonly operation: MemoryOperation;
-};
-
 export function recordMemoryOperation<TResult>(
-  input: MemoryOperationInput,
+  observabilityContext: ObservabilityContext,
+  memoryName: string,
+  operation: MemoryOperation,
   run: () => TResult,
 ): TResult {
+  const { causality } = observabilityContext;
+
   Sentry.addBreadcrumb({
     category: "memory",
     data: {
-      commandTraceKey: input.commandTraceKey,
-      memoryName: input.memoryName,
-      operation: input.operation,
+      "dn.causality.id": causality.id,
+      "dn.causality.key": causality.key,
+      "dn.memory.name": memoryName,
+      "dn.memory.operation": operation,
     },
     level: "info",
-    message: `${input.memoryName}.${input.operation}`,
+    message: `${memoryName}.${operation}`,
   });
 
   if (Sentry.getActiveSpan() === undefined) {
@@ -36,12 +36,13 @@ export function recordMemoryOperation<TResult>(
   return Sentry.startSpan(
     {
       attributes: {
-        commandTraceKey: input.commandTraceKey,
-        "memory.name": input.memoryName,
-        "memory.operation": input.operation,
+        "dn.causality.id": causality.id,
+        "dn.causality.key": causality.key,
+        "dn.memory.name": memoryName,
+        "dn.memory.operation": operation,
       },
-      name: `${input.memoryName}.${input.operation}`,
-      op: "memory.update",
+      name: `${memoryName}.${operation}`,
+      op: "dn.memory",
     },
     run,
   );

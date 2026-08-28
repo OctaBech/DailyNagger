@@ -22,7 +22,7 @@ export type SendApiRequest = {
   readonly payload: JsonValue;
   readonly processing: {
     readonly queuedAt: string;
-    readonly commandTraceKeys: readonly string[];
+    readonly causalityKeys: readonly string[];
     readonly baseVersion?: number;
     readonly nextVersion?: number;
     readonly clientIdentity: ClientIdentity;
@@ -50,7 +50,7 @@ export async function sendApiRequest(request: SendApiRequest): Promise<Versioned
       path: endpoint,
       body,
       observability: {
-        commandTraceKeys: processing.commandTraceKeys,
+        causalityKeys: processing.causalityKeys,
       },
     });
 
