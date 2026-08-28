@@ -50,6 +50,24 @@ are good long-term directions, but they are larger architecture changes.
 DailyNagger will preserve command causality by using decorated action scopes,
 also known as scoped service proxies.
 
+The practical shape should stay boring. A boundary creates one observability
+context for the thing that just started. That context is then carried forward
+instead of rebuilding little pieces of telemetry at every stop. Recorders should
+take the context as their first argument and then the few local facts they need,
+such as the memory name, parcel id, or batch id. That keeps the call sites easy
+to read: "record this thing, for this context, with these details."
+
+The context builder may use a typed object input because different causes need
+different fields. A task item action, a mood selection, a startup flow, and an
+error decision are not the same shape. The record functions should be simpler:
+sharp parameters are preferred when there are only one or two extra values, so
+IntelliSense can guide the next argument without making the caller dig through
+a bag of optional properties.
+
+Only `@/observability` should import Sentry. The rest of the app should call
+DailyNagger record functions. That keeps Sentry formatting, span names,
+attributes, breadcrumbs, and propagation rules in one place.
+
 At command dispatch time, the command boundary may create an observability
 context from the command kind and command arguments. That context includes the
 stable `commandTraceKey` and any Sentry trace context that needs to survive the
