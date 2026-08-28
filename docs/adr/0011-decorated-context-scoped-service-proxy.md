@@ -68,6 +68,13 @@ Only `@/observability` should import Sentry. The rest of the app should call
 DailyNagger record functions. That keeps Sentry formatting, span names,
 attributes, breadcrumbs, and propagation rules in one place.
 
+Outside `@/observability`, observability should read as intent rather than
+plumbing. Call sites should use `buildXxxObservabilityContext(...)` when they
+create a cause and `recordXxx(...)` when they report that something happened.
+They should not hand-roll Sentry attributes, breadcrumb payloads, baggage,
+headers, or causality arrays. This keeps feature code readable and leaves room
+to change the underlying observability tool without rewriting the app.
+
 At command dispatch time, the command boundary may create an observability
 context from the command kind and command arguments. That context includes the
 stable causality key and any Sentry trace context that needs to survive the
@@ -142,9 +149,9 @@ every action.
 The pattern uses normal TypeScript closures and dependency injection. It does
 not depend on React Native supporting reliable async-local context.
 
-The send queue persists `causalityKeys` with parcel metadata. That keeps the
-causal identity available after debounce, coalescing, batching, backoff, app
-restart, and offline retries.
+The send queue persists parcel observability with parcel metadata. That keeps
+the causal identity available after debounce, coalescing, batching, backoff,
+app restart, and offline retries.
 
 When queued work is sent later, the queue should use the persisted
 observability context instead of inventing a new explanation. Sentry can still
