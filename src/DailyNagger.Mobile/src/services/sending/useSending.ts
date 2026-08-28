@@ -37,7 +37,11 @@ import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from 
 import { restampBatchForForcedSend } from "./forced-send";
 import { isVersionedFormula } from "./isVersionedFormula";
 import { sendTimerConfig } from "./sendTimerConfig";
-import { recordSendingOperation, type ObservabilityContext } from "@/observability";
+import {
+  createParcelObservability,
+  recordParcelQueued,
+  type ObservabilityContext,
+} from "@/observability";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
 
@@ -69,11 +73,11 @@ export function useSending(
 
     const newParcel = {
       formula,
+      observability: createParcelObservability(options.observabilityContext),
       stamp: {
         parcelId: newGuid(),
         queuedAt,
         mood: getCurrentMood(),
-        causalityKeys: [options.observabilityContext.causality.key],
         clientIdentity,
         ...versionStamp,
       },
@@ -83,11 +87,16 @@ export function useSending(
 
     switch (addResult.kind) {
       case "added":
-        recordQueuedParcel(options.observabilityContext, "parcel-queued", addResult.parcel);
+        recordParcelQueued(addResult.parcel.observability, {
+          coalesceKey: addResult.parcel.formula.coalesceKey,
+          formulaType: addResult.parcel.formula.type,
+          ownerId: addResult.parcel.formula.ownerId,
+          ownerType: addResult.parcel.formula.ownerType,
+          parcelId: addResult.parcel.stamp.parcelId,
+        });
         sendingEvents.emit("parcel-queued", [addResult.parcel]);
         break;
       case "coalesced":
-        recordQueuedParcel(options.observabilityContext, "parcel-coalesced", addResult.newParcel);
         sendingEvents.emit("parcel-coalesced", [addResult.oldParcel, addResult.newParcel]);
         break;
     }
@@ -105,21 +114,6 @@ export function useSending(
     if (isUserMood(content)) return createUserMoodFormula(content);
 
     throw new Error("Cannot queue content because no sending formula matches it.");
-  }
-
-  function recordQueuedParcel(
-    observabilityContext: ObservabilityContext,
-    operation: "parcel-queued" | "parcel-coalesced",
-    parcel: Parcel,
-  ): void {
-    recordSendingOperation(observabilityContext, {
-      coalesceKey: parcel.formula.coalesceKey ?? null,
-      formulaType: parcel.formula.type,
-      operation,
-      ownerId: parcel.formula.ownerId ?? null,
-      ownerType: parcel.formula.ownerType ?? null,
-      parcelId: parcel.stamp.parcelId,
-    });
   }
 
   async function processSendQueue(): Promise<boolean> {

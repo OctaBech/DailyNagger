@@ -1,35 +1,87 @@
 import * as Sentry from "@sentry/react-native";
-import type { ObservabilityContext } from "./observabilityContext";
+import type { ParcelObservability } from "./observabilityContext";
+import { createCausalityKeyAttributes } from "./causalityKeyList";
 
 type SendingOperation = "parcel-queued" | "parcel-coalesced";
 
-type RecordSendingOperationInput = {
+type ParcelQueuedDetails = {
   readonly coalesceKey: string | null;
   readonly formulaType: string;
-  readonly operation: SendingOperation;
   readonly ownerId: string | null;
   readonly ownerType: string | null;
   readonly parcelId: string;
 };
 
-export function recordSendingOperation(
-  observabilityContext: ObservabilityContext,
-  input: RecordSendingOperationInput,
+type ParcelCoalescedDetails = {
+  readonly coalesceKey: string | null;
+  readonly victimParcelId: string;
+  readonly winnerParcelId: string;
+};
+
+export function recordParcelQueued(
+  observability: ParcelObservability,
+  details: ParcelQueuedDetails,
+): ParcelObservability {
+  recordSendingBreadcrumb(observability, "parcel-queued", {
+    coalesceKey: details.coalesceKey,
+    formulaType: details.formulaType,
+    ownerId: details.ownerId,
+    ownerType: details.ownerType,
+    parcelId: details.parcelId,
+  });
+
+  return observability;
+}
+
+export function recordParcelCoalesced(
+  winner: ParcelObservability,
+  victim: ParcelObservability,
+  details: ParcelCoalescedDetails,
+): ParcelObservability {
+  const coalescedObservability = {
+    ...winner,
+    causalityKeys: [...new Set([...winner.causalityKeys, ...victim.causalityKeys])],
+  };
+
+  const attributes = {
+    "dn.coalesce.key": details.coalesceKey ?? "",
+    "dn.victim.causality.keys": victim.causalityKeys.join(","),
+    "dn.victim.parcel.id": details.victimParcelId,
+    "dn.winner.causality.key": winner.context.causality.key,
+    "dn.winner.parcel.id": details.winnerParcelId,
+    ...createCausalityKeyAttributes(coalescedObservability.causalityKeys),
+  };
+
+  const span = Sentry.startInactiveSpan({
+    attributes,
+    name: "parcel coalesced",
+    op: "dn.sending.coalesce",
+  });
+
+  try {
+    recordSendingBreadcrumb(coalescedObservability, "parcel-coalesced", attributes);
+  } finally {
+    span.end();
+  }
+
+  return coalescedObservability;
+}
+
+function recordSendingBreadcrumb(
+  observability: ParcelObservability,
+  operation: SendingOperation,
+  data: Record<string, string | null>,
 ): void {
-  const { causality } = observabilityContext;
+  const { causality } = observability.context;
 
   Sentry.addBreadcrumb({
     category: "sending",
     data: {
-      coalesceKey: input.coalesceKey,
       "dn.causality.id": causality.id,
       "dn.causality.key": causality.key,
-      formulaType: input.formulaType,
-      ownerId: input.ownerId,
-      ownerType: input.ownerType,
-      parcelId: input.parcelId,
+      ...data,
     },
     level: "info",
-    message: input.operation,
+    message: operation,
   });
 }

@@ -23,16 +23,20 @@ export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
   return request;
 }
 
-function mergeBatchStamps(batch: readonly Parcel[]): Stamp {
+type BatchProcessingStamp = Stamp & {
+  readonly causalityKeys: readonly string[];
+};
+
+function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
   const firstStamp = batch[0].stamp;
 
   let baseVersion = firstStamp.baseVersion;
   let nextVersion = firstStamp.nextVersion;
   let skipPayloadVersionValidation = firstStamp.skipPayloadVersionValidation === true;
-  let causalityKeys = firstStamp.causalityKeys;
+  let causalityKeys = batch[0].observability.causalityKeys;
 
   for (const parcel of batch.slice(1)) {
-    causalityKeys = mergeCausalityKeys(causalityKeys, parcel.stamp.causalityKeys);
+    causalityKeys = mergeCausalityKeys(causalityKeys, parcel.observability.causalityKeys);
 
     if (parcel.stamp.baseVersion !== undefined) {
       baseVersion =

@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { Parcel, OwnerType } from "../contracts";
 import type { Guid } from "@/shared";
 import { sendQueueStorage } from "./sendQueueStorage";
-import { mergeCausalityKeys } from "@/observability/causalityKeyList";
+import { recordParcelCoalesced } from "@/observability";
 
 export function useSendQueue() {
   const [loadedQueue] = useState(() => sendQueueStorage.load());
@@ -34,11 +34,12 @@ export function useSendQueue() {
       stamp: {
         ...newParcel.stamp,
         baseVersion: oldParcel.stamp.baseVersion,
-        causalityKeys: mergeCausalityKeys(
-          oldParcel.stamp.causalityKeys,
-          newParcel.stamp.causalityKeys,
-        ),
       },
+      observability: recordParcelCoalesced(newParcel.observability, oldParcel.observability, {
+        coalesceKey: newParcel.formula.coalesceKey,
+        victimParcelId: oldParcel.stamp.parcelId,
+        winnerParcelId: newParcel.stamp.parcelId,
+      }),
     };
   }
 

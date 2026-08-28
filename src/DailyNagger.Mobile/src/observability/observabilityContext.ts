@@ -17,6 +17,11 @@ export type ObservabilityContext = {
   readonly causality: Causality;
 };
 
+export type ParcelObservability = {
+  readonly context: ObservabilityContext;
+  readonly causalityKeys: readonly string[];
+};
+
 type BuildObservabilityContextInput = {
   readonly key: string;
   readonly kind: string;
@@ -39,6 +44,29 @@ export function buildObservabilityContext({
       occurredAt: new Date().toISOString(),
       source,
     },
+  };
+}
+
+export function createParcelObservability(context: ObservabilityContext): ParcelObservability {
+  return {
+    context,
+    causalityKeys: [context.causality.key],
+  };
+}
+
+export function createLegacyParcelObservability(
+  causalityKeys: readonly string[],
+): ParcelObservability {
+  const key = causalityKeys[0] ?? "legacy:unknown";
+
+  return {
+    context: buildObservabilityContext({
+      key,
+      kind: "legacy/queued-parcel",
+      label: "Legacy queued parcel",
+      source: "send-queue",
+    }),
+    causalityKeys,
   };
 }
 
