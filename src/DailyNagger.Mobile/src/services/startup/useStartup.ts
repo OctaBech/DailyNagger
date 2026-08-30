@@ -5,6 +5,7 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { Loading } from "../loading";
 import type { Rollover } from "../rollover";
 import type { Sending } from "../sending";
+import { recordStartupOperation, recordStartupStep } from "@/observability";
 
 type StartupState = {
   readonly status: StartupStatus;
@@ -41,11 +42,20 @@ export function useStartup(sending: Sending, loading: Loading, rollover: Rollove
 
     isRunningRef.current = true;
     dispatch({ type: "startup-started" });
+    const observability = recordStartupOperation();
 
     try {
-      if ((await flushQueueOrBlockStartup(sendingRef.current, dispatch)) === false) return;
+      if (
+        (await recordStartupStep(observability, "flush-before-load", () =>
+          flushQueueOrBlockStartup(sendingRef.current, dispatch),
+        )) === false
+      ) {
+        return;
+      }
 
-      const loadResult = await loadingRef.current.loadPlan();
+      const loadResult = await recordStartupStep(observability, "load-plan", () =>
+        loadingRef.current.loadPlan(),
+      );
 
       if (loadResult.kind === "blocked") {
         dispatch({
@@ -55,8 +65,16 @@ export function useStartup(sending: Sending, loading: Loading, rollover: Rollove
         return;
       }
 
-      await rolloverRef.current.rolloverDueNaggers();
-      if ((await flushQueueOrBlockStartup(sendingRef.current, dispatch)) === false) return;
+      await recordStartupStep(observability, "rollover", () =>
+        rolloverRef.current.rolloverDueNaggers(),
+      );
+      if (
+        (await recordStartupStep(observability, "flush-after-rollover", () =>
+          flushQueueOrBlockStartup(sendingRef.current, dispatch),
+        )) === false
+      ) {
+        return;
+      }
 
       dispatch({ type: "startup-succeeded" });
     } finally {

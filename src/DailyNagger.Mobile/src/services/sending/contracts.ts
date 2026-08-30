@@ -1,12 +1,8 @@
 import type { Guid, JsonValue } from "@/shared";
 import type { ClientIdentity } from "@/models/clientIdentity";
 import type { UserMoodLabel } from "@/models";
-import type {
-  ObservabilityContext,
-  ParcelObservability,
-  SpanContinuation,
-} from "@/observability/observabilityContext";
-import { createLegacyParcelObservability } from "@/observability/observabilityContext";
+import type { Observability, ObservabilityContext, SpanContinuation } from "@/observability";
+import { recordLegacyObservability } from "@/observability";
 import { z } from "zod";
 
 export type OwnerType = "nagger" | "task-log";
@@ -50,7 +46,7 @@ const parcelObservabilitySchema = z.object({
   context: observabilityContextSchema,
   causalityKeys: z.array(z.string()),
   spanContinuation: spanContinuationSchema.nullable().optional().default(null),
-}) satisfies z.ZodType<ParcelObservability>;
+}) satisfies z.ZodType<Observability>;
 
 export const formulaSchema = z.object({
   type: z.string(),
@@ -93,7 +89,7 @@ export const parcelSchema = z
     return {
       ...parcel,
       observability:
-        observability ?? createLegacyParcelObservability(causalityKeys ?? commandTraceKeys ?? []),
+        observability ?? recordLegacyObservability(causalityKeys ?? commandTraceKeys ?? []),
       stamp: normalizedStamp,
     };
   });

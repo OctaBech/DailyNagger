@@ -5,7 +5,7 @@ export function mergeCausalityKeys(
   return [...new Set([...(left ?? []), ...(right ?? [])])];
 }
 
-export function createCausalityKeyAttributes(
+export function buildCausalityKeyAttributes(
   causalityKeys: readonly string[] | undefined,
 ): Record<string, string> {
   const keys = causalityKeys ?? [];

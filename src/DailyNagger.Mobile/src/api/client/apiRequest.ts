@@ -1,7 +1,6 @@
-import * as Sentry from "@sentry/react-native";
 import { environment } from "@/config";
 import { newGuid } from "@/shared";
-import { createCausalityKeyAttributes } from "@/observability/causalityKeyList";
+import { recordApiRequest, recordSentryTraceHeader } from "@/observability";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
 import { apiRequestHeaders } from "./apiRequestHeaders";
 
@@ -77,82 +76,29 @@ export async function apiRequest<TResponse>(
   const requestId = newGuid();
   const startedAt = performance.now();
 
-  const result = await Sentry.withScope<Promise<ApiRequestResult<TResponse>>>(async (scope) => {
-    scope.setTag("requestId", requestId);
-    scope.setContext("apiRequest", {
-      causalityKeys: options.observability?.causalityKeys,
-      method: options.method,
-      path: options.path,
-      requestId,
-      url,
-    });
-    scope.addBreadcrumb({
-      category: "http",
-      data: {
-        causalityKeys: options.observability?.causalityKeys,
-        method: options.method,
-        path: options.path,
-        requestId,
-        url,
-      },
-      level: "info",
-      message: `${options.method} ${options.path}`,
-      type: "http",
-    });
+  return recordApiRequest(
+    options.observability,
+    { method: options.method, path: options.path, requestId, url },
+    async () => {
+      const request = createApiRequest(options, requestId);
+      const response = await sendApiFetch(url, request, startedAt);
 
-    return Sentry.startSpan(
-      {
-        attributes: {
-          ...createCausalityKeyAttributes(options.observability?.causalityKeys),
-          "http.method": options.method,
-          "http.url": url,
-          requestId,
-        },
-        forceTransaction: true,
-        name: `${options.method} ${options.path}`,
-        op: "http.client",
-      },
-      async () => {
-        const request = createApiRequest(options, requestId);
+      if (!response.ok) {
+        const responseBody = await response.text();
+        throw new ApiRequestError(url, request, response, responseBody, getDurationMs(startedAt));
+      }
 
-        try {
-          const response = await sendApiFetch(url, request, startedAt);
+      if (response.status === 202) {
+        return { kind: "accepted", status: 202, body: null };
+      }
 
-          if (!response.ok) {
-            const responseBody = await response.text();
-            throw new ApiRequestError(
-              url,
-              request,
-              response,
-              responseBody,
-              getDurationMs(startedAt),
-            );
-          }
+      if (response.status === 204) {
+        return { kind: "no-content", status: 204, body: null };
+      }
 
-          if (response.status === 202) {
-            return { kind: "accepted", status: 202, body: null };
-          }
-
-          if (response.status === 204) {
-            return { kind: "no-content", status: 204, body: null };
-          }
-
-          return { kind: "ok", status: response.status, body: await response.json() };
-        } catch (error) {
-          Sentry.captureException(error);
-          throw error;
-        }
-      },
-    );
-  });
-
-  if (result === undefined) {
-    throw new Error(
-      `Sentry scope returned no API request result. ${options.method} ${options.path}`,
-    );
-  }
-
-  return result;
+      return { kind: "ok", status: response.status, body: await response.json() };
+    },
+  );
 }
 
 async function sendApiFetch(
@@ -196,14 +142,11 @@ function createApiHeaders(body: unknown, requestId: string): Record<string, stri
 }
 
 function createSentryTraceHeaders(): Record<string, string> {
-  const span = Sentry.getActiveSpan();
+  const sentryTrace = recordSentryTraceHeader();
   const headers: Record<string, string> = {};
 
-  if (span !== undefined) {
-    const spanContext = span.spanContext();
-    const sampled = spanContext.traceFlags === 1 ? "1" : "0";
-    headers[apiRequestHeaders.sentryTrace] =
-      `${spanContext.traceId}-${spanContext.spanId}-${sampled}`;
+  if (sentryTrace !== null) {
+    headers[apiRequestHeaders.sentryTrace] = sentryTrace;
   }
 
   return headers;

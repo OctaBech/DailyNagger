@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { router } from "expo-router";
 import { StateScreen } from "@/components/primitives";
+import { recordAppErrorBoundaryError } from "@/observability";
 
 type AppErrorBoundaryProps = {
   readonly children: ReactNode;
@@ -20,6 +21,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    recordAppErrorBoundaryError(error, errorInfo);
     console.error("AppErrorBoundary caught render error", error, errorInfo);
   }
 

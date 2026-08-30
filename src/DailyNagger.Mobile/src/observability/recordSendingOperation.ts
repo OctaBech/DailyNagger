@@ -1,9 +1,7 @@
-import * as Sentry from "@sentry/react-native";
-import type { ParcelObservability } from "./observabilityContext";
-import { createCausalityKeyAttributes } from "./causalityKeyList";
-import { recordContinuedSpan } from "./recordContinuedSpan";
-
-type SendingOperation = "parcel-queued" | "parcel-coalesced" | "request";
+import type { Observability } from "./observabilityContext";
+import { recordMergedObservability } from "./observabilityContext";
+import { buildCausalityKeyAttributes } from "./causalityKeyList";
+import { createSpanContinuation, recordContinuedSpan } from "./recordContinuedSpan";
 
 type ParcelQueuedDetails = {
   readonly coalesceKey: string | null;
@@ -26,30 +24,61 @@ type SendingRequestDetails = {
   readonly parcelId: string;
 };
 
-export function recordParcelQueued(
-  observability: ParcelObservability,
-  details: ParcelQueuedDetails,
-): ParcelObservability {
-  recordSendingBreadcrumb(observability, "parcel-queued", {
-    coalesceKey: details.coalesceKey,
-    formulaType: details.formulaType,
-    ownerId: details.ownerId,
-    ownerType: details.ownerType,
-    parcelId: details.parcelId,
-  });
+type SendingDecision =
+  | "connection-lost-backoff"
+  | "sent"
+  | "unrepairable-blocked"
+  | "unrepairable-discarded"
+  | "version-conflict-blocked"
+  | "version-conflict-discard"
+  | "version-conflict-force";
 
-  return observability;
+type ObservableBatchItem = {
+  readonly observability: Observability;
+  readonly stamp: {
+    readonly parcelId: string;
+    readonly queuedAt: string;
+  };
+};
+
+export function recordParcelQueued(
+  observability: Observability,
+  details: ParcelQueuedDetails,
+): Observability {
+  const { causality } = observability.context;
+  const attributes = {
+    "dn.causality.id": causality.id,
+    "dn.causality.key": causality.key,
+    "dn.coalesce.key": details.coalesceKey ?? "",
+    "dn.formula.type": details.formulaType,
+    "dn.owner.id": details.ownerId ?? "",
+    "dn.owner.type": details.ownerType ?? "",
+    "dn.parcel.id": details.parcelId,
+    ...buildCausalityKeyAttributes(observability.causalityKeys),
+  };
+
+  return recordContinuedSpan(
+    {
+      attributes,
+      breadcrumbCategory: "sending",
+      breadcrumbMessage: "parcel queued",
+      name: "parcel queued",
+      observability,
+      operation: "dn.sending.queued",
+    },
+    (span) => ({
+      ...observability,
+      spanContinuation: createSpanContinuation(span),
+    }),
+  );
 }
 
 export function recordParcelCoalesced(
-  winner: ParcelObservability,
-  victim: ParcelObservability,
+  winner: Observability,
+  victim: Observability,
   details: ParcelCoalescedDetails,
-): ParcelObservability {
-  const coalescedObservability = {
-    ...winner,
-    causalityKeys: [...new Set([...winner.causalityKeys, ...victim.causalityKeys])],
-  };
+): Observability {
+  const coalescedObservability = recordMergedObservability(winner, [victim]);
 
   const attributes = {
     "dn.coalesce.key": details.coalesceKey ?? "",
@@ -57,26 +86,27 @@ export function recordParcelCoalesced(
     "dn.victim.parcel.id": details.victimParcelId,
     "dn.winner.causality.key": winner.context.causality.key,
     "dn.winner.parcel.id": details.winnerParcelId,
-    ...createCausalityKeyAttributes(coalescedObservability.causalityKeys),
+    ...buildCausalityKeyAttributes(coalescedObservability.causalityKeys),
   };
 
-  const span = Sentry.startInactiveSpan({
-    attributes,
-    name: "parcel coalesced",
-    op: "dn.sending.coalesce",
-  });
-
-  try {
-    recordSendingBreadcrumb(coalescedObservability, "parcel-coalesced", attributes);
-  } finally {
-    span.end();
-  }
-
-  return coalescedObservability;
+  return recordContinuedSpan(
+    {
+      attributes,
+      breadcrumbCategory: "sending",
+      breadcrumbMessage: "parcel coalesced",
+      name: "parcel coalesced",
+      observability: coalescedObservability,
+      operation: "dn.sending.coalesced",
+    },
+    (span) => ({
+      ...coalescedObservability,
+      spanContinuation: createSpanContinuation(span),
+    }),
+  );
 }
 
 export function recordSendingRequest<TResult>(
-  observability: ParcelObservability,
+  observability: Observability,
   details: SendingRequestDetails,
   run: () => TResult,
 ): TResult {
@@ -86,7 +116,7 @@ export function recordSendingRequest<TResult>(
     "dn.causality.id": causality.id,
     "dn.causality.key": causality.key,
     "dn.parcel.id": details.parcelId,
-    ...createCausalityKeyAttributes(observability.causalityKeys),
+    ...buildCausalityKeyAttributes(observability.causalityKeys),
     "http.method": details.method,
     "http.route": details.endpoint,
   };
@@ -104,21 +134,39 @@ export function recordSendingRequest<TResult>(
   );
 }
 
-function recordSendingBreadcrumb(
-  observability: ParcelObservability,
-  operation: SendingOperation,
-  data: Record<string, string | null>,
+export function recordSendingDecision(
+  batch: readonly ObservableBatchItem[],
+  decision: SendingDecision,
 ): void {
+  if (batch.length === 0) return;
+
+  const observability = createBatchObservability(batch);
   const { causality } = observability.context;
 
-  Sentry.addBreadcrumb({
-    category: "sending",
-    data: {
-      "dn.causality.id": causality.id,
-      "dn.causality.key": causality.key,
-      ...data,
+  recordContinuedSpan(
+    {
+      attributes: {
+        "dn.batch.size": batch.length,
+        "dn.causality.id": causality.id,
+        "dn.causality.key": causality.key,
+        "dn.decision": decision,
+        "dn.parcel.ids": batch.map((parcel) => parcel.stamp.parcelId).join(","),
+        ...buildCausalityKeyAttributes(observability.causalityKeys),
+      },
+      breadcrumbCategory: "sending",
+      breadcrumbMessage: decision,
+      name: decision,
+      observability,
+      operation: "dn.sending.decision",
     },
-    level: "info",
-    message: operation,
-  });
+    () => undefined,
+  );
+}
+
+function createBatchObservability(batch: readonly ObservableBatchItem[]): Observability {
+  const [first, ...rest] = batch;
+  return recordMergedObservability(
+    first.observability,
+    rest.map((parcel) => parcel.observability),
+  );
 }

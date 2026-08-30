@@ -1,19 +1,22 @@
 export {
-  createLegacyParcelObservability,
-  createParcelObservability,
+  recordLegacyObservability,
+  recordMergedObservability,
   type Observability,
   type ObservabilityContext,
-  type ParcelObservability,
   type SpanContinuation,
 } from "./observabilityContext";
-export { createCommandScopedMemory } from "./createCommandScopedMemory";
-export { createCommandScopedSending } from "./createCommandScopedSending";
+export { recordCommandScopedMemory } from "./createCommandScopedMemory";
+export { recordCommandScopedSending } from "./createCommandScopedSending";
+export { recordAppErrorBoundaryError } from "./recordAppErrorBoundaryError";
+export { recordApiRequest, recordSentryTraceHeader } from "./recordApiRequest";
 export { recordCommandOperation } from "./recordCommandOperation";
 export { recordMemoryOperation } from "./recordMemoryOperation";
 export {
   recordParcelCoalesced,
   recordParcelQueued,
+  recordSendingDecision,
   recordSendingRequest,
 } from "./recordSendingOperation";
 export { recordRolloverOperation } from "./recordRolloverOperation";
+export { recordStartupOperation, recordStartupStep } from "./recordStartupOperation";
 export { recordUserMoodOperation } from "./recordUserMoodOperation";

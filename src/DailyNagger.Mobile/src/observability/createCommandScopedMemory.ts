@@ -8,7 +8,7 @@ type CreateCommandScopedMemoryInput = {
   readonly observability: Observability;
 };
 
-export function createCommandScopedMemory({
+export function recordCommandScopedMemory({
   memory,
   memoryName,
   observability,

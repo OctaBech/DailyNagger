@@ -6,7 +6,7 @@ type CreateCommandScopedSendingInput = {
   readonly sending: Sending;
 };
 
-export function createCommandScopedSending({
+export function recordCommandScopedSending({
   observability,
   sending,
 }: CreateCommandScopedSendingInput): ActionSending {

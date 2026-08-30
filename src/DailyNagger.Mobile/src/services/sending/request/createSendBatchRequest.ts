@@ -1,8 +1,7 @@
 import type { SendApiRequest } from "@/api/client/sendApiRequest";
 import type { Parcel, Stamp } from "../contracts";
 import { logSendingRequest } from "../logging/logSendingRequest";
-import { mergeCausalityKeys } from "@/observability/causalityKeyList";
-import type { ParcelObservability } from "@/observability";
+import { recordMergedObservability, type Observability } from "@/observability";
 
 export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
   const { ownerType, ownerId, sendMethod, endpointPath, canBatch } = batch[0].formula;
@@ -26,7 +25,7 @@ export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
 
 type BatchProcessingStamp = Stamp & {
   readonly batchSize: number;
-  readonly observability: ParcelObservability;
+  readonly observability: Observability;
 };
 
 function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
@@ -38,13 +37,7 @@ function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
   let observability = batch[0].observability;
 
   for (const parcel of batch.slice(1)) {
-    observability = {
-      ...observability,
-      causalityKeys: mergeCausalityKeys(
-        observability.causalityKeys,
-        parcel.observability.causalityKeys,
-      ),
-    };
+    observability = recordMergedObservability(observability, [parcel.observability]);
 
     if (parcel.stamp.baseVersion !== undefined) {
       baseVersion =

@@ -40,6 +40,7 @@ export function recordObservability({
 
   return {
     context,
+    causalityKeys: [causality.key],
     spanContinuation,
   };
 }

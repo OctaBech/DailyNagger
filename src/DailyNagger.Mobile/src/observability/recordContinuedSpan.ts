@@ -15,7 +15,7 @@ type RecordContinuedSpanInput = {
 
 export function recordContinuedSpan<TResult>(
   input: RecordContinuedSpanInput,
-  run: () => TResult,
+  run: (span: Sentry.Span) => TResult,
 ): TResult {
   const execute = () => {
     return Sentry.startSpan(
@@ -24,7 +24,7 @@ export function recordContinuedSpan<TResult>(
         name: input.name,
         op: input.operation,
       },
-      () => {
+      (span) => {
         Sentry.addBreadcrumb({
           category: input.breadcrumbCategory,
           data: input.attributes,
@@ -32,7 +32,7 @@ export function recordContinuedSpan<TResult>(
           message: input.breadcrumbMessage,
         });
 
-        return run();
+        return run(span);
       },
     );
   };

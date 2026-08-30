@@ -37,7 +37,7 @@ import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from 
 import { restampBatchForForcedSend } from "./forced-send";
 import { isVersionedFormula } from "./isVersionedFormula";
 import { sendTimerConfig } from "./sendTimerConfig";
-import { createParcelObservability, recordParcelQueued, type Observability } from "@/observability";
+import { recordParcelQueued, recordSendingDecision, type Observability } from "@/observability";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
 
@@ -67,9 +67,9 @@ export function useSending(
       ? createVersionStamp(formula, queuedAt)
       : {};
 
-    const newParcel = {
+    const unrecordedParcel = {
       formula,
-      observability: createParcelObservability(options.observability),
+      observability: options.observability,
       stamp: {
         parcelId: newGuid(),
         queuedAt,
@@ -78,18 +78,21 @@ export function useSending(
         ...versionStamp,
       },
     } satisfies Parcel;
+    const newParcel = {
+      ...unrecordedParcel,
+      observability: recordParcelQueued(unrecordedParcel.observability, {
+        coalesceKey: unrecordedParcel.formula.coalesceKey,
+        formulaType: unrecordedParcel.formula.type,
+        ownerId: unrecordedParcel.formula.ownerId,
+        ownerType: unrecordedParcel.formula.ownerType,
+        parcelId: unrecordedParcel.stamp.parcelId,
+      }),
+    } satisfies Parcel;
 
     const addResult = sendQueue.add(newParcel);
 
     switch (addResult.kind) {
       case "added":
-        recordParcelQueued(addResult.parcel.observability, {
-          coalesceKey: addResult.parcel.formula.coalesceKey,
-          formulaType: addResult.parcel.formula.type,
-          ownerId: addResult.parcel.formula.ownerId,
-          ownerType: addResult.parcel.formula.ownerType,
-          parcelId: addResult.parcel.stamp.parcelId,
-        });
         sendingEvents.emit("parcel-queued", [addResult.parcel]);
         break;
       case "coalesced":
@@ -127,6 +130,7 @@ export function useSending(
 
     switch (sendResult.kind) {
       case "sent":
+        recordSendingDecision(batch, "sent");
         sendQueue.removeActiveBatch();
         sendingEvents.emit("batch-sent", batch);
         sendTimer.resetBackoff();
@@ -136,6 +140,7 @@ export function useSending(
       case "server-rejected-current-version":
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-rejected-current-version", batch);
+        recordSendingDecision(batch, "version-conflict-blocked");
 
         const decision = await askHowToHandleVersioningError(
           serverConfrontationBlock,
@@ -143,6 +148,7 @@ export function useSending(
         );
 
         if (decision === "force-batch") {
+          recordSendingDecision(batch, "version-conflict-force");
           sendQueue.replaceActiveBatch(
             restampBatchForForcedSend({
               batch,
@@ -152,6 +158,7 @@ export function useSending(
           );
           sendingEvents.emit("batch-forced", batch);
         } else {
+          recordSendingDecision(batch, "version-conflict-discard");
           sendQueue.removeActiveBatch();
           sendingEvents.emit("batch-discarded", batch);
         }
@@ -162,8 +169,10 @@ export function useSending(
       case "server-rejected-unrepairable-update":
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-rejected-unrepairable", batch);
+        recordSendingDecision(batch, "unrepairable-blocked");
 
         await askHowToHandleUnrepairableUpdate(serverConfrontationBlock, sendResult.error);
+        recordSendingDecision(batch, "unrepairable-discarded");
         sendQueue.removeActiveBatch();
         sendingEvents.emit("batch-discarded", batch);
         sendTimer.set("debounced", processSendQueue);
@@ -172,6 +181,7 @@ export function useSending(
       case "failed-to-connect":
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-failed-to-connect", batch);
+        recordSendingDecision(batch, "connection-lost-backoff");
         sendQueue.releaseActiveBatch();
         sendTimer.set("delayedAfterFailure", processSendQueue);
         return false;

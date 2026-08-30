@@ -3,6 +3,7 @@ import { isNagger, isTaskEntry, isTaskItem, isTaskLog } from "@/models";
 import type { CommandArgs, CommandKind } from "@/services/command-boundary/commandModel";
 import type { Guid } from "@/shared";
 import { newGuid } from "@/shared";
+import { mergeCausalityKeys } from "./causalityKeyList";
 
 export type Causality = {
   readonly id: Guid;
@@ -24,11 +25,8 @@ export type SpanContinuation = {
 
 export type Observability = {
   readonly context: ObservabilityContext;
-  readonly spanContinuation: SpanContinuation | null;
-};
-
-export type ParcelObservability = Observability & {
   readonly causalityKeys: readonly string[];
+  readonly spanContinuation: SpanContinuation | null;
 };
 
 type BuildObservabilityContextInput = {
@@ -56,16 +54,7 @@ export function buildObservabilityContext({
   };
 }
 
-export function createParcelObservability(observability: Observability): ParcelObservability {
-  return {
-    ...observability,
-    causalityKeys: [observability.context.causality.key],
-  };
-}
-
-export function createLegacyParcelObservability(
-  causalityKeys: readonly string[],
-): ParcelObservability {
+export function recordLegacyObservability(causalityKeys: readonly string[]): Observability {
   const key = causalityKeys[0] ?? "legacy:unknown";
 
   return {
@@ -77,6 +66,22 @@ export function createLegacyParcelObservability(
     }),
     causalityKeys,
     spanContinuation: null,
+  };
+}
+
+export function recordMergedObservability(
+  primary: Observability,
+  secondary: readonly Observability[],
+): Observability {
+  let causalityKeys = primary.causalityKeys;
+
+  for (const observability of secondary) {
+    causalityKeys = mergeCausalityKeys(causalityKeys, observability.causalityKeys);
+  }
+
+  return {
+    ...primary,
+    causalityKeys,
   };
 }
 
