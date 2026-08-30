@@ -1,6 +1,5 @@
 export {
   recordLegacyObservability,
-  recordMergedObservability,
   type Observability,
   type ObservabilityContext,
   type SpanContinuation,
@@ -14,6 +13,7 @@ export { recordMemoryOperation } from "./recordMemoryOperation";
 export {
   recordParcelCoalesced,
   recordParcelQueued,
+  recordSendingBatchPrepared,
   recordSendingDecision,
   recordSendingRequest,
 } from "./recordSendingOperation";

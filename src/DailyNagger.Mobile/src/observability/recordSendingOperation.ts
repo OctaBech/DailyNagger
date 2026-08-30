@@ -1,5 +1,5 @@
 import type { Observability } from "./observabilityContext";
-import { recordMergedObservability } from "./observabilityContext";
+import { mergeObservability } from "./observabilityContext";
 import { buildCausalityKeyAttributes } from "./causalityKeyList";
 import { createSpanContinuation, recordContinuedSpan } from "./recordContinuedSpan";
 
@@ -78,7 +78,7 @@ export function recordParcelCoalesced(
   victim: Observability,
   details: ParcelCoalescedDetails,
 ): Observability {
-  const coalescedObservability = recordMergedObservability(winner, [victim]);
+  const coalescedObservability = mergeObservability(winner, [victim]);
 
   const attributes = {
     "dn.coalesce.key": details.coalesceKey ?? "",
@@ -100,6 +100,32 @@ export function recordParcelCoalesced(
     },
     (span) => ({
       ...coalescedObservability,
+      spanContinuation: createSpanContinuation(span),
+    }),
+  );
+}
+
+export function recordSendingBatchPrepared(batch: readonly ObservableBatchItem[]): Observability {
+  const observability = createBatchObservability(batch);
+  const { causality } = observability.context;
+
+  return recordContinuedSpan(
+    {
+      attributes: {
+        "dn.batch.size": batch.length,
+        "dn.causality.id": causality.id,
+        "dn.causality.key": causality.key,
+        "dn.parcel.ids": batch.map((parcel) => parcel.stamp.parcelId).join(","),
+        ...buildCausalityKeyAttributes(observability.causalityKeys),
+      },
+      breadcrumbCategory: "sending",
+      breadcrumbMessage: "batch prepared",
+      name: "batch prepared",
+      observability,
+      operation: "dn.sending.batch",
+    },
+    (span) => ({
+      ...observability,
       spanContinuation: createSpanContinuation(span),
     }),
   );
@@ -165,7 +191,7 @@ export function recordSendingDecision(
 
 function createBatchObservability(batch: readonly ObservableBatchItem[]): Observability {
   const [first, ...rest] = batch;
-  return recordMergedObservability(
+  return mergeObservability(
     first.observability,
     rest.map((parcel) => parcel.observability),
   );

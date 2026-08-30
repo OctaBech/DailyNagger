@@ -1,7 +1,7 @@
 import type { SendApiRequest } from "@/api/client/sendApiRequest";
 import type { Parcel, Stamp } from "../contracts";
 import { logSendingRequest } from "../logging/logSendingRequest";
-import { recordMergedObservability, type Observability } from "@/observability";
+import { recordSendingBatchPrepared, type Observability } from "@/observability";
 
 export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
   const { ownerType, ownerId, sendMethod, endpointPath, canBatch } = batch[0].formula;
@@ -34,11 +34,9 @@ function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
   let baseVersion = firstStamp.baseVersion;
   let nextVersion = firstStamp.nextVersion;
   let skipPayloadVersionValidation = firstStamp.skipPayloadVersionValidation === true;
-  let observability = batch[0].observability;
+  const observability = recordSendingBatchPrepared(batch);
 
   for (const parcel of batch.slice(1)) {
-    observability = recordMergedObservability(observability, [parcel.observability]);
-
     if (parcel.stamp.baseVersion !== undefined) {
       baseVersion =
         baseVersion === undefined

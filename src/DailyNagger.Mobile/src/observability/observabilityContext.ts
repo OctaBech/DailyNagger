@@ -69,7 +69,7 @@ export function recordLegacyObservability(causalityKeys: readonly string[]): Obs
   };
 }
 
-export function recordMergedObservability(
+export function mergeObservability(
   primary: Observability,
   secondary: readonly Observability[],
 ): Observability {
