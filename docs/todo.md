@@ -2,8 +2,24 @@
 
 This file tracks near-term work that should not be lost while the architecture is still settling.
 
+## Top Tracks
+
+- [ ] Push local commits and verify GitHub Actions status.
+- [ ] CI: keep validation trustworthy for contracts, server, mobile, formatting, and Docker/SQL tests.
+- [ ] CD: keep backup, deploy, smoke, and rollback procedures clear before more automation.
+- [ ] Observability: keep Sentry/Seq useful without leaking observability plumbing into feature code.
+- [ ] DTO contracts: keep server-owned contracts generated and consumed by mobile.
+- [ ] Dev environment: keep Windows/E-drive setup reproducible through scripts.
+- [ ] Frontend tests: add focused tests once the current pipeline is stable.
+- [ ] Actions/tree cleanup: move old actions away from `tree-engine`.
+- [ ] Server structure: split large server files into clearer boundaries.
+
 ## Current Priority
 
+- [ ] Review the 13 local commits ahead of `origin/main`, push them, and confirm CI.
+- [ ] Update ADR 0011 so `recordXxx(...)` explicitly owns span/breadcrumb lifecycle and returns next observability when needed.
+- [x] Add sending request spans that use persisted parcel observability.
+- [ ] Add sending flush spans if request spans do not explain batching clearly enough.
 - [ ] Add C# safety analyzers that remind us when disposable objects are not cleaned up. Keep the tool names in docs only where helpful: `CA2000` / `IDisposableAnalyzers`.
 - [ ] Define a build/test matrix for the repo before CI/CD: `DailyNagger.Mobile` and `DailyNagger.Server` are separate build/test units in the same repo. Mobile-only changes need mobile typecheck/lint/build; server-only changes need server build/tests; contract/API changes need both sides to compile and preferably a smoke test. If SQL Server is unavailable, say that explicitly instead of pretending server tests passed.
 - [ ] Teach Martin proper server observability for job interviews and real operations: set up Serilog, structured request/error logging, correlation/trace IDs, tracing basics, and how to read the logs when production rejects a client parcel. Goal: no more silent server failures and no scattered endpoint logging hacks.

@@ -3,6 +3,7 @@ import type { ClientIdentity } from "@/models/clientIdentity";
 import { environment } from "@/config";
 import type { ClientIdentityDto, VersionedMutationResponse } from "@/api/dto";
 import { apiRequest, ApiRequestError } from "./apiRequest";
+import type { ParcelObservability } from "@/observability";
 
 export class SendApiRequestError extends Error {
   readonly currentVersion: number | null;
@@ -22,7 +23,9 @@ export type SendApiRequest = {
   readonly payload: JsonValue;
   readonly processing: {
     readonly queuedAt: string;
-    readonly causalityKeys: readonly string[];
+    readonly batchSize: number;
+    readonly observability: ParcelObservability;
+    readonly parcelId: string;
     readonly baseVersion?: number;
     readonly nextVersion?: number;
     readonly clientIdentity: ClientIdentity;
@@ -50,7 +53,7 @@ export async function sendApiRequest(request: SendApiRequest): Promise<Versioned
       path: endpoint,
       body,
       observability: {
-        causalityKeys: processing.causalityKeys,
+        causalityKeys: processing.observability.causalityKeys,
       },
     });
 

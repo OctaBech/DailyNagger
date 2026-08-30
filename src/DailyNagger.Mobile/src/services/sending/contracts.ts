@@ -4,6 +4,7 @@ import type { UserMoodLabel } from "@/models";
 import type {
   ObservabilityContext,
   ParcelObservability,
+  SpanContinuation,
 } from "@/observability/observabilityContext";
 import { createLegacyParcelObservability } from "@/observability/observabilityContext";
 import { z } from "zod";
@@ -40,9 +41,15 @@ const observabilityContextSchema = z.object({
   }),
 }) satisfies z.ZodType<ObservabilityContext>;
 
+const spanContinuationSchema = z.object({
+  baggage: z.string().nullable(),
+  sentryTrace: z.string(),
+}) satisfies z.ZodType<SpanContinuation>;
+
 const parcelObservabilitySchema = z.object({
   context: observabilityContextSchema,
   causalityKeys: z.array(z.string()),
+  spanContinuation: spanContinuationSchema.nullable().optional().default(null),
 }) satisfies z.ZodType<ParcelObservability>;
 
 export const formulaSchema = z.object({

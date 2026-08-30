@@ -1,5 +1,5 @@
-import * as Sentry from "@sentry/react-native";
-import type { ObservabilityContext } from "./observabilityContext";
+import type { Observability } from "./observabilityContext";
+import { recordContinuedSpan } from "./recordContinuedSpan";
 
 export type MemoryOperation =
   | "clear"
@@ -10,39 +10,27 @@ export type MemoryOperation =
   | "setTreeAndFocusPath";
 
 export function recordMemoryOperation<TResult>(
-  observabilityContext: ObservabilityContext,
+  observability: Observability,
   memoryName: string,
   operation: MemoryOperation,
   run: () => TResult,
 ): TResult {
-  const { causality } = observabilityContext;
+  const { causality } = observability.context;
+  const attributes = {
+    "dn.causality.id": causality.id,
+    "dn.causality.key": causality.key,
+    "dn.memory.name": memoryName,
+    "dn.memory.operation": operation,
+  };
 
-  Sentry.addBreadcrumb({
-    category: "memory",
-    data: {
-      "dn.causality.id": causality.id,
-      "dn.causality.key": causality.key,
-      "dn.memory.name": memoryName,
-      "dn.memory.operation": operation,
-    },
-    level: "info",
-    message: `${memoryName}.${operation}`,
-  });
-
-  if (Sentry.getActiveSpan() === undefined) {
-    return run();
-  }
-
-  return Sentry.startSpan(
+  return recordContinuedSpan(
     {
-      attributes: {
-        "dn.causality.id": causality.id,
-        "dn.causality.key": causality.key,
-        "dn.memory.name": memoryName,
-        "dn.memory.operation": operation,
-      },
+      attributes,
+      breadcrumbCategory: "memory",
+      breadcrumbMessage: `${memoryName}.${operation}`,
       name: `${memoryName}.${operation}`,
-      op: "dn.memory",
+      observability,
+      operation: "dn.memory",
     },
     run,
   );

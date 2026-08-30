@@ -2,6 +2,7 @@ import type { SendApiRequest } from "@/api/client/sendApiRequest";
 import type { Parcel, Stamp } from "../contracts";
 import { logSendingRequest } from "../logging/logSendingRequest";
 import { mergeCausalityKeys } from "@/observability/causalityKeyList";
+import type { ParcelObservability } from "@/observability";
 
 export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
   const { ownerType, ownerId, sendMethod, endpointPath, canBatch } = batch[0].formula;
@@ -24,7 +25,8 @@ export function createSendBatchRequest(batch: Parcel[]): SendApiRequest {
 }
 
 type BatchProcessingStamp = Stamp & {
-  readonly causalityKeys: readonly string[];
+  readonly batchSize: number;
+  readonly observability: ParcelObservability;
 };
 
 function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
@@ -33,10 +35,16 @@ function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
   let baseVersion = firstStamp.baseVersion;
   let nextVersion = firstStamp.nextVersion;
   let skipPayloadVersionValidation = firstStamp.skipPayloadVersionValidation === true;
-  let causalityKeys = batch[0].observability.causalityKeys;
+  let observability = batch[0].observability;
 
   for (const parcel of batch.slice(1)) {
-    causalityKeys = mergeCausalityKeys(causalityKeys, parcel.observability.causalityKeys);
+    observability = {
+      ...observability,
+      causalityKeys: mergeCausalityKeys(
+        observability.causalityKeys,
+        parcel.observability.causalityKeys,
+      ),
+    };
 
     if (parcel.stamp.baseVersion !== undefined) {
       baseVersion =
@@ -58,7 +66,8 @@ function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
     parcelId: firstStamp.parcelId,
     queuedAt: firstStamp.queuedAt,
     clientIdentity: firstStamp.clientIdentity,
-    causalityKeys,
+    batchSize: batch.length,
+    observability,
     ...(baseVersion === undefined ? {} : { baseVersion }),
     ...(nextVersion === undefined ? {} : { nextVersion }),
     ...(skipPayloadVersionValidation ? { skipPayloadVersionValidation } : {}),

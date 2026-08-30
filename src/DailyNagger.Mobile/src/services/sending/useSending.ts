@@ -37,16 +37,12 @@ import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from 
 import { restampBatchForForcedSend } from "./forced-send";
 import { isVersionedFormula } from "./isVersionedFormula";
 import { sendTimerConfig } from "./sendTimerConfig";
-import {
-  createParcelObservability,
-  recordParcelQueued,
-  type ObservabilityContext,
-} from "@/observability";
+import { createParcelObservability, recordParcelQueued, type Observability } from "@/observability";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
 
 export type SendingQueueOptions = {
-  readonly observabilityContext: ObservabilityContext;
+  readonly observability: Observability;
 };
 
 export function useSending(
@@ -73,7 +69,7 @@ export function useSending(
 
     const newParcel = {
       formula,
-      observability: createParcelObservability(options.observabilityContext),
+      observability: createParcelObservability(options.observability),
       stamp: {
         parcelId: newGuid(),
         queuedAt,

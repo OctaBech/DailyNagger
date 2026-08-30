@@ -3,6 +3,7 @@ import {
   sendApiRequest,
   type SendApiRequest,
 } from "@/api/client/sendApiRequest";
+import { recordSendingRequest } from "@/observability";
 
 export type SendBatchResult =
   | { readonly kind: "sent" }
@@ -16,7 +17,16 @@ export type SendBatchResult =
 
 export async function trySendRequest(request: SendApiRequest): Promise<SendBatchResult> {
   try {
-    await sendApiRequest(request);
+    await recordSendingRequest(
+      request.processing.observability,
+      {
+        batchSize: request.processing.batchSize,
+        endpoint: request.endpoint,
+        method: request.method,
+        parcelId: request.processing.parcelId,
+      },
+      () => sendApiRequest(request),
+    );
     return { kind: "sent" };
   } catch (error) {
     if (serverRejectedCurrentVersion(error)) {

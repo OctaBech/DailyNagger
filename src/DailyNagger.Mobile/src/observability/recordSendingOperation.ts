@@ -1,8 +1,9 @@
 import * as Sentry from "@sentry/react-native";
 import type { ParcelObservability } from "./observabilityContext";
 import { createCausalityKeyAttributes } from "./causalityKeyList";
+import { recordContinuedSpan } from "./recordContinuedSpan";
 
-type SendingOperation = "parcel-queued" | "parcel-coalesced";
+type SendingOperation = "parcel-queued" | "parcel-coalesced" | "request";
 
 type ParcelQueuedDetails = {
   readonly coalesceKey: string | null;
@@ -16,6 +17,13 @@ type ParcelCoalescedDetails = {
   readonly coalesceKey: string | null;
   readonly victimParcelId: string;
   readonly winnerParcelId: string;
+};
+
+type SendingRequestDetails = {
+  readonly batchSize: number;
+  readonly endpoint: string;
+  readonly method: string;
+  readonly parcelId: string;
 };
 
 export function recordParcelQueued(
@@ -65,6 +73,35 @@ export function recordParcelCoalesced(
   }
 
   return coalescedObservability;
+}
+
+export function recordSendingRequest<TResult>(
+  observability: ParcelObservability,
+  details: SendingRequestDetails,
+  run: () => TResult,
+): TResult {
+  const { causality } = observability.context;
+  const attributes = {
+    "dn.batch.size": details.batchSize,
+    "dn.causality.id": causality.id,
+    "dn.causality.key": causality.key,
+    "dn.parcel.id": details.parcelId,
+    ...createCausalityKeyAttributes(observability.causalityKeys),
+    "http.method": details.method,
+    "http.route": details.endpoint,
+  };
+
+  return recordContinuedSpan(
+    {
+      attributes,
+      breadcrumbCategory: "sending",
+      breadcrumbMessage: `${details.method} ${details.endpoint}`,
+      name: `${details.method} ${details.endpoint}`,
+      observability,
+      operation: "dn.sending.request",
+    },
+    run,
+  );
 }
 
 function recordSendingBreadcrumb(

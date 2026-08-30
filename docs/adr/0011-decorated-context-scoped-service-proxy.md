@@ -6,6 +6,10 @@ Accepted
 
 ## Context
 
+DailyNagger should make the causality of a user action easy to identify in
+Sentry waterfall traces, even when the work passes through MMKV, debounce,
+coalescing, batching, retry, app restart, or server processing.
+
 DailyNagger actions already run through a command boundary. The boundary builds
 an action scope and injects capabilities such as `memory`, `sending`,
 `interactionStamp`, and `cultureSettings`.

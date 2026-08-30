@@ -1,10 +1,9 @@
 import { useStableCallback } from "@/shared";
 import {
-  buildCommandObservabilityContext,
   createCommandScopedMemory,
   createCommandScopedSending,
   recordCommandOperation,
-  type ObservabilityContext,
+  type Observability,
 } from "@/observability";
 import type { CultureSettings, InteractionStamp, Memory } from "@/services/contracts";
 import type { Sending } from "../sending";
@@ -61,20 +60,20 @@ export function useCommandDispatcher(memories: CommandMemories): CommandDispatch
 function getCommandActionContext(
   source: CommandSource,
   memories: CommandMemories,
-  observabilityContext: ObservabilityContext,
+  observability: Observability,
 ): CommandActionContext {
   const planMemory = createCommandScopedMemory({
     memory: memories.planMemory,
     memoryName: "planMemory",
-    observabilityContext,
+    observability,
   });
   const editorMemory = createCommandScopedMemory({
     memory: memories.editorMemory,
     memoryName: "editorMemory",
-    observabilityContext,
+    observability,
   });
   const sending = createCommandScopedSending({
-    observabilityContext,
+    observability,
     sending: memories.sending,
   });
 
@@ -131,22 +130,19 @@ function runCommand<TKey extends CommandKind>(
   args: CommandArgs<TKey>,
   memories: CommandMemories,
 ): void {
-  const observabilityContext = buildCommandObservabilityContext(source, kind, args);
-  const context = getCommandActionContext(source, memories, observabilityContext);
+  const observability = recordCommandOperation(source, kind, args);
+  const actionContext = getCommandActionContext(source, memories, observability);
+  const action = commandActions[kind];
 
-  recordCommandOperation(observabilityContext, () => {
-    const action = commandActions[kind];
+  assertSourceMatchesScope(source, action.scope);
+  assertContextMatchesScope(actionContext, action.scope);
 
-    assertSourceMatchesScope(source, action.scope);
-    assertContextMatchesScope(context, action.scope);
+  const run = action.run as (
+    args: CommandArgs<TKey>,
+    context: ContextForScope<CommandScopeForKind<TKey>>,
+  ) => void;
 
-    const run = action.run as (
-      args: CommandArgs<TKey>,
-      context: ContextForScope<CommandScopeForKind<TKey>>,
-    ) => void;
-
-    run(args, context as ContextForScope<CommandScopeForKind<TKey>>);
-  });
+  run(args, actionContext as ContextForScope<CommandScopeForKind<TKey>>);
 }
 
 function assertSourceMatchesScope<TScope extends CommandScope>(

@@ -11,7 +11,7 @@ export function logSendingRequest(
   console.info("Sending queued update", {
     sendMethod: request.method,
     endpointPath: request.endpoint,
-    causalityKeys: request.processing.causalityKeys,
+    causalityKeys: request.processing.observability.causalityKeys,
     baseVersion: request.processing.baseVersion,
     nextVersion: request.processing.nextVersion,
     skipPayloadVersionValidation: request.processing.skipPayloadVersionValidation,

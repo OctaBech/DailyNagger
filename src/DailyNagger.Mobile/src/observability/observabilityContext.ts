@@ -17,8 +17,17 @@ export type ObservabilityContext = {
   readonly causality: Causality;
 };
 
-export type ParcelObservability = {
+export type SpanContinuation = {
+  readonly baggage: string | null;
+  readonly sentryTrace: string;
+};
+
+export type Observability = {
   readonly context: ObservabilityContext;
+  readonly spanContinuation: SpanContinuation | null;
+};
+
+export type ParcelObservability = Observability & {
   readonly causalityKeys: readonly string[];
 };
 
@@ -47,10 +56,10 @@ export function buildObservabilityContext({
   };
 }
 
-export function createParcelObservability(context: ObservabilityContext): ParcelObservability {
+export function createParcelObservability(observability: Observability): ParcelObservability {
   return {
-    context,
-    causalityKeys: [context.causality.key],
+    ...observability,
+    causalityKeys: [observability.context.causality.key],
   };
 }
 
@@ -67,6 +76,7 @@ export function createLegacyParcelObservability(
       source: "send-queue",
     }),
     causalityKeys,
+    spanContinuation: null,
   };
 }
 
