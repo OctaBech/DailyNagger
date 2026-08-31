@@ -18,6 +18,9 @@ Deployment folder on the VPS.
 .PARAMETER KnownHostsPath
 SSH known_hosts file used to verify the VPS host. Can also be supplied with
 DAILY_NAGGER_DEPLOY_KNOWN_HOSTS.
+
+.PARAMETER SummaryPath
+Optional Markdown file path that receives a short rollback inspection summary.
 #>
 
 param(
@@ -25,7 +28,8 @@ param(
     [string]$VpsHost = $env:DAILY_NAGGER_DEPLOY_HOST,
     [string]$VpsUser = "root",
     [string]$RemotePath = "/opt/dailynagger",
-    [string]$KnownHostsPath = $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS
+    [string]$KnownHostsPath = $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS,
+    [string]$SummaryPath
 )
 
 $ErrorActionPreference = "Stop"
@@ -76,9 +80,25 @@ read_image_tag() {
 }
 
 current_tag="$(read_image_tag .env)"
+rollback_candidate="$(
+  find . -maxdepth 1 -type f -name '.env.backup-server-*' -printf '%f\n' |
+    sort -r |
+    while IFS= read -r backup_file; do
+      backup_tag="$(read_image_tag "$backup_file")"
+      if [ -n "$backup_tag" ] && [ "$backup_tag" != "$current_tag" ]; then
+        printf '%s\n' "$backup_tag"
+        break
+      fi
+    done
+)"
 
 printf 'Current image tag:\n'
 printf '  %s\n\n' "${current_tag:-<missing>}"
+printf 'Rollback candidate:\n'
+printf '  %s\n\n' "${rollback_candidate:-<missing>}"
+
+printf 'SUMMARY\tcurrent_image_tag\t%s\n' "${current_tag:-<missing>}"
+printf 'SUMMARY\trollback_candidate\t%s\n' "${rollback_candidate:-<missing>}"
 
 printf 'Recent .env backups:\n'
 find . -maxdepth 1 -type f -name '.env.backup-server-*' -printf '%f\n' |
@@ -98,9 +118,46 @@ printf '%s\n' "$services" | sed 's/^/  /'
 
 printf '\nProduction service status:\n'
 docker compose -f compose.prod.yaml ps
+
+server_status="$(
+  docker compose -f compose.prod.yaml ps server --format '{{.State}}' 2>/dev/null |
+    head -n 1
+)"
+printf 'SUMMARY\tserver_status\t%s\n' "${server_status:-unknown}"
 '@
 
 $remoteScript = $remoteScript -replace "`r", ""
 
-$remoteScript | & ssh @sshOptions $destination "tr -d '\r' | bash -s -- '$RemotePath'"
+$output = $remoteScript | & ssh @sshOptions $destination "tr -d '\r' | bash -s -- '$RemotePath'"
 Assert-LastExitCode "ssh inspect production rollback"
+
+$summary = @{}
+foreach ($line in $output) {
+    if ($line -like "SUMMARY`t*") {
+        $parts = $line -split "`t", 3
+        if ($parts.Length -eq 3) {
+            $summary[$parts[1]] = $parts[2]
+        }
+
+        continue
+    }
+
+    Write-Host $line
+}
+
+if (![string]::IsNullOrWhiteSpace($SummaryPath)) {
+    $summaryLines = @(
+        "## Production Rollback Inspect",
+        "",
+        "| Field | Value |",
+        "| --- | --- |",
+        "| Current image tag | ``$($summary["current_image_tag"])`` |",
+        "| Rollback candidate | ``$($summary["rollback_candidate"])`` |",
+        "| Server status | ``$($summary["server_status"])`` |",
+        "| Smoke | Not run |",
+        "",
+        "This workflow only inspects rollback candidates. It does not change production."
+    )
+
+    $summaryLines | Set-Content -Path $SummaryPath
+}

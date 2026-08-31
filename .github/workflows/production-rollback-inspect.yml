@@ -21,4 +21,4 @@ jobs:
 
       - name: Inspect production rollback candidates
         shell: pwsh
-        run: .\scripts\inspect-production-rollback.ps1
+        run: .\scripts\inspect-production-rollback.ps1 -SummaryPath $env:GITHUB_STEP_SUMMARY
