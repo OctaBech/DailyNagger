@@ -44,9 +44,17 @@ Then open `http://localhost:5341`.
 
 ## Manual Rollback
 
-1. Identify the previous stable image tag from VPS `.env.backup-server-*` files or `docker image ls dailynagger-server`.
+Before changing anything, inspect the current and previous image tags:
+
+```powershell
+.\scripts\inspect-production-rollback.ps1
+```
+
+Then roll back only if the candidate makes sense:
+
+1. Identify the previous stable image tag from the inspect output, VPS `.env.backup-server-*` files, or `docker image ls dailynagger-server`.
 2. On the VPS, edit `/opt/dailynagger/.env` and set `DAILY_NAGGER_IMAGE_TAG` to that stable tag.
-3. From `/opt/dailynagger`, run `docker compose -f compose.prod.yaml up -d server reverse-proxy`.
+3. From `/opt/dailynagger`, run `docker compose -f compose.prod.yaml up -d server reverse-proxy` if the compose file contains `reverse-proxy`; otherwise restart `server` and the currently deployed proxy service.
 4. Run `docker compose -f compose.prod.yaml ps`.
 5. Run `docker compose -f compose.prod.yaml logs --tail=80 server`.
 6. Run `Production Smoke` before declaring rollback complete.
