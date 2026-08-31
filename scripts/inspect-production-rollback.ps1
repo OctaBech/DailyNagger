@@ -154,7 +154,6 @@ if (![string]::IsNullOrWhiteSpace($SummaryPath)) {
         "| Current image tag | ``$($summary["current_image_tag"])`` |",
         "| Rollback candidate | ``$($summary["rollback_candidate"])`` |",
         "| Server status | ``$($summary["server_status"])`` |",
-        "| Smoke | Not run |",
         "",
         "This workflow only inspects rollback candidates. It does not change production."
     )
