@@ -72,6 +72,8 @@ are good long-term directions, but they are larger architecture changes.
 
 ## Decision
 
+### Keep Sentry Behind The Boundary
+
 DailyNagger will preserve command causality by using decorated action scopes,
 also known as scoped service proxies.
 
@@ -126,11 +128,12 @@ needs to participate in the observability flow, it should get a named
 wrapper, not a pile of lower-level builders. That keeps the call site readable
 and makes the observability boundary obvious in imports.
 
+### Create Causality At The Command Boundary
+
 At command dispatch time, the command boundary may create an observability
 context from the command kind and command arguments. That context includes the
-stable causality key and any Sentry trace context that needs to survive the
-persistent queue. The boundary may then wrap the injected capabilities before
-calling the action:
+stable causality key. The boundary may then wrap the injected capabilities
+before calling the action:
 
 - `memory.write` can be decorated so memory mutations record the active
   causality
@@ -162,6 +165,8 @@ create observability spans, and add breadcrumbs that explain the user-visible
 cause of later work. It must not change payloads, endpoint selection,
 versioning, coalescing, retry behavior, or error handling.
 
+### Separate Technical Trace From Domain Cause
+
 Causality is DailyNagger's stable causal identity for the domain object or
 command surface that started the operation. Its `key` is not the same as Sentry
 or OpenTelemetry `traceId`, and it is not an HTTP `requestId`.
@@ -174,6 +179,29 @@ Those identities answer different questions:
 
 The causality key is therefore not a replacement for tracing. It is the domain
 label that makes tracing useful to a DailyNagger developer.
+
+### Prefer Honest Runtime Boundaries
+
+Persisted parcels must keep DailyNagger causality. They should not depend on a
+persisted Sentry trace id as the truth of the operation.
+
+Within the same app runtime, Sentry propagation can be used to make command,
+memory, queue, HTTP, and server spans appear in a clean waterfall. Across an
+app restart, however, it is better to let Sentry start a new technical trace.
+That makes startup flushes honest: the waterfall shows that the work happened
+in a new runtime, while the `dn.causality.*` fields still explain the original
+user action that produced the parcel.
+
+In practice:
+
+- `traceId` shows technical continuity when it is still truthful
+- `causality` shows domain continuity across debounce, offline storage, retry,
+  and restart
+
+This avoids a too-perfect waterfall that hides the fact that the app slept,
+stopped, or restarted before the queued work reached the server.
+
+### Make The Story Readable
 
 Causality keys are join data. Breadcrumbs are the readable story. A causality
 key that only appears as a span attribute is not enough, because the developer
@@ -209,14 +237,15 @@ every action.
 The pattern uses normal TypeScript closures and dependency injection. It does
 not depend on React Native supporting reliable async-local context.
 
-The send queue persists parcel observability with parcel metadata. That keeps
+The send queue persists DailyNagger causality with parcel metadata. That keeps
 the causal identity available after debounce, coalescing, batching, backoff,
 app restart, and offline retries.
 
 When queued work is sent later, the queue should use the persisted
-observability context instead of inventing a new explanation. Sentry can still
-own the technical trace, but DailyNagger must carry the domain cause through
-the queue because Sentry cannot infer it from delayed local state.
+causality context instead of inventing a new explanation. Sentry can still own
+the technical trace for the current runtime, but DailyNagger must carry the
+domain cause through the queue because Sentry cannot infer it from delayed
+local state.
 
 The client should also send DailyNagger causality to the server as request
 headers. The server should attach that causality to Sentry and Serilog request

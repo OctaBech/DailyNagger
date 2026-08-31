@@ -34,6 +34,8 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 
 Production deploy, backup, smoke checks, and rollback are documented in `docs/runbooks/production-deploy.md`.
 
+- Run `use-production-secrets.ps1` once per PowerShell session before production deploy, backup, smoke, or Seq scripts.
+  - `-SecretsRootPath`, `-VpsHost`, `-SshKeyPath`, `-KnownHostsPath`: session setup overrides.
 - `start-local-api.ps1` stops any local `DailyNagger.Server` process and starts the API on `http://localhost:5010`.
 - `test-server.ps1` starts SQL Server, waits for `sqlserver-init`, then runs `dotnet test`.
   - `-RepoRootPath`: repo path override.
