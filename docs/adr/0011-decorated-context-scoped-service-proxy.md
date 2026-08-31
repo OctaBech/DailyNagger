@@ -6,7 +6,28 @@ Accepted
 
 ## Context
 
-DailyNagger should make the causality of a user action easy to identify in
+The main requirement is simple: when we open a Sentry waterfall, the causality
+of a user action should be easy to identify.
+
+That means we should not only see "there was a `PATCH /api/task-logs/...`". We
+should be able to answer the more useful question: "why did this request
+exist?" Was it a checked task item, a mood selection, startup work, rollover,
+or a queued update that swallowed an older parcel through coalescing?
+
+Sentry's trace id is the technical chain. It is good at connecting spans,
+timing bars, HTTP calls, server spans, errors, release data, and device data.
+DailyNagger causality is the domain chain. It explains the user-visible reason
+work happened.
+
+Both are needed. The trace id says "these spans belong to the same technical
+flow". The causality key says "this flow started because of this domain action".
+
+This became especially important because the mobile client can produce long
+session-like traces. A long waterfall is useful only if we can still find the
+one user action we care about. The DailyNagger causality fields are the handle
+we can search for and read.
+
+DailyNagger should therefore make user-action causality easy to identify in
 Sentry waterfall traces, even when the work passes through MMKV, debounce,
 coalescing, batching, retry, app restart, or server processing.
 
@@ -73,11 +94,37 @@ DailyNagger record functions. That keeps Sentry formatting, span names,
 attributes, breadcrumbs, and propagation rules in one place.
 
 Outside `@/observability`, observability should read as intent rather than
-plumbing. Call sites should use `buildXxxObservabilityContext(...)` when they
-create a cause and `recordXxx(...)` when they report that something happened.
-They should not hand-roll Sentry attributes, breadcrumb payloads, baggage,
-headers, or causality arrays. This keeps feature code readable and leaves room
-to change the underlying observability tool without rewriting the app.
+plumbing. Call sites should call `recordXxx(...)` functions for events and
+`xxxWithObservability(...)` functions for decorated capabilities. They should
+not hand-roll Sentry attributes, breadcrumb payloads, baggage, headers,
+causality arrays, or helper-built trace data.
+
+This is deliberately strict. Sentry must not leak into the rest of the
+codebase. Feature code is allowed to say "this happened" or "use this capability
+with observability attached"; `@/observability` decides how that becomes spans,
+breadcrumbs, attributes, headers, and persisted continuation data.
+
+For example, this shape is acceptable:
+
+```ts
+recordMemoryOperation(observability, "planMemory", "setTree", () =>
+  memory.write.setTree(tree),
+);
+```
+
+This shape is not acceptable in feature code:
+
+```ts
+Sentry.startSpan(...)
+scope.setTag(...)
+headers["sentry-trace"] = ...
+```
+
+The same rule applies to helper functions. If code outside `@/observability`
+needs to participate in the observability flow, it should get a named
+`recordXxx(...)` function or a clearly named `xxxWithObservability(...)`
+wrapper, not a pile of lower-level builders. That keeps the call site readable
+and makes the observability boundary obvious in imports.
 
 At command dispatch time, the command boundary may create an observability
 context from the command kind and command arguments. That context includes the
@@ -118,6 +165,15 @@ versioning, coalescing, retry behavior, or error handling.
 Causality is DailyNagger's stable causal identity for the domain object or
 command surface that started the operation. Its `key` is not the same as Sentry
 or OpenTelemetry `traceId`, and it is not an HTTP `requestId`.
+
+Those identities answer different questions:
+
+- Sentry `traceId`: which technical spans belong together?
+- HTTP `requestId`: which single request did the client and server both see?
+- DailyNagger causality: what user or system action caused this work?
+
+The causality key is therefore not a replacement for tracing. It is the domain
+label that makes tracing useful to a DailyNagger developer.
 
 Causality keys are join data. Breadcrumbs are the readable story. A causality
 key that only appears as a span attribute is not enough, because the developer
@@ -161,6 +217,27 @@ When queued work is sent later, the queue should use the persisted
 observability context instead of inventing a new explanation. Sentry can still
 own the technical trace, but DailyNagger must carry the domain cause through
 the queue because Sentry cannot infer it from delayed local state.
+
+The client should also send DailyNagger causality to the server as request
+headers. The server should attach that causality to Sentry and Serilog request
+context. That gives us the same domain handle in the client waterfall, server
+request span, SQL work, Sentry errors, and Seq logs.
+
+Error enrichment should grow from real investigations, not from guesswork. If a
+Sentry issue is hard to understand, add the one missing domain fact at the
+nearest `recordXxx(...)` boundary. Do not add a large pile of "maybe useful"
+fields up front. That only makes the free sink noisy and teaches nobody what
+actually helped.
+
+The practical smoke test for this pattern is:
+
+1. Start the app and inspect the startup trace.
+2. Select a mood and verify the mood/send/request/server chain.
+3. Focus or expand a node and verify command plus memory spans.
+4. Update a task item or entry and verify command, memory, queue, request, and
+   server spans.
+5. Trigger coalescing or batching and verify the surviving request still carries
+   the relevant causality keys.
 
 The pattern has some hidden-wrapper risk. To keep it understandable, decorated
 capabilities must stay narrow and transparent. They may add metadata; they must

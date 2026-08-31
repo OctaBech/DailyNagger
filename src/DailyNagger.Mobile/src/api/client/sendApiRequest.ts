@@ -52,9 +52,7 @@ export async function sendApiRequest(request: SendApiRequest): Promise<Versioned
       method,
       path: endpoint,
       body,
-      observability: {
-        causalityKeys: processing.observability.causalityKeys,
-      },
+      observability: processing.observability,
     });
 
     if (result.kind !== "ok") {

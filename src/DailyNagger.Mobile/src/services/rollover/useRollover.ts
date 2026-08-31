@@ -6,7 +6,7 @@ import type { Sending } from "@/services/sending";
 import { useEffect } from "react";
 import { appTiming } from "@/config";
 import { useRefLatestValue } from "@/shared";
-import { recordCommandScopedSending, recordRolloverOperation } from "@/observability";
+import { recordRolloverOperation, sendingWithObservability } from "@/observability";
 
 export type Rollover = ReturnType<typeof useRollover>;
 
@@ -63,7 +63,7 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
       {
         cultureSettings,
         planMemory,
-        sending: recordCommandScopedSending({
+        sending: sendingWithObservability({
           observability: recordRolloverOperation({
             key: `task-log:${nagger.taskLog.id}/rollover-close`,
             label: "Closed task log for rollover",
@@ -78,7 +78,7 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
       {
         cultureSettings,
         planMemory,
-        sending: recordCommandScopedSending({
+        sending: sendingWithObservability({
           observability: recordRolloverOperation({
             key: `nagger:${nagger.id}/rollover`,
             label: "Rolled over nagger",

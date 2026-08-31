@@ -1,8 +1,8 @@
 import { useStableCallback } from "@/shared";
 import {
-  recordCommandScopedMemory,
-  recordCommandScopedSending,
+  memoryWithObservability,
   recordCommandOperation,
+  sendingWithObservability,
   type Observability,
 } from "@/observability";
 import type { CultureSettings, InteractionStamp, Memory } from "@/services/contracts";
@@ -62,17 +62,17 @@ function getCommandActionContext(
   memories: CommandMemories,
   observability: Observability,
 ): CommandActionContext {
-  const planMemory = recordCommandScopedMemory({
+  const planMemory = memoryWithObservability({
     memory: memories.planMemory,
     memoryName: "planMemory",
     observability,
   });
-  const editorMemory = recordCommandScopedMemory({
+  const editorMemory = memoryWithObservability({
     memory: memories.editorMemory,
     memoryName: "editorMemory",
     observability,
   });
-  const sending = recordCommandScopedSending({
+  const sending = sendingWithObservability({
     observability,
     sending: memories.sending,
   });

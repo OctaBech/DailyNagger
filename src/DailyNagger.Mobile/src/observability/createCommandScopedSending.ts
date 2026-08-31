@@ -1,15 +1,15 @@
 import type { ActionSending, Sending } from "@/services/sending";
 import type { Observability } from "./observabilityContext";
 
-type CreateCommandScopedSendingInput = {
+type SendingWithObservabilityInput = {
   readonly observability: Observability;
   readonly sending: Sending;
 };
 
-export function recordCommandScopedSending({
+export function sendingWithObservability({
   observability,
   sending,
-}: CreateCommandScopedSendingInput): ActionSending {
+}: SendingWithObservabilityInput): ActionSending {
   return {
     ...sending,
     queue: (content) => sending.queue(content, { observability }),

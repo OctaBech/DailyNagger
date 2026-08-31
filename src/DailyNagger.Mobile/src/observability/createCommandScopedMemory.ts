@@ -2,17 +2,17 @@ import type { Memory } from "@/services/memory";
 import type { Observability } from "./observabilityContext";
 import { recordMemoryOperation } from "./recordMemoryOperation";
 
-type CreateCommandScopedMemoryInput = {
+type MemoryWithObservabilityInput = {
   readonly memory: Memory;
   readonly memoryName: string;
   readonly observability: Observability;
 };
 
-export function recordCommandScopedMemory({
+export function memoryWithObservability({
   memory,
   memoryName,
   observability,
-}: CreateCommandScopedMemoryInput): Memory {
+}: MemoryWithObservabilityInput): Memory {
   return {
     ...memory,
     write: {

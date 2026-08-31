@@ -1,6 +1,6 @@
 import { environment } from "@/config";
 import { newGuid } from "@/shared";
-import { recordApiRequest, recordSentryTraceHeader } from "@/observability";
+import { recordApiRequest, recordSentryTraceHeader, type Observability } from "@/observability";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
 import { apiRequestHeaders } from "./apiRequestHeaders";
 
@@ -48,9 +48,7 @@ export class ApiConnectionError extends Error {
 type ApiRequestOptions = {
   readonly body?: unknown;
   readonly method: ApiRequestMethod;
-  readonly observability?: {
-    readonly causalityKeys?: readonly string[];
-  };
+  readonly observability?: Observability;
   readonly path: string;
 };
 
@@ -116,7 +114,7 @@ async function sendApiFetch(
 function createApiRequest(options: ApiRequestOptions, requestId: string): RequestInit {
   return {
     method: options.method,
-    headers: createApiHeaders(options.body, requestId),
+    headers: createApiHeaders(options.body, requestId, options.observability),
     body: createJsonBody(options.body),
   };
 }
@@ -128,9 +126,14 @@ function createApiUrl(path: string): string {
   return `${baseUrl}/${normalizedPath}`;
 }
 
-function createApiHeaders(body: unknown, requestId: string): Record<string, string> {
+function createApiHeaders(
+  body: unknown,
+  requestId: string,
+  observability: Observability | undefined,
+): Record<string, string> {
   const headers = {
     ...createBaseApiHeaders(requestId),
+    ...createCausalityHeaders(observability),
     ...createSentryTraceHeaders(),
   };
 
@@ -139,6 +142,15 @@ function createApiHeaders(body: unknown, requestId: string): Record<string, stri
   }
 
   return headers;
+}
+
+function createCausalityHeaders(observability: Observability | undefined): Record<string, string> {
+  if (observability === undefined) return {};
+
+  return {
+    [apiRequestHeaders.causalityId]: observability.context.causality.id,
+    [apiRequestHeaders.causalityKeys]: observability.causalityKeys.join(","),
+  };
 }
 
 function createSentryTraceHeaders(): Record<string, string> {

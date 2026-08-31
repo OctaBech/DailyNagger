@@ -4,8 +4,8 @@ export {
   type ObservabilityContext,
   type SpanContinuation,
 } from "./observabilityContext";
-export { recordCommandScopedMemory } from "./createCommandScopedMemory";
-export { recordCommandScopedSending } from "./createCommandScopedSending";
+export { memoryWithObservability } from "./createCommandScopedMemory";
+export { sendingWithObservability } from "./createCommandScopedSending";
 export { recordAppErrorBoundaryError } from "./recordAppErrorBoundaryError";
 export { recordApiRequest, recordSentryTraceHeader } from "./recordApiRequest";
 export { recordCommandOperation } from "./recordCommandOperation";

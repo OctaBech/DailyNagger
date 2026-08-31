@@ -103,6 +103,12 @@ app.UseSerilogRequestLogging(options =>
         {
             diagnosticContext.Set("requestId", requestId);
         }
+
+        if (ApiCausalityContext.TryGet(httpContext, out var causality))
+        {
+            diagnosticContext.Set("dn.causality.id", causality.Id);
+            diagnosticContext.Set("dn.causality.keys", causality.Keys);
+        }
     };
 });
 app.UseMiddleware<RequireApiRequestIdMiddleware>();
