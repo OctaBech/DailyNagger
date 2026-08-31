@@ -94,7 +94,6 @@ Write-Host "API token: configured"
 
 Push-Location $mobileProject
 try {
-    $env:NODE_ENV = "production"
     $env:CI = "1"
     $env:SENTRY_DISABLE_AUTO_UPLOAD = "true"
     $env:EXPO_PUBLIC_DAILY_NAGGER_API_BASE_URL = $apiBaseUrl
@@ -106,6 +105,8 @@ try {
 
     npm ci
     Assert-LastExitCode "npm ci"
+
+    $env:NODE_ENV = "production"
 
     npx expo prebuild --platform android --clean
     Assert-LastExitCode "expo prebuild"
