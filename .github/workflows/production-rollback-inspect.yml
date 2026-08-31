@@ -1,0 +1,24 @@
+name: Production Rollback Inspect
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Prepare SSH
+        uses: ./.github/actions/prepare-production-ssh
+        with:
+          vps-host: ${{ secrets.DAILY_NAGGER_DEPLOY_HOST }}
+          ssh-private-key: ${{ secrets.DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.DAILY_NAGGER_DEPLOY_KNOWN_HOSTS }}
+
+      - name: Inspect production rollback candidates
+        shell: pwsh
+        run: .\scripts\inspect-production-rollback.ps1

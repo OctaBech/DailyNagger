@@ -17,6 +17,7 @@ Required environment secrets:
 - `Production Smoke`: read-only production health check.
 - `Production Backup`: backs up both production databases and uploads a GitHub artifact.
 - `Production Deploy`: backs up both production databases, deploys the server, and smoke-tests production.
+- `Production Rollback Inspect`: read-only rollback candidate inspection.
 
 Database backup artifacts expire after 14 days. They are deploy safety artifacts, not long-term backup storage.
 
@@ -49,6 +50,8 @@ Before changing anything, inspect the current and previous image tags:
 ```powershell
 .\scripts\inspect-production-rollback.ps1
 ```
+
+The same read-only check can be run from GitHub Actions with `Production Rollback Inspect`.
 
 Then roll back only if the candidate makes sense:
 
