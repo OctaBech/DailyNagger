@@ -22,11 +22,14 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 
 ## Mobile
 
+- GitHub `Mobile APK Build` builds an APK artifact from a clean runner. It is manual, short-lived, and not an app-store release.
 - `build-mobile-release-apk.ps1` builds the Android release APK and installs it on a connected device.
   - `-RepoRootPath`, `-MobileProjectPath`, `-DevCacheRootPath`, `-AndroidSdkPath`: path overrides.
   - `-DeviceId`: target a specific device.
   - `-SkipInstall`: build APK only.
   - `-Notify`: play a sound when done.
+- `build-mobile-ci-apk.ps1` generates the Expo Android project, builds a release APK artifact, and does not install it.
+  - `-RepoRootPath`, `-MobileProjectPath`, `-ArtifactOutputPath`: path overrides.
 - `start-mobile-android.ps1` sets E: drive Android/Gradle/Ninja paths, then runs `npx expo run:android`.
   - `-RepoRootPath`: repo path override.
 
