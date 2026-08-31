@@ -103,7 +103,7 @@ This file tracks near-term work that should not be lost while the architecture i
 - Measure render performance before adding broad `useCallback`/`useMemo` noise.
 - Low priority: investigate first-mount render spikes on emoji-heavy cards. Current suspicion is text/font measurement or `CommitTextInput` mount behavior on web/dev; only optimize if it becomes visible on device.
 - Clean up runtime warnings: require cycles through app-shell/components, deprecated `pointerEvents` prop usage, and any remaining platform deprecation warnings that show during Expo startup.
-- Add profiling tooling such as React DevTools Profiler or why-did-you-render.
+- Add profiling tooling such as React DevTools Profiler.
 - Learn and introduce animation primitives for visual-only motion, starting with React Native `Animated` and considering Reanimated later if needed.
 - Use React Query for server-owned metadata such as tags, picklists, history lookups, and later MCP helper previews.
 - Add a persisted queue schema/version strategy so old incompatible parcels can be discarded intentionally during development.

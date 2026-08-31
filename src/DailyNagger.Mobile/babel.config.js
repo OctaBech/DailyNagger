@@ -1,19 +1,7 @@
 module.exports = function (api) {
-  const isWhyDidYouRenderEnabled =
-    process.env.EXPO_PUBLIC_DAILY_NAGGER_WHY_DID_YOU_RENDER === "true";
-
-  api.cache(() => isWhyDidYouRenderEnabled);
+  api.cache(true);
 
   return {
-    presets: [
-      isWhyDidYouRenderEnabled
-        ? [
-            "babel-preset-expo",
-            {
-              jsxImportSource: "@welldone-software/why-did-you-render",
-            },
-          ]
-        : "babel-preset-expo",
-    ],
+    presets: ["babel-preset-expo"],
   };
 };

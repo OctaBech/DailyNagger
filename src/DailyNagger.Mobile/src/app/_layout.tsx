@@ -1,4 +1,3 @@
-import "@/debug/whyDidYouRender";
 import "react-native-get-random-values";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PaperProvider } from "react-native-paper";

@@ -78,7 +78,6 @@ $communityId = Get-EnvOrDefault `
 $userId = Get-EnvOrDefault `
     -Name "EXPO_PUBLIC_DAILY_NAGGER_USER_ID" `
     -DefaultValue "11111111-1111-1111-1111-111111111111"
-$whyDidYouRender = Get-EnvOrDefault -Name "EXPO_PUBLIC_DAILY_NAGGER_WHY_DID_YOU_RENDER" -DefaultValue "false"
 $sentryDsn = Get-EnvOrDefault -Name "EXPO_PUBLIC_SENTRY_DSN" -DefaultValue ""
 
 if (!$apiBaseUrl.StartsWith("https://")) {
@@ -100,7 +99,6 @@ try {
     $env:EXPO_PUBLIC_DAILY_NAGGER_API_TOKEN = $apiToken
     $env:EXPO_PUBLIC_DAILY_NAGGER_COMMUNITY_ID = $communityId
     $env:EXPO_PUBLIC_DAILY_NAGGER_USER_ID = $userId
-    $env:EXPO_PUBLIC_DAILY_NAGGER_WHY_DID_YOU_RENDER = $whyDidYouRender
     $env:EXPO_PUBLIC_SENTRY_DSN = $sentryDsn
 
     npm ci
