@@ -23,34 +23,11 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Prepare SSH
-        shell: pwsh
-        env:
-          DAILY_NAGGER_DEPLOY_HOST: ${{ secrets.DAILY_NAGGER_DEPLOY_HOST }}
-          DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY }}
-          DAILY_NAGGER_DEPLOY_KNOWN_HOSTS: ${{ secrets.DAILY_NAGGER_DEPLOY_KNOWN_HOSTS }}
-        run: |
-          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_HOST)) { throw "Missing DAILY_NAGGER_DEPLOY_HOST secret." }
-          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY)) { throw "Missing DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY secret." }
-          if ([string]::IsNullOrWhiteSpace($env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS)) { throw "Missing DAILY_NAGGER_DEPLOY_KNOWN_HOSTS secret." }
-
-          $sshDir = Join-Path $env:RUNNER_TEMP "dailynagger-ssh"
-          New-Item -ItemType Directory -Force $sshDir | Out-Null
-
-          $keyPath = Join-Path $sshDir "deploy_key"
-          $knownHostsPath = Join-Path $sshDir "known_hosts"
-
-          [System.IO.File]::WriteAllText(
-            $keyPath,
-            $env:DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY.Trim() + "`n",
-            [System.Text.UTF8Encoding]::new($false))
-          Set-Content -Path $knownHostsPath -Value $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS -NoNewline
-          chmod 600 $keyPath
-          chmod 600 $knownHostsPath
-          ssh-keygen -y -f $keyPath | Out-Null
-
-          "DAILY_NAGGER_DEPLOY_HOST=$($env:DAILY_NAGGER_DEPLOY_HOST)" >> $env:GITHUB_ENV
-          "DAILY_NAGGER_DEPLOY_SSH_KEY=$keyPath" >> $env:GITHUB_ENV
-          "DAILY_NAGGER_DEPLOY_KNOWN_HOSTS=$knownHostsPath" >> $env:GITHUB_ENV
+        uses: ./.github/actions/prepare-production-ssh
+        with:
+          vps-host: ${{ secrets.DAILY_NAGGER_DEPLOY_HOST }}
+          ssh-private-key: ${{ secrets.DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.DAILY_NAGGER_DEPLOY_KNOWN_HOSTS }}
 
       - name: Deploy production server
         shell: pwsh

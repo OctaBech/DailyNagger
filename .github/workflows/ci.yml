@@ -105,6 +105,10 @@ jobs:
         working-directory: src/DailyNagger.Mobile
         run: npm run format:check
 
+      - name: Lint
+        working-directory: src/DailyNagger.Mobile
+        run: npm run lint
+
   docker:
     runs-on: ubuntu-latest
 
