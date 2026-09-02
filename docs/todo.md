@@ -147,8 +147,8 @@ DailyNagger is still evolving.
 
 - [ ] Clean up actions/tree boundaries by moving old actions away from
       `tree-engine` so the code is easier to read and review.
-- [ ] Add a minimal i18n boundary with `t(...)` and pseudo-locale marking, then
-      delegate broad UI string extraction later.
+- [ ] Add a minimal `t(...)` placeholder boundary for user-facing mobile text.
+- [ ] Add pseudo-locale marking later, then delegate broad UI string extraction.
 - [x] Keep server-owned API DTOs generated into mobile TypeScript contracts.
 - [x] Add model conversion that extends server DTOs with client tree properties
       on load and strips those properties before server sends.
@@ -162,8 +162,9 @@ DailyNagger is still evolving.
       correctness depend on cached indexes.
 - [ ] Migrate API tree contracts to a recursive discriminated union with one
       shared `children` array for mixed task items and entries, as described in
-      ADR 0012. Defer the migration until it can be done deliberately across
-      server DTO ownership, OpenAPI generation, model conversion, and mobile tree
+      [ADR 0012](adr/0012-api-tree-contract-with-discriminated-unions.md).
+      Defer the migration until it can be done deliberately across server DTO
+      ownership, OpenAPI generation, model conversion, and mobile tree
       operations.
 - [ ] Split large server files into clearer boundaries later.
 - [ ] Add a central mobile `apiFetch` boundary for auth, base URL, JSON, timeout,
