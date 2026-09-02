@@ -1,132 +1,243 @@
 # DailyNagger Todo
 
-This file tracks near-term work that should not be lost while the architecture is still settling.
+This file tracks project direction, current work, and parked ideas while
+DailyNagger is still evolving.
 
-## Top Tracks
+## Product Work
 
-- [ ] Push local commits and verify GitHub Actions status.
-- [ ] CI: keep validation trustworthy for contracts, server, mobile, formatting, and Docker/SQL tests.
-- [ ] CD: keep backup, deploy, smoke, and rollback procedures clear before more automation.
-- [ ] Observability: keep Sentry/Seq useful without leaking observability plumbing into feature code.
-- [ ] DTO contracts: keep server-owned contracts generated and consumed by mobile.
-- [ ] Dev environment: keep Windows/E-drive setup reproducible through scripts.
-- [ ] Frontend tests: add focused tests once the current pipeline is stable.
-- [ ] Actions/tree cleanup: move old actions away from `tree-engine`.
-- [ ] Server structure: split large server files into clearer boundaries.
-
-## Current Priority
-
-- [ ] Review the 13 local commits ahead of `origin/main`, push them, and confirm CI.
-- [ ] Update ADR 0011 so `recordXxx(...)` explicitly owns span/breadcrumb lifecycle and returns next observability when needed.
-- [x] Add sending request spans that use persisted parcel observability.
-- [ ] Add sending flush spans if request spans do not explain batching clearly enough.
-- [ ] Add C# safety analyzers that remind us when disposable objects are not cleaned up. Keep the tool names in docs only where helpful: `CA2000` / `IDisposableAnalyzers`.
-- [ ] Define a build/test matrix for the repo before CI/CD: `DailyNagger.Mobile` and `DailyNagger.Server` are separate build/test units in the same repo. Mobile-only changes need mobile typecheck/lint/build; server-only changes need server build/tests; contract/API changes need both sides to compile and preferably a smoke test. If SQL Server is unavailable, say that explicitly instead of pretending server tests passed.
-- [ ] Teach Martin proper server observability for job interviews and real operations: set up Serilog, structured request/error logging, correlation/trace IDs, tracing basics, and how to read the logs when production rejects a client parcel. Goal: no more silent server failures and no scattered endpoint logging hacks.
-- [ ] Remove test-convenience constructors from server request contracts. API request types must show the one JSON shape the client sends; tests should build that shape directly or use test-only helpers.
-- [ ] Deduplicate plan/editor card theme so the editor stays WYSIWYG: same task tree visuals, with editing affordances layered on top instead of a separate color world.
-- [ ] Delegate i18n extraction to MCP later: move visible UI strings behind a small `t(...)` boundary, add a pseudo-locale/debug mode that marks translated strings visually, and keep model/API enum values unchanged.
-- [ ] Prepare Git cleanup so we can diff, rollback, and review changes in small safe slices.
-- [ ] After Git cleanup, run dead-code discovery with Knip and ts-prune. Use the results as review leads, not blind deletes.
-- [ ] Add a central mobile `apiFetch` boundary for auth, base URL, JSON, timeout, and network diagnostics. Cross-cutting concerns belong in boundaries.
+- [x] Persist offline-first send queue in MMKV.
+- [x] Coalesce queued updates for the same owner/key before sending.
+- [x] Batch compatible queued updates before sending them to the server.
+- [x] Surface send decisions for version conflicts, forced sends, discarded
+      batches, and connection-loss retry.
 - [x] Finish mood stamping on updated interaction nodes.
 - [x] Wire mood selection to the server mood history endpoint.
-- [x] Replace the queue and connection status badge idea with PostOfficeStrip visual sync/debug feedback.
+- [x] Replace the queue and connection status badge idea with PostOfficeStrip
+      visual sync/debug feedback.
+- [ ] Add date grouping/separators to the nagger list.
 - [ ] Add nag pinning for useful nags without due dates.
+- [ ] Repair the visual presentation of pinned nags.
+- [ ] Add item rename flow.
+- [ ] Add notes to logs.
+- [ ] Add value suggestions that show field type and useful previous values for
+      task entry inputs.
+- [ ] Add a few schedule rules only if they stay small: even/odd days and weeks.
+- [ ] Clone nodes so useful task structures can be duplicated without rebuilding
+      them manually.
+- [ ] Add deleted-node restore as a simple safety net after accidental deletion.
+- [ ] Add history/log browsing where previous logs and values help the current
+      editing/logging flow.
+- [ ] Add location support later for context-aware nags.
+
+## UI And UX Polish
+
+- [ ] Deduplicate plan/editor card theme so the editor stays WYSIWYG: same task
+      tree visuals, with editing affordances layered on top instead of a
+      separate color world.
+- [ ] Tune SpeedDial color so the primary action reads clearly.
+- [ ] Improve touch hit slop for small controls.
+- [ ] Fix SpeedDial hints: they appear too quickly and do not disappear
+      reliably.
+- [ ] Hide or disable SpeedDial while startup/loading/blocking state screens are
+      active.
+- [ ] Replace rough SpeedDial action labels/icons with clear action-specific
+      icons.
+- [ ] Hide the mood bar after it has been set for a short period, so screenshots
+      and daily use stay focused.
+- [ ] Move MoodBar fully into the app-shell overlay so it stays globally visible
+      without belonging to a single screen.
+- [ ] Reduce tag height so tags align better with add step/note buttons.
+- [ ] Make readonly text inputs non-selectable so display-only fields do not feel
+      editable.
+- [ ] Replace literal "New nagger" text with placeholder/suggestion text.
+- [ ] Add ghost placeholder text for text, integer, and decimal task entry
+      values.
+- [ ] Let both NaggerField lines expand the nagger, but only the first line
+      collapse it again.
+- [ ] Let the second NaggerField line select the active TaskLog when the nagger
+      is expanded.
+- [ ] Keep the parent nagger border visible when a descendant TaskEntry is
+      selected.
+- [ ] Explore focus-depth viewport for deep trees: keep the current branch wide
+      while keeping ancestors available as compact navigation.
+- [ ] Add subtle optional motion after core flows are stable: modal depth,
+      checkmark feedback, chevron settle, and mood reminder motion.
+- [ ] Run an independent styling audit after the mobile UI settles.
+- [ ] Clean up mobile accessibility intentionally: labels, roles, selected state,
+      expanded state, touch targets, icon buttons, mood bar, speed dial, cards,
+      checkboxes, modals, and state screens.
+- [ ] Replace fixed SheetModal keyboard lift with measured `KeyboardLiftAnchor`.
+
+## Quality And Tests
+
+- [x] Push local commits and verify GitHub Actions status.
+- [x] Keep generated server-owned API contracts consumed by mobile.
+- [x] Add development identity guard in tree visitor so accidental id/ancestry
+      changes fail loudly.
+- [x] Make required tree reads and invalid branch operations throw explicit
+      errors instead of silently returning stale or missing state.
+- [x] Add SQL-backed server tests for core data read/write behavior.
+- [x] Add API tests for versioned requests, validation, conflict handling, tags,
+      mood, and task-log updates.
+- [x] Add contract serialization tests for API request/response shapes.
+- [x] Add observability tests for request-id middleware and request context.
+- [ ] Add focused frontend/mobile tests now that CI can run them.
+- [ ] Add focused tree-operation tests for replace, selection refresh, rollover
+      pruning, progress counts, and stale-node cases.
+- [ ] Learn frontend interaction testing with a small user-flow test around
+      selecting, editing, and saving a task tree.
+- [ ] Add focused server/API tests for sync conflicts, forced send, corrupt
+      parcel handling, startup unavailable, rollover, progress counts, and DTO
+      import.
+- [ ] Remove test-convenience constructors from server request contracts. API
+      request types should show the one JSON shape the client sends.
+- [ ] After Git cleanup, run dead-code discovery with Knip and ts-prune. Use the
+      results as review leads, not blind deletes.
+- [ ] Add a persisted queue schema/version strategy so old incompatible parcels
+      can be discarded intentionally during development.
+- [ ] Make tree visitor identity changes opt-in: targeted visitors should throw
+      when returned node ids change unless the operation explicitly allows
+      identity replacement.
+
+## CI/CD And Operations
+
+- [x] CI validates contracts, server, mobile, formatting, and Docker/SQL tests.
+- [x] Production deploy workflow.
+- [x] Production smoke workflow.
+- [x] Production backup workflow.
+- [x] Rollback inspection workflow.
+- [x] Manual mobile APK artifact workflow.
+- [x] Dev environment stays reproducible through scripts.
+- [x] Local Docker Compose starts SQL Server, Seq, database initialization, and
+      the API container.
+- [x] Production deploy backs up databases before deploying.
+- [ ] Tune APK build cache in GitHub Actions.
+- [ ] Decide whether APK artifacts need signing/version naming beyond the current
+      manual debug-friendly artifact build.
+- [ ] Add C# safety analyzers as a CI quality gate later.
+- [ ] Add a commit-time formatter gate for the mobile project, likely
+      Husky/lint-staged or the repo's chosen CI equivalent.
+- [ ] Restore Visual Studio format-on-save settings so C# formatting stays
+      boring locally.
+- [ ] Tag deployment Docker images with an explicit version or git commit SHA
+      instead of relying on `latest`.
+- [ ] Add HTTPS, authentication, login, and user isolation before treating an
+      external server as real daily-use infrastructure.
+- [ ] Track Docker/VPS deployment in `docs/docker-vps-deploy-checklist.md`.
+- [ ] Move connection/server config out of hardcoded settings so phone and VPS
+      testing are realistic.
+- [ ] Split fresh-machine setup from release building.
+- [ ] Move Android SDK/NDK/CMake from `C:` to `E:` in a controlled migration.
+- [ ] Clean stale PATH entries for uninstalled development tools.
+- [ ] Clean up database migrations and schema once the data model is stable.
+
+## Observability
+
+- [x] Keep Sentry/Seq useful without leaking observability plumbing into feature
+      code.
+- [x] Record command, memory, startup, sending, rollover, and error-boundary
+      events through observability boundaries.
+- [x] Carry domain causality separately from technical Sentry trace IDs.
+- [x] Add server-side causality reading so production logs and server spans can
+      be connected to client parcels.
+- [x] Require request IDs on API calls so logs, smoke checks, and traces can be
+      correlated.
+
+## Architecture
+
+- [ ] Clean up actions/tree boundaries by moving old actions away from
+      `tree-engine` so the code is easier to read and review.
+- [ ] Add a minimal i18n boundary with `t(...)` and pseudo-locale marking, then
+      delegate broad UI string extraction later.
+- [x] Keep server-owned API DTOs generated into mobile TypeScript contracts.
+- [x] Add model conversion that extends server DTOs with client tree properties
+      on load and strips those properties before server sends.
+- [x] Keep command dispatch behind a command boundary instead of wiring screens
+      directly to memory, sending, and observability details.
+- [x] Add tree visitor target facade so stale UI node tokens become validated
+      traversal requests before tree changes are applied.
+- [x] Carry required ancestry on tree targets so parent/task-log/nagger
+      relationships are validated during traversal.
+- [x] Add tree visitor index hints as a performance optimization without making
+      correctness depend on cached indexes.
+- [ ] Migrate API tree contracts to a recursive discriminated union with one
+      shared `children` array for mixed task items and entries, as described in
+      ADR 0012. Defer the migration until it can be done deliberately across
+      server DTO ownership, OpenAPI generation, model conversion, and mobile tree
+      operations.
+- [ ] Split large server files into clearer boundaries later.
+- [ ] Add a central mobile `apiFetch` boundary for auth, base URL, JSON, timeout,
+      and network diagnostics.
+- [ ] Remove the old notifications service and let connection feedback flow
+      through sending events/snackbar.
+- [ ] Decide where shared theme colors and styling primitives should live.
+- [ ] Clean up central style tokens for colors, spacing, radius, font sizes,
+      z-index/elevation, safe-area constants, and animation timing.
+- [ ] Move component styling ownership into components, so callers pass semantic
+      props or color tokens instead of raw style wiring.
+- [ ] Measure render performance before adding broad `useCallback`/`useMemo`
+      noise.
+- [ ] Investigate first-mount render spikes on emoji-heavy cards only if it
+      becomes visible on device.
+- [ ] Clean up runtime warnings: require cycles, deprecated `pointerEvents`, and
+      any remaining platform warnings during Expo startup.
+- [ ] Add profiling tooling such as React DevTools Profiler.
+- [ ] Learn and introduce animation primitives for visual-only motion, starting
+      with React Native `Animated`.
+- [ ] Use React Query for server-owned metadata such as tags, picklists, history
+      lookups, and later MCP helper previews.
+- [ ] Add dev preview routes for state screens, queue badges, mood UI, and future
+      MCP questions.
+- [ ] Consolidate old documentation into the main architecture document and
+      rename it when it no longer describes only the client.
+- [ ] Establish one DTO contract owner if the current generated-contract setup
+      stops being enough.
+
+## Documentation And Presentation
+
+- [x] Tighten root `README.md` into a short repo front page.
+- [ ] Add or tighten local READMEs only where they help a reviewer understand a
+      boundary: command boundary, sending/offline queue, tree operations, and
+      server write flow.
+- [ ] Add a small server write-flow diagram that shows optimistic client write,
+      persisted queue, server transaction, version conflict, and retry/decision
+      paths.
+- [ ] Add a one-page DailyNagger case note for CV/job applications with
+      screenshots and 2-3 code references.
+- [ ] Do a public-reader pass before sharing GitHub access: remove stale notes,
+      confusing leftovers, and TODOs that look like broken production behavior
+      instead of planned work.
 
 ## Half-Finished Features
 
-- Mood stamping exists in parts of the model/send flow, but the full update path still needs to be finished and verified.
-- User mood has a server endpoint, but the client still needs final send/startup wiring.
-- Device identity is stamped on sends and stored by the server, but conflict UI does not yet show the device in a human-friendly way.
-- Undo/redo has enough editor structure to become practical, but the actual command/history flow is not finished.
-- Tags exist as server-owned metadata, but task/log/node tagging still needs model, UI, and send flow decisions.
+- [ ] Finish and verify the full mood stamping update path.
+- [ ] Finish final client send/startup wiring for user mood.
+- [ ] Show device identity in conflict UI in a human-friendly way.
+- [ ] Finish undo/redo command/history flow.
+- [ ] Finish tags for task/log/node tagging once model, UI, and send-flow
+      decisions are settled.
 
-## Product Features To Add
+## Learning Tracks
 
-- Queue status badge: show pending parcel count and connection state in the top-right area.
-- Pinning: allow important nags without due dates to stay visible, especially for MCP suggestions.
-- i18n structure: centralize user-facing strings without over-engineering reusable text.
-- Worker task: audit and implement accessibility after the UI language settles. Cover labels, roles, selected/expanded state, touch targets, mood bar, speed dial, cards, checkboxes, modal controls, and state screens.
-- Mobile UI polish: tune spacing, touch ergonomics, speed dial layout, and mood bar behavior on a real phone.
-- Move MoodBar fully into the app-shell overlay so it stays globally visible without belonging to a single screen.
-- Polish SpeedDial icons so available actions are easier to recognize at a glance.
-- Clone nodes: duplicate useful task structures without rebuilding them manually.
-- Deleted node restore: give the editor a simple safety net after accidental deletion.
-- Value suggestions: show field type and useful previous values for task entry inputs.
-- Location support: GPS tracking and map-based location selection for context-aware nags.
-- History/log browsing: expose previous logs and values where they help the current editing/logging flow.
-
-## UX Polish
-
-- Add emotional-design polish after core flows are stable. Treat these as small one-day side quests alongside MCP work, not blockers:
-  - Modal open: background content subtly scales down while dimming, so the sheet feels like it comes forward.
-  - Checkmark toggle: quick expand/retract bounce, satisfying but short.
-  - Chevron expand/collapse: small rotate/settle motion.
-  - Mood bar: occasional gentle wave as a reminder, not constant attention grabbing.
-  - Keep all motion subtle and optional so DailyNagger stays an in-and-out app.
-- Run an independent styling audit after the mobile UI settles. Check spacing ownership, touch targets, card density, modal layout, safe-area behavior, typography scale, color contrast, selected-state chrome, and whether component boundaries match the visual design rules.
-- Clean up mobile accessibility intentionally. Add consistent `accessibilityLabel`, `accessibilityRole`, and state hints for icon-only controls, mood buttons, speed dial actions, checkbox controls, modal close buttons, selected cards, and state screens. Keep labels user-facing and action-based, not component-name based.
-- Replace fixed SheetModal keyboard lift with measured `KeyboardLiftAnchor`. The active input should select an anchor, `SheetModal` should measure that anchor against the keyboard top, and the sheet should lift only enough to keep the relevant workflow region visible. This makes keyboard avoidance intent-aware: tag-name focus keeps input, sorting, and tag suggestions visible; description focus keeps description and the relevant content above it visible; footer actions are not keyboard-critical.
-- Remove the old notifications service and let connection feedback flow through sending events/snackbar.
-- Move MoodBar ownership out of plan screen wiring and into app-shell wiring.
-- Hide or disable SpeedDial while startup/loading/blocking state screens are active.
-- Replace rough SpeedDial action labels/icons with clear action-specific icons.
-- Add calm date separators between nagger groups. Bad boys respect nagger date boundaries.
-- Explore focus-depth viewport for deep trees: keep the current branch wide by shifting older ancestors left, keep compressed ancestor lanes visible as breadcrumb-like navigation, and avoid a separate drill-down screen unless the tree truly forces it.
-- Make readonly text inputs non-selectable so display-only fields do not feel editable.
-- Let both NaggerField lines expand the nagger, but only the first line collapse it again.
-- Let the second NaggerField line select the active TaskLog when the nagger is expanded.
-- Keep the parent nagger border visible when a descendant TaskEntry is selected.
-- Replace literal "New nagger" text with placeholder/suggestion text.
-- Add ghost placeholder text for text, integer, and decimal task entry values.
-
-## Architecture And Infrastructure
-
-- Split fresh-machine setup from release building. `bootstrap-dev.ps1` should own
-  tool checks, cache locations, restore/install steps, and guided setup for
-  missing system tools. `build-mobile-release-apk.ps1` should stay focused on
-  building and installing a release APK from an already prepared machine. Keep
-  build-tool compatibility shims in the build script only when they are required
-  to make the current dependency graph build reliably.
-- Move Android SDK/NDK/CMake from `C:` to `E:` in a controlled migration.
-- Clean stale PATH entries for uninstalled development tools.
-- Build a tiny SSR/RSC learning project, separate from DailyNagger, to practice server/client boundaries without dragging the mobile app into it.
-- Move connection/server config out of hardcoded settings so phone and VPS testing are realistic.
-- Deploy a real server target so the phone can use DailyNagger outside localhost.
-- Tag deployment Docker images with an explicit version or git commit SHA instead of relying on `latest`.
-- Add HTTPS, authentication, login, and user isolation before treating an external server as real daily-use infrastructure.
-- Track Docker/VPS deployment in `docs/docker-vps-deploy-checklist.md`.
-- Decide where shared theme colors and styling primitives should live.
-- Clean up central style tokens for colors, spacing, radius, font sizes, z-index/elevation, safe-area constants, and animation timing.
-- Move component styling ownership into components, so callers pass semantic props or color tokens instead of raw style wiring.
-- Measure render performance before adding broad `useCallback`/`useMemo` noise.
-- Low priority: investigate first-mount render spikes on emoji-heavy cards. Current suspicion is text/font measurement or `CommitTextInput` mount behavior on web/dev; only optimize if it becomes visible on device.
-- Clean up runtime warnings: require cycles through app-shell/components, deprecated `pointerEvents` prop usage, and any remaining platform deprecation warnings that show during Expo startup.
-- Add profiling tooling such as React DevTools Profiler.
-- Learn and introduce animation primitives for visual-only motion, starting with React Native `Animated` and considering Reanimated later if needed.
-- Use React Query for server-owned metadata such as tags, picklists, history lookups, and later MCP helper previews.
-- Add a persisted queue schema/version strategy so old incompatible parcels can be discarded intentionally during development.
-- Add dev preview routes for state screens, queue badges, mood UI, and future MCP questions.
-- Consolidate old documentation into the main architecture document and rename it when it no longer describes only the client.
-- Clean up database migrations and schema once the data model is stable.
-- Add focused tests before publishing the repo: sync conflicts, forced send, discard corrupt parcel, startup unavailable, rollover, progress counts, and DTO import.
-- Establish one DTO contract owner. The server should own the API DTO contract, and the mobile client should import or generate its TypeScript DTO types from that contract instead of manually maintaining a second shape.
-- Prepare the public Git foundation after the architecture is stable enough for feature-sized commits.
-- Learn CI/CD with Git and Docker, using DailyNagger as the real deployment pipeline example.
-- Add a commit-time formatter gate for the mobile project, likely Husky/lint-staged or the repo's chosen CI/CD equivalent, so Prettier runs automatically before commits and formatting noise stops stealing focus.
-- Learn frontend interaction testing with a small user-flow test around selecting, editing, and saving a task tree.
-- Add focused tree-operation tests for replace, selection refresh, rollover pruning, progress counts, and stale-node cases.
-- Make tree visitor identity changes opt-in: targeted visitors should throw when returned node ids change unless the operation explicitly allows identity replacement.
+- [ ] Learn server observability for interviews and real operations: structured
+      request/error logging, correlation/causality IDs, tracing basics, and how
+      to read logs when production rejects a client parcel.
+- [ ] Build a tiny SSR/RSC learning project, separate from DailyNagger, to
+      practice server/client boundaries without dragging the mobile app into it.
 
 ## MCP And LLMX
 
-- Build MCP context shaping endpoints that expose LLM-friendly context instead of raw DB rows or editable app trees.
-- Add SignalR space for live MCP questions and suggestions.
-- Let MCP ask 2-3 choice questions that the user approves in the client.
-- Let MCP suggest or request pinning nags, but keep actions human-approved.
-- Shape context by mode: nudge, decision, recovery, and history.
-- Keep latency visible in context design: fast nudges need tiny shaped context, while slow summaries can run in the background.
-- Add stored LLM memory summaries later so the hot path does not resend the user's whole history.
-- Define privacy and consent rules for mood, location, community data, and MCP-suggested actions.
-- Explore opt-in community context later, where MCP can reason over nearby or shared-goal situations without exposing raw private data.
+- [ ] Build MCP context shaping endpoints that expose LLM-friendly context
+      instead of raw DB rows or editable app trees.
+- [ ] Add SignalR space for live MCP questions and suggestions.
+- [ ] Let MCP ask 2-3 choice questions that the user approves in the client.
+- [ ] Let MCP suggest or request pinning nags, but keep actions human-approved.
+- [ ] Shape context by mode: nudge, decision, recovery, and history.
+- [ ] Keep latency visible in context design: fast nudges need tiny shaped
+      context, while slow summaries can run in the background.
+- [ ] Add stored LLM memory summaries later so the hot path does not resend the
+      user's whole history.
+- [ ] Define privacy and consent rules for mood, location, community data, and
+      MCP-suggested actions.
+- [ ] Explore opt-in community context later, where MCP can reason over nearby
+      or shared-goal situations without exposing raw private data.
