@@ -1,6 +1,6 @@
 import { useMemo } from "react";
+import { treeSelection } from "@/models";
 import type { Guid } from "@/shared";
-import { nodeReaderOperations } from "../core-node-operations";
 import type { PlanScreenCommands } from "../screen-commands";
 import type { PlanScreenData } from "../screen-data";
 import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
@@ -19,7 +19,7 @@ export function useCreatePlanScreenDialMenu({
   onEditNagger,
 }: UseCreatePlanScreenDialMenuProps): SpeedDialMenu {
   const { selectedNodes, selectedPath, startup, mood } = planScreenData;
-  const { nagger, taskItem } = selectedNodes;
+  const { nagger } = selectedNodes;
   const { pinSelectedNagger, unpinSelectedNagger } = planCommands.dial;
 
   return useMemo(() => {
@@ -38,7 +38,7 @@ export function useCreatePlanScreenDialMenu({
 
     const pinItems: SpeedDialMenuItem[] = [];
 
-    if (nodeReaderOperations.canBePinned(selectedPath)) {
+    if (treeSelection.canBePinned(selectedPath)) {
       pinItems.push({
         key: "plan.pin-selected-nagger",
         icon: "pin",
@@ -48,7 +48,7 @@ export function useCreatePlanScreenDialMenu({
       });
     }
 
-    if (nodeReaderOperations.canBeUnpinned(selectedPath)) {
+    if (treeSelection.canBeUnpinned(selectedPath)) {
       pinItems.push({
         key: "plan.unpin-selected-nagger",
         icon: "pin-off",
@@ -61,17 +61,6 @@ export function useCreatePlanScreenDialMenu({
     return {
       items: [
         newNagger,
-        ...(taskItem !== null
-          ? [
-              {
-                key: "plan.add-quick-note",
-                icon: "comment-plus-outline",
-                label: "Quick note",
-                showLabel: true,
-                onSelect: () => planCommands.taskItem.addQuickNote(taskItem),
-              },
-            ]
-          : []),
         ...pinItems,
         {
           key: "plan.edit-selected-nagger",
@@ -87,11 +76,9 @@ export function useCreatePlanScreenDialMenu({
     nagger,
     onCreateNagger,
     onEditNagger,
-    planCommands.taskItem,
     pinSelectedNagger,
     selectedPath,
     startup.isReady,
-    taskItem,
     unpinSelectedNagger,
   ]);
 }

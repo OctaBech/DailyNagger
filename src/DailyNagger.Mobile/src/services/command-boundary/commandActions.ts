@@ -1,8 +1,15 @@
-import type { Nagger, ScheduleRule, TaskEntry, TaskItem, TaskLog } from "@/models";
+import type {
+  Nagger,
+  ScheduleRule,
+  SelectedDeleteContext,
+  SelectedMoveContext,
+  TaskEntry,
+  TaskItem,
+  TaskLog,
+} from "@/models";
 import type { TaskEntryValueType } from "@/api";
 import type { Guid } from "@/shared";
 import type { Memory } from "@/services/contracts";
-import type { SelectedDeleteContext, SelectedMoveContext } from "@/services/core-node-operations";
 import { selectedPathOperations } from "@/services/core-tree-operations";
 import { viewOperations } from "@/services/operations";
 import type { ActionSending } from "../sending";
@@ -13,8 +20,6 @@ import {
   editorMoveSelectedNodeUp as runEditorMoveSelectedNodeUp,
   editorSaveEdit as runEditorSaveEdit,
   editorStartEdit as runEditorStartEdit,
-  editorTaskEntryAdd as runEditorTaskEntryAdd,
-  editorTaskItemAdd as runEditorTaskItemAdd,
   addTaskEntryToTaskItem as runAddTaskEntryToTaskItem,
   addTaskItemToTaskItem as runAddTaskItemToTaskItem,
   addTaskItemToTaskLog as runAddTaskItemToTaskLog,
@@ -29,7 +34,6 @@ import {
   taskEntrySetTag as runTaskEntrySetTag,
   taskEntrySetValue as runTaskEntrySetValue,
   taskEntrySetValueType as runTaskEntrySetValueType,
-  taskItemAddQuickNote as runTaskItemAddQuickNote,
   taskItemSetDoneAndSetFocus as runTaskItemSetDoneAndSetFocus,
   taskItemSetName as runTaskItemSetName,
   taskItemSetTag as runTaskItemSetTag,
@@ -106,16 +110,6 @@ type EditorStartEditArgs = {
 
 type EditorNaggerSessionArgs = {
   readonly nagger: Nagger;
-};
-
-type EditorTaskEntryAddArgs = {
-  readonly taskLog: TaskLog;
-  readonly taskItem: TaskItem;
-};
-
-type EditorTaskItemAddArgs = {
-  readonly taskLog: TaskLog;
-  readonly taskItem: TaskItem | null;
 };
 
 type EditorMoveSelectedNodeArgs = {
@@ -196,10 +190,6 @@ type TaskItemSetDoneAndSetFocusArgs = {
   readonly isDone: boolean;
 };
 
-type TaskItemAddQuickNoteArgs = {
-  readonly taskItem: TaskItem;
-};
-
 type TaskItemDeleteOnceArgs = {
   readonly taskItem: TaskItem;
 };
@@ -257,17 +247,6 @@ function editorCancel(
   context: CommandEditorSessionActionContext,
 ): void {
   runEditorCancelEdit(context);
-}
-
-function editorTaskEntryAdd(
-  args: EditorTaskEntryAddArgs,
-  context: CommandEditorActionContext,
-): void {
-  runEditorTaskEntryAdd(context, args.taskLog, args.taskItem);
-}
-
-function editorTaskItemAdd(args: EditorTaskItemAddArgs, context: CommandEditorActionContext): void {
-  runEditorTaskItemAdd(context, args.taskLog, args.taskItem);
 }
 
 function editorMoveSelectedNodeUp(
@@ -384,13 +363,6 @@ function taskItemSetDoneAndSetFocus(
   runTaskItemSetDoneAndSetFocus(context, args.taskItem, args.isDone);
 }
 
-function taskItemAddQuickNote(
-  args: TaskItemAddQuickNoteArgs,
-  context: CommandInputActionContext,
-): void {
-  runTaskItemAddQuickNote(context, args.taskItem);
-}
-
 function taskItemDeleteOnce(
   args: TaskItemDeleteOnceArgs,
   context: CommandInputActionContext,
@@ -456,8 +428,6 @@ export const commandActions = {
   "editor/move-selected-node-up": command("editor-action", editorMoveSelectedNodeUp),
   "editor/save": command("editor-session", editorSave),
   "editor/start-edit": command("editor-session", editorStartEdit),
-  "editor/task-entry-add": command("editor-action", editorTaskEntryAdd),
-  "editor/task-item-add": command("editor-action", editorTaskItemAdd),
   "nagger/set-expanded": command("view", naggerSetExpanded),
   "nagger/set-focused": command("view", naggerSetFocused),
   "nagger/pin-selected": command("sync", naggerPinSelected),
@@ -472,7 +442,6 @@ export const commandActions = {
   "task-item/set-expanded": command("view", taskItemSetExpanded),
   "task-item/set-focused": command("view", taskItemSetFocused),
   "task-item/set-done-and-set-focus": command("input", taskItemSetDoneAndSetFocus),
-  "task-item/add-quick-note": command("input", taskItemAddQuickNote),
   "task-item/delete-once": command("input", taskItemDeleteOnce),
   "task-item/add-task-entry": command("editor-action", taskItemAddTaskEntry),
   "task-item/add-task-item": command("editor-action", taskItemAddTaskItem),

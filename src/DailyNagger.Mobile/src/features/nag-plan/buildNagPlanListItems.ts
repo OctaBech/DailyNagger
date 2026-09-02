@@ -1,5 +1,5 @@
 import type { Nagger } from "@/models";
-import { orderNaggersForPlanList } from "@/services/operations";
+import { orderNaggersForPlanList } from "@/models";
 
 export type NagPlanListItem =
   | {

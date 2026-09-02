@@ -1,6 +1,6 @@
 import type { NagPlanDto } from "@/api";
+import { orderNaggersByDate } from "@/models";
 import { nagPlanDtoToTree } from "@/services/model-conversion";
-import { orderNaggersByDate } from "@/services/operations";
 import type { Memory } from "../memory";
 
 export function importLoadedPlanToMemory(memory: Memory, nagPlanDto: NagPlanDto): void {

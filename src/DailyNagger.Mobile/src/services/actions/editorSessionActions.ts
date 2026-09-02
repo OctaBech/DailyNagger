@@ -1,8 +1,9 @@
 import type { TreePath } from "@/models";
+import { orderNaggersByDate } from "@/models";
 import type { Guid } from "@/shared";
-import { NodeTemplates } from "@/services/core-node-templates";
 import { selectedPathOperations } from "@/services/core-tree-operations";
-import { editorSessionOperations, orderNaggersByDate } from "@/services/operations";
+import { treeOperations } from "@/services/tree-operations";
+import { editorSessionOperations } from "@/services/operations";
 import type { Memory } from "../memory";
 import type { ActionSending } from "../sending";
 
@@ -17,8 +18,9 @@ export function editorStartEdit(
   naggerId: Guid | null,
 ): void {
   if (naggerId === null) {
-    const newNagger = NodeTemplates.getNagger();
-    const tempTree = NodeTemplates.getNagPlan([newNagger]);
+    const { node, tree } = treeOperations;
+    const newNagger = node.createNagger();
+    const tempTree = tree.createNagPlan([newNagger]);
     const tempTreePath: TreePath = [newNagger, tempTree];
 
     editorMemory.write.setTreeAndSelectedPath(tempTree, tempTreePath);
@@ -27,9 +29,9 @@ export function editorStartEdit(
 
   const planTree = planMemory.read.getTree();
   const selectedPath = planMemory.read.getSelectedPath();
-  const { pruneTreeToSingleNagger } = editorSessionOperations;
+  const { tree } = treeOperations;
 
-  const editTree = pruneTreeToSingleNagger(naggerId, planTree);
+  const editTree = tree.getNaggerBranch(planTree, naggerId);
   editorMemory.write.setTreeAndSelectedPath(editTree, selectedPath);
 }
 

@@ -1,7 +1,7 @@
 import type { TaskEntryValueType } from "@/api/dto";
 import { assertNever } from "@/shared";
 
-export function normalizeInputValue(
+export function normalizeTaskEntryValue(
   valueType: TaskEntryValueType,
   newValue: string | null,
 ): string | null {

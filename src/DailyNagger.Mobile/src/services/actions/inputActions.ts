@@ -1,8 +1,12 @@
 import type { TaskEntryValueType } from "@/api";
-import type { Nagger, ScheduleRule, TaskEntry, TaskItem, TaskLog } from "@/models";
-import { NodeTemplates } from "@/services/core-node-templates";
-import { selectedPathOperations } from "@/services/core-tree-operations";
-import { editorOperations, inputOperations } from "@/services/operations";
+import {
+  normalizeTaskEntryValue,
+  type Nagger,
+  type ScheduleRule,
+  type TaskEntry,
+  type TaskItem,
+  type TaskLog,
+} from "@/models";
 import { scheduleCalculator } from "@/services/schedule-calculator";
 import { treeOperations } from "@/services/tree-operations";
 import type { ActionSending, CultureSettings, InteractionStamp, Memory } from "../contracts";
@@ -21,7 +25,7 @@ export function taskEntrySetValue(
 ): void {
   const { tree, node } = treeOperations;
   const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
-  const normalizedValue = inputOperations.normalizeInputValue(freshTaskEntry.valueType, newValue);
+  const normalizedValue = normalizeTaskEntryValue(freshTaskEntry.valueType, newValue);
 
   const taskEntryV1 = node.setTaskEntryValue(freshTaskEntry, normalizedValue);
   const stampedTaskEntry =
@@ -84,57 +88,17 @@ export function taskLogAddTaskStep(
   sending.queue(updatedTaskLog);
 }
 
-export function taskItemAddQuickNote(
-  { memory, sending, interactionStamp }: InputActionScope,
-  taskItem: TaskItem,
-): void {
-  const currentTree = memory.read.getTree();
-  const taskItemPath = selectedPathOperations.refreshPathToNode(currentTree, taskItem);
-  const { taskLog: currentTaskLog, taskItem: currentTaskItem } =
-    selectedPathOperations.deriveSelectedNodes(taskItemPath);
-
-  if (currentTaskLog === null || currentTaskItem === null) {
-    throw new Error("Cannot add Quick Note because the target TaskItem was not found.");
-  }
-
-  const taskEntryWithoutStamp: TaskEntry = {
-    ...NodeTemplates.getTaskEntry(currentTaskLog, currentTaskItem),
-    label: "Note",
-    rolloverBehavior: "CarryOverValue",
-  };
-  const newTaskEntry =
-    interactionStamp === null
-      ? taskEntryWithoutStamp
-      : interactionStamp.applyTo(taskEntryWithoutStamp);
-
-  const treeWithNewTaskEntry = editorOperations.addTaskEntryToTaskItem(
-    currentTree,
-    currentTaskItem,
-    newTaskEntry,
-  );
-  const newTaskEntryPath = selectedPathOperations.refreshPathToNode(
-    treeWithNewTaskEntry,
-    newTaskEntry,
-  );
-  const { taskLog: updatedTaskLog } = selectedPathOperations.deriveSelectedNodes(newTaskEntryPath);
-
-  if (updatedTaskLog === null) {
-    throw new Error("Cannot queue TaskLog update because the Quick Note has no TaskLog.");
-  }
-
-  memory.write.setTreeAndSelectedPath(treeWithNewTaskEntry, newTaskEntryPath);
-  sending.queue(updatedTaskLog);
-}
-
 export function taskItemSetName(
   { memory }: InputActionScope,
   taskItem: TaskItem,
   name: string,
 ): void {
-  const currentTree = memory.read.getTree();
-  const { tree } = editorOperations.setTaskItemName(currentTree, taskItem, name);
+  const { tree, node } = treeOperations;
+  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, taskItem);
+  const taskItemV1 = node.setTaskItemName(freshTaskItem, name);
+  const result = tree.replaceNode(freshTree, taskItemV1);
 
-  memory.write.setTree(tree);
+  memory.write.setTree(result.newTree);
 }
 
 export function taskLogSetTag(
@@ -142,10 +106,12 @@ export function taskLogSetTag(
   taskLog: TaskLog,
   tag: string | null,
 ): void {
-  const currentTree = memory.read.getTree();
-  const { tree, treePath } = editorOperations.setTaskLogTag(currentTree, taskLog, tag);
+  const { tree, node } = treeOperations;
+  const { freshTree, freshTaskLog } = tree.readTaskLog(memory, taskLog);
+  const taskLogV1 = node.setTaskLogTag(freshTaskLog, tag);
+  const result = tree.replaceNode(freshTree, taskLogV1);
 
-  memory.write.setTreeAndSelectedPath(tree, treePath);
+  memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
 export function taskItemSetTag(
@@ -153,17 +119,21 @@ export function taskItemSetTag(
   taskItem: TaskItem,
   tag: string | null,
 ): void {
-  const currentTree = memory.read.getTree();
-  const { tree, treePath } = editorOperations.setTaskItemTag(currentTree, taskItem, tag);
+  const { tree, node } = treeOperations;
+  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, taskItem);
+  const taskItemV1 = node.setTaskItemTag(freshTaskItem, tag);
+  const result = tree.replaceNode(freshTree, taskItemV1);
 
-  memory.write.setTreeAndSelectedPath(tree, treePath);
+  memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
 export function naggerSetTitle({ memory }: InputActionScope, nagger: Nagger, title: string): void {
-  const currentTree = memory.read.getTree();
-  const { tree } = editorOperations.setNaggerTitle(currentTree, nagger, title);
+  const { tree, node } = treeOperations;
+  const { freshTree, freshNagger } = tree.readNagger(memory, nagger);
+  const naggerV1 = node.setNaggerTitle(freshNagger, title);
+  const result = tree.replaceNode(freshTree, naggerV1);
 
-  memory.write.setTree(tree);
+  memory.write.setTree(result.newTree);
 }
 
 export function naggerSetScheduleRules(
@@ -171,19 +141,16 @@ export function naggerSetScheduleRules(
   nagger: Nagger,
   scheduleRules: readonly ScheduleRule[],
 ): void {
-  const currentTree = memory.read.getTree();
+  const { tree, node } = treeOperations;
+  const { freshTree, freshNagger } = tree.readNagger(memory, nagger);
   const activeLogDueOn = scheduleCalculator.getNextDueOn(
-    { ...nagger, scheduleRules },
+    { ...freshNagger, scheduleRules },
     cultureSettings,
   );
-  const { tree, treePath } = editorOperations.setNaggerScheduleRules(
-    currentTree,
-    nagger,
-    scheduleRules,
-    activeLogDueOn,
-  );
+  const naggerV1 = node.setNaggerScheduleRules(freshNagger, scheduleRules, activeLogDueOn);
+  const result = tree.replaceNode(freshTree, naggerV1);
 
-  memory.write.setTreeAndSelectedPath(tree, treePath);
+  memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
 export function naggerSetTargetTime(
@@ -191,10 +158,12 @@ export function naggerSetTargetTime(
   nagger: Nagger,
   targetTime: string | null,
 ): void {
-  const currentTree = memory.read.getTree();
-  const { tree, treePath } = editorOperations.setNaggerTargetTime(currentTree, nagger, targetTime);
+  const { tree, node } = treeOperations;
+  const { freshTree, freshNagger } = tree.readNagger(memory, nagger);
+  const naggerV1 = node.setNaggerTargetTime(freshNagger, targetTime);
+  const result = tree.replaceNode(freshTree, naggerV1);
 
-  memory.write.setTreeAndSelectedPath(tree, treePath);
+  memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
 export function taskEntrySetLabel(
@@ -202,10 +171,12 @@ export function taskEntrySetLabel(
   taskEntry: TaskEntry,
   label: string,
 ): void {
-  const currentTree = memory.read.getTree();
-  const { tree } = editorOperations.setTaskEntryLabel(currentTree, taskEntry, label);
+  const { tree, node } = treeOperations;
+  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
+  const taskEntryV1 = node.setTaskEntryLabel(freshTaskEntry, label);
+  const result = tree.replaceNode(freshTree, taskEntryV1);
 
-  memory.write.setTree(tree);
+  memory.write.setTree(result.newTree);
 }
 
 export function taskEntrySetTag(
@@ -213,10 +184,12 @@ export function taskEntrySetTag(
   taskEntry: TaskEntry,
   tag: string | null,
 ): void {
-  const currentTree = memory.read.getTree();
-  const { tree, treePath } = editorOperations.setTaskEntryTag(currentTree, taskEntry, tag);
+  const { tree, node } = treeOperations;
+  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
+  const taskEntryV1 = node.setTaskEntryTag(freshTaskEntry, tag);
+  const result = tree.replaceNode(freshTree, taskEntryV1);
 
-  memory.write.setTreeAndSelectedPath(tree, treePath);
+  memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
 export function taskEntrySetValueType(

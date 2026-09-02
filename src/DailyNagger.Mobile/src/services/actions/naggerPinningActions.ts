@@ -1,6 +1,5 @@
 import type { Nagger } from "@/models";
-import { selectedPathOperations } from "@/services/core-tree-operations";
-import { pinNaggerOperations } from "@/services/operations";
+import { treeOperations } from "@/services/tree-operations";
 import type { Memory } from "../memory";
 import type { ActionSending } from "../sending";
 
@@ -15,14 +14,13 @@ export function naggerPinSelected(
 ): void {
   if (nagger.pinnedBy !== "None") return;
 
-  const tree = memory.read.getTree();
-  const newTree = pinNaggerOperations.setNaggerPinnedBy("User", nagger, tree);
-  const updatedNagger = selectedPathOperations.requireSelectedNagger(
-    selectedPathOperations.refreshPathToNode(newTree, nagger),
-  );
+  const { node, tree } = treeOperations;
+  const { freshTree, freshNagger } = tree.readNagger(memory, nagger);
+  const naggerV1 = node.setNaggerPinnedBy(freshNagger, "User");
+  const result = tree.replaceNode(freshTree, naggerV1);
 
-  memory.write.setTree(newTree);
-  sending.queue(updatedNagger);
+  memory.write.setTree(result.newTree);
+  sending.queue(naggerV1);
 }
 
 export function naggerUnpinSelected(
@@ -31,12 +29,11 @@ export function naggerUnpinSelected(
 ): void {
   if (nagger.pinnedBy === "None") return;
 
-  const tree = memory.read.getTree();
-  const newTree = pinNaggerOperations.setNaggerPinnedBy("None", nagger, tree);
-  const updatedNagger = selectedPathOperations.requireSelectedNagger(
-    selectedPathOperations.refreshPathToNode(newTree, nagger),
-  );
+  const { node, tree } = treeOperations;
+  const { freshTree, freshNagger } = tree.readNagger(memory, nagger);
+  const naggerV1 = node.setNaggerPinnedBy(freshNagger, "None");
+  const result = tree.replaceNode(freshTree, naggerV1);
 
-  memory.write.setTree(newTree);
-  sending.queue(updatedNagger);
+  memory.write.setTree(result.newTree);
+  sending.queue(naggerV1);
 }

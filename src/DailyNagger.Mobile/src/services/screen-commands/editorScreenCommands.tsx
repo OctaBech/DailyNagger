@@ -1,7 +1,14 @@
 import type { TaskEntryValueType } from "@/api";
-import type { Nagger, ScheduleRule, TaskEntry, TaskItem, TaskLog } from "@/models";
+import type {
+  Nagger,
+  ScheduleRule,
+  SelectedDeleteContext,
+  SelectedMoveContext,
+  TaskEntry,
+  TaskItem,
+  TaskLog,
+} from "@/models";
 import { createRequiredContext, type Guid, type Prettify } from "@/shared";
-import type { SelectedDeleteContext, SelectedMoveContext } from "@/services/core-node-operations";
 import type { CommandDispatcher } from "@/services/command-boundary";
 import { useMemo } from "react";
 
@@ -42,12 +49,6 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
         },
         saveEdit: (nagger: Nagger) => {
           dispatch("editor-session", "editor/save", { nagger });
-        },
-        taskEntryAdd: (taskLog: TaskLog, taskItem: TaskItem) => {
-          dispatch("editor-action", "editor/task-entry-add", { taskLog, taskItem });
-        },
-        taskItemAdd: (taskLog: TaskLog, taskItem: TaskItem | null) => {
-          dispatch("editor-action", "editor/task-item-add", { taskLog, taskItem });
         },
         unpinSelectedNagger: (nagger: Nagger) => {
           dispatch("editor-sync", "nagger/unpin-selected", { nagger });

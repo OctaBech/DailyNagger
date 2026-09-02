@@ -10,6 +10,7 @@ export const branch = {
   addTaskEntryToTaskItem,
   addTaskItemToTaskLog,
   addTaskItemToTaskItem,
+  deleteTaskEntry,
   deleteTaskItemLeaf,
   replaceTaskItemAndUpdateDoneCounts,
   setFocusPath,
@@ -198,6 +199,30 @@ function deleteTaskItemLeaf(freshTree: Tree, taskItemToDelete: TaskItem): Branch
 
   if (result.kind === "not-found") {
     throw new Error(`TaskItem '${taskItemToDelete.id}' was not found in the current tree.`);
+  }
+
+  return {
+    newTree: result.node as Tree,
+    newPath: result.recordedPath.slice(1) as TreePath,
+  };
+}
+
+function deleteTaskEntry(freshTree: Tree, taskEntryToDelete: TaskEntry): BranchUpdateResult {
+  const result = targets.visitNode(freshTree, taskEntryToDelete, {
+    visitTaskItem: (taskItem, context) => {
+      if (!context.isTargetParent) return taskItem;
+
+      return {
+        ...taskItem,
+        taskEntries: taskItem.taskEntries.filter(
+          (childTaskEntry) => childTaskEntry.id !== taskEntryToDelete.id,
+        ),
+      };
+    },
+  });
+
+  if (result.kind === "not-found") {
+    throw new Error(`TaskEntry '${taskEntryToDelete.id}' was not found in the current tree.`);
   }
 
   return {

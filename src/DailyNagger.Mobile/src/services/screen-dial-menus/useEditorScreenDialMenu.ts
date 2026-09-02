@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { nodeReaderOperations, selectedNodeContextOperations } from "../core-node-operations";
+import { treeSelection } from "@/models";
 import type { EditorScreenCommands } from "../screen-commands";
 import type { EditorScreenData } from "../screen-data";
 import type { SpeedDialMenu } from "./SpeedDialMenu";
@@ -16,7 +16,7 @@ export function useCreateEditorScreenDialMenu({
   onCloseEditor,
 }: UseCreateEditorScreenDialMenuProps): SpeedDialMenu {
   const { selectedNodes, selectedPath } = editorScreenData;
-  const { nagger, taskItem, taskLog } = selectedNodes;
+  const { nagger } = selectedNodes;
   const {
     cancelEdit,
     deleteSelectedNode,
@@ -24,43 +24,15 @@ export function useCreateEditorScreenDialMenu({
     moveSelectedNodeUp,
     pinSelectedNagger,
     saveEdit,
-    taskEntryAdd,
-    taskItemAdd,
     unpinSelectedNagger,
   } = editorCommands.dial;
 
   return useMemo(() => {
-    const moveContext = selectedNodeContextOperations.tryReadMoveContext(selectedPath);
-    const deleteContext = selectedNodeContextOperations.tryReadDeleteContext(selectedPath);
+    const moveContext = treeSelection.tryReadMoveContext(selectedPath);
+    const deleteContext = treeSelection.tryReadDeleteContext(selectedPath);
 
     return {
       items: [
-        {
-          key: "editor.add-comment",
-          icon: "playlist-plus",
-          label: "Add comment",
-          showLabel: true,
-          row: 4,
-          keepOpenAfterPress: true,
-          isDisabled: taskLog === null || taskItem === null,
-          onSelect: () => {
-            if (taskLog === null || taskItem === null) return;
-            taskEntryAdd(taskLog, taskItem);
-          },
-        },
-        {
-          key: "editor.add-task-step",
-          icon: "checkbox-marked-circle-plus-outline",
-          label: "Add task step",
-          showLabel: true,
-          row: 5,
-          keepOpenAfterPress: true,
-          isDisabled: taskLog === null,
-          onSelect: () => {
-            if (taskLog === null) return;
-            taskItemAdd(taskLog, taskItem);
-          },
-        },
         {
           key: "editor.move-selected-up",
           icon: "arrow-up",
@@ -68,10 +40,10 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 1,
           keepOpenAfterPress: true,
-          isDisabled: !nodeReaderOperations.canMoveSelectedContextUp(moveContext),
+          isDisabled: !treeSelection.canMoveSelectedContextUp(moveContext),
           onSelect: () => {
             if (moveContext === null) return;
-            if (!nodeReaderOperations.canMoveSelectedContextUp(moveContext)) return;
+            if (!treeSelection.canMoveSelectedContextUp(moveContext)) return;
             moveSelectedNodeUp(moveContext);
           },
         },
@@ -81,14 +53,14 @@ export function useCreateEditorScreenDialMenu({
           label: "Move down",
           row: 1,
           keepOpenAfterPress: true,
-          isDisabled: !nodeReaderOperations.canMoveSelectedContextDown(moveContext),
+          isDisabled: !treeSelection.canMoveSelectedContextDown(moveContext),
           onSelect: () => {
             if (moveContext === null) return;
-            if (!nodeReaderOperations.canMoveSelectedContextDown(moveContext)) return;
+            if (!treeSelection.canMoveSelectedContextDown(moveContext)) return;
             moveSelectedNodeDown(moveContext);
           },
         },
-        ...(nodeReaderOperations.canSelectedNaggerBePinned(selectedNodes) && nagger !== null
+        ...(treeSelection.canSelectedNaggerBePinned(selectedNodes) && nagger !== null
           ? [
               {
                 key: "editor.pin-selected-nagger",
@@ -101,7 +73,7 @@ export function useCreateEditorScreenDialMenu({
               },
             ]
           : []),
-        ...(nodeReaderOperations.canSelectedNaggerBeUnpinned(selectedNodes) && nagger !== null
+        ...(treeSelection.canSelectedNaggerBeUnpinned(selectedNodes) && nagger !== null
           ? [
               {
                 key: "editor.unpin-selected-nagger",
@@ -164,10 +136,6 @@ export function useCreateEditorScreenDialMenu({
     selectedNodes,
     selectedPath,
     nagger,
-    taskEntryAdd,
-    taskItem,
-    taskItemAdd,
-    taskLog,
     unpinSelectedNagger,
   ]);
 }

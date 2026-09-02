@@ -22,8 +22,6 @@ export {
   editorDeleteSelectedNode,
   editorMoveSelectedNodeDown,
   editorMoveSelectedNodeUp,
-  editorTaskEntryAdd,
-  editorTaskItemAdd,
 } from "./editorActions";
 export {
   naggerSetScheduleRules,
@@ -33,7 +31,6 @@ export {
   taskEntrySetTag,
   taskEntrySetValue,
   taskEntrySetValueType,
-  taskItemAddQuickNote,
   taskItemSetDoneAndSetFocus,
   taskItemSetName,
   taskItemSetTag,

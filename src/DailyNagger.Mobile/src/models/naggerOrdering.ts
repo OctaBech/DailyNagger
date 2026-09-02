@@ -1,4 +1,5 @@
-import type { Nagger, Tree } from "@/models";
+import type { Nagger } from "./clientModel";
+import type { Tree } from "./nodeTypes";
 
 export function orderNaggersByDate(tree: Tree): Tree {
   return {

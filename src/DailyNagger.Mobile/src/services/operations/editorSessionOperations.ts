@@ -1,22 +1,12 @@
-import type { Guid } from "@/shared";
-import { type NagPlan, type Nagger, type TaskLog, type Tree, type TreePath } from "@/models";
-import {
-  treeMutationOperations,
-  selectedPathOperations,
-  treeReadOperations,
-} from "@/services/core-tree-operations";
+import { type Nagger, type TaskLog, type Tree, type TreePath } from "@/models";
+import { treeMutationOperations, selectedPathOperations } from "@/services/core-tree-operations";
 
 export const editorSessionOperations = {
-  pruneTreeToSingleNagger,
   insertNaggerIntoTree,
   getRootVersioning,
   insertRootVersioning,
   getRefreshedPath,
 } as const;
-
-function pruneTreeToSingleNagger(naggerId: Guid, tree: Tree): NagPlan {
-  return treeReadOperations.getSingleNaggerTree(tree, naggerId);
-}
 
 function insertNaggerIntoTree(nagger: Nagger, tree: Tree): Tree {
   const { replaceNagPlan } = treeMutationOperations;

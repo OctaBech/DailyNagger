@@ -49,3 +49,11 @@ export type {
   TreeNode,
   Tree,
 } from "./nodeTypes";
+export { treeSelection } from "./treeSelection";
+export type { SelectedDeleteContext, SelectedMoveContext } from "./treeSelection";
+export { normalizeTaskEntryValue } from "./taskEntryValue";
+export {
+  getTargetMinuteSortValue,
+  orderNaggersByDate,
+  orderNaggersForPlanList,
+} from "./naggerOrdering";

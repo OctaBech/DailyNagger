@@ -57,9 +57,6 @@ export function useCreatePlanScreenCommands({
         setDoneAndSetFocus: (taskItem: TaskItem, isDone: boolean) => {
           dispatch("plan-input", "task-item/set-done-and-set-focus", { taskItem, isDone });
         },
-        addQuickNote: (taskItem: TaskItem) => {
-          dispatch("plan-input", "task-item/add-quick-note", { taskItem });
-        },
         deleteOnce: (taskItem: TaskItem) => {
           dispatch("plan-input", "task-item/delete-once", { taskItem });
         },
