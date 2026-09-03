@@ -10,8 +10,6 @@ import type {
 import type { TaskEntryValueType } from "@/api";
 import type { Guid } from "@/shared";
 import type { Memory } from "@/services/contracts";
-import { selectedPathOperations } from "@/services/core-tree-operations";
-import { viewOperations } from "@/services/operations";
 import type { ActionSending } from "../sending";
 import {
   editorDeleteSelectedNode as runEditorDeleteSelectedNode,
@@ -31,20 +29,25 @@ import {
   naggerPinSelected as runNaggerPinSelected,
   naggerUnpinSelected as runNaggerUnpinSelected,
   taskEntrySetLabel as runTaskEntrySetLabel,
+  taskEntrySetFocused as runTaskEntrySetFocused,
   taskEntrySetTag as runTaskEntrySetTag,
   taskEntrySetValue as runTaskEntrySetValue,
   taskEntrySetValueType as runTaskEntrySetValueType,
   taskItemSetDoneAndSetFocus as runTaskItemSetDoneAndSetFocus,
+  taskItemSetExpanded as runTaskItemSetExpanded,
+  taskItemSetFocused as runTaskItemSetFocused,
   taskItemSetName as runTaskItemSetName,
   taskItemSetTag as runTaskItemSetTag,
   taskLogAddTaskStep as runTaskLogAddTaskStep,
+  taskLogSetFocused as runTaskLogSetFocused,
   taskLogSetTag as runTaskLogSetTag,
   type InputActionScope,
+  naggerSetExpanded as runNaggerSetExpanded,
+  naggerSetFocused as runNaggerSetFocused,
+  type ViewActionScope,
 } from "../actions";
 
-export type CommandViewActionContext = {
-  readonly memory: Memory;
-};
+export type CommandViewActionContext = ViewActionScope;
 
 export type CommandSyncActionContext = {
   readonly memory: Memory;
@@ -271,19 +274,11 @@ function editorDeleteSelectedNode(
 }
 
 function naggerSetExpanded(args: NaggerSetExpandedArgs, context: CommandViewActionContext): void {
-  const tree = context.memory.read.getTree();
-  const result = viewOperations.replaceNaggerViewProps(tree, args.nagger, {
-    isExpanded: args.isExpanded,
-  });
-
-  context.memory.write.setTreeAndSelectedPath(result.tree, result.treePath);
+  runNaggerSetExpanded(context, args.nagger, args.isExpanded);
 }
 
 function naggerSetFocused(args: NaggerSetFocusedArgs, context: CommandViewActionContext): void {
-  const tree = context.memory.read.getTree();
-  const treePath = selectedPathOperations.refreshPathToNode(tree, args.nagger);
-
-  context.memory.write.setTreeAndSelectedPath(tree, treePath);
+  runNaggerSetFocused(context, args.nagger);
 }
 
 function naggerPinSelected(args: NaggerPinningArgs, context: CommandSyncActionContext): void {
@@ -313,10 +308,7 @@ function naggerSetTitle(args: NaggerSetTitleArgs, context: CommandInputActionCon
 }
 
 function taskLogSetFocused(args: TaskLogSetFocusedArgs, context: CommandViewActionContext): void {
-  const tree = context.memory.read.getTree();
-  const treePath = selectedPathOperations.refreshPathToNode(tree, args.taskLog);
-
-  context.memory.write.setTreeAndSelectedPath(tree, treePath);
+  runTaskLogSetFocused(context, args.taskLog);
 }
 
 function taskLogSetTag(args: TaskLogSetTagArgs, context: CommandInputActionContext): void {
@@ -341,19 +333,11 @@ function taskItemSetExpanded(
   args: TaskItemSetExpandedArgs,
   context: CommandViewActionContext,
 ): void {
-  const tree = context.memory.read.getTree();
-  const result = viewOperations.replaceTaskItemViewProps(tree, args.taskItem, {
-    isExpanded: args.isExpanded,
-  });
-
-  context.memory.write.setTreeAndSelectedPath(result.tree, result.treePath);
+  runTaskItemSetExpanded(context, args.taskItem, args.isExpanded);
 }
 
 function taskItemSetFocused(args: TaskItemSetFocusedArgs, context: CommandViewActionContext): void {
-  const tree = context.memory.read.getTree();
-  const treePath = selectedPathOperations.refreshPathToNode(tree, args.taskItem);
-
-  context.memory.write.setTreeAndSelectedPath(tree, treePath);
+  runTaskItemSetFocused(context, args.taskItem);
 }
 
 function taskItemSetDoneAndSetFocus(
@@ -396,10 +380,7 @@ function taskEntrySetFocused(
   args: TaskEntrySetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  const tree = context.memory.read.getTree();
-  const treePath = selectedPathOperations.refreshPathToNode(tree, args.taskEntry);
-
-  context.memory.write.setTreeAndSelectedPath(tree, treePath);
+  runTaskEntrySetFocused(context, args.taskEntry);
 }
 
 function taskEntrySetValue(args: TaskEntrySetValueArgs, context: CommandInputActionContext): void {

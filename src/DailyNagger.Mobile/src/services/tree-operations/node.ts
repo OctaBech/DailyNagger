@@ -20,6 +20,7 @@ export const node = {
   createRolledOverTaskLog,
   isTaskLogClosed,
   moveChild,
+  setNaggerExpanded,
   setNaggerScheduleRules,
   setNaggerTargetTime,
   setNaggerTitle,
@@ -31,6 +32,7 @@ export const node = {
   setNaggerPinnedBy,
   tryPrefillCarryOverTaskEntryValueFromHistory,
   setTaskItemDone,
+  setTaskItemExpanded,
   setTaskItemName,
   setTaskItemRolloverBehavior,
   setTaskItemTag,
@@ -100,6 +102,18 @@ function setNaggerPinnedBy(nagger: Nagger, pinnedBy: Nagger["pinnedBy"]): Nagger
   return {
     ...nagger,
     pinnedBy,
+  };
+}
+
+function setNaggerExpanded(nagger: Nagger, isExpanded: boolean): Nagger {
+  if (nagger.clientProps.isExpanded === isExpanded) return nagger;
+
+  return {
+    ...nagger,
+    clientProps: {
+      ...nagger.clientProps,
+      isExpanded,
+    },
   };
 }
 
@@ -343,6 +357,18 @@ function setTaskItemDone(taskItem: TaskItem, isDone: boolean): TaskItem {
   return {
     ...taskItem,
     isDone,
+  };
+}
+
+function setTaskItemExpanded(taskItem: TaskItem, isExpanded: boolean): TaskItem {
+  if (taskItem.clientProps.isExpanded === isExpanded) return taskItem;
+
+  return {
+    ...taskItem,
+    clientProps: {
+      ...taskItem.clientProps,
+      isExpanded,
+    },
   };
 }
 

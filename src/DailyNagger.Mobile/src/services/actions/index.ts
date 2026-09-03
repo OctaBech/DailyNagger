@@ -13,6 +13,15 @@ export { deleteOnceTaskItem } from "./deleteTreeNodeActions";
 export { importLoadedPlanToMemory } from "./loadedPlanImportActions";
 export { closeTaskLogForRollover, rolloverNagger } from "./rolloverActions";
 export {
+  naggerSetExpanded,
+  naggerSetFocused,
+  taskEntrySetFocused,
+  taskItemSetExpanded,
+  taskItemSetFocused,
+  taskLogSetFocused,
+  type ViewActionScope,
+} from "./viewActions";
+export {
   editorDeleteSelectedNode,
   editorMoveSelectedNodeDown,
   editorMoveSelectedNodeUp,

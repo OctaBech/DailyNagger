@@ -72,8 +72,18 @@ instead of letting the bug spread deeper into the app.
 Add a command here when a screen needs to trigger behavior through the shared
 command path.
 
-Keep the boundary thin. It may translate command arguments into an action call,
-but it should not become the place where task-tree behavior is implemented.
+Keep the boundary thin. Command handlers should package arguments and delegate to
+actions:
+
+```ts
+function taskItemSetExpanded(args, context) {
+  runTaskItemSetExpanded(context, args.taskItem, args.isExpanded);
+}
+```
+
+They should not read memory, mutate trees, refresh selected paths, queue server
+work, or implement task-tree behavior directly. Those scripts belong in
+`services/actions`.
 
 If the code starts reading like business logic, move that logic into an action
 or a lower-level operation and let this folder keep doing the routing.
