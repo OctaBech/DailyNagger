@@ -1,6 +1,9 @@
 # Actions
 
-Actions contain the actual behavior scripts.
+Actions contain user-facing application behavior scripts.
+
+They are the place where a command becomes readable product behavior: read fresh
+state, apply small model/tree operations, write memory, and queue server work.
 
 They should be written so a reader can follow the work from fresh state to final
 memory write without also understanding React hooks, screen components, or

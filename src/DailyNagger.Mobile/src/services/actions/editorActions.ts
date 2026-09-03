@@ -45,11 +45,11 @@ export function editorDeleteSelectedNode(
   { memory }: EditorActionScope,
   deleteContext: SelectedDeleteContext,
 ): void {
-  const { branch } = treeOperations;
-  const currentTree = memory.read.getTree();
-  const result = isTaskEntry(deleteContext.selectedNode)
-    ? branch.deleteTaskEntry(currentTree, deleteContext.selectedNode)
-    : branch.deleteTaskItemLeaf(currentTree, deleteContext.selectedNode);
+  const { branch, tree } = treeOperations;
+  const { freshTree, freshNode } = tree.readNode(memory, deleteContext.selectedNode);
+  const result = isTaskEntry(freshNode)
+    ? branch.deleteTaskEntry(freshTree, freshNode)
+    : branch.deleteTaskItemSubtree(freshTree, freshNode);
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }

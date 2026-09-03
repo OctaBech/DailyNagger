@@ -1,4 +1,4 @@
-import type { TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
+import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
 import { targets, type TargetVisitContext } from "./tree-visitor";
 
 type BranchUpdateResult = {
@@ -7,14 +7,27 @@ type BranchUpdateResult = {
 };
 
 export const branch = {
+  addNaggerToNagPlan,
   addTaskEntryToTaskItem,
   addTaskItemToTaskLog,
   addTaskItemToTaskItem,
   deleteTaskEntry,
-  deleteTaskItemLeaf,
+  deleteTaskItemSubtree,
   replaceTaskItemAndUpdateDoneCounts,
   setFocusPath,
 } as const;
+
+function addNaggerToNagPlan(freshTree: Tree, newNagger: Nagger): BranchUpdateResult {
+  const newTree = {
+    ...freshTree,
+    nags: [...freshTree.nags, newNagger],
+  };
+
+  return {
+    newTree,
+    newPath: [newNagger, newTree],
+  };
+}
 
 function addTaskEntryToTaskItem(
   freshTree: Tree,
@@ -151,12 +164,11 @@ function addTaskItemToTaskItem(
   };
 }
 
-function deleteTaskItemLeaf(freshTree: Tree, taskItemToDelete: TaskItem): BranchUpdateResult {
-  if (taskItemToDelete.taskEntries.length > 0 || taskItemToDelete.taskItems.length > 0) {
-    throw new Error(`TaskItem '${taskItemToDelete.id}' is not a leaf TaskItem.`);
-  }
-
-  const doneDelta = taskItemToDelete.isDone ? -1 : 0;
+function deleteTaskItemSubtree(freshTree: Tree, taskItemToDelete: TaskItem): BranchUpdateResult {
+  const taskItemDelta = -(taskItemToDelete.descendantTaskItemCount + 1);
+  const doneDelta = -(
+    taskItemToDelete.doneDescendantTaskItemCount + (taskItemToDelete.isDone ? 1 : 0)
+  );
 
   const result = targets.visitNode(freshTree, taskItemToDelete, {
     visitTaskItem: (taskItem, context) => {
@@ -165,7 +177,7 @@ function deleteTaskItemLeaf(freshTree: Tree, taskItemToDelete: TaskItem): Branch
       if (context.isTargetParent) {
         return {
           ...taskItem,
-          descendantTaskItemCount: taskItem.descendantTaskItemCount - 1,
+          descendantTaskItemCount: taskItem.descendantTaskItemCount + taskItemDelta,
           doneDescendantTaskItemCount: taskItem.doneDescendantTaskItemCount + doneDelta,
           taskItems: taskItem.taskItems.filter(
             (childTaskItem) => childTaskItem.id !== taskItemToDelete.id,
@@ -175,14 +187,14 @@ function deleteTaskItemLeaf(freshTree: Tree, taskItemToDelete: TaskItem): Branch
 
       return {
         ...taskItem,
-        descendantTaskItemCount: taskItem.descendantTaskItemCount - 1,
+        descendantTaskItemCount: taskItem.descendantTaskItemCount + taskItemDelta,
         doneDescendantTaskItemCount: taskItem.doneDescendantTaskItemCount + doneDelta,
       };
     },
     visitTaskLog: (taskLog, context) => {
       const updatedTaskLog = {
         ...taskLog,
-        descendantTaskItemCount: taskLog.descendantTaskItemCount - 1,
+        descendantTaskItemCount: taskLog.descendantTaskItemCount + taskItemDelta,
         doneDescendantTaskItemCount: taskLog.doneDescendantTaskItemCount + doneDelta,
       };
 
@@ -198,7 +210,7 @@ function deleteTaskItemLeaf(freshTree: Tree, taskItemToDelete: TaskItem): Branch
   });
 
   if (result.kind === "not-found") {
-    throw new Error(`TaskItem '${taskItemToDelete.id}' was not found in the current tree.`);
+    throw new Error(`TaskItem subtree '${taskItemToDelete.id}' was not found in the current tree.`);
   }
 
   return {

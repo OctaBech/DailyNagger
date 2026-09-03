@@ -1,5 +1,5 @@
-import { selectedPathOperations } from "@/services/core-tree-operations";
-import type { Tree, TreePath } from "@/models";
+import { treeSelection } from "@/models/treeSelection";
+import type { Tree, TreeNode, TreePath } from "@/models";
 import { useCallback, useMemo } from "react";
 import type { Memory } from "./useMemory";
 import { startDebugRenderFrame } from "@/debug/render-frame";
@@ -38,7 +38,7 @@ export function useSelectionMemory(memory: Memory, debugName = "memory"): Memory
   const setTree = useCallback(
     (tree: Tree) => {
       const currentPath = getSelectedPath();
-      const selectedNode = selectedPathOperations.tryGetSelectedNode(currentPath);
+      const selectedNode = treeSelection.tryGetSelectedNode(currentPath);
 
       if (selectedNode === null) {
         startDebugRenderFrame(`${debugName}.setTree`);
@@ -116,7 +116,7 @@ function moveSelection(
   newPath: TreePath,
 ): { tree: Tree; treePath: TreePath } {
   const unselectedTree = clearFocusPath(tree, oldPath);
-  const selectedNode = selectedPathOperations.tryGetSelectedNode(newPath);
+  const selectedNode = treeSelection.tryGetSelectedNode(newPath);
 
   if (selectedNode === null) return { tree: unselectedTree, treePath: [] };
 
@@ -139,11 +139,7 @@ function clearFocusPath(tree: Tree, path: TreePath): Tree {
   return tree;
 }
 
-function trySetFocusPath(
-  tree: Tree,
-  node: NonNullable<ReturnType<typeof selectedPathOperations.tryGetSelectedNode>>,
-  hasFocus: boolean,
-) {
+function trySetFocusPath(tree: Tree, node: TreeNode, hasFocus: boolean) {
   if (node.nodeType === "NagPlan") return null;
 
   try {

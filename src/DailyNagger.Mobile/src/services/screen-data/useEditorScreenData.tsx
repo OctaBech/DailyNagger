@@ -1,10 +1,10 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { Memory } from "../contracts";
-import { selectedPathOperations } from "../core-tree-operations";
 import type { Prettify } from "@/shared";
 import type { CultureSettings } from "../culture";
 import { scheduleCalculator } from "../schedule-calculator";
 import type { Nagger, ScheduleRule } from "@/models";
+import { treeSelection } from "@/models/treeSelection";
 
 type UseCreateEditorScreenDataProps = {
   readonly editorMemory: Memory;
@@ -46,7 +46,7 @@ export function useCreateEditorScreenData({
     () => ({
       tree,
       selectedPath,
-      selectedNodes: selectedPathOperations.deriveSelectedNodes(selectedPath),
+      selectedNodes: treeSelection.deriveSelectedNodes(selectedPath),
       schedule: {
         getNextDueOn: (nagger: Nagger, scheduleRules: readonly ScheduleRule[]) =>
           scheduleCalculator.getNextDueOn({ ...nagger, scheduleRules }, cultureSettings),

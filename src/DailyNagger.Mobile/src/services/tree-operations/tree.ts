@@ -7,6 +7,7 @@ import { targets } from "./tree-visitor";
 type ReadNaggerResult = {
   readonly freshTree: Tree;
   readonly freshNagger: Nagger;
+  readonly freshTaskLog: TaskLog;
 };
 
 type ReadTaskItemResult = {
@@ -48,6 +49,7 @@ export const tree = {
   replaceTaskEntry,
   replaceNagger,
   refreshPathToNode,
+  tryReadNagger,
   tryRefreshPathToNode,
 } as const;
 
@@ -73,33 +75,46 @@ function getNaggerBranch(tree: Tree, naggerId: Guid): Tree {
 }
 
 function readNagger(memory: TreeReader, staleNaggerOrId: Nagger | Guid): ReadNaggerResult {
+  const result = tryReadNagger(memory, staleNaggerOrId);
+
+  if (result === null) {
+    const id = typeof staleNaggerOrId === "string" ? staleNaggerOrId : staleNaggerOrId.id;
+    throw new Error(`Nagger '${id}' was not found in the current tree.`);
+  }
+
+  return result;
+}
+
+function tryReadNagger(
+  memory: TreeReader,
+  staleNaggerOrId: Nagger | Guid,
+): ReadNaggerResult | null {
   const freshTree = memory.read.getTree();
 
   if (typeof staleNaggerOrId === "string") {
     const freshNagger = freshTree.nags.find((nagger) => nagger.id === staleNaggerOrId);
 
-    if (freshNagger === undefined) {
-      throw new Error(`Nagger '${staleNaggerOrId}' was not found in the current tree.`);
-    }
+    if (freshNagger === undefined) return null;
 
-    return { freshTree, freshNagger };
+    return { freshTree, freshNagger, freshTaskLog: freshNagger.taskLog };
   }
 
-  let freshNagger: Nagger | null = null;
+  let freshNaggerResult: ReadNaggerResult | null = null;
 
   const result = targets.visitNode(freshTree, staleNaggerOrId, {
     visitNagger: (nagger, context) => {
-      if (context.isTargetNode) freshNagger = nagger as Nagger;
+      if (context.isTargetNode) {
+        const freshNagger = nagger as Nagger;
+        freshNaggerResult = { freshTree, freshNagger, freshTaskLog: freshNagger.taskLog };
+      }
 
       return nagger;
     },
   });
 
-  if (result.kind === "not-found" || freshNagger === null) {
-    throw new Error(`Nagger '${staleNaggerOrId.id}' was not found in the current tree.`);
-  }
+  if (result.kind === "not-found") return null;
 
-  return { freshTree, freshNagger };
+  return freshNaggerResult;
 }
 
 function readTaskItem(memory: TreeReader, staleTaskItem: TaskItem): ReadTaskItemResult {

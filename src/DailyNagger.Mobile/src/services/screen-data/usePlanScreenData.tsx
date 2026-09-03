@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useMemo, useRef, type ReactNode } from "react";
 import type { Memory, Startup, UserMoodState } from "../contracts";
 import type { UserMoodLabel } from "@/models";
+import { treeSelection } from "@/models/treeSelection";
 import type { Prettify } from "@/shared";
-import { selectedPathOperations } from "../core-tree-operations";
 
 type UseCreatePlanScreenDataProps = {
   readonly planMemory: Memory;
@@ -54,7 +54,7 @@ export function useCreatePlanScreenData({
     () => ({
       nags: tree?.nags ?? [],
       selectedPath,
-      selectedNodes: selectedPathOperations.deriveSelectedNodes(selectedPath),
+      selectedNodes: treeSelection.deriveSelectedNodes(selectedPath),
       startup,
       scroll: {
         getOffset: getScrollOffset,

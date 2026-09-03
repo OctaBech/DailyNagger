@@ -24,11 +24,7 @@ export function deleteOnceTaskItem(
     throw new Error(`TaskItem '${freshTaskItem.id}' is already done and cannot be deleted.`);
   }
 
-  if (freshTaskItem.taskEntries.length > 0 || freshTaskItem.taskItems.length > 0) {
-    throw new Error(`TaskItem '${freshTaskItem.id}' cannot be deleted as a once leaf.`);
-  }
-
-  const { newTree, newPath } = branch.deleteTaskItemLeaf(freshTree, freshTaskItem);
+  const { newTree, newPath } = branch.deleteTaskItemSubtree(freshTree, freshTaskItem);
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 

@@ -239,10 +239,10 @@ function editorStartEdit(
 }
 
 function editorSave(
-  _args: EditorNaggerSessionArgs,
+  args: EditorNaggerSessionArgs,
   context: CommandEditorSessionActionContext,
 ): void {
-  runEditorSaveEdit(context);
+  runEditorSaveEdit(context, args.nagger);
 }
 
 function editorCancel(

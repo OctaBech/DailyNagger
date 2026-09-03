@@ -8,12 +8,13 @@ import {
   type TaskLog,
 } from "@/models";
 import { newGuid, type Guid } from "@/shared";
-import { treeCountOperations } from "@/services/core-tree-operations";
 import { nodeTemplates } from "./node-templates";
 
 export const node = {
   attachTaskLog,
   closeTaskLogForNaggerHistory,
+  copyNaggerVersionFrom,
+  copyTaskLogVersionFrom,
   createNagger,
   createTaskEntry,
   createTaskItem,
@@ -44,6 +45,21 @@ function attachTaskLog(nagger: Nagger, taskLog: TaskLog, activeLogDueOn: string 
     ...nagger,
     activeLogDueOn,
     taskLog,
+  };
+}
+
+function copyNaggerVersionFrom(nagger: Nagger, source: Nagger | null): Nagger {
+  return {
+    ...nagger,
+    version: source?.version ?? 0,
+  };
+}
+
+function copyTaskLogVersionFrom(taskLog: TaskLog, source: TaskLog | null): TaskLog {
+  return {
+    ...taskLog,
+    updatedAt: source?.updatedAt ?? taskLog.updatedAt,
+    version: source?.version ?? 0,
   };
 }
 
@@ -249,7 +265,7 @@ function createRolledOverTaskLog(sourceTaskLog: TaskLog): TaskLog {
     closedOn: null,
     version: 0,
     taskItems,
-    descendantTaskItemCount: treeCountOperations.countTaskItems(taskItems),
+    descendantTaskItemCount: countTaskItems(taskItems),
     doneDescendantTaskItemCount: 0,
   };
 }
@@ -429,7 +445,7 @@ function rollOverTaskItem(
     taskEntries,
     taskItems,
     ...emptyInteractionStamp,
-    descendantTaskItemCount: treeCountOperations.countTaskItems(taskItems),
+    descendantTaskItemCount: countTaskItems(taskItems),
     doneDescendantTaskItemCount: 0,
   };
 }
@@ -464,4 +480,12 @@ function keepRolloverTaskEntries<TTaskEntry extends TaskEntry>(
   taskEntries: readonly TTaskEntry[],
 ): readonly TTaskEntry[] {
   return taskEntries;
+}
+
+type TaskItemTree = {
+  readonly taskItems: readonly TaskItemTree[];
+};
+
+function countTaskItems(taskItems: readonly TaskItemTree[]): number {
+  return taskItems.reduce((total, taskItem) => total + 1 + countTaskItems(taskItem.taskItems), 0);
 }
