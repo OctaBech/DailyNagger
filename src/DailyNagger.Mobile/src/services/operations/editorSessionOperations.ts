@@ -1,5 +1,6 @@
 import { type Nagger, type TaskLog, type Tree, type TreePath } from "@/models";
-import { treeMutationOperations, selectedPathOperations } from "@/services/core-tree-operations";
+import { treeSelection } from "@/models/treeSelection";
+import { treeOperations } from "@/services/tree-operations";
 
 export const editorSessionOperations = {
   insertNaggerIntoTree,
@@ -9,10 +10,7 @@ export const editorSessionOperations = {
 } as const;
 
 function insertNaggerIntoTree(nagger: Nagger, tree: Tree): Tree {
-  const { replaceNagPlan } = treeMutationOperations;
-  const { tryRefreshPathToNode } = selectedPathOperations;
-
-  const pathToNagger = tryRefreshPathToNode(tree, nagger);
+  const pathToNagger = treeOperations.tree.tryRefreshPathToNode(tree, nagger);
 
   const isNaggerAlreadyInTree = pathToNagger !== null;
 
@@ -24,18 +22,14 @@ function insertNaggerIntoTree(nagger: Nagger, tree: Tree): Tree {
       })
     : [...nagList, nagger];
 
-  const { tree: newTree } = replaceNagPlan(tree, (nagPlan) => {
-    return { ...nagPlan, nags: newNagList };
-  });
-
-  return newTree;
+  return { ...tree, nags: newNagList };
 }
 
 function getRootVersioning(
   tree: Tree,
   nagger: Nagger,
 ): { versionedNagger: Nagger; versionedTaskLog: TaskLog } {
-  const freshPath = selectedPathOperations.tryRefreshPathToNode(tree, nagger);
+  const freshPath = treeOperations.tree.tryRefreshPathToNode(tree, nagger);
 
   // New Nagger/TaskLog roots start at version 0 because the server has not seen them yet.
   if (freshPath === null)
@@ -45,7 +39,7 @@ function getRootVersioning(
     };
 
   const { nagger: versionedNagger, taskLog: versionedTaskLog } =
-    selectedPathOperations.deriveSelectedNodes(freshPath);
+    treeSelection.deriveSelectedNodes(freshPath);
 
   if (versionedNagger === null) throw new Error();
   if (versionedTaskLog === null) throw new Error();
@@ -58,28 +52,31 @@ function insertRootVersioning(
   versionedNagger: Nagger,
   versionedTaskLog: TaskLog,
 ): Tree {
-  const { replaceNagger, replaceTaskLog } = treeMutationOperations;
+  const treeWithVersionedTaskLog = treeOperations.tree.replaceNode(tree, {
+    ...versionedTaskLog,
+    version: versionedTaskLog.version,
+    updatedAt: versionedTaskLog.updatedAt,
+  }).newTree;
 
-  const { tree: treeVithVersionedTaskLog } = replaceTaskLog(tree, versionedTaskLog, (taskLog) => {
-    return {
-      ...taskLog,
-      version: versionedTaskLog.version,
-      updatedAt: versionedTaskLog.updatedAt,
-    };
+  let wasNaggerVersioned = false;
+  const nags = treeWithVersionedTaskLog.nags.map((nagger) => {
+    if (nagger.id !== versionedNagger.id) return nagger;
+
+    wasNaggerVersioned = true;
+    return { ...nagger, version: versionedNagger.version };
   });
-  const { tree: treeWithVersionedNaggerAndTaskLog } = replaceNagger(
-    treeVithVersionedTaskLog,
-    versionedNagger,
-    (nagger) => {
-      return { ...nagger, version: versionedNagger.version };
-    },
-  );
 
-  return treeWithVersionedNaggerAndTaskLog;
+  if (!wasNaggerVersioned) {
+    throw new Error(
+      `Cannot insert root versioning because Nagger '${versionedNagger.id}' is missing.`,
+    );
+  }
+
+  return { ...treeWithVersionedTaskLog, nags };
 }
 
 function getRefreshedPath(tree: Tree, treePath: TreePath): TreePath {
   if (treePath.length === 0) return treePath;
 
-  return selectedPathOperations.requireRefreshedPathToSelectedNode(tree, treePath);
+  return treeOperations.tree.refreshPathToNode(tree, treeSelection.requireSelectedNode(treePath));
 }

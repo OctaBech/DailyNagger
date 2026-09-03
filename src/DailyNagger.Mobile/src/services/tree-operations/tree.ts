@@ -1,4 +1,4 @@
-import { nagPlanClientModelExtensionDefaults } from "@/models";
+import { isNagPlan, nagPlanClientModelExtensionDefaults } from "@/models";
 import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
 import type { Guid } from "@/shared";
 import type { TreeReader } from "./contracts";
@@ -47,6 +47,8 @@ export const tree = {
   replaceNode,
   replaceTaskEntry,
   replaceNagger,
+  refreshPathToNode,
+  tryRefreshPathToNode,
 } as const;
 
 function createNagPlan(nags: readonly Nagger[]): Tree {
@@ -263,4 +265,30 @@ function replaceNode(tree: Tree, node: ReadableNode): ReplaceNodeResult {
     newTree: result.node as Tree,
     newPath: result.recordedPath as TreePath,
   };
+}
+
+function refreshPathToNode(tree: Tree, node: TreeNode): TreePath {
+  const refreshedPath = tryRefreshPathToNode(tree, node);
+
+  if (refreshedPath === null) {
+    throw new Error(
+      `Cannot refresh path because ${node.nodeType} '${isNagPlan(node) ? "root" : node.id}' was not found in the current tree.`,
+    );
+  }
+
+  return refreshedPath;
+}
+
+function tryRefreshPathToNode(tree: Tree, node: TreeNode): TreePath | null {
+  if (isNagPlan(node)) return [tree];
+
+  try {
+    const result = targets.visitNode(tree, node, {});
+
+    if (result.kind === "not-found") return null;
+
+    return result.recordedPath as TreePath;
+  } catch {
+    return null;
+  }
 }
