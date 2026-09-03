@@ -6,16 +6,15 @@ import {
   taskItemClientModelExtensionDefaults,
   taskLogClientModelExtensionDefaults,
 } from "@/models/clientModelExtensions";
-import { scheduleRuleDtoToModel } from "@/models";
-import { treeMutationOperations } from "@/services/core-tree-operations";
+import { scheduleRuleDtoToModel, type Tree } from "@/models";
+import { treeOperations } from "@/services/tree-operations";
 
 export function nagPlanDtoToTree(nagPlanDto: NagPlanDto) {
-  const { tree } = treeMutationOperations.dtoToModel(
-    nagPlanDto,
-    (nagPlanDtoConvert) => {
+  return treeOperations.tree.replaceAllNodes<NagPlanDto, Tree>(nagPlanDto, {
+    replaceNagPlan: (nagPlanDtoConvert) => {
       return extendDtoNode(nagPlanDtoConvert, nagPlanClientModelExtensionDefaults);
     },
-    (naggerDtoConvert) => {
+    replaceNagger: (naggerDtoConvert) => {
       return extendDtoNode(
         {
           ...naggerDtoConvert,
@@ -24,15 +23,14 @@ export function nagPlanDtoToTree(nagPlanDto: NagPlanDto) {
         naggerClientModelExtensionDefaults,
       );
     },
-    (taskLogDtoConvert) => {
+    replaceTaskLog: (taskLogDtoConvert) => {
       return extendDtoNode(taskLogDtoConvert, taskLogClientModelExtensionDefaults);
     },
-    (taskItemDtoConvert) => extendDtoNode(taskItemDtoConvert, taskItemClientModelExtensionDefaults),
-    (taskEntryDtoConvert) =>
+    replaceTaskItem: (taskItemDtoConvert) =>
+      extendDtoNode(taskItemDtoConvert, taskItemClientModelExtensionDefaults),
+    replaceTaskEntry: (taskEntryDtoConvert) =>
       extendDtoNode(taskEntryDtoConvert, taskEntryClientModelExtensionDefaults),
-  );
-
-  return tree;
+  });
 }
 
 function extendDtoNode<TDtoNode extends object, TClientExtension extends { clientProps: object }>(

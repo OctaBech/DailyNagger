@@ -8,15 +8,14 @@ import {
   taskItemClientModelExtensionDefaults,
   taskLogClientModelExtensionDefaults,
 } from "@/models/clientModelExtensions";
-import { treeMutationOperations, treeReadOperations } from "@/services/core-tree-operations";
+import { treeOperations } from "@/services/tree-operations";
 
 export function nagPlanToDto(nagPlan: NagPlan): NagPlanDto {
-  const { tree: nagPlanDto } = treeMutationOperations.modelToDto(
-    nagPlan,
-    (nagPlanToDto) => {
+  return treeOperations.tree.replaceAllNodes<NagPlan, NagPlanDto>(nagPlan, {
+    replaceNagPlan: (nagPlanToDto) => {
       return stripClientModelExtension(nagPlanToDto, nagPlanClientModelExtensionDefaults);
     },
-    (naggerToDto) => {
+    replaceNagger: (naggerToDto) => {
       return stripClientModelExtension(
         {
           ...naggerToDto,
@@ -27,18 +26,16 @@ export function nagPlanToDto(nagPlan: NagPlan): NagPlanDto {
         naggerClientModelExtensionDefaults,
       );
     },
-    (taskLogToDto) => {
+    replaceTaskLog: (taskLogToDto) => {
       return stripClientModelExtension(taskLogToDto, taskLogClientModelExtensionDefaults);
     },
-    (taskItemToDto) => {
+    replaceTaskItem: (taskItemToDto) => {
       return stripClientModelExtension(taskItemToDto, taskItemClientModelExtensionDefaults);
     },
-    (taskEntryToDto) => {
+    replaceTaskEntry: (taskEntryToDto) => {
       return stripClientModelExtension(taskEntryToDto, taskEntryClientModelExtensionDefaults);
     },
-  );
-
-  return nagPlanDto as NagPlanDto;
+  });
 }
 
 export function naggerToDto(nagger: Nagger): NaggerDto {
@@ -48,7 +45,7 @@ export function naggerToDto(nagger: Nagger): NaggerDto {
     ...nagPlanClientModelExtensionDefaults,
   });
 
-  return treeReadOperations.requireSingleNagger<NaggerDto>(nagPlanDto);
+  return requireSingleNagger<NaggerDto>(nagPlanDto);
 }
 
 export function taskLogToDto(taskLog: TaskLog): TaskLogDto {
@@ -58,7 +55,19 @@ export function taskLogToDto(taskLog: TaskLog): TaskLogDto {
     ...nagPlanClientModelExtensionDefaults,
   });
 
-  return treeReadOperations.requireSingleNagger<NagPlanNaggerDto>(nagPlanDto).taskLog;
+  return requireSingleNagger<NagPlanNaggerDto>(nagPlanDto).taskLog;
+}
+
+function requireSingleNagger<TNagger extends NaggerDto | NagPlanNaggerDto>(
+  nagPlanDto: NagPlanDto,
+): TNagger {
+  const nagger = nagPlanDto.nags[0];
+
+  if (nagger === undefined) {
+    throw new Error("Expected NagPlan DTO to contain one Nagger.");
+  }
+
+  return nagger as TNagger;
 }
 
 function createTaskLogNagger(taskLog: TaskLog): Nagger {
