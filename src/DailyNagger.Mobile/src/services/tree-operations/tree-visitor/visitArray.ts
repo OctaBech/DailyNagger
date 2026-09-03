@@ -2,21 +2,15 @@ import type { TraversedNode } from "./traversed-node";
 import type { VisitRequest } from "./contracts";
 import type { VisitBubble, VisitResult } from "./visitResult";
 
-type VisitArrayResult<TNode extends TraversedNode> =
-  | {
-      readonly kind: "not-found";
-      readonly nodes: readonly TNode[];
-    }
-  | {
-      readonly kind: "visited";
-      readonly nodes: readonly TNode[];
-      readonly recordedPath: readonly TraversedNode[];
-      readonly indexFound: number;
-      readonly bubble: VisitBubble;
-    };
+export type VisitArrayResult<TNode extends TraversedNode> = {
+  readonly wasVisited: boolean;
+  readonly nodes: readonly TNode[];
+  readonly recordedPath: readonly TraversedNode[];
+  readonly indexHint: number;
+  readonly bubble: VisitBubble;
+};
 
 type VisitTargetArrayNodesProps<TNode extends TraversedNode> = {
-  readonly request: { readonly kind: "target" };
   readonly ownerNode: { readonly clientProps?: { readonly indexHint?: number } };
   readonly nodes: readonly TNode[];
   readonly shouldVisitNode: (node: TNode) => boolean;
@@ -24,7 +18,6 @@ type VisitTargetArrayNodesProps<TNode extends TraversedNode> = {
 };
 
 type VisitAllArrayNodesProps<TNode extends TraversedNode> = {
-  readonly request: { readonly kind: "all" };
   readonly ownerNode: { readonly clientProps?: { readonly indexHint?: number } };
   readonly ownerPath: readonly TraversedNode[];
   readonly nodes: readonly TNode[];
@@ -33,6 +26,7 @@ type VisitAllArrayNodesProps<TNode extends TraversedNode> = {
 
 type VisitArrayNodesInput<TNode extends TraversedNode> = {
   readonly request: VisitRequest;
+  readonly shouldVisitArray: boolean;
   readonly ownerNode: { readonly clientProps?: { readonly indexHint?: number } };
   readonly ownerPath: readonly TraversedNode[];
   readonly nodes: readonly TNode[];
@@ -42,12 +36,15 @@ type VisitArrayNodesInput<TNode extends TraversedNode> = {
 
 export function visitArrayNodes<TNode extends TraversedNode>({
   request,
+  shouldVisitArray,
   ownerNode,
   ownerPath,
   nodes,
   shouldVisitNode,
   visitNode,
 }: VisitArrayNodesInput<TNode>): VisitArrayResult<TNode> {
+  if (!shouldVisitArray) return notVisited(ownerNode, nodes);
+
   if (request.kind === "all") {
     return visitAllArrayNodes({
       ownerNode,
@@ -70,7 +67,7 @@ function visitTargetArrayNode<TNode extends TraversedNode>({
   nodes,
   shouldVisitNode,
   visitNode,
-}: Omit<VisitTargetArrayNodesProps<TNode>, "request">): VisitArrayResult<TNode> {
+}: VisitTargetArrayNodesProps<TNode>): VisitArrayResult<TNode> {
   const indexHint = getIndexHint(ownerNode, nodes.length);
 
   for (let loopIndex = 0; loopIndex < nodes.length; loopIndex++) {
@@ -86,18 +83,15 @@ function visitTargetArrayNode<TNode extends TraversedNode>({
     const copiedNodes = nodes.slice();
     copiedNodes[index] = result.node;
     return {
-      kind: "visited",
+      wasVisited: true,
       nodes: copiedNodes,
       recordedPath: result.recordedPath,
-      indexFound: index,
+      indexHint: index,
       bubble: result.bubble,
     };
   }
 
-  return {
-    kind: "not-found",
-    nodes,
-  };
+  return notVisited(ownerNode, nodes);
 }
 
 function visitAllArrayNodes<TNode extends TraversedNode>({
@@ -105,7 +99,7 @@ function visitAllArrayNodes<TNode extends TraversedNode>({
   ownerPath,
   nodes,
   visitNode,
-}: Omit<VisitAllArrayNodesProps<TNode>, "request">): VisitArrayResult<TNode> {
+}: VisitAllArrayNodesProps<TNode>): VisitArrayResult<TNode> {
   let recordedPath: readonly TraversedNode[] = ownerPath;
 
   const newNodes = nodes.map((node) => {
@@ -118,10 +112,23 @@ function visitAllArrayNodes<TNode extends TraversedNode>({
   });
 
   return {
-    kind: "visited",
+    wasVisited: true,
     nodes: newNodes,
     recordedPath,
-    indexFound: getIndexHint(ownerNode, nodes.length),
+    indexHint: getIndexHint(ownerNode, nodes.length),
+    bubble: { kind: "none" },
+  };
+}
+
+function notVisited<TNode extends TraversedNode>(
+  ownerNode: { readonly clientProps?: { readonly indexHint?: number } },
+  nodes: readonly TNode[],
+): VisitArrayResult<TNode> {
+  return {
+    wasVisited: false,
+    nodes,
+    recordedPath: [],
+    indexHint: getIndexHint(ownerNode, nodes.length),
     bubble: { kind: "none" },
   };
 }

@@ -7,7 +7,7 @@ import type { TreeVisitor, VisitRequest } from "./contracts";
 import { isRequestTargetUnreachable } from "./targetMatching";
 import { visitArrayNodes } from "./visitArray";
 import { visitNodeFromTaskEntry } from "./visitNodeFromTaskEntry";
-import { nodeNotFound, visitCurrentNode, type VisitResult } from "./visitResult";
+import { nodeNotFound, visitCurrentNode, type VisitBubble, type VisitResult } from "./visitResult";
 
 export function visitNodeFromTaskItem(
   taskItem: TaskItemTraversedNode,
@@ -27,52 +27,48 @@ export function visitNodeFromTaskItem(
     });
   }
 
-  let newTaskItem = taskItem;
-  let newPath: TraversedNode[] = [];
+  const taskEntriesResult = visitArrayNodes({
+    request,
+    shouldVisitArray: shouldVisitTaskEntries(request, taskItem),
+    ownerNode: taskItem,
+    ownerPath: [],
+    nodes: taskItem.taskEntries,
+    shouldVisitNode: (taskEntry) => shouldVisitTaskEntry(request, taskEntry),
+    visitNode: (taskEntry) => visitNodeFromTaskEntry(taskEntry, request, visitor),
+  });
 
-  if (shouldVisitTaskEntries(request, taskItem)) {
-    const result = visitArrayNodes({
-      request,
-      ownerNode: newTaskItem,
-      ownerPath: [],
-      nodes: newTaskItem.taskEntries,
-      shouldVisitNode: (taskEntry) => shouldVisitTaskEntry(request, taskEntry),
-      visitNode: (taskEntry) => visitNodeFromTaskEntry(taskEntry, request, visitor),
-    });
-    if (result.kind === "visited") {
-      newTaskItem = withTaskEntries(newTaskItem, result.nodes, result.indexFound);
-      newPath = [...result.recordedPath];
-      return visitCurrentNode({
-        node: newTaskItem,
-        childPath: newPath,
-        childBubble: result.bubble,
-        visitNode: visitor.visitTaskItem,
-      });
-    }
-  }
+  const taskItemsResult = visitArrayNodes({
+    request,
+    shouldVisitArray: shouldVisitChildTaskItems(request, taskItem),
+    ownerNode: taskItem,
+    ownerPath: [],
+    nodes: taskItem.taskItems,
+    shouldVisitNode: () => true,
+    visitNode: (childTaskItem) => visitNodeFromTaskItem(childTaskItem, request, visitor),
+  });
 
-  if (shouldVisitChildTaskItems(request, taskItem)) {
-    const result = visitArrayNodes({
-      request,
-      ownerNode: newTaskItem,
-      ownerPath: [],
-      nodes: newTaskItem.taskItems,
-      shouldVisitNode: () => true,
-      visitNode: (childTaskItem) => visitNodeFromTaskItem(childTaskItem, request, visitor),
-    });
-    if (result.kind === "visited") {
-      newTaskItem = withTaskItems(newTaskItem, result.nodes, result.indexFound);
-      newPath = [...result.recordedPath, ...newPath];
-      return visitCurrentNode({
-        node: newTaskItem,
-        childPath: newPath,
-        childBubble: result.bubble,
-        visitNode: visitor.visitTaskItem,
-      });
-    }
-  }
+  if (!taskEntriesResult.wasVisited && !taskItemsResult.wasVisited) return nodeNotFound(taskItem);
 
-  return nodeNotFound(taskItem);
+  const indexHint = taskItemsResult.wasVisited
+    ? taskItemsResult.indexHint
+    : taskEntriesResult.indexHint;
+  const newTaskItem = {
+    ...taskItem,
+    taskEntries: taskEntriesResult.nodes,
+    taskItems: taskItemsResult.nodes,
+    clientProps: { ...taskItem.clientProps, indexHint },
+  };
+
+  const childBubble: VisitBubble = taskItemsResult.wasVisited
+    ? taskItemsResult.bubble
+    : taskEntriesResult.bubble;
+
+  return visitCurrentNode({
+    node: newTaskItem,
+    childPath: [...taskItemsResult.recordedPath, ...taskEntriesResult.recordedPath],
+    childBubble,
+    visitNode: visitor.visitTaskItem,
+  });
 }
 
 function shouldVisitTaskEntry(request: VisitRequest, taskEntry: TaskEntryTraversedNode): boolean {
@@ -113,28 +109,4 @@ function requestTargetsTaskItem(request: VisitRequest, taskItem: TaskItemTravers
     request.target.requiredAncestry.taskLogId === taskItem.taskLogId &&
     request.target.requiredAncestry.parentTaskItemId === taskItem.parentTaskItemId
   );
-}
-
-function withTaskItems(
-  taskItem: TaskItemTraversedNode,
-  taskItems: readonly TaskItemTraversedNode[],
-  indexHint: number,
-): TaskItemTraversedNode {
-  return {
-    ...taskItem,
-    taskItems,
-    clientProps: { ...taskItem.clientProps, indexHint },
-  };
-}
-
-function withTaskEntries(
-  taskItem: TaskItemTraversedNode,
-  taskEntries: readonly TaskEntryTraversedNode[],
-  indexHint: number,
-): TaskItemTraversedNode {
-  return {
-    ...taskItem,
-    taskEntries,
-    clientProps: { ...taskItem.clientProps, indexHint },
-  };
 }

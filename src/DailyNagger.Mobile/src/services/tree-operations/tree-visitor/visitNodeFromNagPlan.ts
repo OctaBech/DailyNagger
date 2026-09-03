@@ -11,6 +11,7 @@ export function visitNodeFromNagPlan(
 ): VisitResult<NagPlanTraversedNode> {
   const naggerResult = visitArrayNodes({
     request,
+    shouldVisitArray: true,
     ownerNode: nagPlan,
     ownerPath: [],
     nodes: nagPlan.nags,
@@ -18,11 +19,11 @@ export function visitNodeFromNagPlan(
     visitNode: (nagger) => visitNodeFromNagger(nagger, request, visitor),
   });
 
-  if (naggerResult.kind === "visited") {
+  if (naggerResult.wasVisited) {
     const nodeWithVisitedNaggers = withNaggers(
       nagPlan,
       naggerResult.nodes,
-      naggerResult.indexFound,
+      naggerResult.indexHint,
     );
 
     return visitCurrentNode({

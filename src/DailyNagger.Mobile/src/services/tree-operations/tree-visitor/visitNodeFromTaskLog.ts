@@ -23,6 +23,7 @@ export function visitNodeFromTaskLog(
 
   const taskItemsResult = visitArrayNodes({
     request,
+    shouldVisitArray: true,
     ownerNode: taskLog,
     ownerPath: [],
     nodes: taskLog.taskItems,
@@ -30,11 +31,11 @@ export function visitNodeFromTaskLog(
     visitNode: (taskItem) => visitNodeFromTaskItem(taskItem, request, visitor),
   });
 
-  if (taskItemsResult.kind === "visited") {
+  if (taskItemsResult.wasVisited) {
     const nodeWithVisitedTaskItems = withTaskItems(
       taskLog,
       taskItemsResult.nodes,
-      taskItemsResult.indexFound,
+      taskItemsResult.indexHint,
     );
 
     return visitCurrentNode({
