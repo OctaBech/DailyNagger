@@ -1,84 +1,123 @@
 # DailyNagger
 
-DailyNagger is a present-focused task app. It exists to reduce mental load so
-the user can open the app, see what matters now, act, and leave.
+DailyNagger is a personal planning app with a React Native/Expo mobile client
+and an ASP.NET Core API.
 
-The current product direction is captured in
-[`docs/adr/0001-current-direction.md`](docs/adr/0001-current-direction.md).
+It is built around tree-shaped tasks, offline-first local writes, queued server
+sync, Sentry/Seq observability, and small architecture boundaries that keep user
+actions, tree changes, and production behavior readable.
 
-## Current Shape
+DailyNagger is a personal project. Scripts for production deploy, backup,
+smoke, and rollback inspection require secrets outside the repository.
 
-- `src/DailyNagger.Server` contains the ASP.NET Core API and EF Core data model.
+## Repository Map
+
 - `src/DailyNagger.Mobile` contains the React Native/Expo mobile app.
-- `scripts` contains local build, deploy, and database helper scripts.
-- `docs/adr` contains active architecture/product decisions.
-- `docs/archive` is a local ignored archive of old notes and is not repo truth.
+- `src/DailyNagger.Server` contains the ASP.NET Core API and data access.
+- `src/api-contracts` contains generated TypeScript API contracts from the
+  server OpenAPI document.
+- `scripts` contains repeatable local, mobile, and production helper scripts.
+- `docs/adr` contains active architecture and product decisions.
+- `docs/runbooks` contains operational notes for production workflows.
 
-## Local API
+## Start Local Development
 
-From the repository root.
+Use this when setting up or refreshing the local development environment from
+the repository root.
 
-Restore a fresh checkout:
+1. Restore project dependencies and local tool expectations.
 
-```powershell
-.\scripts\bootstrap-dev.ps1
-```
+   ```powershell
+   .\scripts\bootstrap-dev.ps1
+   ```
 
-Start local dependencies and server:
+   The script prepares a fresh checkout and keeps heavyweight development state
+   on the configured development drive where possible.
 
-```powershell
-docker compose -f .\compose.yaml up -d
-```
+2. Start the local stack.
 
-Check health:
+   ```powershell
+   docker compose -f .\compose.yaml up -d
+   ```
 
-```powershell
-Invoke-RestMethod http://localhost:5007/api/health
-Invoke-RestMethod http://localhost:5007/api/health/database
-```
+   This starts SQL Server, Seq, database initialization, and the local API
+   container.
 
-Reset local databases and seed dev data:
+3. Check the API.
 
-```powershell
-.\scripts\reset-local-db.ps1
-```
+   ```powershell
+   Invoke-RestMethod http://localhost:5007/api/health
+   Invoke-RestMethod http://localhost:5007/api/health/database
+   ```
 
-## Mobile
+   These checks verify that the local server and database are reachable.
 
-Install dependencies from the mobile project folder:
+4. Reset local data when needed.
+
+   ```powershell
+   .\scripts\reset-local-db.ps1
+   ```
+
+   This recreates the local databases and applies development seed data.
+
+Local ports:
+
+- `5007` exposes the Docker-hosted API.
+- `5010` is used by `scripts/start-local-api.ps1` for direct local API runs.
+- `1433` exposes SQL Server.
+- `5341` exposes the local Seq UI.
+
+## Run Mobile
+
+Use this when working on the app UI on a local machine.
 
 ```powershell
 cd .\src\DailyNagger.Mobile
 npm install
+npm run android
 ```
 
-Build and install the release APK on a connected Android device:
+The Android command uses `scripts/start-mobile-android.ps1` so local Gradle and
+Android paths stay consistent with the project setup.
+
+## Build APK
+
+Use this when building a release APK for a connected Android device.
 
 ```powershell
 .\scripts\build-mobile-release-apk.ps1 -Notify
 ```
 
-## Server Deploy
+GitHub Actions also has a manual mobile APK workflow that builds an unsigned,
+short-lived APK artifact on a clean runner.
 
-Deploy the server to the VPS:
+## Verify Changes
 
-```powershell
-.\scripts\deploy-server.ps1 -Notify
-```
-
-Deploy without running migrations only when the production schema is already up
-to date:
-
-```powershell
-.\scripts\deploy-server.ps1 -SkipMigrations -Notify
-```
-
-## Verification
-
-Common checks:
+Use these checks before pushing or sharing code.
 
 ```powershell
 dotnet test .\DailyNagger.sln
 npm run mobile:typecheck
 npm run mobile:lint
+npm run contracts:check
 ```
+
+Server tests that need SQL Server can also be run through:
+
+```powershell
+npm run server:test
+```
+
+## Production Scripts
+
+Use this only from a trusted machine with production secrets available.
+
+```powershell
+.\scripts\use-production-secrets.ps1
+.\scripts\deploy-production.ps1 -Notify
+.\scripts\smoke-production.ps1
+```
+
+`use-production-secrets.ps1` loads session variables for the current PowerShell
+session. Secrets are not stored in the repository. Production workflow details
+live in `docs/runbooks/production-deploy.md`.
