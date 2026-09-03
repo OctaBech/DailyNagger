@@ -1,7 +1,4 @@
-import type {
-  NaggerTraversedNode,
-  NagPlanTraversedNode,
-} from "../../core-tree-operations/traversed-node/contracts";
+import type { NaggerTraversedNode, NagPlanTraversedNode } from "./traversed-node";
 import type { TreeVisitor, VisitRequest } from "./contracts";
 import { visitArrayNodes } from "./visitArray";
 import { visitNodeFromNagger } from "./visitNodeFromNagger";

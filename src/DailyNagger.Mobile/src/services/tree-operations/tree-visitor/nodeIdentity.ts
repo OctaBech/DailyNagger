@@ -1,4 +1,4 @@
-import type { TraversedNode } from "../../core-tree-operations/traversed-node/contracts";
+import type { TraversedNode } from "./traversed-node";
 
 const identityKeys = ["id", "taskLogId", "parentTaskItemId"] as const;
 

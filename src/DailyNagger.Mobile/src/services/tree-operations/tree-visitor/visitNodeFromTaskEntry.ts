@@ -1,4 +1,4 @@
-import type { TaskEntryTraversedNode } from "../../core-tree-operations/traversed-node/contracts";
+import type { TaskEntryTraversedNode } from "./traversed-node";
 import type { TreeVisitor, VisitRequest } from "./contracts";
 import { isRequestTargetUnreachable } from "./targetMatching";
 import { nodeNotFound, visitCurrentNode, type VisitResult } from "./visitResult";

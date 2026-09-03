@@ -1,7 +1,4 @@
-import type {
-  NaggerTraversedNode,
-  TaskLogTraversedNode,
-} from "../../core-tree-operations/traversed-node/contracts";
+import type { NaggerTraversedNode, TaskLogTraversedNode } from "./traversed-node";
 import type { TreeVisitor, VisitRequest } from "./contracts";
 import { requestTargetsKind } from "./targetMatching";
 import { visitNodeFromTaskLog } from "./visitNodeFromTaskLog";

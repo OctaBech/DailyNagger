@@ -6,7 +6,7 @@ import type {
   TaskItemTraversedNode,
   TaskLogTraversedNode,
   TraversedNode,
-} from "../../core-tree-operations/traversed-node/contracts";
+} from "./traversed-node";
 
 export type NaggerTarget = {
   readonly kind: "nagger";

@@ -1,4 +1,4 @@
-import type { TraversedNode } from "../../core-tree-operations/traversed-node/contracts";
+import type { TraversedNode } from "./traversed-node";
 import type { VisitContext } from "./contracts";
 import { assertSameNodeIdentity } from "./nodeIdentity";
 import { appendPathNode } from "./pathBubbling";

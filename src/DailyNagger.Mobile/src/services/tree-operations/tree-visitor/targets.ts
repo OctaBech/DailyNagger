@@ -6,7 +6,7 @@ import type {
   TaskEntryTraversedNode,
   TaskItemTraversedNode,
   TaskLogTraversedNode,
-} from "../../core-tree-operations/traversed-node/contracts";
+} from "./traversed-node";
 import type {
   NaggerTarget,
   TaskEntryTarget,

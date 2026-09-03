@@ -4,7 +4,7 @@ import type {
   TaskLogTraversedNode,
   TaskItemTraversedNode,
   TaskEntryTraversedNode,
-} from "../traversed-node/contracts";
+} from "../../tree-operations/tree-visitor/traversed-node";
 import type { ReplaceFunctions } from "./contracts";
 
 export function createPassingUpdateFunctions(): ReplaceFunctions {

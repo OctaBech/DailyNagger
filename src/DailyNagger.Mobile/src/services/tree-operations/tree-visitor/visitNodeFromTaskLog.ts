@@ -1,7 +1,4 @@
-import type {
-  TaskItemTraversedNode,
-  TaskLogTraversedNode,
-} from "../../core-tree-operations/traversed-node/contracts";
+import type { TaskItemTraversedNode, TaskLogTraversedNode } from "./traversed-node";
 import type { TreeVisitor, VisitRequest } from "./contracts";
 import { isRequestTargetUnreachable, requestTargetsKind } from "./targetMatching";
 import { visitArrayNodes } from "./visitArray";

@@ -5,7 +5,7 @@ import type {
   TaskItemTraversedNode,
   TaskLogTraversedNode,
   TraversedNode,
-} from "../../core-tree-operations/traversed-node/contracts";
+} from "../tree-visitor/traversed-node";
 import type { TreeTarget } from "../tree-visitor/contracts";
 
 export const branchTargetGuards = {

@@ -5,7 +5,7 @@ import type {
   TaskLogTraversedNode,
   TaskItemTraversedNode,
   TaskEntryTraversedNode,
-} from "../traversed-node/contracts";
+} from "../../tree-operations/tree-visitor/traversed-node";
 import type { Guid } from "@/shared";
 
 export type ReplaceContext = {

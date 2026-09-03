@@ -2,7 +2,7 @@ import type {
   TaskEntryTraversedNode,
   TaskItemTraversedNode,
   TraversedNode,
-} from "../../core-tree-operations/traversed-node/contracts";
+} from "./traversed-node";
 import type { TreeVisitor, VisitRequest } from "./contracts";
 import { isRequestTargetUnreachable } from "./targetMatching";
 import { visitArrayNodes } from "./visitArray";
