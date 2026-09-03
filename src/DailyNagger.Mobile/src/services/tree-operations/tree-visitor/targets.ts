@@ -18,6 +18,7 @@ import type {
   VisitRequest,
 } from "./contracts";
 import { visitNodeFromNagPlan } from "./visitNodeFromNagPlan";
+import { visitNodeFromTaskLog } from "./visitNodeFromTaskLog";
 import type { VisitResult } from "./visitResult";
 
 export type TargetVisitContext = VisitContext;
@@ -32,6 +33,7 @@ type TargetVisitor = {
 export const targets = {
   fromTaskItem,
   visitAll,
+  visitAllFromTaskLog,
   visitNode,
 } as const;
 
@@ -40,6 +42,13 @@ function visitAll(
   visitor: TreeVisitor,
 ): VisitResult<NagPlanTraversedNode> {
   return visitNodeFromNagPlan(fromTree, { kind: "all", allowIdentityChange: true }, visitor);
+}
+
+function visitAllFromTaskLog(
+  taskLog: TaskLogTraversedNode,
+  visitor: TreeVisitor,
+): VisitResult<TaskLogTraversedNode> {
+  return visitNodeFromTaskLog(taskLog, { kind: "all", allowIdentityChange: true }, visitor);
 }
 
 function visitNode(

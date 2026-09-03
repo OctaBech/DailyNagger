@@ -52,6 +52,12 @@ type ReplaceAllNodesVisitor = {
   readonly replaceTaskEntry: (taskEntry: TaskEntryTraversedNode) => TaskEntryTraversedNode;
 };
 
+type ReplaceAllNodesFromTaskLogVisitor = {
+  readonly replaceTaskLog: (taskLog: TaskLogTraversedNode) => TaskLogTraversedNode;
+  readonly replaceTaskItem: (taskItem: TaskItemTraversedNode) => TaskItemTraversedNode;
+  readonly replaceTaskEntry: (taskEntry: TaskEntryTraversedNode) => TaskEntryTraversedNode;
+};
+
 export const tree = {
   createNagPlan,
   getNaggerBranch,
@@ -61,6 +67,7 @@ export const tree = {
   readTaskItem,
   readTaskLog,
   replaceAllNodes,
+  replaceAllNodesFromTaskLog,
   replaceNode,
   replaceTaskEntry,
   replaceNagger,
@@ -104,6 +111,23 @@ function replaceAllNodes<TIn extends NagPlanTraversedNode, TOut extends NagPlanT
 
   if (result.kind === "not-found") {
     throw new Error("Cannot replace all tree nodes because the tree root was not visited.");
+  }
+
+  return result.node as TOut;
+}
+
+function replaceAllNodesFromTaskLog<
+  TIn extends TaskLogTraversedNode,
+  TOut extends TaskLogTraversedNode,
+>(taskLog: TIn, visitor: ReplaceAllNodesFromTaskLogVisitor): TOut {
+  const result = targets.visitAllFromTaskLog(taskLog, {
+    visitTaskLog: visitor.replaceTaskLog,
+    visitTaskItem: visitor.replaceTaskItem,
+    visitTaskEntry: visitor.replaceTaskEntry,
+  });
+
+  if (result.kind === "not-found") {
+    throw new Error("Cannot replace TaskLog subtree nodes because the TaskLog was not visited.");
   }
 
   return result.node as TOut;
