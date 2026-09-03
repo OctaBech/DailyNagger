@@ -20,7 +20,6 @@ import {
   useTimer,
 } from "@/shared";
 import type { Memory } from "../contracts";
-import { updateExpectedVersion } from "../actions";
 import { useClientIdentity } from "../clientIdentity";
 import type { Formula, OwnerType, Parcel, SendingEventType } from "./contracts";
 import { createNaggerFormula } from "./queueNagger";
@@ -34,10 +33,9 @@ import { useServerConfrontationBlock } from "./server-confrontation/useServerCon
 import { trySendRequest } from "./request/trySendRequest";
 import { naggerToDto, taskLogToDto } from "@/services/model-conversion";
 import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from "./error-questions";
-import { restampBatchForForcedSend } from "./forced-send";
-import { isVersionedFormula } from "./isVersionedFormula";
 import { sendTimerConfig } from "./sendTimerConfig";
 import { recordParcelQueued, recordSendingDecision, type Observability } from "@/observability";
+import { createParcelVersionStamp, restampBatchForForcedSend } from "@/services/parcel-versioning";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
 
@@ -64,7 +62,7 @@ export function useSending(
     const formula = getFormulaForContent(content);
 
     const versionStamp = formula.recipientExpectsVersioning
-      ? createVersionStamp(formula, queuedAt)
+      ? createParcelVersionStamp({ memory: versionMemory, formula, queuedAt })
       : {};
 
     const unrecordedParcel = {
@@ -152,7 +150,7 @@ export function useSending(
           sendQueue.replaceActiveBatch(
             restampBatchForForcedSend({
               batch,
-              versionMemory,
+              memory: versionMemory,
               serverVersion: sendResult.serverVersion,
             }),
           );
@@ -189,21 +187,6 @@ export function useSending(
       default:
         assertNever(sendResult);
     }
-  }
-
-  function createVersionStamp(formula: Formula, queuedAt: string) {
-    if (!isVersionedFormula(formula)) {
-      throw new Error(
-        "Cannot stamp versioning on queued formula because the recipient expects versioning but the formula has no version owner.",
-      );
-    }
-
-    return updateExpectedVersion(
-      { memory: versionMemory },
-      formula.ownerType,
-      formula.ownerId,
-      queuedAt,
-    );
   }
 
   async function flushQueue(): Promise<FlushQueueResult> {

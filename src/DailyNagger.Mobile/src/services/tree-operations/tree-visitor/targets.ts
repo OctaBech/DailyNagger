@@ -6,7 +6,7 @@ import type {
   TaskEntryTraversedNode,
   TaskItemTraversedNode,
   TaskLogTraversedNode,
-} from "../core-tree-operations/traversed-node/contracts";
+} from "../../core-tree-operations/traversed-node/contracts";
 import type {
   NaggerTarget,
   TaskEntryTarget,
@@ -16,9 +16,9 @@ import type {
   TreeTarget,
   VisitContext,
   VisitRequest,
-} from "./tree-visitor/contracts";
-import { visitNodeFromNagPlan } from "./tree-visitor/visitNodeFromNagPlan";
-import type { VisitResult } from "./tree-visitor/visitResult";
+} from "./contracts";
+import { visitNodeFromNagPlan } from "./visitNodeFromNagPlan";
+import type { VisitResult } from "./visitResult";
 
 export type TargetVisitContext = VisitContext;
 

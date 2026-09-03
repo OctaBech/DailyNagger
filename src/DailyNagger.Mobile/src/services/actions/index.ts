@@ -13,12 +13,6 @@ export { deleteOnceTaskItem } from "./deleteTreeNodeActions";
 export { importLoadedPlanToMemory } from "./loadedPlanImportActions";
 export { closeTaskLogForRollover, rolloverNagger } from "./rolloverActions";
 export {
-  forceExpectedVersion,
-  getExpectedVersion,
-  replaceExpectedVersion,
-  updateExpectedVersion,
-} from "./versionActions";
-export {
   editorDeleteSelectedNode,
   editorMoveSelectedNodeDown,
   editorMoveSelectedNodeUp,

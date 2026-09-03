@@ -14,9 +14,8 @@ const { tree, branch, node } = treeOperations;
 - `tree` reads fresh nodes from memory and replaces nodes from the tree root.
 - `branch` changes a target path or multiple related nodes in one operation.
 - `node` changes one node without knowing where that node lives in the tree.
-- `targets` hides tree-visitor setup and turns a stale node-shaped token into a
-  validated traversal target.
-- `tree-visitor` is the traversal engine behind the facade.
+- `tree-visitor` is private traversal infrastructure used by `tree` and
+  `branch`. Its `targets` facade is intentionally not exported from this folder.
 
 Use this folder when code needs to read or change the task tree. Use
 `@/services/tree-operations/tree-visitor/README.md` before changing the traversal

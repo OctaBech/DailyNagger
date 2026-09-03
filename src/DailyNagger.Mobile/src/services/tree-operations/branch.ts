@@ -1,5 +1,5 @@
 import type { TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
-import { targets, type TargetVisitContext } from "./targets";
+import { targets, type TargetVisitContext } from "./tree-visitor";
 
 type BranchUpdateResult = {
   readonly newTree: Tree;

@@ -2,7 +2,7 @@ import { nagPlanClientModelExtensionDefaults } from "@/models";
 import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
 import type { Guid } from "@/shared";
 import type { TreeReader } from "./contracts";
-import { targets } from "./targets";
+import { targets } from "./tree-visitor";
 
 type ReadNaggerResult = {
   readonly freshTree: Tree;
@@ -70,11 +70,22 @@ function getNaggerBranch(tree: Tree, naggerId: Guid): Tree {
   };
 }
 
-function readNagger(memory: TreeReader, staleNagger: Nagger): ReadNaggerResult {
+function readNagger(memory: TreeReader, staleNaggerOrId: Nagger | Guid): ReadNaggerResult {
   const freshTree = memory.read.getTree();
+
+  if (typeof staleNaggerOrId === "string") {
+    const freshNagger = freshTree.nags.find((nagger) => nagger.id === staleNaggerOrId);
+
+    if (freshNagger === undefined) {
+      throw new Error(`Nagger '${staleNaggerOrId}' was not found in the current tree.`);
+    }
+
+    return { freshTree, freshNagger };
+  }
+
   let freshNagger: Nagger | null = null;
 
-  const result = targets.visitNode(freshTree, staleNagger, {
+  const result = targets.visitNode(freshTree, staleNaggerOrId, {
     visitNagger: (nagger, context) => {
       if (context.isTargetNode) freshNagger = nagger as Nagger;
 
@@ -83,7 +94,7 @@ function readNagger(memory: TreeReader, staleNagger: Nagger): ReadNaggerResult {
   });
 
   if (result.kind === "not-found" || freshNagger === null) {
-    throw new Error(`Nagger '${staleNagger.id}' was not found in the current tree.`);
+    throw new Error(`Nagger '${staleNaggerOrId.id}' was not found in the current tree.`);
   }
 
   return { freshTree, freshNagger };
@@ -127,13 +138,27 @@ function readTaskEntry(memory: TreeReader, staleTaskEntry: TaskEntry): ReadTaskE
   return { freshTree, freshTaskEntry };
 }
 
-function readTaskLog(memory: TreeReader, staleNode: TaskItem | TaskLog): ReadTaskLogResult {
+function readTaskLog(
+  memory: TreeReader,
+  staleNodeOrId: TaskItem | TaskLog | Guid,
+): ReadTaskLogResult {
   const freshTree = memory.read.getTree();
+
+  if (typeof staleNodeOrId === "string") {
+    const freshNagger = freshTree.nags.find((nagger) => nagger.taskLog.id === staleNodeOrId);
+
+    if (freshNagger === undefined) {
+      throw new Error(`TaskLog '${staleNodeOrId}' was not found in the current tree.`);
+    }
+
+    return { freshTree, freshTaskLog: freshNagger.taskLog };
+  }
+
   let freshTaskLog: TaskLog | null = null;
 
-  const result = targets.visitNode(freshTree, staleNode, {
+  const result = targets.visitNode(freshTree, staleNodeOrId, {
     visitTaskLog: (taskLog, context) => {
-      if (staleNode.nodeType === "TaskLog" && !context.isTargetNode) return taskLog;
+      if (staleNodeOrId.nodeType === "TaskLog" && !context.isTargetNode) return taskLog;
       freshTaskLog = taskLog as TaskLog;
 
       return taskLog;
@@ -142,7 +167,7 @@ function readTaskLog(memory: TreeReader, staleNode: TaskItem | TaskLog): ReadTas
 
   if (result.kind === "not-found" || freshTaskLog === null) {
     throw new Error(
-      `TaskLog '${staleNode.nodeType === "TaskLog" ? staleNode.id : staleNode.taskLogId}' was not found in the current tree.`,
+      `TaskLog '${staleNodeOrId.nodeType === "TaskLog" ? staleNodeOrId.id : staleNodeOrId.taskLogId}' was not found in the current tree.`,
     );
   }
 
