@@ -31,8 +31,16 @@ type TargetVisitor = {
 
 export const targets = {
   fromTaskItem,
+  visitAll,
   visitNode,
 } as const;
+
+function visitAll(
+  fromTree: NagPlanTraversedNode,
+  visitor: TreeVisitor,
+): VisitResult<NagPlanTraversedNode> {
+  return visitNodeFromNagPlan(fromTree, { kind: "all" }, visitor);
+}
 
 function visitNode(
   fromTree: Tree,
