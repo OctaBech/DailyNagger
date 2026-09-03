@@ -39,7 +39,7 @@ function visitAll(
   fromTree: NagPlanTraversedNode,
   visitor: TreeVisitor,
 ): VisitResult<NagPlanTraversedNode> {
-  return visitNodeFromNagPlan(fromTree, { kind: "all" }, visitor);
+  return visitNodeFromNagPlan(fromTree, { kind: "all", allowIdentityChange: true }, visitor);
 }
 
 function visitNode(

@@ -18,6 +18,7 @@ export function visitNodeFromTaskEntry(
       childPath: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskEntry,
+      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
     });
   }
 

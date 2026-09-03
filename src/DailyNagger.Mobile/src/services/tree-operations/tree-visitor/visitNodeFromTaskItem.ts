@@ -24,6 +24,7 @@ export function visitNodeFromTaskItem(
       childPath: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskItem,
+      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
     });
   }
 
@@ -68,6 +69,7 @@ export function visitNodeFromTaskItem(
     childPath: [...taskItemsResult.recordedPath, ...taskEntriesResult.recordedPath],
     childBubble,
     visitNode: visitor.visitTaskItem,
+    allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
   });
 }
 

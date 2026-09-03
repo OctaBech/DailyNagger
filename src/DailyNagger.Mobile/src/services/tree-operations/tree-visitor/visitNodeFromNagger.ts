@@ -15,6 +15,7 @@ export function visitNodeFromNagger(
       childPath: [],
       isTargetNode: true,
       visitNode: visitor.visitNagger,
+      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
     });
   }
 
@@ -32,6 +33,7 @@ export function visitNodeFromNagger(
         childPath: taskLogResult.recordedPath,
         childBubble: taskLogResult.bubble,
         visitNode: visitor.visitNagger,
+        allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
       });
     }
   }

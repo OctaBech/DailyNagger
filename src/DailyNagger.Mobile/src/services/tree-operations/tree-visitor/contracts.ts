@@ -46,6 +46,7 @@ export type TreeTarget = NaggerTarget | TaskEntryTarget | TaskItemTarget | TaskL
 export type VisitRequest =
   | {
       readonly kind: "all";
+      readonly allowIdentityChange?: boolean;
     }
   | {
       readonly kind: "target";

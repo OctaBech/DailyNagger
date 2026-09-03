@@ -31,6 +31,7 @@ export function visitNodeFromNagPlan(
       childPath: naggerResult.recordedPath,
       childBubble: naggerResult.bubble,
       visitNode: visitor.visitNagPlan,
+      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
     });
   }
 
