@@ -1,4 +1,4 @@
 export const actionButtonTheme = {
-  background: "#e8d8ff",
-  icon: "#2c075f",
+  background: "#d97828",
+  icon: "#fffaf3",
 } as const;
