@@ -1,4 +1,6 @@
+import { appTheme } from "@/config/appTheme";
+
 export const actionButtonTheme = {
-  background: "#d97828",
-  icon: "#fffaf3",
+  background: appTheme.accent,
+  icon: appTheme.accentText,
 } as const;

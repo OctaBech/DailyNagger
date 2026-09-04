@@ -1,6 +1,8 @@
+import { appTheme } from "@/config/appTheme";
+
 export const modalTheme = {
   button: {
-    primaryBackground: "#d97828",
+    primaryBackground: appTheme.accent,
     singleUseBackground: "#f2d66f",
     primaryText: "#1a1b1d",
     secondaryBorder: "#d8d1c9",
@@ -20,8 +22,8 @@ export const modalTheme = {
   },
   modalButtonTone: {
     primary: {
-      background: "#d97828",
-      border: "#d97828",
+      background: appTheme.accent,
+      border: appTheme.accent,
       text: "#18242b",
     },
     secondary: {
@@ -51,17 +53,17 @@ export const modalTheme = {
     tone: {
       active: {
         background: "#f3d6bd",
-        border: "#d97828",
+        border: appTheme.accent,
         text: "#18242b",
       },
       preview: {
         background: "transparent",
-        border: "#d97828",
+        border: appTheme.accent,
         text: "#58656d",
       },
       selected: {
         background: "transparent",
-        border: "#d97828",
+        border: appTheme.accent,
         text: "#18242b",
       },
     },
@@ -88,7 +90,7 @@ export const modalTheme = {
     borderRadius: 3,
     minHeight: 28,
     selectedBackground: "#f3d6bd",
-    selectedBorder: "#d97828",
+    selectedBorder: appTheme.accent,
     selectedText: "#18242b",
     text: "#18242b",
     unselectedBackground: "transparent",
@@ -110,18 +112,18 @@ export const modalTheme = {
     gap: 8,
     minHeight: 34,
     selectedBackground: "#f3d6bd",
-    selectedBorder: "#d97828",
+    selectedBorder: appTheme.accent,
     selectedText: "#18242b",
     text: "#18242b",
     unselectedBackground: "transparent",
   },
   modalWheel: {
-    bar: "#d97828",
+    bar: appTheme.accent,
     fadedText: "#8a969d",
     horizontalItemSize: 56,
     itemSize: 42,
     labelText: "#58656d",
-    markedText: "#d97828",
+    markedText: appTheme.accent,
     selectedText: "#18242b",
     text: "#58656d",
     visibleItemCount: 5,
@@ -161,7 +163,7 @@ export const modalTheme = {
   },
   valuePicker: {
     selectedBackground: "#f3d6bd",
-    selectedBorder: "#d97828",
+    selectedBorder: appTheme.accent,
     selectedText: "#1a1b1d",
   },
 };

@@ -1,8 +1,10 @@
+import { appTheme } from "@/config/appTheme";
+
 export const nagPlanTheme = {
   screen: {
     background: "#f4f1ed",
     text: "#f4f1ed",
-    accent: "#d97828",
+    accent: appTheme.accent,
   },
   screenDensity: {
     horizontalPadding: 8,
@@ -13,11 +15,11 @@ export const nagPlanTheme = {
   },
   selection: {
     border: "#2f3b3f",
-    focusBorder: "#d97828",
+    focusBorder: appTheme.accent,
   },
   rail: {
-    active: "#d97828",
-    activeSoft: "#e7b07c",
+    active: appTheme.accent,
+    activeSoft: appTheme.accentSoft,
     completed: "#5f7f4c",
     completedSoft: "#a8bd9a",
     contentGap: 6,

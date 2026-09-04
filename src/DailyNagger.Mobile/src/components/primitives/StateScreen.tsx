@@ -1,4 +1,5 @@
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { appTheme } from "@/config/appTheme";
 
 export type StateScreenAction = {
   readonly label: string;
@@ -86,7 +87,8 @@ const stateScreenColors = {
   surface: "#26292c",
   text: "#f4f1ed",
   mutedText: "#eef2f3",
-  accent: "#d97828",
+  accent: appTheme.accent,
+  accentText: appTheme.accentText,
 } as const;
 
 const styles = StyleSheet.create({
@@ -151,7 +153,7 @@ const styles = StyleSheet.create({
     backgroundColor: stateScreenColors.accent,
   },
   primaryButtonText: {
-    color: stateScreenColors.background,
+    color: stateScreenColors.accentText,
     fontSize: 16,
     fontWeight: "900",
   },

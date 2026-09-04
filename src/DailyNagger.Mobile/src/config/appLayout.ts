@@ -1,3 +1,5 @@
+import { appTheme } from "./appTheme";
+
 export const appLayout = {
   assistantBubble: {
     bottom: 28,
@@ -11,8 +13,8 @@ export const appLayout = {
     minBottomPadding: 56,
   },
   moodBar: {
-    backgroundColor: "#d97828",
-    borderColor: "#b85f1f",
+    backgroundColor: appTheme.accent,
+    borderColor: appTheme.accentBorder,
     bubbleVisibleMs: 6500,
     dateLabelColor: "#19120c",
     itemWidth: 31,
