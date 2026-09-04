@@ -305,11 +305,18 @@ else {
 
 $buildLogDirectory = Join-Path $repoRoot "artifacts\mobile-builds"
 $buildLogPath = Join-Path $buildLogDirectory "release-apk-build.log"
-$envPath = if ([string]::IsNullOrWhiteSpace($EnvPath)) {
+$configuredEnvPath = if ([string]::IsNullOrWhiteSpace($EnvPath)) {
+    [Environment]::GetEnvironmentVariable("DAILY_NAGGER_MOBILE_ENV_PATH")
+}
+else {
+    $EnvPath
+}
+
+$envPath = if ([string]::IsNullOrWhiteSpace($configuredEnvPath)) {
     Join-Path $mobileProject ".env"
 }
 else {
-    $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($EnvPath)
+    $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($configuredEnvPath)
 }
 $gradlePath = Join-Path $mobileProject "android\gradlew.bat"
 $apkOutputPath = Join-Path $mobileProject "android\app\build\outputs\apk\release"

@@ -71,6 +71,7 @@ $env:DAILY_NAGGER_DEPLOY_HOST = $VpsHost
 $env:DAILY_NAGGER_DEPLOY_SSH_KEY = (Resolve-Path $SshKeyPath).Path
 $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS = (Resolve-Path $KnownHostsPath).Path
 $env:DAILY_NAGGER_STAGING_ENV_PATH = (Resolve-Path $StagingEnvPath).Path
+$env:DAILY_NAGGER_MOBILE_ENV_PATH = $env:DAILY_NAGGER_STAGING_ENV_PATH
 
 Write-Host "DailyNagger staging session variables loaded."
 Write-Host "VPS host: $env:DAILY_NAGGER_DEPLOY_HOST"
@@ -82,4 +83,4 @@ Write-Host "API token: configured"
 Write-Host ""
 Write-Host "This PowerShell session can now run:"
 Write-Host "  .\scripts\staging-copy-production-db.ps1"
-Write-Host "  .\scripts\staging-build-mobile-apk.ps1 -Notify"
+Write-Host "  .\scripts\build-mobile-release-apk.ps1 -Notify"
