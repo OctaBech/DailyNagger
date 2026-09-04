@@ -26,12 +26,12 @@ Runs build/typecheck/lint after restore.
 Plays a local Windows sound when the bootstrap finishes or fails.
 
 .EXAMPLE
-.\scripts\bootstrap-dev.ps1
+.\scripts\local-bootstrap-dev.ps1
 
 Restores .NET and mobile npm dependencies.
 
 .EXAMPLE
-.\scripts\bootstrap-dev.ps1 -StartDocker -RunChecks -Notify
+.\scripts\local-bootstrap-dev.ps1 -StartDocker -RunChecks -Notify
 
 Restores dependencies, starts local Docker services, runs verification, and
 plays a sound when done.

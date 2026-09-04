@@ -28,7 +28,7 @@ the repository root.
 1. Restore project dependencies and local tool expectations.
 
    ```powershell
-   .\scripts\bootstrap-dev.ps1
+   .\scripts\local-bootstrap-dev.ps1
    ```
 
    The script prepares a fresh checkout and keeps heavyweight development state
@@ -55,7 +55,7 @@ the repository root.
 4. Reset local data when needed.
 
    ```powershell
-   .\scripts\reset-local-db.ps1
+   .\scripts\local-reset-db.ps1
    ```
 
    This recreates the local databases and applies development seed data.
@@ -63,7 +63,7 @@ the repository root.
 Local ports:
 
 - `5007` exposes the Docker-hosted API.
-- `5010` is used by `scripts/start-local-api.ps1` for direct local API runs.
+- `5010` is used by `scripts/local-start-api.ps1` for direct local API runs.
 - `1433` exposes SQL Server.
 - `5341` exposes the local Seq UI.
 
@@ -77,7 +77,7 @@ npm install
 npm run android
 ```
 
-The Android command uses `scripts/start-mobile-android.ps1` so local Gradle and
+The Android command uses `scripts/local-start-mobile-android.ps1` so local Gradle and
 Android paths stay consistent with the project setup.
 
 ## Build APK

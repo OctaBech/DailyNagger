@@ -9,7 +9,7 @@ PATH. This script does not install Git, Node.js, .NET, Java, Android Studio,
 Docker, or Visual Studio.
 
 .EXAMPLE
-.\scripts\configure-dev-machine.ps1
+.\scripts\local-configure-dev-machine.ps1
 
 Creates folders and writes user environment variables for a DailyNagger
 development machine.

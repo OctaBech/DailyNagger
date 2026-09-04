@@ -4,20 +4,20 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 
 ## Development
 
-- `configure-dev-machine.ps1` creates expected `E:` folders and points npm, NuGet, Gradle, Android SDK, AVD, and PATH there.
+- `local-configure-dev-machine.ps1` creates expected `E:` folders and points npm, NuGet, Gradle, Android SDK, AVD, and PATH there.
   - `-DevelopmentDrive`: drive root to configure, default `E:`.
-- `validate-dev-machine.ps1` checks required tools, environment variables, caches, SDK paths, and basic project checks.
+- `local-validate-dev-machine.ps1` checks required tools, environment variables, caches, SDK paths, and basic project checks.
   - `-RepoRootPath`: repo path override.
   - `-SkipProjectChecks`: skip build/typecheck-style project validation.
-- `bootstrap-dev.ps1` restores a fresh checkout into a usable local development state.
+- `local-bootstrap-dev.ps1` restores a fresh checkout into a usable local development state.
   - `-RepoRootPath`: repo path override.
   - `-SkipMobileInstall`: skip mobile `npm install`.
   - `-StartDocker`: start local Docker services.
   - `-RunChecks`: run validation after setup.
   - `-Notify`: play a sound when done.
-- `validate-local-observability.ps1` checks local SQL Server, Seq, server health, and request-id logging.
-- `validate-local-compose.ps1` builds and starts the local Docker stack, then checks server, database, and Seq request-id logging.
-- `update-api-contracts.ps1` fetches OpenAPI from a running local API and regenerates TypeScript contracts.
+- `local-validate-observability.ps1` checks local SQL Server, Seq, server health, and request-id logging.
+- `local-validate-compose.ps1` builds and starts the local Docker stack, then checks server, database, and Seq request-id logging.
+- `local-update-api-contracts.ps1` fetches OpenAPI from a running local API and regenerates TypeScript contracts.
   - `-OpenApiUrl`: OpenAPI endpoint override, default `http://localhost:5010/openapi/v1.json`.
 
 ## Mobile
@@ -30,7 +30,7 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
   - `-Notify`: play a sound when done.
 - `build-mobile-ci-apk.ps1` generates the Expo Android project, builds a release APK artifact, and does not install it.
   - `-RepoRootPath`, `-MobileProjectPath`, `-ArtifactOutputPath`: path overrides.
-- `start-mobile-android.ps1` sets E: drive Android/Gradle/Ninja paths, then runs `npx expo run:android`.
+- `local-start-mobile-android.ps1` sets E: drive Android/Gradle/Ninja paths, then runs `npx expo run:android`.
   - `-RepoRootPath`: repo path override.
 
 ## Server
@@ -39,10 +39,10 @@ Production deploy, backup, smoke checks, and rollback are documented in `docs/ru
 
 - Run `use-production-secrets.ps1` once per PowerShell session before production deploy, backup, smoke, rollback inspection, or Seq scripts.
   - `-SecretsRootPath`, `-VpsHost`, `-SshKeyPath`, `-KnownHostsPath`: session setup overrides.
-- `start-local-api.ps1` stops any local `DailyNagger.Server` process and starts the API on `http://localhost:5010`.
-- `test-server.ps1` starts SQL Server, waits for `sqlserver-init`, then runs `dotnet test`.
+- `local-start-api.ps1` stops any local `DailyNagger.Server` process and starts the API on `http://localhost:5010`.
+- `local-test-server.ps1` starts SQL Server, waits for `sqlserver-init`, then runs `dotnet test`.
   - `-RepoRootPath`: repo path override.
-- `reset-local-db.ps1` drops, recreates, migrates, and seeds the local SQL Server databases.
+- `local-reset-db.ps1` drops, recreates, migrates, and seeds the local SQL Server databases.
   - `-SqlServer`, `-SqlUser`, `-SqlPassword`: SQL connection overrides.
 - `deploy-server.ps1` uploads server source to the VPS, builds a tagged Docker image, migrates, restarts, and smoke-tests production.
   - `-RepoRootPath`, `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-ImageTag`, `-KnownHostsPath`: deploy overrides.

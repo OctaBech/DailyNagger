@@ -14,7 +14,7 @@ Repository root to validate. Defaults to the parent folder of this script.
 Skips dotnet restore, npm install, mobile typecheck, and expo-doctor.
 
 .EXAMPLE
-.\scripts\validate-dev-machine.ps1
+.\scripts\local-validate-dev-machine.ps1
 
 Validates tools, paths, and project checks for the current checkout.
 #>
@@ -34,7 +34,7 @@ function Assert-CommandAvailable {
         return
     }
 
-    throw "Missing required command in this shell: $CommandName. Open a new terminal after installing tools or rerun scripts\configure-dev-machine.ps1."
+    throw "Missing required command in this shell: $CommandName. Open a new terminal after installing tools or rerun scripts\local-configure-dev-machine.ps1."
 }
 
 function Assert-PathExists {
@@ -83,7 +83,7 @@ function Assert-WindowsLongPathsEnabled {
         return
     }
 
-    throw "Windows long paths are disabled. Run scripts\configure-dev-machine.ps1 as Administrator."
+    throw "Windows long paths are disabled. Run scripts\local-configure-dev-machine.ps1 as Administrator."
 }
 
 function Assert-GitLongPathsEnabled {

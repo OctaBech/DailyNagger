@@ -48,7 +48,7 @@ part of the normal development workflow.
 Run this from the repository root after installing the required system tools:
 
 ```powershell
-.\scripts\configure-dev-machine.ps1
+.\scripts\local-configure-dev-machine.ps1
 ```
 
 The script creates the expected folders, sets cache environment variables, sets
@@ -61,20 +61,20 @@ Visual Studio.
 Then validate the machine:
 
 ```powershell
-.\scripts\validate-dev-machine.ps1
+.\scripts\local-validate-dev-machine.ps1
 ```
 
 Use this shorter check while tools are still being installed:
 
 ```powershell
-.\scripts\validate-dev-machine.ps1 -SkipProjectChecks
+.\scripts\local-validate-dev-machine.ps1 -SkipProjectChecks
 ```
 
 The split is intentional:
 
-- `configure-dev-machine.ps1` writes machine settings.
-- `bootstrap-dev.ps1` restores a checkout.
-- `validate-dev-machine.ps1` proves the machine and checkout can actually run.
+- `local-configure-dev-machine.ps1` writes machine settings.
+- `local-bootstrap-dev.ps1` restores a checkout.
+- `local-validate-dev-machine.ps1` proves the machine and checkout can actually run.
 
 ## Tool Setup
 
@@ -301,7 +301,7 @@ docker compose up -d seq sqlserver sqlserver-init
 Validate the full local Docker stack, including the API container:
 
 ```powershell
-.\scripts\validate-local-compose.ps1
+.\scripts\local-validate-compose.ps1
 ```
 
 Validate Docker:
