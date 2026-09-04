@@ -1,0 +1,17 @@
+name: dailynagger-staging
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: dailynagger-staging-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in production .env}"
+    networks:
+      - production
+    restart: unless-stopped
+
+networks:
+  production:
+    external: true
+    name: dailynagger_default

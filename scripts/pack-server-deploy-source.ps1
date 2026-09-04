@@ -22,6 +22,7 @@ try {
         --exclude=src/DailyNagger.Client/node_modules `
         -czf $OutputPath `
         compose.prod.yaml `
+        compose.staging.yaml `
         deploy `
         global.json `
         Directory.Build.props `

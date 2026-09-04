@@ -44,7 +44,7 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 ## Staging
 
 - `staging-use-secrets.ps1` loads staging VPS and mobile build settings from `E:\Secrets\DailyNagger\env\staging.env`.
-- `staging-copy-production-db.ps1` recreates the isolated staging SQL container from a production data backup. It does not change production data or production control routing.
+- `staging-copy-production-db.ps1` recreates the isolated staging SQL container from `compose.staging.yaml`, then restores a production data backup into it. It does not change production data or production control routing.
 - After `staging-use-secrets.ps1`, run `build-mobile-release-apk.ps1` to build and install the staging APK from the same build path as production.
 
 ## Production

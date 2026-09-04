@@ -4,8 +4,8 @@ Refreshes the isolated staging SQL container from production data.
 
 .DESCRIPTION
 Runs on the VPS through SSH. Production SQL is used only as a backup source.
-The staging SQL container and its volume are recreated, then the production data
-backup is restored into the staging SQL container.
+The staging SQL container is recreated without a data volume, then the
+production data backup is restored into it.
 
 This script does not change production data or production control routing.
 #>
@@ -16,9 +16,7 @@ param(
     [string]$VpsUser = "root",
     [string]$RemotePath = "/opt/dailynagger",
     [string]$KnownHostsPath = $env:DAILY_NAGGER_DEPLOY_KNOWN_HOSTS,
-    [string]$StagingContainerName = "dailynagger-staging-sqlserver",
-    [string]$StagingVolumeName = "dailynagger_staging-sqlserver-data",
-    [string]$DockerNetworkName = "dailynagger_default"
+    [string]$StagingContainerName = "dailynagger-staging-sqlserver"
 )
 
 $ErrorActionPreference = "Stop"
@@ -52,14 +50,6 @@ if ($StagingContainerName -notmatch "^[A-Za-z0-9_.-]+$") {
     throw "Invalid staging container name: $StagingContainerName"
 }
 
-if ($StagingVolumeName -notmatch "^[A-Za-z0-9_.-]+$") {
-    throw "Invalid staging volume name: $StagingVolumeName"
-}
-
-if ($DockerNetworkName -notmatch "^[A-Za-z0-9_.-]+$") {
-    throw "Invalid Docker network name: $DockerNetworkName"
-}
-
 $destination = "${VpsUser}@${VpsHost}"
 $sshOptions = @("-i", $SshKeyPath)
 
@@ -70,7 +60,7 @@ if (![string]::IsNullOrWhiteSpace($KnownHostsPath)) {
 Write-Host "Refreshing isolated DailyNagger staging SQL container from production data."
 Write-Host "Production SQL: compose service sqlserver"
 Write-Host "Staging SQL container: $StagingContainerName"
-Write-Host "Staging SQL volume: $StagingVolumeName"
+Write-Host "Staging SQL compose: compose.staging.yaml"
 Write-Host "Production data is not changed."
 Write-Host "Production control routing is not changed."
 
@@ -79,11 +69,10 @@ set -euo pipefail
 
 remote_path="$1"
 staging_container="$2"
-staging_volume="$3"
-docker_network="$4"
 
 cd "$remote_path"
 test -f compose.prod.yaml
+test -f compose.staging.yaml
 test -f .env
 
 prod_container="$(docker compose -f compose.prod.yaml ps -q sqlserver)"
@@ -112,16 +101,12 @@ docker exec "$prod_container" /opt/mssql-tools18/bin/sqlcmd \
   -Q "BACKUP DATABASE [DailyNaggerData] TO DISK = N'${prod_backup_file}' WITH INIT, COMPRESSION, CHECKSUM"
 
 printf 'Recreating isolated staging SQL container...\n'
-docker rm -f "$staging_container" >/dev/null 2>&1 || true
-docker volume rm "$staging_volume" >/dev/null 2>&1 || true
-docker run -d \
-  --name "$staging_container" \
-  --network "$docker_network" \
-  --restart unless-stopped \
-  -e ACCEPT_EULA=Y \
-  -e MSSQL_SA_PASSWORD="$sa_password" \
-  -v "${staging_volume}:/var/opt/mssql" \
-  mcr.microsoft.com/mssql/server:2022-latest >/dev/null
+docker compose -f compose.staging.yaml down
+if docker ps -aq -f "name=^/${staging_container}$" | grep -q .; then
+  printf 'Removing previous staging SQL container not owned by compose...\n'
+  docker rm -f "$staging_container" >/dev/null
+fi
+docker compose -f compose.staging.yaml up -d
 
 printf 'Waiting for staging SQL...\n'
 until docker exec "$staging_container" /opt/mssql-tools18/bin/sqlcmd \
@@ -213,7 +198,7 @@ $remoteScriptPath = New-TemporaryShellScript $remoteScript
 
 try {
     Get-Content -LiteralPath $remoteScriptPath -Raw |
-        & ssh @sshOptions $destination "bash -s -- '$RemotePath' '$StagingContainerName' '$StagingVolumeName' '$DockerNetworkName'"
+        & ssh @sshOptions $destination "bash -s -- '$RemotePath' '$StagingContainerName'"
     Assert-LastExitCode "ssh staging database copy"
 }
 finally {
