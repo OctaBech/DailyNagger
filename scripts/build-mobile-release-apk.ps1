@@ -256,6 +256,48 @@ function Ensure-ReactNativeGradlePluginFoojayVersion {
     return $true
 }
 
+function Set-AndroidAppIdentity {
+    param(
+        [string]$MobileProject,
+        [string]$AndroidPackage,
+        [string]$AppName
+    )
+
+    if ($AndroidPackage -notmatch "^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$") {
+        throw "Invalid Android package name: $AndroidPackage"
+    }
+
+    $buildGradlePath = Join-Path $MobileProject "android\app\build.gradle"
+    $stringsPath = Join-Path $MobileProject "android\app\src\main\res\values\strings.xml"
+
+    if (!(Test-Path $buildGradlePath)) {
+        throw "Missing Android app Gradle file at $buildGradlePath."
+    }
+
+    if (!(Test-Path $stringsPath)) {
+        throw "Missing Android strings file at $stringsPath."
+    }
+
+    $buildGradle = Get-Content $buildGradlePath -Raw
+    $updatedBuildGradle = $buildGradle -replace "applicationId\s+'[^']+'", "applicationId '$AndroidPackage'"
+    if ($updatedBuildGradle -eq $buildGradle -and $buildGradle -notmatch "applicationId\s+'$([regex]::Escape($AndroidPackage))'") {
+        throw "Could not update Android applicationId in $buildGradlePath."
+    }
+    if ($updatedBuildGradle -ne $buildGradle) {
+        Set-Content -Path $buildGradlePath -Value $updatedBuildGradle -NoNewline
+    }
+
+    $escapedAppName = [System.Security.SecurityElement]::Escape($AppName)
+    $stringsXml = Get-Content $stringsPath -Raw
+    $updatedStringsXml = $stringsXml -replace '<string name="app_name">[^<]*</string>', "<string name=`"app_name`">$escapedAppName</string>"
+    if ($updatedStringsXml -eq $stringsXml -and $stringsXml -notmatch "<string name=`"app_name`">$([regex]::Escape($escapedAppName))</string>") {
+        throw "Could not update Android app_name in $stringsPath."
+    }
+    if ($updatedStringsXml -ne $stringsXml) {
+        Set-Content -Path $stringsPath -Value $updatedStringsXml -NoNewline
+    }
+}
+
 function Invoke-GradleReleaseBuild {
     param(
         [string]$MobileProject,
@@ -349,6 +391,15 @@ Import-DotEnv $envPath
 
 $apiBaseUrl = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_API_BASE_URL"
 $apiToken = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_API_TOKEN"
+$androidPackage = [Environment]::GetEnvironmentVariable("DAILY_NAGGER_MOBILE_ANDROID_PACKAGE")
+$appName = [Environment]::GetEnvironmentVariable("DAILY_NAGGER_MOBILE_APP_NAME")
+if ([string]::IsNullOrWhiteSpace($androidPackage)) {
+    $androidPackage = "com.dailynagger.mobile"
+}
+if ([string]::IsNullOrWhiteSpace($appName)) {
+    $appName = "DailyNagger"
+}
+
 $env:NODE_ENV = "production"
 $env:GRADLE_USER_HOME = $gradleUserHome
 $env:ANDROID_HOME = $androidSdk
@@ -376,6 +427,8 @@ if (!$apiBaseUrl.StartsWith("https://")) {
 Write-Host "Building DailyNagger mobile release APK..."
 Write-Host "Repo root: $repoRoot"
 Write-Host "Mobile project: $mobileProject"
+Write-Host "Android package: $androidPackage"
+Write-Host "App name: $appName"
 Write-Host "API base URL: $apiBaseUrl"
 Write-Host "API token: configured"
 Write-Host "Build log: $buildLogPath"
@@ -393,6 +446,11 @@ if (!(Test-Path $androidSdk)) {
 Remove-Item $buildLogPath -ErrorAction SilentlyContinue
 
 & (Join-Path $PSScriptRoot "bump-mobile-build.ps1") -RepoRootPath $repoRoot
+
+Set-AndroidAppIdentity `
+    -MobileProject $mobileProject `
+    -AndroidPackage $androidPackage `
+    -AppName $appName
 
 $patchedExpoModulesCore = Ensure-ExpoModulesCoreCMakeVersion $mobileProject $androidCMakeVersion
 if ($patchedExpoModulesCore) {
