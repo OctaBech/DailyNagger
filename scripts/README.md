@@ -24,7 +24,7 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 
 - GitHub `Mobile APK Build` builds an APK artifact from a clean runner. It is manual, short-lived, and not an app-store release.
 - `build-mobile-release-apk.ps1` builds the Android release APK and installs it on a connected device.
-  - `-RepoRootPath`, `-MobileProjectPath`, `-DevCacheRootPath`, `-AndroidSdkPath`: path overrides.
+  - `-RepoRootPath`, `-MobileProjectPath`, `-EnvPath`, `-DevCacheRootPath`, `-AndroidSdkPath`: path overrides.
   - `-DeviceId`: target a specific device.
   - `-SkipInstall`: build APK only.
   - `-Notify`: play a sound when done.
@@ -35,15 +35,24 @@ Repeatable project commands live here. Keep scripts narrow and keep this file as
 
 ## Server
 
-Production deploy, backup, smoke checks, and rollback are documented in `docs/runbooks/production-deploy.md`.
-
-- Run `use-production-secrets.ps1` once per PowerShell session before production deploy, backup, smoke, rollback inspection, or Seq scripts.
-  - `-SecretsRootPath`, `-VpsHost`, `-SshKeyPath`, `-KnownHostsPath`: session setup overrides.
 - `local-start-api.ps1` stops any local `DailyNagger.Server` process and starts the API on `http://localhost:5010`.
 - `local-test-server.ps1` starts SQL Server, waits for `sqlserver-init`, then runs `dotnet test`.
   - `-RepoRootPath`: repo path override.
 - `local-reset-db.ps1` drops, recreates, migrates, and seeds the local SQL Server databases.
   - `-SqlServer`, `-SqlUser`, `-SqlPassword`: SQL connection overrides.
+
+## Staging
+
+- `staging-use-secrets.ps1` loads staging VPS and mobile build settings from `E:\Secrets\DailyNagger\env\staging.env`.
+- `staging-copy-production-db.ps1` replaces the staging data database with a copy of production data and registers the staging community.
+- `staging-build-mobile-apk.ps1` builds and installs a staging APK using the staging env file.
+
+## Production
+
+Production deploy, backup, smoke checks, and rollback are documented in `docs/runbooks/production-deploy.md`.
+
+- Run `use-production-secrets.ps1` once per PowerShell session before production deploy, backup, smoke, rollback inspection, or Seq scripts.
+  - `-SecretsRootPath`, `-VpsHost`, `-SshKeyPath`, `-KnownHostsPath`: session setup overrides.
 - `deploy-server.ps1` uploads server source to the VPS, builds a tagged Docker image, migrates, restarts, and smoke-tests production.
   - `-RepoRootPath`, `-SshKeyPath`, `-VpsHost`, `-VpsUser`, `-RemotePath`, `-ImageTag`, `-KnownHostsPath`: deploy overrides.
   - `-SkipMigrations`: deploy without EF migrations.

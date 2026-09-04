@@ -1,6 +1,7 @@
 param(
     [string]$RepoRootPath,
     [string]$MobileProjectPath,
+    [string]$EnvPath,
     [string]$DevCacheRootPath = "E:\Caches",
     [string]$AndroidSdkPath,
     [string]$DeviceId,
@@ -304,7 +305,12 @@ else {
 
 $buildLogDirectory = Join-Path $repoRoot "artifacts\mobile-builds"
 $buildLogPath = Join-Path $buildLogDirectory "release-apk-build.log"
-$envPath = Join-Path $mobileProject ".env"
+$envPath = if ([string]::IsNullOrWhiteSpace($EnvPath)) {
+    Join-Path $mobileProject ".env"
+}
+else {
+    $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($EnvPath)
+}
 $gradlePath = Join-Path $mobileProject "android\gradlew.bat"
 $apkOutputPath = Join-Path $mobileProject "android\app\build\outputs\apk\release"
 $devCacheRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($DevCacheRootPath)
