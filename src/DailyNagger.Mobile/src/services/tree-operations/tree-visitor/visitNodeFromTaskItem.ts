@@ -1,7 +1,6 @@
 import type {
   TaskEntryTraversedNode,
   TaskItemTraversedNode,
-  TraversedNode,
 } from "./traversed-node";
 import type { TreeVisitor, VisitRequest } from "./contracts";
 import { isRequestTargetUnreachable } from "./targetMatching";

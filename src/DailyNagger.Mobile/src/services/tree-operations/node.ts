@@ -1,5 +1,4 @@
 import {
-  emptyInteractionStamp,
   naggerClientModelExtensionDefaults,
   taskLogClientModelExtensionDefaults,
   type Nagger,
@@ -18,7 +17,6 @@ export const node = {
   createNagger,
   createTaskEntry,
   createTaskItem,
-  createRolledOverTaskLog,
   isTaskLogClosed,
   moveChild,
   setNaggerExpanded,
@@ -242,34 +240,6 @@ function closeTaskLogForNaggerHistory(taskLog: TaskLog, nagger: Nagger): TaskLog
   };
 }
 
-function createRolledOverTaskLog(sourceTaskLog: TaskLog): TaskLog {
-  const newTaskLogId = newGuid();
-  const taskItemIdMap = new Map<Guid, Guid>();
-  const getNewTaskItemId = (oldId: Guid) => {
-    const existingId = taskItemIdMap.get(oldId);
-    if (existingId !== undefined) return existingId;
-
-    const newId = newGuid();
-    taskItemIdMap.set(oldId, newId);
-    return newId;
-  };
-
-  const taskItems = keepRolloverTaskItems(sourceTaskLog.taskItems).map((taskItem) =>
-    rollOverTaskItem(taskItem, newTaskLogId, getNewTaskItemId),
-  );
-
-  return {
-    ...sourceTaskLog,
-    id: newTaskLogId,
-    copiedFromTaskLogId: sourceTaskLog.id,
-    closedOn: null,
-    version: 0,
-    taskItems,
-    descendantTaskItemCount: countTaskItems(taskItems),
-    doneDescendantTaskItemCount: 0,
-  };
-}
-
 function isTaskLogClosed(taskLog: TaskLog): boolean {
   return taskLog.closedOn !== null;
 }
@@ -416,76 +386,4 @@ function setTaskItemRolloverBehavior(
     ...taskItem,
     rolloverBehavior,
   };
-}
-
-type RolloverTaskItem = TaskItem & {
-  readonly taskItems: readonly RolloverTaskItem[];
-  readonly taskEntries: readonly TaskEntry[];
-};
-
-function rollOverTaskItem(
-  taskItem: RolloverTaskItem,
-  newTaskLogId: Guid,
-  getNewTaskItemId: (oldId: Guid) => Guid,
-): TaskItem {
-  const taskItems = keepRolloverTaskItems(taskItem.taskItems).map((childTaskItem) =>
-    rollOverTaskItem(childTaskItem, newTaskLogId, getNewTaskItemId),
-  );
-  const taskEntries = keepRolloverTaskEntries(taskItem.taskEntries).map((taskEntry) =>
-    rollOverTaskEntry(taskEntry, newTaskLogId, getNewTaskItemId),
-  );
-
-  return {
-    ...taskItem,
-    id: getNewTaskItemId(taskItem.id),
-    taskLogId: newTaskLogId,
-    parentTaskItemId:
-      taskItem.parentTaskItemId === null ? null : getNewTaskItemId(taskItem.parentTaskItemId),
-    isDone: false,
-    taskEntries,
-    taskItems,
-    ...emptyInteractionStamp,
-    descendantTaskItemCount: countTaskItems(taskItems),
-    doneDescendantTaskItemCount: 0,
-  };
-}
-
-function rollOverTaskEntry(
-  taskEntry: TaskEntry,
-  newTaskLogId: Guid,
-  getNewTaskItemId: (oldId: Guid) => Guid,
-): TaskEntry {
-  const isCarryOver = taskEntry.rolloverBehavior === "CarryOverValue";
-
-  return {
-    ...taskEntry,
-    id: newGuid(),
-    taskLogId: newTaskLogId,
-    parentTaskItemId: getNewTaskItemId(taskEntry.parentTaskItemId),
-    value: isCarryOver ? taskEntry.value : null,
-    lastTaskRunReferenceValue: taskEntry.value,
-    ...emptyInteractionStamp,
-  };
-}
-
-function keepRolloverTaskItems<TTaskItem extends TaskItem>(
-  taskItems: readonly TTaskItem[],
-): readonly TTaskItem[] {
-  return taskItems.filter(
-    (taskItem) => taskItem.rolloverBehavior !== "RemoveWhenDone" || taskItem.isDone === false,
-  );
-}
-
-function keepRolloverTaskEntries<TTaskEntry extends TaskEntry>(
-  taskEntries: readonly TTaskEntry[],
-): readonly TTaskEntry[] {
-  return taskEntries;
-}
-
-type TaskItemTree = {
-  readonly taskItems: readonly TaskItemTree[];
-};
-
-function countTaskItems(taskItems: readonly TaskItemTree[]): number {
-  return taskItems.reduce((total, taskItem) => total + 1 + countTaskItems(taskItem.taskItems), 0);
 }

@@ -29,6 +29,7 @@ function requestTargetsTaskEntry(
   request: VisitRequest,
   taskEntry: TaskEntryTraversedNode,
 ): boolean {
+  if (request.kind === "all") return true;
   if (request.kind !== "target") return false;
   if (request.target.kind !== "task-entry") return false;
 

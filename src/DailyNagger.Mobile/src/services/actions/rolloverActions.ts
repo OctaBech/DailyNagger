@@ -15,7 +15,7 @@ export function rolloverNagger(
   { cultureSettings, planMemory, sending }: RolloverActionScope,
   nagger: Nagger,
 ): void {
-  const { node, tree } = treeOperations;
+  const { node, rollover, tree } = treeOperations;
   const { freshNagger, freshTree } = tree.readNagger(planMemory, nagger);
   const freshTaskLog = freshNagger.taskLog;
 
@@ -25,7 +25,7 @@ export function rolloverNagger(
     );
   }
 
-  const taskLogV1 = node.createRolledOverTaskLog(freshTaskLog);
+  const taskLogV1 = rollover.createTaskLog(freshTaskLog);
   const activeLogDueOnV1 = scheduleCalculator.getNextDueOn(freshNagger, cultureSettings);
   const naggerV1 = node.attachTaskLog(freshNagger, taskLogV1, activeLogDueOnV1);
 
