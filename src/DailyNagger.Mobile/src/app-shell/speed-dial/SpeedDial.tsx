@@ -88,7 +88,11 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
                         color={actionButtonTheme.icon}
                         icon={
                           "emoji" in action
-                            ? () => <Text style={styles.actionEmoji}>{action.emoji}</Text>
+                            ? () => (
+                                <View style={styles.actionEmojiFrame}>
+                                  <Text style={styles.actionEmoji}>{action.emoji}</Text>
+                                </View>
+                              )
                             : action.icon
                         }
                         disabled={action.isDisabled}
@@ -187,7 +191,14 @@ const styles = StyleSheet.create({
     right: appLayout.speedDial.right,
   },
   actionEmoji: {
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 19,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  actionEmojiFrame: {
+    alignItems: "center",
+    height: 28,
+    justifyContent: "center",
+    width: 28,
   },
 });
