@@ -1,30 +1,31 @@
 import { useMemo } from "react";
-import { treeSelection } from "@/models";
+import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { Guid } from "@/shared";
 import type { PlanScreenCommands } from "../screen-commands";
-import type { PlanScreenData } from "../screen-data";
 import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
 
 type UseCreatePlanScreenDialMenuProps = {
   readonly planCommands: PlanScreenCommands;
-  readonly planScreenData: PlanScreenData;
+  readonly actionsAreAvailable: boolean;
+  readonly selectedNodes: SelectedNodes;
+  readonly selectedPath: TreePath;
   readonly onCreateNagger: () => void;
   readonly onEditNagger: (naggerId: Guid) => void;
 };
 
 export function useCreatePlanScreenDialMenu({
   planCommands,
-  planScreenData,
+  actionsAreAvailable,
+  selectedNodes,
+  selectedPath,
   onCreateNagger,
   onEditNagger,
 }: UseCreatePlanScreenDialMenuProps): SpeedDialMenu {
-  const { selectedNodes, selectedPath, startup, mood } = planScreenData;
   const { nagger } = selectedNodes;
   const { pinSelectedNagger, unpinSelectedNagger } = planCommands.dial;
 
   return useMemo(() => {
-    if (!startup.isReady) return { items: [] };
-    if (mood.selectedMood === null) return { items: [] };
+    if (!actionsAreAvailable) return { items: [] };
 
     const newNagger: SpeedDialMenuItem = {
       key: "plan.new-nagger",
@@ -72,13 +73,12 @@ export function useCreatePlanScreenDialMenu({
       ],
     };
   }, [
-    mood.selectedMood,
+    actionsAreAvailable,
     nagger,
     onCreateNagger,
     onEditNagger,
     pinSelectedNagger,
     selectedPath,
-    startup.isReady,
     unpinSelectedNagger,
   ]);
 }

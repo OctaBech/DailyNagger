@@ -23,21 +23,25 @@ export const NagList = ({ nags }: NagListProps) => {
   });
 
   return (
-    <FlatList
-      ref={listRef}
-      style={[styles.list]}
-      contentContainerStyle={[
-        styles.listContent,
-        { paddingBottom: bottomComfortSpace + keyboardInset },
-      ]}
-      data={nags}
-      ListHeaderComponent={__DEV__ ? <BuildMarker /> : null}
-      renderItem={({ item }) => <NagCard nagger={item} />}
-      keyExtractor={(nagger: Nagger) => nagger.id}
-      ItemSeparatorComponent={() => <View style={styles.listGap} />}
-      onScroll={rememberScrollOffset}
-      scrollEventThrottle={16}
-    />
+    <View style={styles.container}>
+      <FlatList
+        ref={listRef}
+        style={[styles.list]}
+        contentContainerStyle={[
+          styles.listContent,
+          {
+            paddingBottom: bottomComfortSpace + keyboardInset,
+          },
+        ]}
+        data={nags}
+        ListHeaderComponent={__DEV__ ? <BuildMarker /> : null}
+        renderItem={({ item }) => <NagCard nagger={item} />}
+        keyExtractor={(nagger: Nagger) => nagger.id}
+        ItemSeparatorComponent={() => <View style={styles.listGap} />}
+        onScroll={rememberScrollOffset}
+        scrollEventThrottle={16}
+      />
+    </View>
   );
 };
 
@@ -50,6 +54,10 @@ function BuildMarker() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: nagPlanTheme.screen.background,
+    flex: 1,
+  },
   list: {
     backgroundColor: nagPlanTheme.screen.background,
   },
@@ -75,10 +83,5 @@ const styles = StyleSheet.create({
     color: "#f1d56b",
     fontSize: 12,
     fontWeight: "900",
-  },
-  emptyText: {
-    color: nagPlanTheme.screen.text,
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

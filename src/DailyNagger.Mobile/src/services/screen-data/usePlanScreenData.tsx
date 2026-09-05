@@ -1,14 +1,11 @@
 import { createContext, useCallback, useContext, useMemo, useRef, type ReactNode } from "react";
 import type { Memory, Startup, UserMoodState } from "../contracts";
-import type { UserMoodLabel } from "@/models";
-import { treeSelection } from "@/models/treeSelection";
 import type { Prettify } from "@/shared";
 
 type UseCreatePlanScreenDataProps = {
   readonly planMemory: Memory;
   readonly startup: Startup;
   readonly userMood: UserMoodState;
-  readonly selectMood: (mood: UserMoodLabel) => void;
 };
 
 export type PlanScreenData = Prettify<ReturnType<typeof useCreatePlanScreenData>>;
@@ -38,11 +35,8 @@ export function useCreatePlanScreenData({
   planMemory,
   startup,
   userMood,
-  selectMood,
 }: UseCreatePlanScreenDataProps) {
-  const { selectedPath, tree } = planMemory.state;
-  const { options, state } = userMood;
-  const { selectedAt, selectedMood } = state;
+  const { tree } = planMemory.state;
   const scrollOffsetRef = useRef(0);
 
   const getScrollOffset = useCallback(() => scrollOffsetRef.current, []);
@@ -53,30 +47,13 @@ export function useCreatePlanScreenData({
   return useMemo(
     () => ({
       nags: tree?.nags ?? [],
-      selectedPath,
-      selectedNodes: treeSelection.deriveSelectedNodes(selectedPath),
       startup,
+      moodIsSelected: userMood.state.selectedMood !== null,
       scroll: {
         getOffset: getScrollOffset,
         setOffset: setScrollOffset,
       },
-      mood: {
-        options,
-        selectedMood,
-        selectedAt,
-        select: selectMood,
-      },
     }),
-    [
-      getScrollOffset,
-      options,
-      selectMood,
-      selectedAt,
-      selectedMood,
-      selectedPath,
-      setScrollOffset,
-      startup,
-      tree,
-    ],
+    [getScrollOffset, setScrollOffset, startup, tree, userMood.state.selectedMood],
   );
 }

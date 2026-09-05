@@ -86,7 +86,11 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
                       ) : null}
                       <FAB
                         color={actionButtonTheme.icon}
-                        icon={action.icon}
+                        icon={
+                          "emoji" in action
+                            ? () => <Text style={styles.actionEmoji}>{action.emoji}</Text>
+                            : action.icon
+                        }
                         disabled={action.isDisabled}
                         onPress={action.onPress}
                         size="small"
@@ -181,5 +185,9 @@ const styles = StyleSheet.create({
     backgroundColor: actionButtonTheme.background,
     position: "absolute",
     right: appLayout.speedDial.right,
+  },
+  actionEmoji: {
+    fontSize: 20,
+    lineHeight: 24,
   },
 });

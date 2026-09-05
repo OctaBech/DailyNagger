@@ -4,7 +4,6 @@ import type { Prettify } from "@/shared";
 import type { CultureSettings } from "../culture";
 import { scheduleCalculator } from "../schedule-calculator";
 import type { Nagger, ScheduleRule } from "@/models";
-import { treeSelection } from "@/models/treeSelection";
 
 type UseCreateEditorScreenDataProps = {
   readonly editorMemory: Memory;
@@ -40,18 +39,16 @@ export function useCreateEditorScreenData({
   editorMemory,
   cultureSettings,
 }: UseCreateEditorScreenDataProps) {
-  const { tree, selectedPath } = editorMemory.state;
+  const { tree } = editorMemory.state;
 
   return useMemo(
     () => ({
       tree,
-      selectedPath,
-      selectedNodes: treeSelection.deriveSelectedNodes(selectedPath),
       schedule: {
         getNextDueOn: (nagger: Nagger, scheduleRules: readonly ScheduleRule[]) =>
           scheduleCalculator.getNextDueOn({ ...nagger, scheduleRules }, cultureSettings),
       },
     }),
-    [cultureSettings, selectedPath, tree],
+    [cultureSettings, tree],
   );
 }

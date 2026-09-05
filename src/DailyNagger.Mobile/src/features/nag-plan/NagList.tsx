@@ -5,16 +5,16 @@ import * as Input from "@/components/input";
 import { TimeSectionHeader } from "@/components/primitives";
 import { NagCard } from "./cards";
 import { nagPlanTheme } from "./theme";
-import { appLayout } from "@/config";
 import { buildNagPlanListItems, type NagPlanListItem } from "./buildNagPlanListItems";
 
 type NagListProps = {
   readonly nags: readonly Nagger[];
   readonly getScrollOffset: () => number;
   readonly setScrollOffset: (offset: number) => void;
+  readonly topPadding: number;
 };
 
-const NagListComponent = ({ getScrollOffset, nags, setScrollOffset }: NagListProps) => {
+const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }: NagListProps) => {
   const listRef = useRef<FlatList<NagPlanListItem>>(null);
   const hasRestoredScrollOffsetRef = useRef(false);
   const { height: screenHeight } = useWindowDimensions();
@@ -50,27 +50,29 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset }: NagListPro
   );
 
   return (
-    <FlatList
-      ref={listRef}
-      style={[styles.list]}
-      contentContainerStyle={[
-        styles.listContent,
-        { paddingBottom: bottomComfortSpace + keyboardInset },
-      ]}
-      data={listItems}
-      ListHeaderComponent={__DEV__ ? <BuildMarker /> : null}
-      renderItem={({ item }) => {
-        if (item.kind === "time-section") {
-          return <TimeSectionHeader title={item.title} rangeLabel={item.rangeLabel} />;
-        }
+    <View style={styles.container}>
+      <FlatList
+        ref={listRef}
+        style={[styles.list]}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: bottomComfortSpace + keyboardInset, paddingTop: topPadding },
+        ]}
+        data={listItems}
+        ListHeaderComponent={__DEV__ ? <BuildMarker /> : null}
+        renderItem={({ item }) => {
+          if (item.kind === "time-section") {
+            return <TimeSectionHeader title={item.title} rangeLabel={item.rangeLabel} />;
+          }
 
-        return <NagCard nagger={item.nagger} />;
-      }}
-      keyExtractor={(item) => item.id}
-      ItemSeparatorComponent={() => <View style={styles.listGap} />}
-      onScroll={rememberScrollOffset}
-      scrollEventThrottle={16}
-    />
+          return <NagCard nagger={item.nagger} />;
+        }}
+        keyExtractor={(item) => item.id}
+        ItemSeparatorComponent={() => <View style={styles.listGap} />}
+        onScroll={rememberScrollOffset}
+        scrollEventThrottle={16}
+      />
+    </View>
   );
 };
 
@@ -85,6 +87,10 @@ function BuildMarker() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    backgroundColor: nagPlanTheme.screen.background,
+    flex: 1,
+  },
   list: {
     backgroundColor: nagPlanTheme.screen.background,
   },
@@ -92,7 +98,6 @@ const styles = StyleSheet.create({
     backgroundColor: nagPlanTheme.screen.background,
     flexGrow: 1,
     paddingHorizontal: nagPlanTheme.screenDensity.horizontalPadding,
-    paddingTop: appLayout.moodBar.listTopPadding,
   },
   listGap: {
     height: nagPlanTheme.spacing.listGap,

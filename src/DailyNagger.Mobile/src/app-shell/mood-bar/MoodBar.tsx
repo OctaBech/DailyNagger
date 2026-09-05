@@ -16,12 +16,13 @@ type MoodBarProps = {
   readonly visible: boolean;
   readonly options: readonly UserMoodOption[];
   readonly onSelect: (mood: UserMoodLabel) => void;
+  readonly onSelectionFeedbackHidden?: () => void;
   readonly selected: UserMoodLabel | null;
   readonly selectedAt: string | null;
 };
 
 export const MoodBar = (props: MoodBarProps) => {
-  const { visible, options, selected, onSelect, selectedAt } = props;
+  const { visible, options, selected, onSelect, onSelectionFeedbackHidden, selectedAt } = props;
   const [bubbleVisibility, setBubbleVisibility] = useState({ token: 0, visible: false });
 
   useEffect(() => {
@@ -31,10 +32,11 @@ export const MoodBar = (props: MoodBarProps) => {
       setBubbleVisibility((current) =>
         current.token === bubbleVisibility.token ? { ...current, visible: false } : current,
       );
+      onSelectionFeedbackHidden?.();
     }, appLayout.moodBar.bubbleVisibleMs);
 
     return () => clearTimeout(timeoutId);
-  }, [bubbleVisibility.token, bubbleVisibility.visible]);
+  }, [bubbleVisibility.token, bubbleVisibility.visible, onSelectionFeedbackHidden]);
 
   if (!visible) return <></>;
 

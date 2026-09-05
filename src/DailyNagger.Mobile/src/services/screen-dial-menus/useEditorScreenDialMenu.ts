@@ -1,21 +1,21 @@
 import { useMemo } from "react";
-import { treeSelection } from "@/models";
+import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { EditorScreenCommands } from "../screen-commands";
-import type { EditorScreenData } from "../screen-data";
 import type { SpeedDialMenu } from "./SpeedDialMenu";
 
 type UseCreateEditorScreenDialMenuProps = {
   readonly editorCommands: EditorScreenCommands;
-  readonly editorScreenData: EditorScreenData;
+  readonly selectedNodes: SelectedNodes;
+  readonly selectedPath: TreePath;
   readonly onCloseEditor: () => void;
 };
 
 export function useCreateEditorScreenDialMenu({
   editorCommands,
-  editorScreenData,
+  selectedNodes,
+  selectedPath,
   onCloseEditor,
 }: UseCreateEditorScreenDialMenuProps): SpeedDialMenu {
-  const { selectedNodes, selectedPath } = editorScreenData;
   const { nagger } = selectedNodes;
   const {
     cancelEdit,

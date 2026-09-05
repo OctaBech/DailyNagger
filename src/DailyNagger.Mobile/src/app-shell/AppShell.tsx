@@ -1,24 +1,14 @@
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Platform, StyleSheet } from "react-native";
-import { useCallback } from "react";
-import type { ReactNode } from "react";
-import { usePathname, useRouter } from "expo-router";
+import { Platform, StyleSheet, View } from "react-native";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { usePathname } from "expo-router";
 import { AssistantBubble } from "./assistant-bubble";
+import { MoodBar } from "./mood-bar";
 import { PostOfficeStrip } from "./post-office-strip";
-import {
-  emptySpeedDialMenu,
-  useCreateEditorScreenDialMenu,
-  useCreatePlanScreenDialMenu,
-  useEditorScreenCommands,
-  useEditorScreenData,
-  usePlanScreenCommands,
-  usePlanScreenData,
-  useServices,
-} from "@/services";
+import { emptySpeedDialMenu, type SpeedDialMenu, useAppShellState } from "@/services";
 import { SpeedDial } from "./speed-dial";
 import { appRoutes } from "@/navigation";
-import type { Guid } from "@/shared";
 import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
 import { appLayout } from "@/config";
 
@@ -28,67 +18,67 @@ type AppShellProps = {
 
 export const AppShell = ({ children }: AppShellProps) => {
   const { bottom } = useSafeAreaInsets();
-  const { appShell } = useServices();
-  const editorScreenCommands = useEditorScreenCommands();
-  const planScreenCommands = usePlanScreenCommands();
-  const planScreenData = usePlanScreenData();
-  const editorScreenData = useEditorScreenData();
+  const [showMoodBar, setShowMoodBar] = useState(true);
+  const appShellState = useAppShellState();
   const path = usePathname();
-  const router = useRouter();
   const assistantBubbleBottomOffset = Math.max(
     appLayout.assistantBubble.bottom,
     bottom + appLayout.assistantBubble.safeAreaGap,
   );
   const postOfficeStripBottomOffset = appLayout.postOfficeStrip.bottom;
-  const createNagger = useCallback(() => {
-    router.replace(appRoutes.newTaskLogEditor);
-  }, [router]);
-
-  const editNagger = useCallback(
-    (naggerId: Guid) => {
-      router.replace(`${appRoutes.taskLogEditorBase}/${naggerId}`);
-    },
-    [router],
-  );
-
-  const closeEditor = useCallback(() => {
-    router.replace(appRoutes.plan);
-  }, [router]);
-
-  const planScreenDialMenu = useCreatePlanScreenDialMenu({
-    planCommands: planScreenCommands,
-    planScreenData,
-    onCreateNagger: createNagger,
-    onEditNagger: editNagger,
-  });
-  const editorScreenDialMenu = useCreateEditorScreenDialMenu({
-    editorCommands: editorScreenCommands,
-    editorScreenData,
-    onCloseEditor: closeEditor,
-  });
+  const moodBarIsVisible = appShellState.globalOverlaysAreEnabled && showMoodBar;
   let speedDialMenu = emptySpeedDialMenu;
 
-  if (appShell.globalOverlaysAreEnabled) {
+  const hideMoodBar = useCallback(() => {
+    setShowMoodBar(false);
+  }, []);
+  const showMoodBarAgain = useCallback(() => {
+    setShowMoodBar(true);
+  }, []);
+
+  if (appShellState.globalOverlaysAreEnabled) {
     if (path === appRoutes.plan) {
-      speedDialMenu = planScreenDialMenu;
+      speedDialMenu = appShellState.speedDial.planMenu;
     } else if (path.startsWith(appRoutes.taskLogEditorBase)) {
-      speedDialMenu = editorScreenDialMenu;
+      speedDialMenu = appShellState.speedDial.editorMenu;
     }
   }
+  const speedDialMenuWithShellActions = useMemo(
+    () =>
+      addShellSpeedDialActions(
+        speedDialMenu,
+        showMoodBarAgain,
+        appShellState.moodBar.selectedEmoji,
+        moodBarIsVisible,
+      ),
+    [appShellState.moodBar.selectedEmoji, moodBarIsVisible, showMoodBarAgain, speedDialMenu],
+  );
 
   return (
     <ModalKeyboardBoundaryProvider>
       <SafeAreaView style={styles.container}>
         {Platform.OS === "android" ? null : <StatusBar style="auto" />}
         {children}
-        {appShell.globalOverlaysAreEnabled ? (
+        {appShellState.globalOverlaysAreEnabled ? (
           <PostOfficeStrip
-            sendingEvents={appShell.sendingEvents}
+            sendingEvents={appShellState.sendingEvents}
             bottomOffset={postOfficeStripBottomOffset}
           />
         ) : null}
-        <SpeedDial menu={speedDialMenu} />
-        {appShell.globalOverlaysAreEnabled ? (
+        {moodBarIsVisible ? (
+          <View pointerEvents="box-none" style={styles.moodBarOverlay}>
+            <MoodBar
+              visible
+              options={appShellState.moodBar.options}
+              selected={appShellState.moodBar.selectedMood}
+              selectedAt={appShellState.moodBar.selectedAt}
+              onSelect={appShellState.moodBar.select}
+              onSelectionFeedbackHidden={hideMoodBar}
+            />
+          </View>
+        ) : null}
+        <SpeedDial menu={speedDialMenuWithShellActions} />
+        {appShellState.globalOverlaysAreEnabled ? (
           <AssistantBubble
             bottomOffset={assistantBubbleBottomOffset}
             leftOffset={appLayout.assistantBubble.left}
@@ -104,4 +94,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#1a1b1d",
   },
+  moodBarOverlay: {
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: appLayout.moodBar.topOffset,
+    zIndex: 10,
+  },
 });
+
+function addShellSpeedDialActions(
+  menu: SpeedDialMenu,
+  showMoodBar: () => void,
+  selectedMoodEmoji: string | null,
+  moodBarIsVisible: boolean,
+): SpeedDialMenu {
+  if (moodBarIsVisible) return menu;
+
+  return {
+    items: [
+      ...menu.items,
+      {
+        key: "shell.show-mood-bar",
+        emoji: selectedMoodEmoji ?? "🙂",
+        label: "Mood",
+        showLabel: true,
+        row: 4,
+        onSelect: showMoodBar,
+      },
+    ],
+  };
+}

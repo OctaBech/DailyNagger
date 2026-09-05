@@ -1,0 +1,44 @@
+import { createContext, useContext, type ReactNode } from "react";
+import type { AssistantBubble } from "../assistant-bubble";
+import type { Parcel, SendingEventType } from "../sending";
+import type { SpeedDialMenu } from "../screen-dial-menus";
+import type { EventEmitter, Prettify } from "@/shared";
+import type { UserMoodLabel, UserMoodOption } from "@/models";
+
+export type AppShellState = Prettify<{
+  readonly globalOverlaysAreEnabled: boolean;
+  readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
+  readonly assistantBubble: AssistantBubble;
+  readonly moodBar: {
+    readonly options: readonly UserMoodOption[];
+    readonly selectedMood: UserMoodLabel | null;
+    readonly selectedEmoji: string | null;
+    readonly selectedAt: string | null;
+    readonly select: (mood: UserMoodLabel) => void;
+  };
+  readonly speedDial: {
+    readonly planMenu: SpeedDialMenu;
+    readonly editorMenu: SpeedDialMenu;
+  };
+}>;
+
+const AppShellStateContext = createContext<AppShellState | null>(null);
+
+type AppShellStateProviderProps = {
+  readonly value: AppShellState;
+  readonly children: ReactNode;
+};
+
+export function AppShellStateProvider({ value, children }: AppShellStateProviderProps) {
+  return <AppShellStateContext.Provider value={value}>{children}</AppShellStateContext.Provider>;
+}
+
+export function useAppShellState(): AppShellState {
+  const appShellState = useContext(AppShellStateContext);
+
+  if (appShellState === null) {
+    throw new Error("AppShellStateContext is missing.");
+  }
+
+  return appShellState;
+}

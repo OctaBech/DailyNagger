@@ -1,4 +1,4 @@
-import { useServices } from "@/services";
+import { useAppShellState } from "@/services";
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -13,7 +13,7 @@ type AssistantBubbleProps = {
 };
 
 export const AssistantBubble = ({ bottomOffset, leftOffset }: AssistantBubbleProps) => {
-  const { assistantBubble } = useServices();
+  const { assistantBubble } = useAppShellState();
 
   useEffect(() => {
     if (!assistantBubble.hasMessage()) return;

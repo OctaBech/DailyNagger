@@ -1,11 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, useRef, type ReactNode } from "react";
+import { useCallback, useRef, type ReactNode } from "react";
 import { useCultureSettings } from "./culture";
 import { useMemory, useSelectionMemory } from "./memory";
 import { useLoading } from "./loading";
-import { useSending } from "./sending";
-import { useUserMoodState } from "./user-mood";
+import { type Parcel, type SendingEventType, useSending } from "./sending";
+import { useSelectUserMood, useUserMoodState } from "./user-mood";
 import { useInteractionStamp } from "./interaction-stamp";
-import { type AssistantBubble, useAssistantBubble } from "./assistant-bubble";
+import { useAssistantBubble } from "./assistant-bubble";
 import {
   EditorScreenCommandsProvider,
   type EditorScreenCommands,
@@ -15,12 +15,10 @@ import {
   type PlanScreenCommands,
 } from "./screen-commands";
 import { useCommandDispatcher } from "./command-boundary";
-import type { Prettify } from "@/shared";
 import type { UserMoodLabel } from "@/models";
 import { useEventEmitter } from "@/shared";
 import { useRollover } from "./rollover";
 import { useStartup } from "./startup";
-import type { Parcel, SendingEventType } from "./sending";
 import {
   PlanScreenDataProvider,
   EditorScreenDataProvider,
@@ -29,40 +27,27 @@ import {
   type PlanScreenData,
   type EditorScreenData,
 } from "./screen-data";
-import { recordUserMoodOperation } from "@/observability";
-
-export type Services = Prettify<{
-  readonly appShell: AppShell;
-  readonly assistantBubble: AssistantBubble;
-}>;
-
-type AppShell = Prettify<{
-  readonly globalOverlaysAreEnabled: boolean;
-  readonly sendingEvents: ReturnType<typeof useEventEmitter<SendingEventType, readonly Parcel[]>>;
-}>;
-
-const ServiceContext = createContext<Services | null>(null);
-
-export function useServices() {
-  const services = useContext(ServiceContext);
-
-  if (services === null) {
-    throw new Error("ServiceContext is missing.");
-  }
-
-  return services;
-}
+import {
+  AppShellStateProvider,
+  type AppShellState,
+  useCreateAppShellState,
+} from "./app-shell-state";
 
 type ServiceProviderProps = {
   children: ReactNode;
 };
 
 export const ServiceProvider = ({ children }: ServiceProviderProps) => {
-  const { services, editorScreenCommands, planScreenCommands, planScreenData, editorScreenData } =
-    useCreateServices();
+  const {
+    appShellState,
+    editorScreenCommands,
+    planScreenCommands,
+    planScreenData,
+    editorScreenData,
+  } = useCreateServices();
 
   return (
-    <ServiceContext.Provider value={services}>
+    <AppShellStateProvider value={appShellState}>
       <PlanScreenCommandsProvider value={planScreenCommands}>
         <EditorScreenCommandsProvider value={editorScreenCommands}>
           <PlanScreenDataProvider value={planScreenData}>
@@ -70,12 +55,12 @@ export const ServiceProvider = ({ children }: ServiceProviderProps) => {
           </PlanScreenDataProvider>
         </EditorScreenCommandsProvider>
       </PlanScreenCommandsProvider>
-    </ServiceContext.Provider>
+    </AppShellStateProvider>
   );
 };
 
 function useCreateServices(): {
-  readonly services: Services;
+  readonly appShellState: AppShellState;
   readonly editorScreenCommands: EditorScreenCommands;
   readonly planScreenCommands: PlanScreenCommands;
   readonly planScreenData: PlanScreenData;
@@ -91,48 +76,29 @@ function useCreateServices(): {
   const sendingEvents = useEventEmitter<SendingEventType, readonly Parcel[]>();
   const assistantBubble = useAssistantBubble(sendingEvents);
   const userMood = useUserMoodState();
+  const interactionStamp = useInteractionStamp(cultureSettings, userMood);
   const currentMoodRef = useRef<UserMoodLabel | null>(null);
   const getCurrentMood = useCallback(() => currentMoodRef.current, []);
-  const interactionStamp = useInteractionStamp(cultureSettings, userMood);
-
+  const setCurrentMood = useCallback((mood: UserMoodLabel) => {
+    currentMoodRef.current = mood;
+  }, []);
   const sending = useSending(planMemory, sendingEvents, getCurrentMood);
+  const selectMood = useSelectUserMood({
+    cultureSettings,
+    sending,
+    setCurrentMood,
+    userMood,
+  });
+
   const rollover = useRollover(cultureSettings, planMemory, editorMemory, sending);
 
   const loading = useLoading(planMemory);
   const startup = useStartup(sending, loading, rollover);
-  const selectMood = useCallback(
-    (mood: UserMoodLabel) => {
-      const selection = userMood.create({
-        mood,
-        timeZone: cultureSettings.getUserTimeZone(),
-        locale: cultureSettings.getUserLocale(),
-      });
 
-      currentMoodRef.current = selection.mood;
-      userMood.select(selection);
-      sending.queue(selection, {
-        observability: recordUserMoodOperation({
-          operation: "select",
-          selectionId: selection.id,
-        }),
-      });
-    },
-    [cultureSettings, sending, userMood],
-  );
-
-  // Wiring jsx screen services
-  const appShell = useMemo(
-    () => ({
-      globalOverlaysAreEnabled: !startup.hasBlockingState,
-      sendingEvents,
-    }),
-    [sendingEvents, startup.hasBlockingState],
-  );
   const planScreenData = useCreatePlanScreenData({
     planMemory,
     startup,
     userMood,
-    selectMood,
   });
   const editorScreenData = useCreateEditorScreenData({ editorMemory, cultureSettings });
   const commandDispatcher = useCommandDispatcher({
@@ -147,12 +113,20 @@ function useCreateServices(): {
     dispatch: commandDispatcher,
   });
   const editorScreenCommands = useCreateEditorScreenCommands({ dispatch: commandDispatcher });
+  const appShellState = useCreateAppShellState({
+    assistantBubble,
+    editorMemory,
+    editorScreenCommands,
+    planMemory,
+    planScreenCommands,
+    sendingEvents,
+    startup,
+    selectMood,
+    userMood,
+  });
 
   return {
-    services: {
-      appShell,
-      assistantBubble,
-    },
+    appShellState,
     editorScreenCommands,
     planScreenCommands,
     planScreenData,
