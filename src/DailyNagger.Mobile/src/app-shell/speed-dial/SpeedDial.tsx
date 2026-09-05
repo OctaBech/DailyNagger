@@ -22,14 +22,20 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
   const { open } = state;
   const bottomOffset = Math.max(appLayout.speedDial.bottom, bottom + 12);
   const actionGridBottom = bottomOffset + appLayout.speedDial.actionGridGap;
-  const paperSpeedDialActions = menu.items.map(({ keepOpenAfterPress, onSelect, ...action }) => ({
-    ...action,
-    onPress: () => {
-      if (action.isDisabled === true) return;
-      onSelect();
-      if (keepOpenAfterPress !== true) close();
-    },
-  }));
+  const paperSpeedDialActions = menu.items.flatMap(({ keepOpenAfterPress, onSelect, ...action }) => {
+    if (onSelect === undefined) return [];
+
+    return [
+      {
+        ...action,
+        onPress: () => {
+          if (action.isDisabled === true) return;
+          onSelect();
+          if (keepOpenAfterPress !== true) close();
+        },
+      },
+    ];
+  });
 
   const close = () => {
     setShowLabels(false);

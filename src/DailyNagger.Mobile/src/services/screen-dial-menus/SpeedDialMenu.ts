@@ -1,3 +1,5 @@
+export type ShellSpeedDialAction = "showMoodBar";
+
 export type SpeedDialMenuItem = {
   readonly key: string;
   readonly label: string;
@@ -5,7 +7,8 @@ export type SpeedDialMenuItem = {
   readonly isDisabled?: boolean;
   readonly row?: number;
   readonly keepOpenAfterPress?: boolean;
-  readonly onSelect: () => void;
+  readonly onSelect?: () => void;
+  readonly shellAction?: ShellSpeedDialAction;
 } & (
   | {
       readonly icon: string;

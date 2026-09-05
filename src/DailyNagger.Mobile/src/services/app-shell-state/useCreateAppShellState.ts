@@ -7,9 +7,11 @@ import type { EditorScreenCommands, PlanScreenCommands } from "../screen-command
 import {
   useCreateEditorScreenDialMenu,
   useCreatePlanScreenDialMenu,
+  type SpeedDialMenu,
 } from "../screen-dial-menus";
 import type { UserMoodState } from "../user-mood";
 import { treeSelection, type UserMoodLabel } from "@/models";
+import { userMoodConfig } from "@/config";
 import { appRoutes } from "@/navigation";
 import type { EventEmitter, Guid } from "@/shared";
 
@@ -79,6 +81,14 @@ export function useCreateAppShellState({
     selectedPath: editorSelectedPath,
     onCloseEditor: closeEditor,
   });
+  const planSpeedDialMenuWithShellActions = useMemo(
+    () => addMoodBarSpeedDialAction(planSpeedDialMenu, selectedMoodEmoji),
+    [planSpeedDialMenu, selectedMoodEmoji],
+  );
+  const editorSpeedDialMenuWithShellActions = useMemo(
+    () => addMoodBarSpeedDialAction(editorSpeedDialMenu, selectedMoodEmoji),
+    [editorSpeedDialMenu, selectedMoodEmoji],
+  );
 
   return useMemo(
     () => ({
@@ -93,14 +103,14 @@ export function useCreateAppShellState({
         select: selectMood,
       },
       speedDial: {
-        planMenu: planSpeedDialMenu,
-        editorMenu: editorSpeedDialMenu,
+        planMenu: planSpeedDialMenuWithShellActions,
+        editorMenu: editorSpeedDialMenuWithShellActions,
       },
     }),
     [
       assistantBubble,
-      editorSpeedDialMenu,
-      planSpeedDialMenu,
+      editorSpeedDialMenuWithShellActions,
+      planSpeedDialMenuWithShellActions,
       selectMood,
       sendingEvents,
       startup.hasBlockingState,
@@ -110,4 +120,23 @@ export function useCreateAppShellState({
       selectedMoodEmoji,
     ],
   );
+}
+
+function addMoodBarSpeedDialAction(
+  menu: SpeedDialMenu,
+  selectedMoodEmoji: string | null,
+): SpeedDialMenu {
+  return {
+    items: [
+      ...menu.items,
+      {
+        key: "shell.show-mood-bar",
+        emoji: selectedMoodEmoji ?? userMoodConfig.unknownMoodEmoji,
+        label: "Mood",
+        showLabel: true,
+        row: 4,
+        shellAction: "showMoodBar",
+      },
+    ],
+  };
 }

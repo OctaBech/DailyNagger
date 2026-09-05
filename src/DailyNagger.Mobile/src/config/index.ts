@@ -4,3 +4,4 @@ export { appMotion } from "./appMotion";
 export { appTiming } from "./appTiming";
 export { environment } from "./environment";
 export { postOfficeStripConfig } from "./postOfficeStripConfig";
+export { userMoodConfig } from "./userMoodConfig";

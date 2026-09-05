@@ -4,6 +4,7 @@ export { useEditorScreenCommands, usePlanScreenCommands } from "./screen-command
 export { useEditorScreenData, usePlanScreenData } from "./screen-data";
 export {
   emptySpeedDialMenu,
+  type ShellSpeedDialAction,
   type SpeedDialMenu,
   type SpeedDialMenuItem,
 } from "./screen-dial-menus";

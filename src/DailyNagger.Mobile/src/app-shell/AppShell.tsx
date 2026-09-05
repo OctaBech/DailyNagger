@@ -6,7 +6,11 @@ import { usePathname } from "expo-router";
 import { AssistantBubble } from "./assistant-bubble";
 import { MoodBar } from "./mood-bar";
 import { PostOfficeStrip } from "./post-office-strip";
-import { emptySpeedDialMenu, type SpeedDialMenu, useAppShellState } from "@/services";
+import {
+  emptySpeedDialMenu,
+  type SpeedDialMenu,
+  useAppShellState,
+} from "@/services";
 import { SpeedDial } from "./speed-dial";
 import { appRoutes } from "@/navigation";
 import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
@@ -17,7 +21,7 @@ type AppShellProps = {
 };
 
 export const AppShell = ({ children }: AppShellProps) => {
-  const { bottom } = useSafeAreaInsets();
+  const { bottom, top } = useSafeAreaInsets();
   const [showMoodBar, setShowMoodBar] = useState(true);
   const appShellState = useAppShellState();
   const path = usePathname();
@@ -27,7 +31,7 @@ export const AppShell = ({ children }: AppShellProps) => {
   );
   const postOfficeStripBottomOffset = appLayout.postOfficeStrip.bottom;
   const moodBarIsVisible = appShellState.globalOverlaysAreEnabled && showMoodBar;
-  let speedDialMenu = emptySpeedDialMenu;
+  let baseSpeedDialMenu = emptySpeedDialMenu;
 
   const hideMoodBar = useCallback(() => {
     setShowMoodBar(false);
@@ -38,20 +42,18 @@ export const AppShell = ({ children }: AppShellProps) => {
 
   if (appShellState.globalOverlaysAreEnabled) {
     if (path === appRoutes.plan) {
-      speedDialMenu = appShellState.speedDial.planMenu;
+      baseSpeedDialMenu = appShellState.speedDial.planMenu;
     } else if (path.startsWith(appRoutes.taskLogEditorBase)) {
-      speedDialMenu = appShellState.speedDial.editorMenu;
+      baseSpeedDialMenu = appShellState.speedDial.editorMenu;
     }
   }
-  const speedDialMenuWithShellActions = useMemo(
+  const speedDialMenu = useMemo(
     () =>
-      addShellSpeedDialActions(
-        speedDialMenu,
-        showMoodBarAgain,
-        appShellState.moodBar.selectedEmoji,
-        moodBarIsVisible,
-      ),
-    [appShellState.moodBar.selectedEmoji, moodBarIsVisible, showMoodBarAgain, speedDialMenu],
+      hydrateSpeedDialMenu(baseSpeedDialMenu, {
+        showMoodBar: showMoodBarAgain,
+        showMoodBarIsAvailable: !moodBarIsVisible,
+      }),
+    [baseSpeedDialMenu, moodBarIsVisible, showMoodBarAgain],
   );
 
   return (
@@ -66,7 +68,10 @@ export const AppShell = ({ children }: AppShellProps) => {
           />
         ) : null}
         {moodBarIsVisible ? (
-          <View pointerEvents="box-none" style={styles.moodBarOverlay}>
+          <View
+            pointerEvents="box-none"
+            style={[styles.moodBarOverlay, { top: top + appLayout.moodBar.topOffset }]}
+          >
             <MoodBar
               visible
               options={appShellState.moodBar.options}
@@ -77,7 +82,7 @@ export const AppShell = ({ children }: AppShellProps) => {
             />
           </View>
         ) : null}
-        <SpeedDial menu={speedDialMenuWithShellActions} />
+        <SpeedDial menu={speedDialMenu} />
         {appShellState.globalOverlaysAreEnabled ? (
           <AssistantBubble
             bottomOffset={assistantBubbleBottomOffset}
@@ -98,30 +103,31 @@ const styles = StyleSheet.create({
     left: 0,
     position: "absolute",
     right: 0,
-    top: appLayout.moodBar.topOffset,
     zIndex: 10,
   },
 });
 
-function addShellSpeedDialActions(
-  menu: SpeedDialMenu,
-  showMoodBar: () => void,
-  selectedMoodEmoji: string | null,
-  moodBarIsVisible: boolean,
-): SpeedDialMenu {
-  if (moodBarIsVisible) return menu;
+type ShellSpeedDialActions = {
+  readonly showMoodBar: () => void;
+  readonly showMoodBarIsAvailable: boolean;
+};
 
+function hydrateSpeedDialMenu(
+  menu: SpeedDialMenu,
+  shellActions: ShellSpeedDialActions,
+): SpeedDialMenu {
   return {
-    items: [
-      ...menu.items,
-      {
-        key: "shell.show-mood-bar",
-        emoji: selectedMoodEmoji ?? "🙂",
-        label: "Mood",
-        showLabel: true,
-        row: 4,
-        onSelect: showMoodBar,
-      },
-    ],
+    items: menu.items.flatMap((item) => {
+      if (item.onSelect !== undefined) {
+        const { shellAction: _shellAction, ...presentation } = item;
+        return [{ ...presentation, onSelect: item.onSelect }];
+      }
+
+      if (item.shellAction !== "showMoodBar") return [];
+      if (!shellActions.showMoodBarIsAvailable) return [];
+
+      const { shellAction: _shellAction, ...presentation } = item;
+      return [{ ...presentation, onSelect: shellActions.showMoodBar }];
+    }),
   };
 }
