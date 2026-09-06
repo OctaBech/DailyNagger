@@ -2,12 +2,12 @@ import type { Nagger, TaskEntry, TaskItem, TaskLog } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
 import type { Memory } from "../memory";
 
-export type ViewActionScope = {
+export type NavigationActionScope = {
   readonly memory: Memory;
 };
 
 export function naggerSetExpanded(
-  { memory }: ViewActionScope,
+  { memory }: NavigationActionScope,
   nagger: Nagger,
   isExpanded: boolean,
 ): void {
@@ -19,7 +19,7 @@ export function naggerSetExpanded(
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
-export function naggerSetFocused({ memory }: ViewActionScope, nagger: Nagger): void {
+export function naggerSetFocused({ memory }: NavigationActionScope, nagger: Nagger): void {
   const { tree } = treeOperations;
   const { freshTree, freshNagger } = tree.readNagger(memory, nagger);
   const result = tree.replaceNode(freshTree, freshNagger);
@@ -27,7 +27,7 @@ export function naggerSetFocused({ memory }: ViewActionScope, nagger: Nagger): v
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
-export function taskLogSetFocused({ memory }: ViewActionScope, taskLog: TaskLog): void {
+export function taskLogSetFocused({ memory }: NavigationActionScope, taskLog: TaskLog): void {
   const { tree } = treeOperations;
   const { freshTree, freshTaskLog } = tree.readTaskLog(memory, taskLog);
   const result = tree.replaceNode(freshTree, freshTaskLog);
@@ -36,7 +36,7 @@ export function taskLogSetFocused({ memory }: ViewActionScope, taskLog: TaskLog)
 }
 
 export function taskItemSetExpanded(
-  { memory }: ViewActionScope,
+  { memory }: NavigationActionScope,
   taskItem: TaskItem,
   isExpanded: boolean,
 ): void {
@@ -48,7 +48,7 @@ export function taskItemSetExpanded(
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
-export function taskItemSetFocused({ memory }: ViewActionScope, taskItem: TaskItem): void {
+export function taskItemSetFocused({ memory }: NavigationActionScope, taskItem: TaskItem): void {
   const { tree } = treeOperations;
   const { freshTree, freshTaskItem } = tree.readTaskItem(memory, taskItem);
   const result = tree.replaceNode(freshTree, freshTaskItem);
@@ -56,7 +56,7 @@ export function taskItemSetFocused({ memory }: ViewActionScope, taskItem: TaskIt
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
-export function taskEntrySetFocused({ memory }: ViewActionScope, taskEntry: TaskEntry): void {
+export function taskEntrySetFocused({ memory }: NavigationActionScope, taskEntry: TaskEntry): void {
   const { tree } = treeOperations;
   const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
   const result = tree.replaceNode(freshTree, freshTaskEntry);

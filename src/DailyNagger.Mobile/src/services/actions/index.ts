@@ -19,8 +19,8 @@ export {
   taskItemSetExpanded,
   taskItemSetFocused,
   taskLogSetFocused,
-  type ViewActionScope,
-} from "./viewActions";
+  type NavigationActionScope,
+} from "./navigationActions";
 export {
   editorDeleteSelectedNode,
   editorMoveSelectedNodeDown,
