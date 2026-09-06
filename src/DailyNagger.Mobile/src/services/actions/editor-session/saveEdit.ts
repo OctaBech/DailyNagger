@@ -1,30 +1,7 @@
-import type { Nagger, TreePath } from "@/models";
+import type { Nagger } from "@/models";
 import { orderNaggersByDate } from "@/models";
-import type { Guid } from "@/shared";
 import { treeOperations } from "@/services/tree-operations";
-import type { Memory } from "../memory";
-import type { ActionSending } from "../sending";
-
-export type EditorSessionActionScope = {
-  readonly editorMemory: Memory;
-  readonly planMemory: Memory;
-  readonly sending: ActionSending;
-};
-
-export function editorStartEdit(
-  { editorMemory, planMemory }: EditorSessionActionScope,
-  naggerId: Guid | null,
-): void {
-  const { node, tree } = treeOperations;
-
-  const editorNagger =
-    naggerId === null ? node.createNagger() : tree.readNagger(planMemory, naggerId).freshNagger;
-  const editorTree = tree.createNagPlan([editorNagger]);
-  const editorPath: TreePath =
-    naggerId === null ? [editorNagger, editorTree] : planMemory.read.getSelectedPath();
-
-  editorMemory.write.setTreeAndSelectedPath(editorTree, editorPath);
-}
+import type { EditorSessionActionScope } from "./contracts";
 
 export function editorSaveEdit(
   { editorMemory, planMemory, sending }: EditorSessionActionScope,
@@ -56,8 +33,4 @@ export function editorSaveEdit(
 
   sending.queue(naggerV2);
   sending.queue(taskLogV1);
-}
-
-export function editorCancelEdit({ editorMemory }: EditorSessionActionScope): void {
-  editorMemory.write.clear();
 }

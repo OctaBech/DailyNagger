@@ -1,8 +1,6 @@
 import {
-  editorCancelEdit as runEditorCancelEdit,
-  editorSaveEdit as runEditorSaveEdit,
-  editorStartEdit as runEditorStartEdit,
   editorActions,
+  editorSessionActions,
   navigationActions,
   naggerPinSelected as runNaggerPinSelected,
   naggerUnpinSelected as runNaggerUnpinSelected,
@@ -49,21 +47,21 @@ export function editorStartEdit(
   args: EditorStartEditArgs,
   context: CommandEditorSessionActionContext,
 ): void {
-  runEditorStartEdit(context, args.naggerId);
+  editorSessionActions.editorStartEdit(context, args.naggerId);
 }
 
 export function editorSave(
   args: EditorNaggerSessionArgs,
   context: CommandEditorSessionActionContext,
 ): void {
-  runEditorSaveEdit(context, args.nagger);
+  editorSessionActions.editorSaveEdit(context, args.nagger);
 }
 
 export function editorCancel(
   _args: EditorNaggerSessionArgs,
   context: CommandEditorSessionActionContext,
 ): void {
-  runEditorCancelEdit(context);
+  editorSessionActions.editorCancelEdit(context);
 }
 
 export function editorMoveSelectedNodeUp(

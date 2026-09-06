@@ -1,7 +1,7 @@
 import type { Memory } from "@/services/contracts";
 import type {
-  EditorSessionActionScope,
   editorActions,
+  editorSessionActions,
   navigationActions,
   taskInputActions,
 } from "../actions";
@@ -18,7 +18,7 @@ export type CommandEditorActionContext = editorActions.EditorActionScope;
 
 export type CommandInputActionContext = taskInputActions.TaskInputActionScope;
 
-export type CommandEditorSessionActionContext = EditorSessionActionScope;
+export type CommandEditorSessionActionContext = editorSessionActions.EditorSessionActionScope;
 
 export type CommandActionContext =
   | CommandEditorActionContext
