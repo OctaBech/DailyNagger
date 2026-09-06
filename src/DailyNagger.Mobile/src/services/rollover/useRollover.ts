@@ -1,7 +1,7 @@
 import type { Nagger, Tree } from "@/models";
 import type { Memory } from "@/services/memory";
 import type { CultureSettings } from "@/services/culture";
-import { closeTaskLogForRollover, rolloverNagger } from "@/services/actions";
+import { rolloverActions } from "@/services/actions";
 import type { Sending } from "@/services/sending";
 import { useEffect } from "react";
 import { appTiming } from "@/config";
@@ -59,7 +59,7 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
     // Do not rollover a nagger if its TaskLog has pending server updates
     if (sending.hasUpdateBelongingTo("task-log", nagger.taskLog.id)) continue;
 
-    closeTaskLogForRollover(
+    rolloverActions.closeTaskLogForRollover(
       {
         cultureSettings,
         planMemory,
@@ -74,7 +74,7 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
       },
       nagger,
     );
-    rolloverNagger(
+    rolloverActions.rolloverNagger(
       {
         cultureSettings,
         planMemory,
