@@ -4,21 +4,7 @@ import type { EditorActionScope } from "./contracts";
 
 type MoveDirection = "up" | "down";
 
-export function editorMoveSelectedNodeUp(
-  scope: EditorActionScope,
-  moveContext: SelectedMoveContext,
-): void {
-  moveSelectedNode(scope, moveContext, "up");
-}
-
-export function editorMoveSelectedNodeDown(
-  scope: EditorActionScope,
-  moveContext: SelectedMoveContext,
-): void {
-  moveSelectedNode(scope, moveContext, "down");
-}
-
-function moveSelectedNode(
+export function moveSelectedNode(
   { memory }: EditorActionScope,
   moveContext: SelectedMoveContext,
   direction: MoveDirection,
