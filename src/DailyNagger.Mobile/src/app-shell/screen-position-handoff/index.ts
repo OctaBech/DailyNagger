@@ -1,5 +1,5 @@
+export { ScreenPositionHandoffDebug } from "./ScreenPositionHandoffDebug";
 export {
-  ScreenPositionHandoffDebug,
   ScreenPositionHandoffProvider,
   useScreenPositionHandoff,
 } from "./useScreenPositionHandoff";
