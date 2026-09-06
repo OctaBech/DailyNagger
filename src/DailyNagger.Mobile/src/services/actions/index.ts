@@ -1,4 +1,4 @@
-export { importLoadedPlanToMemory } from "./loadedPlanImportActions";
+export { importLoadedPlanToMemory } from "./loaded-plan-import";
 export * as editorActions from "./editor";
 export * as editorSessionActions from "./editor-session";
 export * as navigationActions from "./navigation";
