@@ -10,7 +10,7 @@ import { scheduleRuleDtoToModel, type Tree } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
 
 export function nagPlanDtoToTree(nagPlanDto: NagPlanDto) {
-  return treeOperations.tree.replaceAllNodes<NagPlanDto, Tree>(nagPlanDto, {
+  return treeOperations.modelConversion.replaceAllNodes<NagPlanDto, Tree>(nagPlanDto, {
     replaceNagPlan: (nagPlanDtoConvert) => {
       return extendDtoNode(nagPlanDtoConvert, nagPlanClientModelExtensionDefaults);
     },

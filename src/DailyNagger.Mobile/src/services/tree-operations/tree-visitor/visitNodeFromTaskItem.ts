@@ -1,7 +1,4 @@
-import type {
-  TaskEntryTraversedNode,
-  TaskItemTraversedNode,
-} from "./traversed-node";
+import type { TaskEntryTraversedNode, TaskItemTraversedNode } from "./traversed-node";
 import type { TreeVisitor, VisitRequest } from "./contracts";
 import { isRequestTargetUnreachable } from "./targetMatching";
 import { visitArrayNodes } from "./visitArray";
@@ -23,7 +20,7 @@ export function visitNodeFromTaskItem(
       childPath: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskItem,
-      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+      allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
     });
   }
 
@@ -68,19 +65,19 @@ export function visitNodeFromTaskItem(
     childPath: [...taskItemsResult.recordedPath, ...taskEntriesResult.recordedPath],
     childBubble,
     visitNode: visitor.visitTaskItem,
-    allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+    allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
   });
 }
 
 function shouldVisitTaskEntry(request: VisitRequest, taskEntry: TaskEntryTraversedNode): boolean {
-  if (request.kind === "all") return true;
+  if (request.kind === "whole-tree") return true;
   if (request.target.kind !== "task-entry") return false;
 
   return request.target.id === taskEntry.id;
 }
 
 function shouldVisitTaskEntries(request: VisitRequest, taskItem: TaskItemTraversedNode): boolean {
-  if (request.kind === "all") return true;
+  if (request.kind === "whole-tree") return true;
   if (request.target.kind !== "task-entry") return false;
 
   return (
@@ -93,7 +90,7 @@ function shouldVisitChildTaskItems(
   request: VisitRequest,
   taskItem: TaskItemTraversedNode,
 ): boolean {
-  if (request.kind === "all") return true;
+  if (request.kind === "whole-tree") return true;
   if (request.target.kind !== "task-entry") return true;
   return (
     request.target.requiredAncestry.taskLogId === taskItem.taskLogId &&

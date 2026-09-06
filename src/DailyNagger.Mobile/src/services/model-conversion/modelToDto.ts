@@ -11,7 +11,7 @@ import {
 import { treeOperations } from "@/services/tree-operations";
 
 export function nagPlanToDto(nagPlan: NagPlan): NagPlanDto {
-  return treeOperations.tree.replaceAllNodes<NagPlan, NagPlanDto>(nagPlan, {
+  return treeOperations.modelConversion.replaceAllNodes<NagPlan, NagPlanDto>(nagPlan, {
     replaceNagPlan: (nagPlanToDto) => {
       return stripClientModelExtension(nagPlanToDto, nagPlanClientModelExtensionDefaults);
     },
@@ -57,7 +57,7 @@ export function naggerToDto(nagger: Nagger): NaggerDto {
 }
 
 export function taskLogToDto(taskLog: TaskLog): TaskLogDto {
-  return treeOperations.tree.replaceAllNodesFromTaskLog<TaskLog, TaskLogDto>(taskLog, {
+  return treeOperations.modelConversion.replaceAllNodesFromTaskLog<TaskLog, TaskLogDto>(taskLog, {
     replaceTaskLog: (taskLogToDto) => {
       return stripClientModelExtension(taskLogToDto, taskLogClientModelExtensionDefaults);
     },

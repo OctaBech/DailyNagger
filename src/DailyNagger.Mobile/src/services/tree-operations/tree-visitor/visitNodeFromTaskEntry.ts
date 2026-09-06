@@ -18,7 +18,7 @@ export function visitNodeFromTaskEntry(
       childPath: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskEntry,
-      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+      allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
     });
   }
 
@@ -29,7 +29,7 @@ function requestTargetsTaskEntry(
   request: VisitRequest,
   taskEntry: TaskEntryTraversedNode,
 ): boolean {
-  if (request.kind === "all") return true;
+  if (request.kind === "whole-tree") return true;
   if (request.kind !== "target") return false;
   if (request.target.kind !== "task-entry") return false;
 

@@ -3,13 +3,6 @@ import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } f
 import type { Guid } from "@/shared";
 import type { TreeReader } from "./contracts";
 import { targets } from "./tree-visitor";
-import type {
-  NaggerTraversedNode,
-  NagPlanTraversedNode,
-  TaskEntryTraversedNode,
-  TaskItemTraversedNode,
-  TaskLogTraversedNode,
-} from "./tree-visitor/traversed-node";
 
 type ReadNaggerResult = {
   readonly freshTree: Tree;
@@ -44,20 +37,6 @@ type ReplaceNodeResult = {
 
 type ReadableNode = Exclude<TreeNode, Tree>;
 
-type ReplaceAllNodesVisitor = {
-  readonly replaceNagPlan: (nagPlan: NagPlanTraversedNode) => NagPlanTraversedNode;
-  readonly replaceNagger: (nagger: NaggerTraversedNode) => NaggerTraversedNode;
-  readonly replaceTaskLog: (taskLog: TaskLogTraversedNode) => TaskLogTraversedNode;
-  readonly replaceTaskItem: (taskItem: TaskItemTraversedNode) => TaskItemTraversedNode;
-  readonly replaceTaskEntry: (taskEntry: TaskEntryTraversedNode) => TaskEntryTraversedNode;
-};
-
-type ReplaceAllNodesFromTaskLogVisitor = {
-  readonly replaceTaskLog: (taskLog: TaskLogTraversedNode) => TaskLogTraversedNode;
-  readonly replaceTaskItem: (taskItem: TaskItemTraversedNode) => TaskItemTraversedNode;
-  readonly replaceTaskEntry: (taskEntry: TaskEntryTraversedNode) => TaskEntryTraversedNode;
-};
-
 export const tree = {
   createNagPlan,
   getNaggerBranch,
@@ -66,8 +45,6 @@ export const tree = {
   readTaskEntry,
   readTaskItem,
   readTaskLog,
-  replaceAllNodes,
-  replaceAllNodesFromTaskLog,
   replaceNode,
   replaceTaskEntry,
   replaceNagger,
@@ -95,42 +72,6 @@ function getNaggerBranch(tree: Tree, naggerId: Guid): Tree {
     ...tree,
     nags: [nagger],
   };
-}
-
-function replaceAllNodes<TIn extends NagPlanTraversedNode, TOut extends NagPlanTraversedNode>(
-  tree: TIn,
-  visitor: ReplaceAllNodesVisitor,
-): TOut {
-  const result = targets.visitAll(tree, {
-    visitNagPlan: visitor.replaceNagPlan,
-    visitNagger: visitor.replaceNagger,
-    visitTaskLog: visitor.replaceTaskLog,
-    visitTaskItem: visitor.replaceTaskItem,
-    visitTaskEntry: visitor.replaceTaskEntry,
-  });
-
-  if (result.kind === "not-found") {
-    throw new Error("Cannot replace all tree nodes because the tree root was not visited.");
-  }
-
-  return result.node as TOut;
-}
-
-function replaceAllNodesFromTaskLog<
-  TIn extends TaskLogTraversedNode,
-  TOut extends TaskLogTraversedNode,
->(taskLog: TIn, visitor: ReplaceAllNodesFromTaskLogVisitor): TOut {
-  const result = targets.visitAllFromTaskLog(taskLog, {
-    visitTaskLog: visitor.replaceTaskLog,
-    visitTaskItem: visitor.replaceTaskItem,
-    visitTaskEntry: visitor.replaceTaskEntry,
-  });
-
-  if (result.kind === "not-found") {
-    throw new Error("Cannot replace TaskLog subtree nodes because the TaskLog was not visited.");
-  }
-
-  return result.node as TOut;
 }
 
 function readNagger(memory: TreeReader, staleNaggerOrId: Nagger | Guid): ReadNaggerResult {

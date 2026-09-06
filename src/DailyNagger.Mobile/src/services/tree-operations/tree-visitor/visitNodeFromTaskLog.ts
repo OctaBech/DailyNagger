@@ -18,7 +18,7 @@ export function visitNodeFromTaskLog(
       childPath: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskLog,
-      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+      allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
     });
   }
 
@@ -44,7 +44,7 @@ export function visitNodeFromTaskLog(
       childPath: taskItemsResult.recordedPath,
       childBubble: taskItemsResult.bubble,
       visitNode: visitor.visitTaskLog,
-      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+      allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
     });
   }
 

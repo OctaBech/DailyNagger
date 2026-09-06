@@ -17,7 +17,7 @@ type VisitTargetArrayNodesProps<TNode extends TraversedNode> = {
   readonly visitNode: (node: TNode) => VisitResult<TNode>;
 };
 
-type VisitAllArrayNodesProps<TNode extends TraversedNode> = {
+type VisitWholeArrayNodesProps<TNode extends TraversedNode> = {
   readonly ownerNode: { readonly clientProps?: { readonly indexHint?: number } };
   readonly ownerPath: readonly TraversedNode[];
   readonly nodes: readonly TNode[];
@@ -45,8 +45,8 @@ export function visitArrayNodes<TNode extends TraversedNode>({
 }: VisitArrayNodesInput<TNode>): VisitArrayResult<TNode> {
   if (!shouldVisitArray) return notVisited(ownerNode, nodes);
 
-  if (request.kind === "all") {
-    return visitAllArrayNodes({
+  if (request.kind === "whole-tree") {
+    return visitWholeArrayNodes({
       ownerNode,
       ownerPath,
       nodes,
@@ -94,12 +94,12 @@ function visitTargetArrayNode<TNode extends TraversedNode>({
   return notVisited(ownerNode, nodes);
 }
 
-function visitAllArrayNodes<TNode extends TraversedNode>({
+function visitWholeArrayNodes<TNode extends TraversedNode>({
   ownerNode,
   ownerPath,
   nodes,
   visitNode,
-}: VisitAllArrayNodesProps<TNode>): VisitArrayResult<TNode> {
+}: VisitWholeArrayNodesProps<TNode>): VisitArrayResult<TNode> {
   let recordedPath: readonly TraversedNode[] = ownerPath;
 
   const newNodes = nodes.map((node) => {

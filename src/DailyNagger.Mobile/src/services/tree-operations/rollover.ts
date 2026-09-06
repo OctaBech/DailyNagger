@@ -1,6 +1,6 @@
 import { emptyInteractionStamp, type TaskEntry, type TaskItem, type TaskLog } from "@/models";
 import { newGuid, type Guid } from "@/shared";
-import { tree } from "./tree";
+import { modelConversion } from "./modelConversion";
 
 export const rollover = {
   createTaskLog,
@@ -18,7 +18,7 @@ function createTaskLog(sourceTaskLog: TaskLog): TaskLog {
     return newId;
   };
 
-  return tree.replaceAllNodesFromTaskLog<TaskLog, TaskLog>(sourceTaskLog, {
+  return modelConversion.replaceAllNodesFromTaskLog<TaskLog, TaskLog>(sourceTaskLog, {
     replaceTaskLog: (taskLog) => {
       const taskLogModel = taskLog as TaskLog;
       const taskItems = keepRolloverTaskItems(taskLogModel.taskItems);

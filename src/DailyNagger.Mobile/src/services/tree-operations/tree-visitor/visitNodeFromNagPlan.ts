@@ -20,18 +20,14 @@ export function visitNodeFromNagPlan(
   });
 
   if (naggerResult.wasVisited) {
-    const nodeWithVisitedNaggers = withNaggers(
-      nagPlan,
-      naggerResult.nodes,
-      naggerResult.indexHint,
-    );
+    const nodeWithVisitedNaggers = withNaggers(nagPlan, naggerResult.nodes, naggerResult.indexHint);
 
     return visitCurrentNode({
       node: nodeWithVisitedNaggers,
       childPath: naggerResult.recordedPath,
       childBubble: naggerResult.bubble,
       visitNode: visitor.visitNagPlan,
-      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+      allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
     });
   }
 
@@ -39,7 +35,7 @@ export function visitNodeFromNagPlan(
 }
 
 function shouldVisitNagger(request: VisitRequest, nagger: NaggerTraversedNode): boolean {
-  if (request.kind === "all") return true;
+  if (request.kind === "whole-tree") return true;
 
   switch (request.target.kind) {
     case "nagger":

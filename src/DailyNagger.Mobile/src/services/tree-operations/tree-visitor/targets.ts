@@ -6,6 +6,7 @@ import type {
   TaskEntryTraversedNode,
   TaskItemTraversedNode,
   TaskLogTraversedNode,
+  TraversedNode,
 } from "./traversed-node";
 import type {
   NaggerTarget,
@@ -23,6 +24,17 @@ import type { VisitResult } from "./visitResult";
 
 export type TargetVisitContext = VisitContext;
 
+type WholeTreeVisitResult<TNode extends NagPlanTraversedNode | TaskLogTraversedNode> =
+  | {
+      readonly kind: "not-found";
+      readonly node: TNode;
+    }
+  | {
+      readonly kind: "visited";
+      readonly node: TNode;
+      readonly visitedNodes: readonly TraversedNode[];
+    };
+
 type TargetVisitor = {
   readonly visitNagger?: (nagger: Nagger, context: TargetVisitContext) => Nagger;
   readonly visitTaskLog?: (taskLog: TaskLog, context: TargetVisitContext) => TaskLog;
@@ -32,23 +44,35 @@ type TargetVisitor = {
 
 export const targets = {
   fromTaskItem,
-  visitAll,
-  visitAllFromTaskLog,
+  visitWholeTaskLog,
+  visitWholeTree,
   visitNode,
 } as const;
 
-function visitAll(
+function visitWholeTree(
   fromTree: NagPlanTraversedNode,
   visitor: TreeVisitor,
-): VisitResult<NagPlanTraversedNode> {
-  return visitNodeFromNagPlan(fromTree, { kind: "all", allowIdentityChange: true }, visitor);
+): WholeTreeVisitResult<NagPlanTraversedNode> {
+  const result = visitNodeFromNagPlan(
+    fromTree,
+    { kind: "whole-tree", allowIdentityChange: true },
+    visitor,
+  );
+
+  return toWholeTreeResult(result);
 }
 
-function visitAllFromTaskLog(
+function visitWholeTaskLog(
   taskLog: TaskLogTraversedNode,
   visitor: TreeVisitor,
-): VisitResult<TaskLogTraversedNode> {
-  return visitNodeFromTaskLog(taskLog, { kind: "all", allowIdentityChange: true }, visitor);
+): WholeTreeVisitResult<TaskLogTraversedNode> {
+  const result = visitNodeFromTaskLog(
+    taskLog,
+    { kind: "whole-tree", allowIdentityChange: true },
+    visitor,
+  );
+
+  return toWholeTreeResult(result);
 }
 
 function visitNode(
@@ -173,5 +197,17 @@ function toTreeVisitor(visitor: TargetVisitor): TreeVisitor {
               context,
             ) as TaskEntryTraversedNode;
           },
+  };
+}
+
+function toWholeTreeResult<TNode extends NagPlanTraversedNode | TaskLogTraversedNode>(
+  result: VisitResult<TNode>,
+): WholeTreeVisitResult<TNode> {
+  if (result.kind === "not-found") return result;
+
+  return {
+    kind: "visited",
+    node: result.node,
+    visitedNodes: result.recordedPath,
   };
 }

@@ -15,7 +15,7 @@ export function visitNodeFromNagger(
       childPath: [],
       isTargetNode: true,
       visitNode: visitor.visitNagger,
-      allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+      allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
     });
   }
 
@@ -33,7 +33,7 @@ export function visitNodeFromNagger(
         childPath: taskLogResult.recordedPath,
         childBubble: taskLogResult.bubble,
         visitNode: visitor.visitNagger,
-        allowIdentityChange: request.kind === "all" && request.allowIdentityChange === true,
+        allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
       });
     }
   }
@@ -42,7 +42,7 @@ export function visitNodeFromNagger(
 }
 
 function shouldVisitTaskLog(request: VisitRequest, taskLog: TaskLogTraversedNode): boolean {
-  if (request.kind === "all") return true;
+  if (request.kind === "whole-tree") return true;
 
   switch (request.target.kind) {
     case "task-log":
