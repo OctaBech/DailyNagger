@@ -1,5 +1,5 @@
 import type { Guid } from "@/shared";
-import type { InternalScreenPositionDebugStore, ScreenName } from "./useScreenPositionHandoff";
+import type { InternalScreenPositionDebugStore, ScreenName } from "./contracts";
 
 export type ScreenPositionWriter = {
   readonly setScrollY: (scrollY: number) => void;
