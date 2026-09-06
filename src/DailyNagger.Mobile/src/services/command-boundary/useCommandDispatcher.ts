@@ -183,7 +183,7 @@ function contextMatchesScope(context: CommandActionContext, scope: CommandScope)
       return "memory" in context && !("sending" in context);
 
     case "input":
-      return "memory" in context && "sending" in context && "cultureSettings" in context;
+      return "memory" in context && "sending" in context && "interactionStamp" in context;
 
     case "sync":
       return "memory" in context && "sending" in context && !("cultureSettings" in context);
