@@ -79,9 +79,11 @@ Keep operations separate.
 
 Action files are grouped by user intent:
 
-- `navigationActions` keeps track of where the user is in the tree.
-- `taskInputActions` records task execution from the plan screen and queues
+- `navigation` keeps track of where the user is in the tree.
+- `task-input` records task execution from the plan screen and queues
   server work.
-- `editorActions` mutates the editor draft without queueing server work.
-- `editorSessionActions` moves data between plan memory and editor memory.
-- `rolloverActions` closes or creates task logs for scheduled rollover.
+- `editor` mutates the editor draft without queueing server work.
+- `editor-session` moves data between plan memory and editor memory.
+- `rollover` closes or creates task logs for scheduled rollover.
+- `sync` performs explicit server-facing synchronization work.
+- `loaded-plan-import` imports server DTOs into local memory.
