@@ -2,8 +2,7 @@ import {
   editorActions,
   editorSessionActions,
   navigationActions,
-  naggerPinSelected as runNaggerPinSelected,
-  naggerUnpinSelected as runNaggerUnpinSelected,
+  syncActions,
   taskInputActions,
 } from "../actions";
 import type {
@@ -110,14 +109,14 @@ export function naggerPinSelected(
   args: NaggerPinningArgs,
   context: CommandSyncActionContext,
 ): void {
-  runNaggerPinSelected(context, args.nagger);
+  syncActions.naggerPinSelected(context, args.nagger);
 }
 
 export function naggerUnpinSelected(
   args: NaggerPinningArgs,
   context: CommandSyncActionContext,
 ): void {
-  runNaggerUnpinSelected(context, args.nagger);
+  syncActions.naggerUnpinSelected(context, args.nagger);
 }
 
 export function editorNaggerSetScheduleRules(

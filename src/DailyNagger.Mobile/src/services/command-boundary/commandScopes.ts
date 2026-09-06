@@ -1,18 +1,14 @@
-import type { Memory } from "@/services/contracts";
 import type {
   editorActions,
   editorSessionActions,
   navigationActions,
+  syncActions,
   taskInputActions,
 } from "../actions";
-import type { ActionSending } from "../sending";
 
 export type CommandViewActionContext = navigationActions.NavigationActionScope;
 
-export type CommandSyncActionContext = {
-  readonly memory: Memory;
-  readonly sending: ActionSending;
-};
+export type CommandSyncActionContext = syncActions.SyncActionScope;
 
 export type CommandEditorActionContext = editorActions.EditorActionScope;
 
