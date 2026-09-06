@@ -6,9 +6,22 @@ Accepted
 
 ## Context
 
-DailyNagger uses a command boundary so screens can say what happened without
-also knowing how memory, sending, interaction stamps, editor sessions, or tree
-operations are wired.
+DailyNagger wants actions to live in services and read like small behavior
+scripts.
+
+A button in JSX should not import those actions directly. If it does, the
+component starts pulling in memory, sending, tree operations, interaction
+stamps, editor state, and observability wiring.
+
+That creates dependency domino.
+
+Instead, services can build screen and menu view models that contain command
+names as strings. JSX can render those commands without knowing the action
+function behind them.
+
+When the user presses a button, JSX sends the command name and command arguments
+back to the command boundary. The boundary maps the command to the real action
+function and gives that action the correct runtime context.
 
 That boundary is only useful if a reader can follow one command without getting
 lost in repeated registrations. A command should have one clear registry entry,
@@ -29,6 +42,8 @@ are routed through the command boundary.
 
 ## Decision
 
+The command boundary maps command names to real action functions.
+
 Commands are registered in `commandRegistry.ts`.
 
 Each command registry entry must show the command name, the command scope, and
@@ -40,6 +55,13 @@ the command handler:
 
 The registry is the single place where a command becomes part of the command
 boundary.
+
+The command source identifies where the command came from, for example
+`plan-input`, `editor-action`, or `editor-session`.
+
+The scope decides which runtime context the command may receive. That context is
+based on the source and contains only the dependencies that action category is
+allowed to use.
 
 Command argument contracts live under `command-args/<scope-package>/` using the
 same package names as the action groups. For example, navigation/view commands
