@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import type { Guid } from "@/shared";
+import { createScreenPositionTracker, type ScreenPositionWriter } from "./ScreenPositionTracker";
 
-type ScreenName = "plan" | "editor";
+export type ScreenName = "plan" | "editor";
 
 type ScreenPositionHandoff = {
   readonly plan: ScreenPositionWriter;
@@ -11,11 +12,6 @@ type ScreenPositionHandoff = {
   readonly markEditorPlacementApplied: (placement: EditorPlacement) => void;
   readonly markPlanPlacementApplied: (placement: PlanPlacement) => void;
   readonly debug: ScreenPositionDebugStore;
-};
-
-type ScreenPositionWriter = {
-  readonly setScrollY: (scrollY: number) => void;
-  readonly setNaggerTopY: (naggerId: Guid, topY: number) => void;
 };
 
 type EditorPlacement = {
@@ -31,12 +27,6 @@ type PlanPlacement = {
   readonly destinationTopY: number;
   readonly currentScrollY: number;
   readonly nextScrollY: number;
-};
-
-type ScreenPositionState = {
-  scrollY: number;
-  naggerId: Guid | null;
-  naggerTopY: number | null;
 };
 
 export type ScreenPositionDebugSnapshot = {
@@ -84,22 +74,30 @@ export function useScreenPositionHandoff(): ScreenPositionHandoff {
 }
 
 function createScreenPositionHandoff(): ScreenPositionHandoff {
-  const plan = createScreenPositionState();
-  const editor = createScreenPositionState();
   const debug = createScreenPositionDebugStore();
+  const plan = createScreenPositionTracker("plan", debug);
+  const editor = createScreenPositionTracker("editor", debug);
 
   return {
-    plan: createScreenPositionWriter("plan", plan, debug),
-    editor: createScreenPositionWriter("editor", editor, debug),
+    plan: plan.writer,
+    editor: editor.writer,
     readEditorPlacement: (naggerId) => {
-      if (plan.naggerId !== naggerId || plan.naggerTopY === null) return null;
+      const planSnapshot = plan.read();
+      if (planSnapshot.naggerId !== naggerId || planSnapshot.naggerTopY === null) return null;
 
-      return createEditorPlacement(naggerId, plan.naggerTopY);
+      return createEditorPlacement(naggerId, planSnapshot.naggerTopY);
     },
     readPlanPlacement: (naggerId, currentTopY) => {
-      if (editor.naggerId !== naggerId || editor.naggerTopY === null) return null;
+      const editorSnapshot = editor.read();
+      const planSnapshot = plan.read();
+      if (editorSnapshot.naggerId !== naggerId || editorSnapshot.naggerTopY === null) return null;
 
-      return createPlanPlacement(naggerId, editor.naggerTopY, currentTopY, plan.scrollY);
+      return createPlanPlacement(
+        naggerId,
+        editorSnapshot.naggerTopY,
+        currentTopY,
+        planSnapshot.scrollY,
+      );
     },
     markEditorPlacementApplied: (placement) => {
       debug.setEditorPlacement(placement);
@@ -108,32 +106,6 @@ function createScreenPositionHandoff(): ScreenPositionHandoff {
       debug.setPlanPlacement(placement);
     },
     debug,
-  };
-}
-
-function createScreenPositionState(): ScreenPositionState {
-  return {
-    scrollY: 0,
-    naggerId: null,
-    naggerTopY: null,
-  };
-}
-
-function createScreenPositionWriter(
-  screen: ScreenName,
-  state: ScreenPositionState,
-  debug: InternalScreenPositionDebugStore,
-): ScreenPositionWriter {
-  return {
-    setScrollY: (scrollY) => {
-      state.scrollY = scrollY;
-      debug.setScrollY(screen, scrollY);
-    },
-    setNaggerTopY: (naggerId, topY) => {
-      state.naggerId = naggerId;
-      state.naggerTopY = topY;
-      debug.setNaggerTopY(screen, naggerId, topY);
-    },
   };
 }
 
@@ -161,7 +133,7 @@ function createPlanPlacement(
   };
 }
 
-type InternalScreenPositionDebugStore = ScreenPositionDebugStore & {
+export type InternalScreenPositionDebugStore = ScreenPositionDebugStore & {
   readonly setScrollY: (screen: ScreenName, scrollY: number) => void;
   readonly setNaggerTopY: (screen: ScreenName, naggerId: Guid, topY: number) => void;
   readonly setEditorPlacement: (placement: EditorPlacement) => void;
