@@ -10,6 +10,7 @@ import type {
   EditorMoveSelectedNodeArgs,
   EditorNaggerSessionArgs,
   EditorStartEditArgs,
+  EditorTaskEntrySetValueArgs,
   NaggerPinningArgs,
   NaggerSetExpandedArgs,
   NaggerSetFocusedArgs,
@@ -265,7 +266,7 @@ export function editorTaskEntrySetValueType(
 }
 
 export function editorTaskEntrySetValue(
-  args: TaskEntrySetValueArgs,
+  args: EditorTaskEntrySetValueArgs,
   context: CommandEditorActionContext,
 ): void {
   editorActions.editorTaskEntrySetValue(context, args.taskEntry, args.newValue);
