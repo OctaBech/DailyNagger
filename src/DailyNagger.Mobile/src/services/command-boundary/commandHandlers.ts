@@ -3,15 +3,10 @@ import {
   editorSaveEdit as runEditorSaveEdit,
   editorStartEdit as runEditorStartEdit,
   editorActions,
+  navigationActions,
   naggerPinSelected as runNaggerPinSelected,
-  naggerSetExpanded as runNaggerSetExpanded,
-  naggerSetFocused as runNaggerSetFocused,
   naggerUnpinSelected as runNaggerUnpinSelected,
   taskInputActions,
-  taskEntrySetFocused as runTaskEntrySetFocused,
-  taskItemSetExpanded as runTaskItemSetExpanded,
-  taskItemSetFocused as runTaskItemSetFocused,
-  taskLogSetFocused as runTaskLogSetFocused,
 } from "../actions";
 import type {
   EditorDeleteSelectedNodeArgs,
@@ -103,14 +98,14 @@ export function naggerSetExpanded(
   args: NaggerSetExpandedArgs,
   context: CommandViewActionContext,
 ): void {
-  runNaggerSetExpanded(context, args.nagger, args.isExpanded);
+  navigationActions.naggerSetExpanded(context, args.nagger, args.isExpanded);
 }
 
 export function naggerSetFocused(
   args: NaggerSetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  runNaggerSetFocused(context, args.nagger);
+  navigationActions.naggerSetFocused(context, args.nagger);
 }
 
 export function naggerPinSelected(
@@ -152,7 +147,7 @@ export function taskLogSetFocused(
   args: TaskLogSetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  runTaskLogSetFocused(context, args.taskLog);
+  navigationActions.taskLogSetFocused(context, args.taskLog);
 }
 
 export function editorTaskLogSetTag(
@@ -180,14 +175,14 @@ export function taskItemSetExpanded(
   args: TaskItemSetExpandedArgs,
   context: CommandViewActionContext,
 ): void {
-  runTaskItemSetExpanded(context, args.taskItem, args.isExpanded);
+  navigationActions.taskItemSetExpanded(context, args.taskItem, args.isExpanded);
 }
 
 export function taskItemSetFocused(
   args: TaskItemSetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  runTaskItemSetFocused(context, args.taskItem);
+  navigationActions.taskItemSetFocused(context, args.taskItem);
 }
 
 export function taskItemSetDoneAndSetFocus(
@@ -236,7 +231,7 @@ export function taskEntrySetFocused(
   args: TaskEntrySetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  runTaskEntrySetFocused(context, args.taskEntry);
+  navigationActions.taskEntrySetFocused(context, args.taskEntry);
 }
 
 export function taskEntrySetValue(
