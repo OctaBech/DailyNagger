@@ -1,9 +1,9 @@
 import type { Memory } from "@/services/contracts";
 import type {
-  EditorActionScope,
   EditorSessionActionScope,
   NavigationActionScope,
-  TaskInputActionScope,
+  editorActions,
+  taskInputActions,
 } from "../actions";
 import type { ActionSending } from "../sending";
 
@@ -14,9 +14,9 @@ export type CommandSyncActionContext = {
   readonly sending: ActionSending;
 };
 
-export type CommandEditorActionContext = EditorActionScope;
+export type CommandEditorActionContext = editorActions.EditorActionScope;
 
-export type CommandInputActionContext = TaskInputActionScope;
+export type CommandInputActionContext = taskInputActions.TaskInputActionScope;
 
 export type CommandEditorSessionActionContext = EditorSessionActionScope;
 

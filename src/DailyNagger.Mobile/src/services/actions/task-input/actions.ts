@@ -6,7 +6,7 @@ import {
   type TreeNode,
 } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { ActionSending, InteractionStamp, Memory } from "../contracts";
+import type { ActionSending, InteractionStamp, Memory } from "../../contracts";
 
 export type TaskInputActionScope = {
   readonly memory: Memory;

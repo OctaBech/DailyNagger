@@ -12,7 +12,7 @@ import {
 } from "@/models";
 import { scheduleCalculator } from "@/services/schedule-calculator";
 import { treeOperations } from "@/services/tree-operations";
-import type { CultureSettings, Memory } from "../contracts";
+import type { CultureSettings, Memory } from "../../contracts";
 
 export type EditorActionScope = {
   readonly cultureSettings: CultureSettings;

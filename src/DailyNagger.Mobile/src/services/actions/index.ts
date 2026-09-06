@@ -4,11 +4,6 @@ export {
   editorStartEdit,
   type EditorSessionActionScope,
 } from "./editorSessionActions";
-export {
-  addTaskEntryToTaskItem,
-  addTaskItemToTaskItem,
-  addTaskItemToTaskLog,
-} from "./addTreeNodeActions";
 export { importLoadedPlanToMemory } from "./loadedPlanImportActions";
 export { closeTaskLogForRollover, rolloverNagger } from "./rolloverActions";
 export {
@@ -20,28 +15,6 @@ export {
   taskLogSetFocused,
   type NavigationActionScope,
 } from "./navigationActions";
-export {
-  editorDeleteSelectedNode,
-  editorDeleteOnceTaskItem,
-  editorMoveSelectedNodeDown,
-  editorMoveSelectedNodeUp,
-  editorNaggerSetScheduleRules,
-  editorNaggerSetTargetTime,
-  editorNaggerSetTitle,
-  editorTaskEntrySetLabel,
-  editorTaskEntrySetTag,
-  editorTaskEntrySetValue,
-  editorTaskEntrySetValueType,
-  editorTaskItemSetName,
-  editorTaskItemSetTag,
-  editorTaskLogSetTag,
-  type EditorActionScope,
-} from "./editorActions";
-export {
-  deleteOnceTaskItem,
-  taskEntrySetValue,
-  taskItemSetDoneAndSetFocus,
-  taskLogAddTaskStep,
-  type TaskInputActionScope,
-} from "./taskInputActions";
+export * as editorActions from "./editor";
+export * as taskInputActions from "./task-input";
 export { naggerPinSelected, naggerUnpinSelected } from "./naggerPinningActions";
