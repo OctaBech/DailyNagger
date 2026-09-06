@@ -6,12 +6,12 @@ import { usePathname } from "expo-router";
 import { AssistantBubble } from "./assistant-bubble";
 import { MoodBar } from "./mood-bar";
 import { PostOfficeStrip } from "./post-office-strip";
-import {
-  emptySpeedDialMenu,
-  type SpeedDialMenu,
-  useAppShellState,
-} from "@/services";
+import { emptySpeedDialMenu, type SpeedDialMenu, useAppShellState } from "@/services";
 import { SpeedDial } from "./speed-dial";
+import {
+  ScreenPositionHandoffDebug,
+  ScreenPositionHandoffProvider,
+} from "./screen-position-handoff";
 import { appRoutes } from "@/navigation";
 import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
 import { appLayout } from "@/config";
@@ -58,38 +58,41 @@ export const AppShell = ({ children }: AppShellProps) => {
 
   return (
     <ModalKeyboardBoundaryProvider>
-      <SafeAreaView style={styles.container}>
-        {Platform.OS === "android" ? null : <StatusBar style="auto" />}
-        {children}
-        {appShellState.globalOverlaysAreEnabled ? (
-          <PostOfficeStrip
-            sendingEvents={appShellState.sendingEvents}
-            bottomOffset={postOfficeStripBottomOffset}
-          />
-        ) : null}
-        {moodBarIsVisible ? (
-          <View
-            pointerEvents="box-none"
-            style={[styles.moodBarOverlay, { top: top + appLayout.moodBar.topOffset }]}
-          >
-            <MoodBar
-              visible
-              options={appShellState.moodBar.options}
-              selected={appShellState.moodBar.selectedMood}
-              selectedAt={appShellState.moodBar.selectedAt}
-              onSelect={appShellState.moodBar.select}
-              onSelectionFeedbackHidden={hideMoodBar}
+      <ScreenPositionHandoffProvider>
+        <SafeAreaView style={styles.container}>
+          {Platform.OS === "android" ? null : <StatusBar style="auto" />}
+          {children}
+          {appShellState.globalOverlaysAreEnabled ? (
+            <PostOfficeStrip
+              sendingEvents={appShellState.sendingEvents}
+              bottomOffset={postOfficeStripBottomOffset}
             />
-          </View>
-        ) : null}
-        <SpeedDial menu={speedDialMenu} />
-        {appShellState.globalOverlaysAreEnabled ? (
-          <AssistantBubble
-            bottomOffset={assistantBubbleBottomOffset}
-            leftOffset={appLayout.assistantBubble.left}
-          />
-        ) : null}
-      </SafeAreaView>
+          ) : null}
+          {moodBarIsVisible ? (
+            <View
+              pointerEvents="box-none"
+              style={[styles.moodBarOverlay, { top: top + appLayout.moodBar.topOffset }]}
+            >
+              <MoodBar
+                visible
+                options={appShellState.moodBar.options}
+                selected={appShellState.moodBar.selectedMood}
+                selectedAt={appShellState.moodBar.selectedAt}
+                onSelect={appShellState.moodBar.select}
+                onSelectionFeedbackHidden={hideMoodBar}
+              />
+            </View>
+          ) : null}
+          <SpeedDial menu={speedDialMenu} />
+          <ScreenPositionHandoffDebug />
+          {appShellState.globalOverlaysAreEnabled ? (
+            <AssistantBubble
+              bottomOffset={assistantBubbleBottomOffset}
+              leftOffset={appLayout.assistantBubble.left}
+            />
+          ) : null}
+        </SafeAreaView>
+      </ScreenPositionHandoffProvider>
     </ModalKeyboardBoundaryProvider>
   );
 };

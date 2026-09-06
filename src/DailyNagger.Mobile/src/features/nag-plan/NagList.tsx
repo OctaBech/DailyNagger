@@ -1,5 +1,6 @@
-import { FlatList, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import { useScreenPositionHandoff } from "@/app-shell";
 import type { Nagger } from "@/models";
 import * as Input from "@/components/input";
 import { TimeSectionHeader } from "@/components/primitives";
@@ -15,11 +16,18 @@ type NagListProps = {
 };
 
 const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }: NagListProps) => {
+  const screenPositionHandoff = useScreenPositionHandoff();
   const listRef = useRef<FlatList<NagPlanListItem>>(null);
+  const naggerRefs = useRef(new Map<Nagger["id"], View>());
   const hasRestoredScrollOffsetRef = useRef(false);
+  const appliedPlanPlacementKeyRef = useRef<string | null>(null);
   const { height: screenHeight } = useWindowDimensions();
-  const bottomComfortSpace = screenHeight * nagPlanTheme.spacing.listBottomComfortScreenRatio;
+  const bottomComfortSpace = screenHeight;
   const listItems = useMemo(() => buildNagPlanListItems(nags), [nags]);
+  const selectedNaggerId = useMemo(
+    () => nags.find((nagger) => nagger.clientProps.isSelected)?.id ?? null,
+    [nags],
+  );
   const { keyboardInset, rememberScrollOffset: rememberKeyboardScrollOffset } =
     Input.useKeyboardFocusedInputScroller({
       getScrollOffset,
@@ -42,11 +50,54 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
     return () => cancelAnimationFrame(animationFrame);
   }, [getScrollOffset, listItems.length]);
 
+  const applyPlanPlacement = useCallback(
+    (naggerId: Nagger["id"], topY: number) => {
+      const placement = screenPositionHandoff.readPlanPlacement(naggerId, topY);
+      if (placement === null) return;
+
+      const placementKey = `${placement.naggerId}:${placement.sourceTopY.toFixed(1)}`;
+      if (appliedPlanPlacementKeyRef.current === placementKey) return;
+
+      appliedPlanPlacementKeyRef.current = placementKey;
+      setScrollOffset(placement.nextScrollY);
+      screenPositionHandoff.plan.setScrollY(placement.nextScrollY);
+      screenPositionHandoff.markPlanPlacementApplied(placement);
+      listRef.current?.scrollToOffset({ animated: false, offset: placement.nextScrollY });
+    },
+    [screenPositionHandoff, setScrollOffset],
+  );
+  const measureSelectedNaggerTop = useCallback(() => {
+    if (selectedNaggerId === null) return;
+
+    naggerRefs.current.get(selectedNaggerId)?.measureInWindow((_x, y) => {
+      screenPositionHandoff.plan.setNaggerTopY(selectedNaggerId, y);
+      applyPlanPlacement(selectedNaggerId, y);
+    });
+  }, [applyPlanPlacement, screenPositionHandoff.plan, selectedNaggerId]);
+  useEffect(() => {
+    const animationFrame = requestAnimationFrame(measureSelectedNaggerTop);
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [measureSelectedNaggerTop]);
+
   const rememberScrollOffset = useCallback(
     (event: { nativeEvent: { contentOffset: { y: number } } }) => {
       rememberKeyboardScrollOffset(event);
+      screenPositionHandoff.plan.setScrollY(event.nativeEvent.contentOffset.y);
+      measureSelectedNaggerTop();
     },
-    [rememberKeyboardScrollOffset],
+    [measureSelectedNaggerTop, rememberKeyboardScrollOffset, screenPositionHandoff.plan],
+  );
+  const measureNaggerOnLayout = useCallback(
+    (nagger: Nagger) => {
+      if (nagger.id !== selectedNaggerId) return;
+
+      naggerRefs.current.get(nagger.id)?.measureInWindow((_x, topY) => {
+        screenPositionHandoff.plan.setNaggerTopY(nagger.id, topY);
+        applyPlanPlacement(nagger.id, topY);
+      });
+    },
+    [applyPlanPlacement, screenPositionHandoff.plan, selectedNaggerId],
   );
 
   return (
@@ -56,16 +107,31 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
         style={[styles.list]}
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: bottomComfortSpace + keyboardInset, paddingTop: topPadding },
+          { paddingBottom: keyboardInset, paddingTop: topPadding },
         ]}
         data={listItems}
-        ListHeaderComponent={__DEV__ ? <BuildMarker /> : null}
+        ListFooterComponent={<View style={{ height: bottomComfortSpace }} />}
         renderItem={({ item }) => {
           if (item.kind === "time-section") {
             return <TimeSectionHeader title={item.title} rangeLabel={item.rangeLabel} />;
           }
 
-          return <NagCard nagger={item.nagger} />;
+          return (
+            <View
+              ref={(ref) => {
+                if (ref === null) {
+                  naggerRefs.current.delete(item.nagger.id);
+                  return;
+                }
+
+                naggerRefs.current.set(item.nagger.id, ref);
+              }}
+              collapsable={false}
+              onLayout={() => measureNaggerOnLayout(item.nagger)}
+            >
+              <NagCard nagger={item.nagger} />
+            </View>
+          );
         }}
         keyExtractor={(item) => item.id}
         ItemSeparatorComponent={() => <View style={styles.listGap} />}
@@ -77,14 +143,6 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
 };
 
 export const NagList = memo(NagListComponent);
-
-function BuildMarker() {
-  return (
-    <View style={styles.buildMarker}>
-      <Text style={styles.buildMarkerText}>DEV build: sheet-lift-only</Text>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   container: {
@@ -101,20 +159,5 @@ const styles = StyleSheet.create({
   },
   listGap: {
     height: nagPlanTheme.spacing.listGap,
-  },
-  buildMarker: {
-    alignSelf: "center",
-    backgroundColor: "#1b1f24",
-    borderColor: "#f1d56b",
-    borderRadius: 6,
-    borderWidth: 2,
-    marginBottom: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  buildMarkerText: {
-    color: "#f1d56b",
-    fontSize: 12,
-    fontWeight: "900",
   },
 });
