@@ -1,4 +1,6 @@
-export * from "./addTreeNodeActions";
+export * from "./addTaskEntryToTaskItem";
+export * from "./addTaskItemToTaskItem";
+export * from "./addTaskItemToTaskLog";
 export * from "./contracts";
 export * from "./deleteOnceTaskItem";
 export * from "./deleteSelectedNode";
