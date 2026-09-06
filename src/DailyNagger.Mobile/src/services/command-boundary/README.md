@@ -56,11 +56,13 @@ command boundary should explain the path of an action, not leak user content.
 Scopes are the guard rails. They describe what kind of runtime context an action
 is allowed to receive.
 
-- `view` commands can update local view state only.
-- `input` commands can change data and queue server work.
+- `view` commands can update local navigation/view state only.
+- `input` commands record task execution from the plan screen and can queue
+  server work.
 - `sync` commands can perform server-facing synchronization work.
 - `editor-action` commands can mutate the editor tree while staying inside the
-  editor session.
+  editor session. They do not queue server work; save does that at the session
+  boundary.
 - `editor-session` commands can coordinate plan memory, editor memory, and
   sending when entering or leaving the editor.
 

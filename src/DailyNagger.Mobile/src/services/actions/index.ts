@@ -23,22 +23,25 @@ export {
 } from "./navigationActions";
 export {
   editorDeleteSelectedNode,
+  editorDeleteOnceTaskItem,
   editorMoveSelectedNodeDown,
   editorMoveSelectedNodeUp,
+  editorNaggerSetScheduleRules,
+  editorNaggerSetTargetTime,
+  editorNaggerSetTitle,
+  editorTaskEntrySetLabel,
+  editorTaskEntrySetTag,
+  editorTaskEntrySetValue,
+  editorTaskEntrySetValueType,
+  editorTaskItemSetName,
+  editorTaskItemSetTag,
+  editorTaskLogSetTag,
+  type EditorActionScope,
 } from "./editorActions";
 export {
-  naggerSetScheduleRules,
-  naggerSetTargetTime,
-  naggerSetTitle,
-  taskEntrySetLabel,
-  taskEntrySetTag,
   taskEntrySetValue,
-  taskEntrySetValueType,
   taskItemSetDoneAndSetFocus,
-  taskItemSetName,
-  taskItemSetTag,
   taskLogAddTaskStep,
-  taskLogSetTag,
-  type InputActionScope,
-} from "./inputActions";
+  type TaskInputActionScope,
+} from "./taskInputActions";
 export { naggerPinSelected, naggerUnpinSelected } from "./naggerPinningActions";

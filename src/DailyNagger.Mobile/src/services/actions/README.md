@@ -74,3 +74,14 @@ node.setTaskEntryValueTypeAndRolloverBehavior(...)
 ```
 
 Keep operations separate.
+
+## Groups
+
+Action files are grouped by user intent:
+
+- `navigationActions` keeps track of where the user is in the tree.
+- `taskInputActions` records task execution from the plan screen and queues
+  server work.
+- `editorActions` mutates the editor draft without queueing server work.
+- `editorSessionActions` moves data between plan memory and editor memory.
+- `rolloverActions` closes or creates task logs for scheduled rollover.

@@ -62,13 +62,16 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
           dispatch("editor-view", "nagger/set-focused", { nagger });
         },
         setScheduleRules: (nagger: Nagger, scheduleRules: readonly ScheduleRule[]) => {
-          dispatch("editor-input", "nagger/set-schedule-rules", { nagger, scheduleRules });
+          dispatch("editor-action", "editor/nagger/set-schedule-rules", {
+            nagger,
+            scheduleRules,
+          });
         },
         setTargetTime: (nagger: Nagger, targetTime: string | null) => {
-          dispatch("editor-input", "nagger/set-target-time", { nagger, targetTime });
+          dispatch("editor-action", "editor/nagger/set-target-time", { nagger, targetTime });
         },
         setTitle: (nagger: Nagger, title: string) => {
-          dispatch("editor-input", "nagger/set-title", { nagger, title });
+          dispatch("editor-action", "editor/nagger/set-title", { nagger, title });
         },
       },
       taskLog: {
@@ -79,7 +82,7 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
           dispatch("editor-view", "task-log/set-focused", { taskLog });
         },
         setTag: (taskLog: TaskLog, tag: string | null) => {
-          dispatch("editor-input", "task-log/set-tag", { taskLog, tag });
+          dispatch("editor-action", "editor/task-log/set-tag", { taskLog, tag });
         },
       },
       taskItem: {
@@ -90,7 +93,7 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
           dispatch("editor-action", "task-item/add-task-item", { taskItem });
         },
         deleteOnce: (taskItem: TaskItem) => {
-          dispatch("editor-input", "task-item/delete-once", { taskItem });
+          dispatch("editor-action", "editor/task-item/delete-once", { taskItem });
         },
         setExpanded: (taskItem: TaskItem, isExpanded: boolean) => {
           dispatch("editor-view", "task-item/set-expanded", { taskItem, isExpanded });
@@ -99,10 +102,10 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
           dispatch("editor-view", "task-item/set-focused", { taskItem });
         },
         setName: (taskItem: TaskItem, name: string) => {
-          dispatch("editor-input", "task-item/set-name", { taskItem, name });
+          dispatch("editor-action", "editor/task-item/set-name", { taskItem, name });
         },
         setTag: (taskItem: TaskItem, tag: string | null) => {
-          dispatch("editor-input", "task-item/set-tag", { taskItem, tag });
+          dispatch("editor-action", "editor/task-item/set-tag", { taskItem, tag });
         },
       },
       taskEntry: {
@@ -110,20 +113,20 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
           dispatch("editor-view", "task-entry/set-focused", { taskEntry });
         },
         setLabel: (taskEntry: TaskEntry, label: string) => {
-          dispatch("editor-input", "task-entry/set-label", { taskEntry, label });
+          dispatch("editor-action", "editor/task-entry/set-label", { taskEntry, label });
         },
         setTag: (taskEntry: TaskEntry, tag: string | null) => {
-          dispatch("editor-input", "task-entry/set-tag", { taskEntry, tag });
+          dispatch("editor-action", "editor/task-entry/set-tag", { taskEntry, tag });
         },
         setValue: (taskEntry: TaskEntry, newValue: string | null) => {
-          dispatch("editor-input", "task-entry/set-value", { taskEntry, newValue });
+          dispatch("editor-action", "editor/task-entry/set-value", { taskEntry, newValue });
         },
         setValueType: (
           taskEntry: TaskEntry,
           valueType: TaskEntryValueType,
           rolloverBehavior?: TaskEntry["rolloverBehavior"],
         ) => {
-          dispatch("editor-input", "task-entry/set-value-type", {
+          dispatch("editor-action", "editor/task-entry/set-value-type", {
             taskEntry,
             valueType,
             rolloverBehavior,

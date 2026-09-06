@@ -1,5 +1,10 @@
 import type { Memory } from "@/services/contracts";
-import type { EditorSessionActionScope, InputActionScope, NavigationActionScope } from "../actions";
+import type {
+  EditorActionScope,
+  EditorSessionActionScope,
+  NavigationActionScope,
+  TaskInputActionScope,
+} from "../actions";
 import type { ActionSending } from "../sending";
 
 export type CommandViewActionContext = NavigationActionScope;
@@ -9,11 +14,9 @@ export type CommandSyncActionContext = {
   readonly sending: ActionSending;
 };
 
-export type CommandEditorActionContext = {
-  readonly memory: Memory;
-};
+export type CommandEditorActionContext = EditorActionScope;
 
-export type CommandInputActionContext = InputActionScope;
+export type CommandInputActionContext = TaskInputActionScope;
 
 export type CommandEditorSessionActionContext = EditorSessionActionScope;
 
@@ -29,7 +32,7 @@ export type CommandScope = "editor-action" | "editor-session" | "input" | "sync"
 export type SourceForScope<TScope extends CommandScope> = TScope extends "view"
   ? "editor-view" | "plan-view"
   : TScope extends "input"
-    ? "editor-input" | "plan-input"
+    ? "plan-input"
     : TScope extends "sync"
       ? "editor-sync" | "plan-sync"
       : TScope extends "editor-action"

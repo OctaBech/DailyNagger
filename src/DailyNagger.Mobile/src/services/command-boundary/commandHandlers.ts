@@ -4,31 +4,33 @@ import {
   addTaskItemToTaskLog as runAddTaskItemToTaskLog,
   deleteOnceTaskItem as runDeleteOnceTaskItem,
   editorCancelEdit as runEditorCancelEdit,
+  editorDeleteOnceTaskItem as runEditorDeleteOnceTaskItem,
   editorDeleteSelectedNode as runEditorDeleteSelectedNode,
   editorMoveSelectedNodeDown as runEditorMoveSelectedNodeDown,
   editorMoveSelectedNodeUp as runEditorMoveSelectedNodeUp,
+  editorNaggerSetScheduleRules as runEditorNaggerSetScheduleRules,
+  editorNaggerSetTargetTime as runEditorNaggerSetTargetTime,
+  editorNaggerSetTitle as runEditorNaggerSetTitle,
   editorSaveEdit as runEditorSaveEdit,
   editorStartEdit as runEditorStartEdit,
   naggerPinSelected as runNaggerPinSelected,
   naggerSetExpanded as runNaggerSetExpanded,
   naggerSetFocused as runNaggerSetFocused,
-  naggerSetScheduleRules as runNaggerSetScheduleRules,
-  naggerSetTargetTime as runNaggerSetTargetTime,
-  naggerSetTitle as runNaggerSetTitle,
   naggerUnpinSelected as runNaggerUnpinSelected,
+  editorTaskEntrySetLabel as runEditorTaskEntrySetLabel,
+  editorTaskEntrySetTag as runEditorTaskEntrySetTag,
+  editorTaskEntrySetValue as runEditorTaskEntrySetValue,
+  editorTaskEntrySetValueType as runEditorTaskEntrySetValueType,
   taskEntrySetFocused as runTaskEntrySetFocused,
-  taskEntrySetLabel as runTaskEntrySetLabel,
-  taskEntrySetTag as runTaskEntrySetTag,
   taskEntrySetValue as runTaskEntrySetValue,
-  taskEntrySetValueType as runTaskEntrySetValueType,
+  editorTaskItemSetName as runEditorTaskItemSetName,
+  editorTaskItemSetTag as runEditorTaskItemSetTag,
   taskItemSetDoneAndSetFocus as runTaskItemSetDoneAndSetFocus,
   taskItemSetExpanded as runTaskItemSetExpanded,
   taskItemSetFocused as runTaskItemSetFocused,
-  taskItemSetName as runTaskItemSetName,
-  taskItemSetTag as runTaskItemSetTag,
   taskLogAddTaskStep as runTaskLogAddTaskStep,
   taskLogSetFocused as runTaskLogSetFocused,
-  taskLogSetTag as runTaskLogSetTag,
+  editorTaskLogSetTag as runEditorTaskLogSetTag,
 } from "../actions";
 import type {
   EditorDeleteSelectedNodeArgs,
@@ -109,6 +111,13 @@ export function editorDeleteSelectedNode(
   runEditorDeleteSelectedNode(context, args.deleteContext);
 }
 
+export function editorDeleteOnceTaskItem(
+  args: TaskItemDeleteOnceArgs,
+  context: CommandEditorActionContext,
+): void {
+  runEditorDeleteOnceTaskItem(context, args.taskItem);
+}
+
 export function naggerSetExpanded(
   args: NaggerSetExpandedArgs,
   context: CommandViewActionContext,
@@ -137,22 +146,25 @@ export function naggerUnpinSelected(
   runNaggerUnpinSelected(context, args.nagger);
 }
 
-export function naggerSetScheduleRules(
+export function editorNaggerSetScheduleRules(
   args: NaggerSetScheduleRulesArgs,
-  context: CommandInputActionContext,
+  context: CommandEditorActionContext,
 ): void {
-  runNaggerSetScheduleRules(context, args.nagger, args.scheduleRules);
+  runEditorNaggerSetScheduleRules(context, args.nagger, args.scheduleRules);
 }
 
-export function naggerSetTargetTime(
+export function editorNaggerSetTargetTime(
   args: NaggerSetTargetTimeArgs,
-  context: CommandInputActionContext,
+  context: CommandEditorActionContext,
 ): void {
-  runNaggerSetTargetTime(context, args.nagger, args.targetTime);
+  runEditorNaggerSetTargetTime(context, args.nagger, args.targetTime);
 }
 
-export function naggerSetTitle(args: NaggerSetTitleArgs, context: CommandInputActionContext): void {
-  runNaggerSetTitle(context, args.nagger, args.title);
+export function editorNaggerSetTitle(
+  args: NaggerSetTitleArgs,
+  context: CommandEditorActionContext,
+): void {
+  runEditorNaggerSetTitle(context, args.nagger, args.title);
 }
 
 export function taskLogSetFocused(
@@ -162,8 +174,11 @@ export function taskLogSetFocused(
   runTaskLogSetFocused(context, args.taskLog);
 }
 
-export function taskLogSetTag(args: TaskLogSetTagArgs, context: CommandInputActionContext): void {
-  runTaskLogSetTag(context, args.taskLog, args.tag);
+export function editorTaskLogSetTag(
+  args: TaskLogSetTagArgs,
+  context: CommandEditorActionContext,
+): void {
+  runEditorTaskLogSetTag(context, args.taskLog, args.tag);
 }
 
 export function taskLogAddTaskStep(
@@ -222,15 +237,18 @@ export function taskItemAddTaskItem(
   runAddTaskItemToTaskItem(context, args.taskItem);
 }
 
-export function taskItemSetName(
+export function editorTaskItemSetName(
   args: TaskItemSetNameArgs,
-  context: CommandInputActionContext,
+  context: CommandEditorActionContext,
 ): void {
-  runTaskItemSetName(context, args.taskItem, args.name);
+  runEditorTaskItemSetName(context, args.taskItem, args.name);
 }
 
-export function taskItemSetTag(args: TaskItemSetTagArgs, context: CommandInputActionContext): void {
-  runTaskItemSetTag(context, args.taskItem, args.tag);
+export function editorTaskItemSetTag(
+  args: TaskItemSetTagArgs,
+  context: CommandEditorActionContext,
+): void {
+  runEditorTaskItemSetTag(context, args.taskItem, args.tag);
 }
 
 export function taskEntrySetFocused(
@@ -247,23 +265,30 @@ export function taskEntrySetValue(
   runTaskEntrySetValue(context, args.taskEntry, args.newValue);
 }
 
-export function taskEntrySetLabel(
+export function editorTaskEntrySetLabel(
   args: TaskEntrySetLabelArgs,
-  context: CommandInputActionContext,
+  context: CommandEditorActionContext,
 ): void {
-  runTaskEntrySetLabel(context, args.taskEntry, args.label);
+  runEditorTaskEntrySetLabel(context, args.taskEntry, args.label);
 }
 
-export function taskEntrySetTag(
+export function editorTaskEntrySetTag(
   args: TaskEntrySetTagArgs,
-  context: CommandInputActionContext,
+  context: CommandEditorActionContext,
 ): void {
-  runTaskEntrySetTag(context, args.taskEntry, args.tag);
+  runEditorTaskEntrySetTag(context, args.taskEntry, args.tag);
 }
 
-export function taskEntrySetValueType(
+export function editorTaskEntrySetValueType(
   args: TaskEntrySetValueTypeArgs,
-  context: CommandInputActionContext,
+  context: CommandEditorActionContext,
 ): void {
-  runTaskEntrySetValueType(context, args.taskEntry, args.valueType, args.rolloverBehavior);
+  runEditorTaskEntrySetValueType(context, args.taskEntry, args.valueType, args.rolloverBehavior);
+}
+
+export function editorTaskEntrySetValue(
+  args: TaskEntrySetValueArgs,
+  context: CommandEditorActionContext,
+): void {
+  runEditorTaskEntrySetValue(context, args.taskEntry, args.newValue);
 }

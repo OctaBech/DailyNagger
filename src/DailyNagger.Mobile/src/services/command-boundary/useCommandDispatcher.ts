@@ -26,7 +26,6 @@ export type CommandSource =
   | "plan-sync"
   | "plan-view"
   | "editor-action"
-  | "editor-input"
   | "editor-sync"
   | "editor-view"
   | "editor-session";
@@ -83,7 +82,6 @@ function getCommandActionContext(
 
     case "plan-input":
       return {
-        cultureSettings: memories.cultureSettings,
         memory: planMemory,
         sending,
         interactionStamp: memories.planInteractionStamp,
@@ -96,18 +94,13 @@ function getCommandActionContext(
       } satisfies CommandSyncActionContext;
 
     case "editor-action":
-      return { memory: editorMemory } satisfies CommandEditorActionContext;
-
-    case "editor-view":
-      return { memory: editorMemory } satisfies CommandViewActionContext;
-
-    case "editor-input":
       return {
         cultureSettings: memories.cultureSettings,
         memory: editorMemory,
-        sending,
-        interactionStamp: null,
-      } satisfies CommandInputActionContext;
+      } satisfies CommandEditorActionContext;
+
+    case "editor-view":
+      return { memory: editorMemory } satisfies CommandViewActionContext;
 
     case "editor-sync":
       return {
@@ -169,7 +162,6 @@ function getSourceScope(source: CommandSource): CommandScope {
     case "plan-view":
       return "view";
 
-    case "editor-input":
     case "plan-input":
       return "input";
 
