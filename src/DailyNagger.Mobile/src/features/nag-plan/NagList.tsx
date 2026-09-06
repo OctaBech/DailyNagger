@@ -2,6 +2,7 @@ import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { useScreenPositionHandoff } from "@/app-shell";
 import type { Nagger } from "@/models";
+import * as Components from "@/components";
 import * as Input from "@/components/input";
 import { TimeSectionHeader } from "@/components/primitives";
 import { NagCard } from "./cards";
@@ -18,7 +19,6 @@ type NagListProps = {
 const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }: NagListProps) => {
   const screenPositionHandoff = useScreenPositionHandoff();
   const listRef = useRef<FlatList<NagPlanListItem>>(null);
-  const naggerRefs = useRef(new Map<Nagger["id"], View>());
   const hasRestoredScrollOffsetRef = useRef(false);
   const appliedPlanPlacementKeyRef = useRef<string | null>(null);
   const { height: screenHeight } = useWindowDimensions();
@@ -66,38 +66,19 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
     },
     [screenPositionHandoff, setScrollOffset],
   );
-  const measureSelectedNaggerTop = useCallback(() => {
-    if (selectedNaggerId === null) return;
-
-    naggerRefs.current.get(selectedNaggerId)?.measureInWindow((_x, y) => {
-      screenPositionHandoff.plan.setNaggerTopY(selectedNaggerId, y);
-      applyPlanPlacement(selectedNaggerId, y);
-    });
-  }, [applyPlanPlacement, screenPositionHandoff.plan, selectedNaggerId]);
-  useEffect(() => {
-    const animationFrame = requestAnimationFrame(measureSelectedNaggerTop);
-
-    return () => cancelAnimationFrame(animationFrame);
-  }, [measureSelectedNaggerTop]);
-
   const rememberScrollOffset = useCallback(
     (event: { nativeEvent: { contentOffset: { y: number } } }) => {
       rememberKeyboardScrollOffset(event);
       screenPositionHandoff.plan.setScrollY(event.nativeEvent.contentOffset.y);
-      measureSelectedNaggerTop();
     },
-    [measureSelectedNaggerTop, rememberKeyboardScrollOffset, screenPositionHandoff.plan],
+    [rememberKeyboardScrollOffset, screenPositionHandoff.plan],
   );
-  const measureNaggerOnLayout = useCallback(
-    (nagger: Nagger) => {
-      if (nagger.id !== selectedNaggerId) return;
-
-      naggerRefs.current.get(nagger.id)?.measureInWindow((_x, topY) => {
-        screenPositionHandoff.plan.setNaggerTopY(nagger.id, topY);
-        applyPlanPlacement(nagger.id, topY);
-      });
+  const measureSelectedNagger = useCallback(
+    (nagger: Nagger, topY: number) => {
+      screenPositionHandoff.plan.setNaggerTopY(nagger.id, topY);
+      applyPlanPlacement(nagger.id, topY);
     },
-    [applyPlanPlacement, screenPositionHandoff.plan, selectedNaggerId],
+    [applyPlanPlacement, screenPositionHandoff.plan],
   );
 
   return (
@@ -116,21 +97,15 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
             return <TimeSectionHeader title={item.title} rangeLabel={item.rangeLabel} />;
           }
 
-          return (
-            <View
-              ref={(ref) => {
-                if (ref === null) {
-                  naggerRefs.current.delete(item.nagger.id);
-                  return;
-                }
+          const onMeasured =
+            item.nagger.id === selectedNaggerId
+              ? (topY: number) => measureSelectedNagger(item.nagger, topY)
+              : undefined;
 
-                naggerRefs.current.set(item.nagger.id, ref);
-              }}
-              collapsable={false}
-              onLayout={() => measureNaggerOnLayout(item.nagger)}
-            >
+          return (
+            <Components.FlatList.FlatListTrackedElement onMeasured={onMeasured}>
               <NagCard nagger={item.nagger} />
-            </View>
+            </Components.FlatList.FlatListTrackedElement>
           );
         }}
         keyExtractor={(item) => item.id}

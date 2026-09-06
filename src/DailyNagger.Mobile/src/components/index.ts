@@ -1,4 +1,5 @@
 export * as Card from "./card";
+export * as FlatList from "./flatlist";
 export * as Input from "./input";
 export * as Modal from "./modal";
 export * as Primitives from "./primitives";
