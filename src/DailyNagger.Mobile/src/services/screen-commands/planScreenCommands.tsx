@@ -29,10 +29,10 @@ export function useCreatePlanScreenCommands({
       },
       dial: {
         pinSelectedNagger: (nagger: Nagger) => {
-          dispatch("plan-sync", "nagger/pin-selected", { nagger });
+          dispatch("plan-input", "nagger/pin-selected", { nagger });
         },
         unpinSelectedNagger: (nagger: Nagger) => {
-          dispatch("plan-sync", "nagger/unpin-selected", { nagger });
+          dispatch("plan-input", "nagger/unpin-selected", { nagger });
         },
       },
       taskLog: {

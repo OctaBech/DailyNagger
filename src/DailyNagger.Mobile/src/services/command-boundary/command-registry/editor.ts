@@ -4,9 +4,11 @@ import {
   editorDeleteSelectedNode,
   editorMoveSelectedNodeDown,
   editorMoveSelectedNodeUp,
+  editorNaggerPinSelected,
   editorNaggerSetScheduleRules,
   editorNaggerSetTargetTime,
   editorNaggerSetTitle,
+  editorNaggerUnpinSelected,
   editorTaskEntrySetLabel,
   editorTaskEntrySetTag,
   editorTaskEntrySetValue,
@@ -21,6 +23,8 @@ import {
 
 export const editorCommandActions = {
   "editor/nagger/set-schedule-rules": command("editor", editorNaggerSetScheduleRules),
+  "editor/nagger/pin-selected": command("editor", editorNaggerPinSelected),
+  "editor/nagger/unpin-selected": command("editor", editorNaggerUnpinSelected),
   "editor/nagger/set-target-time": command("editor", editorNaggerSetTargetTime),
   "editor/nagger/set-title": command("editor", editorNaggerSetTitle),
   "editor/delete-selected-node": command("editor", editorDeleteSelectedNode),

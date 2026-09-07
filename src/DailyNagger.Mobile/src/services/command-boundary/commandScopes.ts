@@ -2,13 +2,10 @@ import type {
   editorActions,
   editorSessionActions,
   navigationActions,
-  syncActions,
   taskInputActions,
 } from "../actions";
 
 export type CommandViewActionContext = navigationActions.NavigationRuntimeDependencies;
-
-export type CommandSyncActionContext = syncActions.SyncRuntimeDependencies;
 
 export type CommandEditorActionContext = editorActions.EditorActionScope;
 
@@ -20,18 +17,15 @@ export type CommandActionContext =
   | CommandEditorActionContext
   | CommandEditorSessionActionContext
   | CommandInputActionContext
-  | CommandSyncActionContext
   | CommandViewActionContext;
 
-export type CommandScope = "editor" | "editor-session" | "navigation" | "sync" | "task-input";
+export type CommandScope = "editor" | "editor-session" | "navigation" | "task-input";
 
 export type SourceForScope<TScope extends CommandScope> = TScope extends "navigation"
   ? "editor-view" | "plan-view"
   : TScope extends "task-input"
     ? "plan-input"
-  : TScope extends "sync"
-    ? "editor-sync" | "plan-sync"
-    : TScope extends "editor"
+  : TScope extends "editor"
         ? "editor-action"
         : TScope extends "editor-session"
           ? "editor-session"
@@ -41,9 +35,7 @@ export type ContextForScope<TScope extends CommandScope> = TScope extends "navig
   ? CommandViewActionContext
   : TScope extends "task-input"
     ? CommandInputActionContext
-  : TScope extends "sync"
-    ? CommandSyncActionContext
-    : TScope extends "editor"
+  : TScope extends "editor"
         ? CommandEditorActionContext
         : TScope extends "editor-session"
           ? CommandEditorSessionActionContext

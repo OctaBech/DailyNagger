@@ -14,7 +14,6 @@ import {
   type CommandEditorSessionActionContext,
   type CommandInputActionContext,
   type CommandScope,
-  type CommandSyncActionContext,
   type CommandViewActionContext,
   type ContextForScope,
   type SourceForScope,
@@ -23,10 +22,8 @@ import type { CommandArgs, CommandKind, CommandScopeForKind } from "./commandMod
 
 export type CommandSource =
   | "plan-input"
-  | "plan-sync"
   | "plan-view"
   | "editor-action"
-  | "editor-sync"
   | "editor-view"
   | "editor-session";
 
@@ -87,12 +84,6 @@ function getCommandActionContext(
         interactionStamp: memories.planInteractionStamp,
       } satisfies CommandInputActionContext;
 
-    case "plan-sync":
-      return {
-        memory: planMemory,
-        sending,
-      } satisfies CommandSyncActionContext;
-
     case "editor-action":
       return {
         cultureSettings: memories.cultureSettings,
@@ -101,12 +92,6 @@ function getCommandActionContext(
 
     case "editor-view":
       return { memory: editorMemory } satisfies CommandViewActionContext;
-
-    case "editor-sync":
-      return {
-        memory: editorMemory,
-        sending,
-      } satisfies CommandSyncActionContext;
 
     case "editor-session":
       return {
@@ -165,10 +150,6 @@ function getSourceScope(source: CommandSource): CommandScope {
     case "plan-input":
       return "task-input";
 
-    case "editor-sync":
-    case "plan-sync":
-      return "sync";
-
     case "editor-action":
       return "editor";
 
@@ -184,9 +165,6 @@ function contextMatchesScope(context: CommandActionContext, scope: CommandScope)
 
     case "task-input":
       return "memory" in context && "sending" in context && "interactionStamp" in context;
-
-    case "sync":
-      return "memory" in context && "sending" in context && !("cultureSettings" in context);
 
     case "editor":
       return "memory" in context && !("sending" in context);

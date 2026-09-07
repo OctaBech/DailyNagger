@@ -2,7 +2,6 @@ import {
   editorActions,
   editorSessionActions,
   navigationActions,
-  syncActions,
   taskInputActions,
 } from "../actions";
 import type {
@@ -39,7 +38,6 @@ import type {
   CommandEditorActionContext,
   CommandEditorSessionActionContext,
   CommandInputActionContext,
-  CommandSyncActionContext,
   CommandViewActionContext,
 } from "./commandScopes";
 
@@ -108,16 +106,30 @@ export function naggerSetFocused(
 
 export function naggerPinSelected(
   args: NaggerPinningArgs,
-  context: CommandSyncActionContext,
+  context: CommandInputActionContext,
 ): void {
-  syncActions.naggerPinSelected(args, context);
+  taskInputActions.naggerPinSelected(args, context);
 }
 
 export function naggerUnpinSelected(
   args: NaggerPinningArgs,
-  context: CommandSyncActionContext,
+  context: CommandInputActionContext,
 ): void {
-  syncActions.naggerUnpinSelected(args, context);
+  taskInputActions.naggerUnpinSelected(args, context);
+}
+
+export function editorNaggerPinSelected(
+  args: NaggerPinningArgs,
+  context: CommandEditorActionContext,
+): void {
+  editorActions.naggerPinSelected(args, context);
+}
+
+export function editorNaggerUnpinSelected(
+  args: NaggerPinningArgs,
+  context: CommandEditorActionContext,
+): void {
+  editorActions.naggerUnpinSelected(args, context);
 }
 
 export function editorNaggerSetScheduleRules(

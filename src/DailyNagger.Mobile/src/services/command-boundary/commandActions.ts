@@ -6,7 +6,6 @@ export type {
   CommandEditorSessionActionContext,
   CommandInputActionContext,
   CommandScope,
-  CommandSyncActionContext,
   CommandViewActionContext,
   ContextForScope,
   SourceForScope,

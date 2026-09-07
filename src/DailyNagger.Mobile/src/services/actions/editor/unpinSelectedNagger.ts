@@ -1,20 +1,19 @@
 import type { Nagger } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { SyncRuntimeDependencies } from "./contracts";
+import type { EditorActionScope } from "./contracts";
 
-export function naggerPinSelected(
+export function naggerUnpinSelected(
   args: {
     readonly nagger: Nagger;
   },
-  { memory, sending }: SyncRuntimeDependencies,
+  { memory }: EditorActionScope,
 ): void {
-  if (args.nagger.pinnedBy !== "None") return;
+  if (args.nagger.pinnedBy === "None") return;
 
   const { node, tree } = treeOperations;
   const { freshTree, freshNagger } = tree.readNagger(memory, args.nagger);
-  const naggerV1 = node.setNaggerPinnedBy(freshNagger, "User");
+  const naggerV1 = node.setNaggerPinnedBy(freshNagger, "None");
   const result = tree.replaceNode(freshTree, naggerV1);
 
   memory.write.setTree(result.newTree);
-  sending.queue(naggerV1);
 }

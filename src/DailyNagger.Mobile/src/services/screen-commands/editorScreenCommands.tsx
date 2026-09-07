@@ -45,13 +45,13 @@ export function useCreateEditorScreenCommands({ dispatch }: UseCreateEditorScree
           dispatch("editor-action", "editor/move-selected-node-up", { moveContext });
         },
         pinSelectedNagger: (nagger: Nagger) => {
-          dispatch("editor-sync", "nagger/pin-selected", { nagger });
+          dispatch("editor-action", "editor/nagger/pin-selected", { nagger });
         },
         saveEdit: (nagger: Nagger) => {
           dispatch("editor-session", "editor/save", { nagger });
         },
         unpinSelectedNagger: (nagger: Nagger) => {
-          dispatch("editor-sync", "nagger/unpin-selected", { nagger });
+          dispatch("editor-action", "editor/nagger/unpin-selected", { nagger });
         },
       },
       nagger: {
