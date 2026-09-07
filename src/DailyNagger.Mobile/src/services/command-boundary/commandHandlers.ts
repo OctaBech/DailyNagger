@@ -171,7 +171,7 @@ export function taskLogAddTaskStep(
   args: TaskLogAddTaskStepArgs,
   context: CommandInputActionContext,
 ): void {
-  taskInputActions.taskLogAddTaskStep(context, args.taskLog, args.name, args.rolloverBehavior);
+  taskInputActions.taskLogAddTaskStep(args, context);
 }
 
 export function taskLogAddTaskItem(
@@ -199,14 +199,14 @@ export function taskItemSetDoneAndSetFocus(
   args: TaskItemSetDoneAndSetFocusArgs,
   context: CommandInputActionContext,
 ): void {
-  taskInputActions.taskItemSetDoneAndSetFocus(context, args.taskItem, args.isDone);
+  taskInputActions.taskItemSetDoneAndSetFocus(args, context);
 }
 
 export function taskItemDeleteOnce(
   args: TaskItemDeleteOnceArgs,
   context: CommandInputActionContext,
 ): void {
-  taskInputActions.deleteOnceTaskItem(context, args.taskItem);
+  taskInputActions.deleteOnceTaskItem(args, context);
 }
 
 export function taskItemAddTaskEntry(
@@ -248,7 +248,7 @@ export function taskEntrySetValue(
   args: TaskEntrySetValueArgs,
   context: CommandInputActionContext,
 ): void {
-  taskInputActions.taskEntrySetValue(context, args.taskEntry, args.newValue);
+  taskInputActions.taskEntrySetValue(args, context);
 }
 
 export function editorTaskEntrySetLabel(

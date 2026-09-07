@@ -9,7 +9,7 @@ export type CommandViewActionContext = navigationActions.NavigationRuntimeDepend
 
 export type CommandEditorActionContext = editorActions.EditorActionScope;
 
-export type CommandInputActionContext = taskInputActions.TaskInputActionScope;
+export type CommandInputActionContext = taskInputActions.TaskInputRuntimeDependencies;
 
 export type CommandEditorSessionActionContext =
   editorSessionActions.EditorSessionRuntimeDependencies;

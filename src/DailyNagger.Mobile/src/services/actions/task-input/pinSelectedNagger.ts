@@ -1,12 +1,12 @@
 import type { Nagger } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { TaskInputActionScope } from "./contracts";
+import type { TaskInputRuntimeDependencies } from "./contracts";
 
 export function naggerPinSelected(
   args: {
     readonly nagger: Nagger;
   },
-  { memory, sending }: TaskInputActionScope,
+  { memory, sending }: TaskInputRuntimeDependencies,
 ): void {
   if (args.nagger.pinnedBy !== "None") return;
 

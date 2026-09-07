@@ -1,18 +1,20 @@
 import type { TaskItem } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { TaskInputActionScope } from "./contracts";
+import type { TaskInputRuntimeDependencies } from "./contracts";
 
 export function taskItemSetDoneAndSetFocus(
-  { memory, sending, interactionStamp }: TaskInputActionScope,
-  taskItem: TaskItem,
-  isDone: boolean,
+  args: {
+    readonly taskItem: TaskItem;
+    readonly isDone: boolean;
+  },
+  { memory, sending, interactionStamp }: TaskInputRuntimeDependencies,
 ): void {
   const { tree, branch, node } = treeOperations;
-  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, taskItem);
+  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, args.taskItem);
 
-  if (freshTaskItem.isDone === isDone) return;
+  if (freshTaskItem.isDone === args.isDone) return;
 
-  const taskItemV1 = node.setTaskItemDone(freshTaskItem, isDone);
+  const taskItemV1 = node.setTaskItemDone(freshTaskItem, args.isDone);
   const updatedTaskItem = interactionStamp.applyTo(taskItemV1);
 
   const { newTree, newPath } = branch.replaceTaskItemAndUpdateDoneCounts(
@@ -22,6 +24,6 @@ export function taskItemSetDoneAndSetFocus(
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 
-  const { freshTaskLog } = tree.readTaskLog(memory, taskItem);
+  const { freshTaskLog } = tree.readTaskLog(memory, args.taskItem);
   sending.queue(freshTaskLog);
 }

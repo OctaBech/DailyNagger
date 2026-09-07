@@ -1,14 +1,16 @@
 import type { TaskItem, TaskLog, TreeNode } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { TaskInputActionScope } from "./contracts";
+import type { TaskInputRuntimeDependencies } from "./contracts";
 
 export function deleteOnceTaskItem(
-  { memory, sending }: TaskInputActionScope,
-  staleTaskItem: TaskItem,
+  args: {
+    readonly taskItem: TaskItem;
+  },
+  { memory, sending }: TaskInputRuntimeDependencies,
 ): void {
   const { tree, branch } = treeOperations;
 
-  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, staleTaskItem);
+  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, args.taskItem);
 
   if (freshTaskItem.rolloverBehavior !== "RemoveWhenDone") {
     throw new Error(`TaskItem '${freshTaskItem.id}' is not a once TaskItem.`);

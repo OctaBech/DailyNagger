@@ -1,15 +1,17 @@
 import { normalizeTaskEntryValue, type TaskEntry } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { TaskInputActionScope } from "./contracts";
+import type { TaskInputRuntimeDependencies } from "./contracts";
 
 export function taskEntrySetValue(
-  { memory, sending, interactionStamp }: TaskInputActionScope,
-  taskEntry: TaskEntry,
-  newValue: string | null,
+  args: {
+    readonly taskEntry: TaskEntry;
+    readonly newValue: string | null;
+  },
+  { memory, sending, interactionStamp }: TaskInputRuntimeDependencies,
 ): void {
   const { tree, node } = treeOperations;
-  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
-  const normalizedValue = normalizeTaskEntryValue(freshTaskEntry.valueType, newValue);
+  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, args.taskEntry);
+  const normalizedValue = normalizeTaskEntryValue(freshTaskEntry.valueType, args.newValue);
 
   const taskEntryV1 = node.setTaskEntryValue(freshTaskEntry, normalizedValue);
   const stampedTaskEntry = interactionStamp.applyTo(taskEntryV1);
