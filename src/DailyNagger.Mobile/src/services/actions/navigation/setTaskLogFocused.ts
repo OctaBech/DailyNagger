@@ -1,11 +1,17 @@
 import type { TaskLog } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { NavigationActionScope } from "./contracts";
+import type { NavigationRuntimeDependencies } from "./contracts";
 
-export function taskLogSetFocused({ memory }: NavigationActionScope, taskLog: TaskLog): void {
+export function taskLogSetFocused(
+  args: {
+    readonly taskLog: TaskLog;
+  },
+  { memory }: NavigationRuntimeDependencies,
+): void {
   const { tree } = treeOperations;
-  const { freshTree, freshTaskLog } = tree.readTaskLog(memory, taskLog);
+  const { freshTree, freshTaskLog } = tree.readTaskLog(memory, args.taskLog);
   const result = tree.replaceNode(freshTree, freshTaskLog);
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
+

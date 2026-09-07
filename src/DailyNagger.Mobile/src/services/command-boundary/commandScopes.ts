@@ -6,7 +6,7 @@ import type {
   taskInputActions,
 } from "../actions";
 
-export type CommandViewActionContext = navigationActions.NavigationActionScope;
+export type CommandViewActionContext = navigationActions.NavigationRuntimeDependencies;
 
 export type CommandSyncActionContext = syncActions.SyncActionScope;
 
@@ -60,3 +60,4 @@ export function command<TScope extends CommandScope, TArgs>(
 ): CommandDefinition<TScope, TArgs> {
   return { scope, run };
 }
+

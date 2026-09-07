@@ -1,5 +1,6 @@
 import type { Memory } from "../../memory";
 
-export type NavigationActionScope = {
+export type NavigationRuntimeDependencies = {
   readonly memory: Memory;
 };
+

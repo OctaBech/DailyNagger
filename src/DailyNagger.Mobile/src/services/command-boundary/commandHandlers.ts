@@ -96,14 +96,14 @@ export function naggerSetExpanded(
   args: NaggerSetExpandedArgs,
   context: CommandViewActionContext,
 ): void {
-  navigationActions.naggerSetExpanded(context, args.nagger, args.isExpanded);
+  navigationActions.naggerSetExpanded(args, context);
 }
 
 export function naggerSetFocused(
   args: NaggerSetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  navigationActions.naggerSetFocused(context, args.nagger);
+  navigationActions.naggerSetFocused(args, context);
 }
 
 export function naggerPinSelected(
@@ -145,7 +145,7 @@ export function taskLogSetFocused(
   args: TaskLogSetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  navigationActions.taskLogSetFocused(context, args.taskLog);
+  navigationActions.taskLogSetFocused(args, context);
 }
 
 export function editorTaskLogSetTag(
@@ -173,14 +173,14 @@ export function taskItemSetExpanded(
   args: TaskItemSetExpandedArgs,
   context: CommandViewActionContext,
 ): void {
-  navigationActions.taskItemSetExpanded(context, args.taskItem, args.isExpanded);
+  navigationActions.taskItemSetExpanded(args, context);
 }
 
 export function taskItemSetFocused(
   args: TaskItemSetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  navigationActions.taskItemSetFocused(context, args.taskItem);
+  navigationActions.taskItemSetFocused(args, context);
 }
 
 export function taskItemSetDoneAndSetFocus(
@@ -229,7 +229,7 @@ export function taskEntrySetFocused(
   args: TaskEntrySetFocusedArgs,
   context: CommandViewActionContext,
 ): void {
-  navigationActions.taskEntrySetFocused(context, args.taskEntry);
+  navigationActions.taskEntrySetFocused(args, context);
 }
 
 export function taskEntrySetValue(

@@ -1,11 +1,17 @@
 import type { TaskItem } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { NavigationActionScope } from "./contracts";
+import type { NavigationRuntimeDependencies } from "./contracts";
 
-export function taskItemSetFocused({ memory }: NavigationActionScope, taskItem: TaskItem): void {
+export function taskItemSetFocused(
+  args: {
+    readonly taskItem: TaskItem;
+  },
+  { memory }: NavigationRuntimeDependencies,
+): void {
   const { tree } = treeOperations;
-  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, taskItem);
+  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, args.taskItem);
   const result = tree.replaceNode(freshTree, freshTaskItem);
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
+
