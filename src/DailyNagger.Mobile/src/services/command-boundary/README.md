@@ -1,7 +1,8 @@
 # Command Boundary
 
-See `../../../../../docs/adr/0006-command-boundary.md` for the architecture
-decision behind this boundary.
+See `../../../../../docs/adr/0006-command-boundary.md` and
+`../../../../../docs/adr/0016-command-registration-and-action-contracts.md` for
+the architecture decisions behind this boundary.
 
 The command boundary exists to stop dependency domino.
 
@@ -56,15 +57,19 @@ command boundary should explain the path of an action, not leak user content.
 Scopes are the guard rails. They describe what kind of runtime context an action
 is allowed to receive.
 
-- `view` commands can update local navigation/view state only.
-- `input` commands record task execution from the plan screen and can queue
+- `navigation` commands can update local navigation/view state only.
+- `task-input` commands record task execution from the plan screen and can queue
   server work.
 - `sync` commands can perform server-facing synchronization work.
-- `editor-action` commands can mutate the editor tree while staying inside the
-  editor session. They do not queue server work; save does that at the session
+- `editor` commands can mutate the editor tree while staying inside the editor
+  session. They do not queue server work; save does that at the session
   boundary.
 - `editor-session` commands can coordinate plan memory, editor memory, and
   sending when entering or leaving the editor.
+
+Scope names match the action package they are allowed to call. A `task-input`
+command uses `command-args/task-input`, `command-registry/task-input.ts`, and
+`services/actions/task-input`.
 
 If a screen command sends the wrong source for a command, this folder throws
 instead of letting the bug spread deeper into the app.
