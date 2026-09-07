@@ -11,7 +11,8 @@ export type CommandEditorActionContext = editorActions.EditorActionScope;
 
 export type CommandInputActionContext = taskInputActions.TaskInputActionScope;
 
-export type CommandEditorSessionActionContext = editorSessionActions.EditorSessionActionScope;
+export type CommandEditorSessionActionContext =
+  editorSessionActions.EditorSessionRuntimeDependencies;
 
 export type CommandActionContext =
   | CommandEditorActionContext

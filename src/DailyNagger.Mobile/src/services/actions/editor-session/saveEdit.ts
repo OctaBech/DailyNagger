@@ -1,18 +1,20 @@
 import type { Nagger } from "@/models";
 import { orderNaggersByDate } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { EditorSessionActionScope } from "./contracts";
+import type { EditorSessionRuntimeDependencies } from "./contracts";
 
 export function editorSaveEdit(
-  { editorMemory, planMemory, sending }: EditorSessionActionScope,
-  nagger: Nagger,
+  args: {
+    readonly nagger: Nagger;
+  },
+  { editorMemory, planMemory, sending }: EditorSessionRuntimeDependencies,
 ): void {
   const planTree = planMemory.read.getTree();
   const editorSelectedPath = editorMemory.read.getSelectedPath();
   const { node, tree } = treeOperations;
   const { freshNagger: editorNagger, freshTaskLog: editorTaskLog } = treeOperations.tree.readNagger(
     editorMemory,
-    nagger,
+    args.nagger,
   );
 
   const planRoot = tree.tryReadNagger(planMemory, editorNagger);

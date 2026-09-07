@@ -45,21 +45,21 @@ export function editorStartEdit(
   args: EditorStartEditArgs,
   context: CommandEditorSessionActionContext,
 ): void {
-  editorSessionActions.editorStartEdit(context, args.naggerId);
+  editorSessionActions.editorStartEdit(args, context);
 }
 
 export function editorSave(
   args: EditorNaggerSessionArgs,
   context: CommandEditorSessionActionContext,
 ): void {
-  editorSessionActions.editorSaveEdit(context, args.nagger);
+  editorSessionActions.editorSaveEdit(args, context);
 }
 
 export function editorCancel(
-  _args: EditorNaggerSessionArgs,
+  args: EditorNaggerSessionArgs,
   context: CommandEditorSessionActionContext,
 ): void {
-  editorSessionActions.editorCancelEdit(context);
+  editorSessionActions.editorCancelEdit(args, context);
 }
 
 export function editorMoveSelectedNodeUp(
