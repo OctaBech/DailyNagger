@@ -85,5 +85,4 @@ Action files are grouped by user intent:
 - `editor` mutates the editor draft without queueing server work.
 - `editor-session` moves data between plan memory and editor memory.
 - `rollover` closes or creates task logs for scheduled rollover.
-- `sync` performs explicit server-facing synchronization work.
 - `loaded-plan-import` imports server DTOs into local memory.

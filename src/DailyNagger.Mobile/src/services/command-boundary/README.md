@@ -60,7 +60,6 @@ is allowed to receive.
 - `navigation` commands can update local navigation/view state only.
 - `task-input` commands record task execution from the plan screen and can queue
   server work.
-- `sync` commands can perform server-facing synchronization work.
 - `editor` commands can mutate the editor tree while staying inside the editor
   session. They do not queue server work; save does that at the session
   boundary.

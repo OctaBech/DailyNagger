@@ -43,7 +43,41 @@ them.
 
 When the user presses a button, JSX sends the command name and command arguments
 back to the command boundary. The boundary maps the command to the real action
-function and gives that action the correct runtime context.
+function and gives that action the correct runtime dependencies.
+
+Action functions use two argument groups:
+
+1. command arguments from JSX
+2. runtime dependencies hydrated by the command dispatcher from source and scope
+
+The terms mean:
+
+- command args come from JSX
+- scope decides which action package may be called
+- source identifies where the command came from
+- runtime dependencies are memory, sending, stamps, culture settings, and other
+  dependencies hydrated by the dispatcher
+
+The action signature owns the command argument type. We do not define command
+arguments a second time in the command boundary. Duplicating those types makes
+it possible to change an action parameter without noticing that JSX still sends
+an outdated command argument package.
+
+The command boundary should derive command argument types from the registered
+action function so TypeScript can carry the contract from the action all the way
+out to JSX.
+
+```ts
+export function taskEntrySetValue(
+  args: {
+    readonly taskEntry: TaskEntry;
+    readonly newValue: string | null;
+  },
+  context: TaskInputActionScope,
+): void {
+  // read fresh state, mutate tree, write memory, queue send
+}
+```
 
 The command boundary has a `commandRegistry`, where user actions are given text
 command names:
@@ -59,7 +93,7 @@ Each entry connects three things:
 
 - the command name JSX can dispatch
 - the scope the command is allowed to run in
-- the handler that calls the real action function
+- the action function that owns the command argument type
 
 The registry is the single place where a command becomes part of the command
 boundary.
@@ -72,7 +106,6 @@ Action packages and command scopes are grouped by intent:
 - `editor`
 - `editor-session`
 - `navigation`
-- `sync`
 - `task-input`
 - `rollover`
 - `loaded-plan-import`
@@ -80,33 +113,26 @@ Action packages and command scopes are grouped by intent:
 The command source identifies where the command came from, for example
 `plan-input`, `editor-action`, or `editor-session`.
 
-The scope decides which runtime context the command may receive. That context is
-based on the source and contains only the dependencies that action category is
-allowed to use.
+The scope decides which runtime dependencies the command may receive. Those
+dependencies are based on the source and contain only what that action category
+is allowed to use.
 
 Command registries live under `command-registry/<scope-package>.ts`. Command
-argument contracts live under `command-args/<scope-package>/`. Action runtime
-contracts live under `services/actions/<scope-package>/contracts.ts`.
+argument contracts are derived from the registered action functions. Runtime
+dependency contracts live under
+`services/actions/<scope-package>/contracts.ts`.
 
 For a scope named `task-input`:
 
 - command registry entries live in `command-registry/task-input.ts`
-- command argument contracts live in `command-args/task-input`
 - action functions live in `services/actions/task-input`
-- action runtime contracts live in `services/actions/task-input/contracts.ts`
+- runtime dependency contracts live in
+  `services/actions/task-input/contracts.ts`
 
-Command handlers stay thin. They unpack the command arguments and delegate to
-the matching action package:
-
-```ts
-export function taskItemSetFocused(args, context): void {
-  navigationActions.taskItemSetFocused(context, args.taskItem);
-}
-```
-
-Action packages own their runtime contracts. For example, `task-input` owns the
-context it needs to record plan input and queue server work, while `editor` owns
-the context it needs to mutate the editor draft.
+Action packages own their runtime dependency contracts. For example,
+`task-input` owns the dependencies it needs to record plan input and queue
+server work, while `editor` owns the dependencies it needs to mutate the editor
+draft.
 
 The command boundary may choose the correct action context for a source and
 scope, but it must not implement task-tree behavior itself.
@@ -115,29 +141,31 @@ scope, but it must not implement task-tree behavior itself.
 
 When adding a command:
 
-1. Add or reuse an argument contract in `command-args/<scope-package>/`.
-2. Add a thin handler in `commandHandlers.ts`.
+1. Put behavior in the matching `services/actions/<scope-package>/` action.
+2. Let the action function signature own the command argument type.
 3. Register the command once in `command-registry/<scope-package>.ts`.
-4. Put behavior in the matching `services/actions/<scope-package>/` action.
+4. Use the matching scope name so the dispatcher can hydrate the runtime
+   context.
 
 Do not create duplicate registries for the same command.
 
-Do not put memory reads, tree mutations, selected-path refresh, sending queue
-logic, or business rules inside the command handler.
+Do not create a second command argument type in the command boundary when the
+action signature already owns it.
 
 ## Consequences
 
 A reader can follow the command path in one direction:
 
 ```text
-commandRegistry -> command handler -> action package -> lower-level operation
+commandRegistry -> action package -> lower-level operation
 ```
 
 Scopes remain meaningful because argument contracts and action contexts are
 grouped by the same intent and use the same package names.
 
 Adding a command requires a small amount of ceremony, but that ceremony protects
-the boundary from becoming implicit React wiring or hidden domain logic.
+the boundary from becoming implicit React wiring, hidden domain logic, or a
+second source of truth for command arguments.
 
 Existing code may temporarily violate this decision. Refactors should move
 toward this model without mixing unrelated behavior changes into the same
