@@ -160,17 +160,17 @@ function getSourceScope(source: CommandSource): CommandScope {
   switch (source) {
     case "editor-view":
     case "plan-view":
-      return "view";
+      return "navigation";
 
     case "plan-input":
-      return "input";
+      return "task-input";
 
     case "editor-sync":
     case "plan-sync":
       return "sync";
 
     case "editor-action":
-      return "editor-action";
+      return "editor";
 
     case "editor-session":
       return "editor-session";
@@ -179,16 +179,16 @@ function getSourceScope(source: CommandSource): CommandScope {
 
 function contextMatchesScope(context: CommandActionContext, scope: CommandScope): boolean {
   switch (scope) {
-    case "view":
+    case "navigation":
       return "memory" in context && !("sending" in context);
 
-    case "input":
+    case "task-input":
       return "memory" in context && "sending" in context && "interactionStamp" in context;
 
     case "sync":
       return "memory" in context && "sending" in context && !("cultureSettings" in context);
 
-    case "editor-action":
+    case "editor":
       return "memory" in context && !("sending" in context);
 
     case "editor-session":

@@ -23,27 +23,27 @@ export type CommandActionContext =
   | CommandSyncActionContext
   | CommandViewActionContext;
 
-export type CommandScope = "editor-action" | "editor-session" | "input" | "sync" | "view";
+export type CommandScope = "editor" | "editor-session" | "navigation" | "sync" | "task-input";
 
-export type SourceForScope<TScope extends CommandScope> = TScope extends "view"
+export type SourceForScope<TScope extends CommandScope> = TScope extends "navigation"
   ? "editor-view" | "plan-view"
-  : TScope extends "input"
+  : TScope extends "task-input"
     ? "plan-input"
-    : TScope extends "sync"
-      ? "editor-sync" | "plan-sync"
-      : TScope extends "editor-action"
+  : TScope extends "sync"
+    ? "editor-sync" | "plan-sync"
+    : TScope extends "editor"
         ? "editor-action"
         : TScope extends "editor-session"
           ? "editor-session"
           : never;
 
-export type ContextForScope<TScope extends CommandScope> = TScope extends "view"
+export type ContextForScope<TScope extends CommandScope> = TScope extends "navigation"
   ? CommandViewActionContext
-  : TScope extends "input"
+  : TScope extends "task-input"
     ? CommandInputActionContext
-    : TScope extends "sync"
-      ? CommandSyncActionContext
-      : TScope extends "editor-action"
+  : TScope extends "sync"
+    ? CommandSyncActionContext
+    : TScope extends "editor"
         ? CommandEditorActionContext
         : TScope extends "editor-session"
           ? CommandEditorSessionActionContext
