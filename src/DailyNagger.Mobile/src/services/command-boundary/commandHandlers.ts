@@ -110,14 +110,14 @@ export function naggerPinSelected(
   args: NaggerPinningArgs,
   context: CommandSyncActionContext,
 ): void {
-  syncActions.naggerPinSelected(context, args.nagger);
+  syncActions.naggerPinSelected(args, context);
 }
 
 export function naggerUnpinSelected(
   args: NaggerPinningArgs,
   context: CommandSyncActionContext,
 ): void {
-  syncActions.naggerUnpinSelected(context, args.nagger);
+  syncActions.naggerUnpinSelected(args, context);
 }
 
 export function editorNaggerSetScheduleRules(

@@ -1,7 +1,7 @@
 import { command } from "../commandScopes";
-import { naggerPinSelected, naggerUnpinSelected } from "../commandHandlers";
+import { syncActions } from "../../actions";
 
 export const syncCommandActions = {
-  "nagger/pin-selected": command("sync", naggerPinSelected),
-  "nagger/unpin-selected": command("sync", naggerUnpinSelected),
+  "nagger/pin-selected": command("sync", syncActions.naggerPinSelected),
+  "nagger/unpin-selected": command("sync", syncActions.naggerUnpinSelected),
 } as const;
