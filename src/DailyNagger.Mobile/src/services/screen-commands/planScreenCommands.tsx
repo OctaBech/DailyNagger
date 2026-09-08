@@ -1,6 +1,7 @@
 import type { Nagger, TaskEntry, TaskItem, TaskLog } from "@/models";
 import { createRequiredContext, type Prettify } from "@/shared";
 import type { CommandDispatcher } from "@/services/command-boundary";
+import type { RegisteredActionClient, planScreenActionRegistry } from "@/services/action-boundary";
 import { useMemo } from "react";
 
 export type PlanScreenCommands = Prettify<ReturnType<typeof useCreatePlanScreenCommands>>;
@@ -11,18 +12,18 @@ export const { Provider: PlanScreenCommandsProvider, useRequiredContext: usePlan
 type UseCreatePlanScreenCommandsProps = {
   readonly decimalSeparator: "." | ",";
   readonly dispatch: CommandDispatcher;
+  readonly registeredActions: RegisteredActionClient<typeof planScreenActionRegistry>;
 };
 
 export function useCreatePlanScreenCommands({
   decimalSeparator,
   dispatch,
+  registeredActions,
 }: UseCreatePlanScreenCommandsProps) {
   return useMemo(
     () => ({
       nagger: {
-        setExpanded: (nagger: Nagger, isExpanded: boolean) => {
-          dispatch("plan-view", "nagger/set-expanded", { nagger, isExpanded });
-        },
+        setExpanded: registeredActions.nagger.setExpanded,
         setFocused: (nagger: Nagger) => {
           dispatch("plan-view", "nagger/set-focused", { nagger });
         },
@@ -71,6 +72,6 @@ export function useCreatePlanScreenCommands({
         },
       },
     }),
-    [decimalSeparator, dispatch],
+    [decimalSeparator, dispatch, registeredActions],
   );
 }

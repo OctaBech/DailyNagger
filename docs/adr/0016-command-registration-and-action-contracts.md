@@ -50,13 +50,48 @@ Action functions use two argument groups:
 1. command arguments from JSX
 2. runtime dependencies hydrated by the command dispatcher from source and scope
 
+The dispatch flow is:
+
+```text
+JSX
+  -> dispatch(commandName, commandArgs)
+
+dispatch = stable callback
+  -> record command observability
+  -> build action runtime dependencies from source
+  -> find action in registry
+  -> verify source and scope match
+  -> action(commandArgs, runtimeDependencies)
+```
+
+The stable callback belongs around the dispatcher function exposed to JSX. The
+runtime dependency factory is internal to dispatch and does not need to be a
+hook or stable callback.
+
 The terms mean:
 
 - command args come from JSX
 - scope decides which action package may be called
-- source identifies where the command came from
+- screen identifies which screen dispatched the command
 - runtime dependencies are memory, sending, stamps, culture settings, and other
   dependencies hydrated by the dispatcher
+
+The command model has two explicit dimensions:
+
+- `screen`: `plan` or `editor`
+- `scope`: `navigation`, `task-input`, `editor`, or `editor-session`
+
+The screen explains which screen-owned runtime state is available. The scope
+matches the action package that owns the behavior. The dispatcher must reject
+invalid screen/scope combinations before running an action.
+
+Valid combinations are:
+
+- `plan` + `navigation`
+- `plan` + `task-input`
+- `editor` + `navigation`
+- `editor` + `editor`
+- `editor` + `editor-session`
 
 The action signature owns the command argument type. We do not define command
 arguments a second time in the command boundary. Duplicating those types makes
@@ -73,7 +108,7 @@ export function taskEntrySetValue(
     readonly taskEntry: TaskEntry;
     readonly newValue: string | null;
   },
-  context: TaskInputActionScope,
+  runtimeDependencies: TaskInputRuntimeDependencies,
 ): void {
   // read fresh state, mutate tree, write memory, queue send
 }
@@ -110,12 +145,9 @@ Action packages and command scopes are grouped by intent:
 - `rollover`
 - `loaded-plan-import`
 
-The command source identifies where the command came from, for example
-`plan-input`, `editor-action`, or `editor-session`.
-
-The scope decides which runtime dependencies the command may receive. Those
-dependencies are based on the source and contain only what that action category
-is allowed to use.
+The screen and scope together decide which runtime dependencies the command may
+receive. Those dependencies contain only what that action category is allowed to
+use on that screen.
 
 Command registries live under `command-registry/<scope-package>.ts`. Command
 argument contracts are derived from the registered action functions. Runtime

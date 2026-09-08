@@ -15,6 +15,10 @@ import {
   type PlanScreenCommands,
 } from "./screen-commands";
 import { useCommandDispatcher } from "./command-boundary";
+import {
+  planScreenActionRegistry,
+  useRegisteredActions,
+} from "./action-boundary";
 import type { UserMoodLabel } from "@/models";
 import { useEventEmitter } from "@/shared";
 import { useRollover } from "./rollover";
@@ -108,9 +112,17 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     sending,
   });
+  const planRegisteredActions = useRegisteredActions(planScreenActionRegistry, {
+    cultureSettings,
+    editorMemory,
+    planInteractionStamp: interactionStamp,
+    planMemory,
+    screen: "plan",
+  });
   const planScreenCommands = useCreatePlanScreenCommands({
     decimalSeparator: cultureSettings.isUsingCommaForDecimals ? "," : ".",
     dispatch: commandDispatcher,
+    registeredActions: planRegisteredActions,
   });
   const editorScreenCommands = useCreateEditorScreenCommands({ dispatch: commandDispatcher });
   const appShellState = useCreateAppShellState({
