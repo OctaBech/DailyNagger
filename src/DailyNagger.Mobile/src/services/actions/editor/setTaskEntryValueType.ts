@@ -1,26 +1,30 @@
 import type { TaskEntryValueType } from "@/api";
 import type { TaskEntry } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { EditorActionScope } from "./contracts";
+import type { EditorRuntimeDependencies } from "./contracts";
 
 export function editorTaskEntrySetValueType(
-  { memory }: EditorActionScope,
-  taskEntry: TaskEntry,
-  valueType: TaskEntryValueType,
-  rolloverBehaviorInput: TaskEntry["rolloverBehavior"] = taskEntry.rolloverBehavior,
+  args: {
+    readonly taskEntry: TaskEntry;
+    readonly valueType: TaskEntryValueType;
+    readonly rolloverBehavior?: TaskEntry["rolloverBehavior"];
+  },
+  { memory }: EditorRuntimeDependencies,
 ): void {
   const { tree, node } = treeOperations;
-  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
-  const rolloverBehavior = getTaskEntryValueRolloverBehavior(rolloverBehaviorInput);
+  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, args.taskEntry);
+  const rolloverBehavior = getTaskEntryValueRolloverBehavior(
+    args.rolloverBehavior ?? args.taskEntry.rolloverBehavior,
+  );
 
   if (
-    freshTaskEntry.valueType === valueType &&
+    freshTaskEntry.valueType === args.valueType &&
     freshTaskEntry.rolloverBehavior === rolloverBehavior
   ) {
     return;
   }
 
-  const taskEntryV1 = node.setTaskEntryValueType(freshTaskEntry, valueType);
+  const taskEntryV1 = node.setTaskEntryValueType(freshTaskEntry, args.valueType);
   const taskEntryV2 = node.setTaskEntryRolloverBehavior(taskEntryV1, rolloverBehavior);
   const taskEntryV3 = node.tryPrefillCarryOverTaskEntryValueFromHistory(taskEntryV2);
   const newTree = tree.replaceTaskEntry(freshTree, taskEntryV3);

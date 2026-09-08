@@ -1,14 +1,16 @@
 import type { TaskItem } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { EditorActionScope } from "./contracts";
+import type { EditorRuntimeDependencies } from "./contracts";
 
 export function addTaskEntryToTaskItem(
-  { memory }: EditorActionScope,
-  staleTaskItem: TaskItem,
+  args: {
+    readonly taskItem: TaskItem;
+  },
+  { memory }: EditorRuntimeDependencies,
 ): void {
   const { tree, branch, node } = treeOperations;
 
-  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, staleTaskItem);
+  const { freshTree, freshTaskItem } = tree.readTaskItem(memory, args.taskItem);
 
   const taskEntryV1 = node.createTaskEntry({
     taskLogId: freshTaskItem.taskLogId,

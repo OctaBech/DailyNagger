@@ -7,7 +7,7 @@ import type {
 
 export type CommandViewActionContext = navigationActions.NavigationRuntimeDependencies;
 
-export type CommandEditorActionContext = editorActions.EditorActionScope;
+export type CommandEditorActionContext = editorActions.EditorRuntimeDependencies;
 
 export type CommandInputActionContext = taskInputActions.TaskInputRuntimeDependencies;
 

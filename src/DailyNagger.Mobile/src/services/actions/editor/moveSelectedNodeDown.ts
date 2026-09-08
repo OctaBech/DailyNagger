@@ -1,10 +1,12 @@
 import type { SelectedMoveContext } from "@/models";
-import type { EditorActionScope } from "./contracts";
+import type { EditorRuntimeDependencies } from "./contracts";
 import { moveSelectedNode } from "./moveSelectedNode";
 
 export function editorMoveSelectedNodeDown(
-  scope: EditorActionScope,
-  moveContext: SelectedMoveContext,
+  args: {
+    readonly moveContext: SelectedMoveContext;
+  },
+  runtimeDependencies: EditorRuntimeDependencies,
 ): void {
-  moveSelectedNode(scope, moveContext, "down");
+  moveSelectedNode(args, runtimeDependencies, "down");
 }

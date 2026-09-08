@@ -1,12 +1,12 @@
 import type { Nagger } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { EditorActionScope } from "./contracts";
+import type { EditorRuntimeDependencies } from "./contracts";
 
 export function naggerPinSelected(
   args: {
     readonly nagger: Nagger;
   },
-  { memory }: EditorActionScope,
+  { memory }: EditorRuntimeDependencies,
 ): void {
   if (args.nagger.pinnedBy !== "None") return;
 

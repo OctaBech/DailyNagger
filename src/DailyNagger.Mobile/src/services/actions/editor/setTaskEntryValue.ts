@@ -1,15 +1,17 @@
 import { normalizeTaskEntryValue, type TaskEntry } from "@/models";
 import { treeOperations } from "@/services/tree-operations";
-import type { EditorActionScope } from "./contracts";
+import type { EditorRuntimeDependencies } from "./contracts";
 
 export function editorTaskEntrySetValue(
-  { memory }: EditorActionScope,
-  taskEntry: TaskEntry,
-  newValue: string | null,
+  args: {
+    readonly taskEntry: TaskEntry;
+    readonly newValue: string | null;
+  },
+  { memory }: EditorRuntimeDependencies,
 ): void {
   const { tree, node } = treeOperations;
-  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, taskEntry);
-  const normalizedValue = normalizeTaskEntryValue(freshTaskEntry.valueType, newValue);
+  const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, args.taskEntry);
+  const normalizedValue = normalizeTaskEntryValue(freshTaskEntry.valueType, args.newValue);
 
   const taskEntryV1 = node.setTaskEntryValue(freshTaskEntry, normalizedValue);
   const newTree = tree.replaceTaskEntry(freshTree, taskEntryV1);
