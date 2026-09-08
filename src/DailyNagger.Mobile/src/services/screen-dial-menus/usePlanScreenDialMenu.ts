@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
+import type { SelectedNodes, TreePath } from "@/models";
 import type { Guid } from "@/shared";
 import type { PlanScreenCommands } from "../screen-commands";
 import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
+import { readPlanSpeedDialMenuState } from "./readPlanSpeedDialMenuState";
 
 type UseCreatePlanScreenDialMenuProps = {
   readonly planCommands: PlanScreenCommands;
@@ -21,11 +22,16 @@ export function useCreatePlanScreenDialMenu({
   onCreateNagger,
   onEditNagger,
 }: UseCreatePlanScreenDialMenuProps): SpeedDialMenu {
-  const { nagger } = selectedNodes;
   const { pinSelectedNagger, unpinSelectedNagger } = planCommands.dial;
 
   return useMemo(() => {
-    if (!actionsAreAvailable) return { items: [] };
+    const menuState = readPlanSpeedDialMenuState({
+      actionsAreAvailable,
+      selectedNodes,
+      selectedPath,
+    });
+
+    if (!menuState.canCreateNagger) return { items: [] };
 
     const newNagger: SpeedDialMenuItem = {
       key: "plan.new-nagger",
@@ -36,29 +42,31 @@ export function useCreatePlanScreenDialMenu({
       onSelect: onCreateNagger,
     };
 
-    if (nagger === null) return { items: [newNagger] };
+    const { selectedNagger } = menuState;
+
+    if (!menuState.canEditNagger || selectedNagger === null) return { items: [newNagger] };
 
     const pinItems: SpeedDialMenuItem[] = [];
 
-    if (treeSelection.canBePinned(selectedPath)) {
+    if (menuState.canPinNagger) {
       pinItems.push({
         key: "plan.pin-selected-nagger",
         iconType: "vector",
         iconValue: "pin",
         label: "Pin",
         showLabel: true,
-        onSelect: () => pinSelectedNagger(nagger),
+        onSelect: () => pinSelectedNagger(selectedNagger),
       });
     }
 
-    if (treeSelection.canBeUnpinned(selectedPath)) {
+    if (menuState.canUnpinNagger) {
       pinItems.push({
         key: "plan.unpin-selected-nagger",
         iconType: "vector",
         iconValue: "pin-off",
         label: "Unpin",
         showLabel: true,
-        onSelect: () => unpinSelectedNagger(nagger),
+        onSelect: () => unpinSelectedNagger(selectedNagger),
       });
     }
 
@@ -72,16 +80,16 @@ export function useCreatePlanScreenDialMenu({
           iconValue: "pencil-box-outline",
           label: "Edit nagger",
           showLabel: true,
-          onSelect: () => onEditNagger(nagger.id),
+          onSelect: () => onEditNagger(selectedNagger.id),
         },
       ],
     };
   }, [
     actionsAreAvailable,
-    nagger,
     onCreateNagger,
     onEditNagger,
     pinSelectedNagger,
+    selectedNodes,
     selectedPath,
     unpinSelectedNagger,
   ]);
