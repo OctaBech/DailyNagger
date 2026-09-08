@@ -1,8 +1,7 @@
 import { useMemo } from "react";
-import type { SelectedNodes, TreePath } from "@/models";
+import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { EditorScreenCommands } from "../screen-commands";
 import type { SpeedDialMenu } from "./SpeedDialMenu";
-import { readEditorSpeedDialMenuState } from "./readEditorSpeedDialMenuState";
 
 type UseCreateEditorScreenDialMenuProps = {
   readonly editorCommands: EditorScreenCommands;
@@ -17,6 +16,7 @@ export function useCreateEditorScreenDialMenu({
   selectedPath,
   onCloseEditor,
 }: UseCreateEditorScreenDialMenuProps): SpeedDialMenu {
+  const { nagger } = selectedNodes;
   const {
     cancelEdit,
     deleteSelectedNode,
@@ -28,8 +28,8 @@ export function useCreateEditorScreenDialMenu({
   } = editorCommands.dial;
 
   return useMemo(() => {
-    const menuState = readEditorSpeedDialMenuState({ selectedNodes, selectedPath });
-    const { deleteContext, moveContext, selectedNagger } = menuState;
+    const moveContext = treeSelection.tryReadMoveContext(selectedPath);
+    const deleteContext = treeSelection.tryReadDeleteContext(selectedPath);
 
     return {
       items: [
@@ -41,10 +41,10 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 1,
           keepOpenAfterPress: true,
-          isDisabled: !menuState.canMoveSelectedNodeUp,
+          isDisabled: !treeSelection.canMoveSelectedContextUp(moveContext),
           onSelect: () => {
             if (moveContext === null) return;
-            if (!menuState.canMoveSelectedNodeUp) return;
+            if (!treeSelection.canMoveSelectedContextUp(moveContext)) return;
             moveSelectedNodeUp(moveContext);
           },
         },
@@ -55,14 +55,14 @@ export function useCreateEditorScreenDialMenu({
           label: "Move down",
           row: 1,
           keepOpenAfterPress: true,
-          isDisabled: !menuState.canMoveSelectedNodeDown,
+          isDisabled: !treeSelection.canMoveSelectedContextDown(moveContext),
           onSelect: () => {
             if (moveContext === null) return;
-            if (!menuState.canMoveSelectedNodeDown) return;
+            if (!treeSelection.canMoveSelectedContextDown(moveContext)) return;
             moveSelectedNodeDown(moveContext);
           },
         },
-        ...(menuState.canPinNagger && selectedNagger !== null
+        ...(treeSelection.canSelectedNaggerBePinned(selectedNodes) && nagger !== null
           ? [
               {
                 key: "editor.pin-selected-nagger",
@@ -72,11 +72,11 @@ export function useCreateEditorScreenDialMenu({
                 showLabel: true,
                 row: 3,
                 keepOpenAfterPress: true,
-                onSelect: () => pinSelectedNagger(selectedNagger),
+                onSelect: () => pinSelectedNagger(nagger),
               },
             ]
           : []),
-        ...(menuState.canUnpinNagger && selectedNagger !== null
+        ...(treeSelection.canSelectedNaggerBeUnpinned(selectedNodes) && nagger !== null
           ? [
               {
                 key: "editor.unpin-selected-nagger",
@@ -86,7 +86,7 @@ export function useCreateEditorScreenDialMenu({
                 showLabel: true,
                 row: 3,
                 keepOpenAfterPress: true,
-                onSelect: () => unpinSelectedNagger(selectedNagger),
+                onSelect: () => unpinSelectedNagger(nagger),
               },
             ]
           : []),
@@ -98,7 +98,7 @@ export function useCreateEditorScreenDialMenu({
           showLabel: true,
           row: 2,
           keepOpenAfterPress: true,
-          isDisabled: !menuState.canDeleteSelectedNode,
+          isDisabled: deleteContext === null,
           onSelect: () => {
             if (deleteContext === null) return;
             deleteSelectedNode(deleteContext);
@@ -110,10 +110,10 @@ export function useCreateEditorScreenDialMenu({
           iconValue: "content-save",
           label: "Save",
           row: 0,
-          isDisabled: !menuState.canSaveEdit,
+          isDisabled: nagger === null,
           onSelect: () => {
-            if (selectedNagger === null) return;
-            saveEdit(selectedNagger);
+            if (nagger === null) return;
+            saveEdit(nagger);
             onCloseEditor();
           },
         },
@@ -123,10 +123,10 @@ export function useCreateEditorScreenDialMenu({
           iconValue: "close",
           label: "Cancel",
           row: 0,
-          isDisabled: !menuState.canCancelEdit,
+          isDisabled: nagger === null,
           onSelect: () => {
-            if (selectedNagger === null) return;
-            cancelEdit(selectedNagger);
+            if (nagger === null) return;
+            cancelEdit(nagger);
             onCloseEditor();
           },
         },
@@ -142,6 +142,7 @@ export function useCreateEditorScreenDialMenu({
     saveEdit,
     selectedNodes,
     selectedPath,
+    nagger,
     unpinSelectedNagger,
   ]);
 }

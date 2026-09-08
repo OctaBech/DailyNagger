@@ -59,9 +59,10 @@ export const AppShell = ({ children }: AppShellProps) => {
   const handleSpeedDialItemSelected = useCallback(
     (item: SpeedDialMenuItem) => {
       if (item.key !== "shell.show-mood-bar") return;
+      if (moodBarIsVisible) return;
       showMoodBarAgain();
     },
-    [showMoodBarAgain],
+    [moodBarIsVisible, showMoodBarAgain],
   );
 
   return (
