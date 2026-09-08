@@ -131,11 +131,11 @@ function addMoodBarSpeedDialAction(
       ...menu.items,
       {
         key: "shell.show-mood-bar",
-        emoji: selectedMoodEmoji ?? userMoodConfig.unknownMoodEmoji,
+        iconType: "emoji",
+        iconValue: selectedMoodEmoji ?? userMoodConfig.unknownMoodEmoji,
         label: "Mood",
         showLabel: true,
         row: 4,
-        shellAction: "showMoodBar",
       },
     ],
   };

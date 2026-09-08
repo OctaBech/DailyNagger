@@ -35,7 +35,8 @@ export function useCreateEditorScreenDialMenu({
       items: [
         {
           key: "editor.move-selected-up",
-          icon: "arrow-up",
+          iconType: "vector" as const,
+          iconValue: "arrow-up",
           label: "Move up/down",
           showLabel: true,
           row: 1,
@@ -49,7 +50,8 @@ export function useCreateEditorScreenDialMenu({
         },
         {
           key: "editor.move-selected-down",
-          icon: "arrow-down",
+          iconType: "vector" as const,
+          iconValue: "arrow-down",
           label: "Move down",
           row: 1,
           keepOpenAfterPress: true,
@@ -64,7 +66,8 @@ export function useCreateEditorScreenDialMenu({
           ? [
               {
                 key: "editor.pin-selected-nagger",
-                icon: "pin",
+                iconType: "vector" as const,
+                iconValue: "pin",
                 label: "Pin",
                 showLabel: true,
                 row: 3,
@@ -77,7 +80,8 @@ export function useCreateEditorScreenDialMenu({
           ? [
               {
                 key: "editor.unpin-selected-nagger",
-                icon: "pin-off",
+                iconType: "vector" as const,
+                iconValue: "pin-off",
                 label: "Unpin",
                 showLabel: true,
                 row: 3,
@@ -88,7 +92,8 @@ export function useCreateEditorScreenDialMenu({
           : []),
         {
           key: "editor.delete-selected-node",
-          icon: "delete",
+          iconType: "vector" as const,
+          iconValue: "delete",
           label: "Delete",
           showLabel: true,
           row: 2,
@@ -101,7 +106,8 @@ export function useCreateEditorScreenDialMenu({
         },
         {
           key: "editor.save",
-          icon: "content-save",
+          iconType: "vector" as const,
+          iconValue: "content-save",
           label: "Save",
           row: 0,
           isDisabled: nagger === null,
@@ -113,7 +119,8 @@ export function useCreateEditorScreenDialMenu({
         },
         {
           key: "editor.cancel",
-          icon: "close",
+          iconType: "vector" as const,
+          iconValue: "close",
           label: "Cancel",
           row: 0,
           isDisabled: nagger === null,

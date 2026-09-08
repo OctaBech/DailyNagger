@@ -29,7 +29,8 @@ export function useCreatePlanScreenDialMenu({
 
     const newNagger: SpeedDialMenuItem = {
       key: "plan.new-nagger",
-      icon: "bell-plus",
+      iconType: "vector",
+      iconValue: "bell-plus",
       label: "New nagger",
       showLabel: true,
       onSelect: onCreateNagger,
@@ -42,7 +43,8 @@ export function useCreatePlanScreenDialMenu({
     if (treeSelection.canBePinned(selectedPath)) {
       pinItems.push({
         key: "plan.pin-selected-nagger",
-        icon: "pin",
+        iconType: "vector",
+        iconValue: "pin",
         label: "Pin",
         showLabel: true,
         onSelect: () => pinSelectedNagger(nagger),
@@ -52,7 +54,8 @@ export function useCreatePlanScreenDialMenu({
     if (treeSelection.canBeUnpinned(selectedPath)) {
       pinItems.push({
         key: "plan.unpin-selected-nagger",
-        icon: "pin-off",
+        iconType: "vector",
+        iconValue: "pin-off",
         label: "Unpin",
         showLabel: true,
         onSelect: () => unpinSelectedNagger(nagger),
@@ -65,7 +68,8 @@ export function useCreatePlanScreenDialMenu({
         ...pinItems,
         {
           key: "plan.edit-selected-nagger",
-          icon: "pencil-box-outline",
+          iconType: "vector",
+          iconValue: "pencil-box-outline",
           label: "Edit nagger",
           showLabel: true,
           onSelect: () => onEditNagger(nagger.id),

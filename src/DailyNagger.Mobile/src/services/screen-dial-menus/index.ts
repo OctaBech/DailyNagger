@@ -1,6 +1,5 @@
 export {
   emptySpeedDialMenu,
-  type ShellSpeedDialAction,
   type SpeedDialMenu,
   type SpeedDialMenuItem,
 } from "./SpeedDialMenu";

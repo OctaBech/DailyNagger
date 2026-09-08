@@ -6,7 +6,12 @@ import { usePathname } from "expo-router";
 import { AssistantBubble } from "./assistant-bubble";
 import { MoodBar } from "./mood-bar";
 import { PostOfficeStrip } from "./post-office-strip";
-import { emptySpeedDialMenu, type SpeedDialMenu, useAppShellState } from "@/services";
+import {
+  emptySpeedDialMenu,
+  type SpeedDialMenu,
+  type SpeedDialMenuItem,
+  useAppShellState,
+} from "@/services";
 import { SpeedDial } from "./speed-dial";
 import {
   ScreenPositionHandoffDebug,
@@ -48,12 +53,16 @@ export const AppShell = ({ children }: AppShellProps) => {
     }
   }
   const speedDialMenu = useMemo(
-    () =>
-      hydrateSpeedDialMenu(baseSpeedDialMenu, {
-        showMoodBar: showMoodBarAgain,
-        showMoodBarIsAvailable: !moodBarIsVisible,
-      }),
-    [baseSpeedDialMenu, moodBarIsVisible, showMoodBarAgain],
+    () => hideUnavailableShellItems(baseSpeedDialMenu, { moodBarIsVisible }),
+    [baseSpeedDialMenu, moodBarIsVisible],
+  );
+  const handleSpeedDialItemSelected = useCallback(
+    (item: SpeedDialMenuItem) => {
+      if (item.key !== "shell.show-mood-bar") return;
+      if (moodBarIsVisible) return;
+      showMoodBarAgain();
+    },
+    [moodBarIsVisible, showMoodBarAgain],
   );
 
   return (
@@ -83,7 +92,7 @@ export const AppShell = ({ children }: AppShellProps) => {
               />
             </View>
           ) : null}
-          <SpeedDial menu={speedDialMenu} />
+          <SpeedDial menu={speedDialMenu} onItemSelected={handleSpeedDialItemSelected} />
           <ScreenPositionHandoffDebug />
           {appShellState.globalOverlaysAreEnabled ? (
             <AssistantBubble
@@ -110,27 +119,14 @@ const styles = StyleSheet.create({
   },
 });
 
-type ShellSpeedDialActions = {
-  readonly showMoodBar: () => void;
-  readonly showMoodBarIsAvailable: boolean;
-};
-
-function hydrateSpeedDialMenu(
+function hideUnavailableShellItems(
   menu: SpeedDialMenu,
-  shellActions: ShellSpeedDialActions,
+  options: { readonly moodBarIsVisible: boolean },
 ): SpeedDialMenu {
   return {
-    items: menu.items.flatMap((item) => {
-      if (item.onSelect !== undefined) {
-        const { shellAction: _shellAction, ...presentation } = item;
-        return [{ ...presentation, onSelect: item.onSelect }];
-      }
-
-      if (item.shellAction !== "showMoodBar") return [];
-      if (!shellActions.showMoodBarIsAvailable) return [];
-
-      const { shellAction: _shellAction, ...presentation } = item;
-      return [{ ...presentation, onSelect: shellActions.showMoodBar }];
+    items: menu.items.filter((item) => {
+      if (item.key !== "shell.show-mood-bar") return true;
+      return !options.moodBarIsVisible;
     }),
   };
 }

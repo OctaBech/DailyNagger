@@ -8,13 +8,14 @@ import type { SpeedDialMenu, SpeedDialMenuItem } from "@/services";
 
 type SpeedDialProps = {
   readonly menu: SpeedDialMenu;
+  readonly onItemSelected?: (item: SpeedDialMenuItem) => void;
 };
 
-type PaperSpeedDialAction = Omit<SpeedDialMenuItem, "keepOpenAfterPress" | "onSelect"> & {
+type PaperSpeedDialAction = SpeedDialMenuItem & {
   readonly onPress: () => void;
 };
 
-export const SpeedDial = ({ menu }: SpeedDialProps) => {
+export const SpeedDial = ({ menu, onItemSelected }: SpeedDialProps) => {
   const { bottom } = useSafeAreaInsets();
   const [state, setState] = useState<{ open: boolean }>({ open: false });
   const [showLabels, setShowLabels] = useState(false);
@@ -22,16 +23,16 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
   const { open } = state;
   const bottomOffset = Math.max(appLayout.speedDial.bottom, bottom + 12);
   const actionGridBottom = bottomOffset + appLayout.speedDial.actionGridGap;
-  const paperSpeedDialActions = menu.items.flatMap(({ keepOpenAfterPress, onSelect, ...action }) => {
-    if (onSelect === undefined) return [];
-
+  const paperSpeedDialActions = menu.items.flatMap((item) => {
+    if (item.onSelect === undefined && onItemSelected === undefined) return [];
     return [
       {
-        ...action,
+        ...item,
         onPress: () => {
-          if (action.isDisabled === true) return;
-          onSelect();
-          if (keepOpenAfterPress !== true) close();
+          if (item.isDisabled === true) return;
+          item.onSelect?.();
+          onItemSelected?.(item);
+          if (item.keepOpenAfterPress !== true) close();
         },
       },
     ];
@@ -93,13 +94,13 @@ export const SpeedDial = ({ menu }: SpeedDialProps) => {
                       <FAB
                         color={actionButtonTheme.icon}
                         icon={
-                          "emoji" in action
+                          action.iconType === "emoji"
                             ? () => (
                                 <View style={styles.actionEmojiFrame}>
-                                  <Text style={styles.actionEmoji}>{action.emoji}</Text>
+                                  <Text style={styles.actionEmoji}>{action.iconValue}</Text>
                                 </View>
                               )
-                            : action.icon
+                            : action.iconValue
                         }
                         disabled={action.isDisabled}
                         onPress={action.onPress}
