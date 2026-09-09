@@ -14,15 +14,10 @@ export type MemoryEventType =
   | "setTreeAndSelectedPath"
   | "setTreeAndFocusPath";
 
-export type MemoryEvent = {
-  readonly memoryName: string;
-  readonly operation: MemoryEventType;
-};
-
 export function useSelectionMemory(
   memory: Memory,
   debugName = "memory",
-  memoryEvents?: EventEmitter<MemoryEventType, MemoryEvent>,
+  memoryEvents?: EventEmitter<MemoryEventType, void>,
 ): Memory {
   const getSelectedPath = memory.read.getSelectedPath;
   const baseClear = memory.write.clear;
@@ -34,7 +29,7 @@ export function useSelectionMemory(
   const recordMemoryEvent = useCallback(
     (operation: MemoryEventType): void => {
       startDebugRenderFrame(`${debugName}.${operation}`);
-      memoryEvents?.emit(operation, { memoryName: debugName, operation });
+      memoryEvents?.emit(operation, undefined);
     },
     [debugName, memoryEvents],
   );
