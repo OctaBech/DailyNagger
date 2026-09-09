@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { Guid } from "@/shared";
-import type { PlanScreenCommands } from "../screen-commands";
+import type { RegisteredActionClient, planDialActionRegistry } from "@/services/action-boundary";
 import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
 
+type PlanDialJsxActions = RegisteredActionClient<typeof planDialActionRegistry>["dial"];
+
 type UseCreatePlanScreenDialMenuProps = {
-  readonly planCommands: PlanScreenCommands;
+  readonly planDialJsxActions: PlanDialJsxActions;
   readonly actionsAreAvailable: boolean;
   readonly selectedNodes: SelectedNodes;
   readonly selectedPath: TreePath;
@@ -14,7 +16,7 @@ type UseCreatePlanScreenDialMenuProps = {
 };
 
 export function useCreatePlanScreenDialMenu({
-  planCommands,
+  planDialJsxActions,
   actionsAreAvailable,
   selectedNodes,
   selectedPath,
@@ -22,7 +24,7 @@ export function useCreatePlanScreenDialMenu({
   onEditNagger,
 }: UseCreatePlanScreenDialMenuProps): SpeedDialMenu {
   const { nagger } = selectedNodes;
-  const { pinSelectedNagger, unpinSelectedNagger } = planCommands.dial;
+  const { pinSelectedNagger, unpinSelectedNagger } = planDialJsxActions;
 
   return useMemo(() => {
     if (!actionsAreAvailable) return { items: [] };

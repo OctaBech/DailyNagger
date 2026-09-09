@@ -4,6 +4,11 @@ import type { Memory, Startup } from "../contracts";
 import type { AssistantBubble } from "../assistant-bubble";
 import type { Parcel, SendingEventType } from "../sending";
 import type { EditorScreenCommands, PlanScreenCommands } from "../screen-commands";
+import type {
+  editorDialActionRegistry,
+  planDialActionRegistry,
+  RegisteredActionClient,
+} from "@/services/action-boundary";
 import {
   useCreateEditorScreenDialMenu,
   useCreatePlanScreenDialMenu,
@@ -17,8 +22,10 @@ import type { EventEmitter, Guid } from "@/shared";
 
 type UseCreateAppShellStateProps = {
   readonly assistantBubble: AssistantBubble;
+  readonly editorDialJsxActions: RegisteredActionClient<typeof editorDialActionRegistry>["dial"];
   readonly editorMemory: Memory;
   readonly editorScreenCommands: EditorScreenCommands;
+  readonly planDialJsxActions: RegisteredActionClient<typeof planDialActionRegistry>["dial"];
   readonly planMemory: Memory;
   readonly planScreenCommands: PlanScreenCommands;
   readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
@@ -29,8 +36,10 @@ type UseCreateAppShellStateProps = {
 
 export function useCreateAppShellState({
   assistantBubble,
+  editorDialJsxActions,
   editorMemory,
   editorScreenCommands,
+  planDialJsxActions,
   planMemory,
   planScreenCommands,
   sendingEvents,
@@ -68,7 +77,7 @@ export function useCreateAppShellState({
   const selectedMoodEmoji =
     userMood.options.find((option) => option.label === userMood.state.selectedMood)?.emoji ?? null;
   const planSpeedDialMenu = useCreatePlanScreenDialMenu({
-    planCommands: planScreenCommands,
+    planDialJsxActions,
     actionsAreAvailable: startup.isReady && userMood.state.selectedMood !== null,
     selectedNodes: planSelectedNodes,
     selectedPath: planSelectedPath,
@@ -76,7 +85,7 @@ export function useCreateAppShellState({
     onEditNagger: editNagger,
   });
   const editorSpeedDialMenu = useCreateEditorScreenDialMenu({
-    editorCommands: editorScreenCommands,
+    editorDialJsxActions,
     selectedNodes: editorSelectedNodes,
     selectedPath: editorSelectedPath,
     onCloseEditor: closeEditor,

@@ -14,8 +14,10 @@ import {
   useCreatePlanScreenCommands,
   type PlanScreenCommands,
 } from "./screen-commands";
-import { useCommandDispatcher } from "./command-boundary";
 import {
+  editorDialActionRegistry,
+  editorScreenActionRegistry,
+  planDialActionRegistry,
   planScreenActionRegistry,
   useRegisteredActions,
 } from "./action-boundary";
@@ -106,13 +108,6 @@ function useCreateServices(): {
     userMood,
   });
   const editorScreenData = useCreateEditorScreenData({ editorMemory, cultureSettings });
-  const commandDispatcher = useCommandDispatcher({
-    cultureSettings,
-    planMemory,
-    editorMemory,
-    planInteractionStamp: interactionStamp,
-    sending,
-  });
   const planRegisteredActions = useRegisteredActions(planScreenActionRegistry, {
     cultureSettings,
     editorMemory,
@@ -121,14 +116,42 @@ function useCreateServices(): {
     sending,
     screen: "plan",
   });
+  const planDialJsxActions = useRegisteredActions(planDialActionRegistry, {
+    cultureSettings,
+    editorMemory,
+    planInteractionStamp: interactionStamp,
+    planMemory,
+    sending,
+    screen: "plan",
+  }).dial;
+  const editorRegisteredActions = useRegisteredActions(editorScreenActionRegistry, {
+    cultureSettings,
+    editorMemory,
+    planInteractionStamp: interactionStamp,
+    planMemory,
+    sending,
+    screen: "editor",
+  });
+  const editorDialJsxActions = useRegisteredActions(editorDialActionRegistry, {
+    cultureSettings,
+    editorMemory,
+    planInteractionStamp: interactionStamp,
+    planMemory,
+    sending,
+    screen: "editor",
+  }).dial;
   const planScreenCommands = useCreatePlanScreenCommands({
     registeredActions: planRegisteredActions,
   });
-  const editorScreenCommands = useCreateEditorScreenCommands({ dispatch: commandDispatcher });
+  const editorScreenCommands = useCreateEditorScreenCommands({
+    registeredActions: editorRegisteredActions,
+  });
   const appShellState = useCreateAppShellState({
     assistantBubble,
+    editorDialJsxActions,
     editorMemory,
     editorScreenCommands,
+    planDialJsxActions,
     planMemory,
     planScreenCommands,
     sendingEvents,
@@ -145,6 +168,12 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
+
+
+
+
+
+
 
 
 

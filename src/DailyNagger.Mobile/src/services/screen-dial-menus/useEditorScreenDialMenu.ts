@@ -1,17 +1,19 @@
 import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
-import type { EditorScreenCommands } from "../screen-commands";
+import type { RegisteredActionClient, editorDialActionRegistry } from "@/services/action-boundary";
 import type { SpeedDialMenu } from "./SpeedDialMenu";
 
+type EditorDialJsxActions = RegisteredActionClient<typeof editorDialActionRegistry>["dial"];
+
 type UseCreateEditorScreenDialMenuProps = {
-  readonly editorCommands: EditorScreenCommands;
+  readonly editorDialJsxActions: EditorDialJsxActions;
   readonly selectedNodes: SelectedNodes;
   readonly selectedPath: TreePath;
   readonly onCloseEditor: () => void;
 };
 
 export function useCreateEditorScreenDialMenu({
-  editorCommands,
+  editorDialJsxActions,
   selectedNodes,
   selectedPath,
   onCloseEditor,
@@ -25,7 +27,7 @@ export function useCreateEditorScreenDialMenu({
     pinSelectedNagger,
     saveEdit,
     unpinSelectedNagger,
-  } = editorCommands.dial;
+  } = editorDialJsxActions;
 
   return useMemo(() => {
     const moveContext = treeSelection.tryReadMoveContext(selectedPath);

@@ -3,18 +3,6 @@ import { navigationActions, taskInputActions } from "@/services/actions";
 import { registerAction } from "./actionRegistrationModel";
 
 export const planScreenActionRegistry = {
-  dial: {
-    pinSelectedNagger: registerAction(
-      "task-input",
-      taskInputActions.naggerPinSelected,
-      (nagger: Nagger) => ({ nagger }),
-    ),
-    unpinSelectedNagger: registerAction(
-      "task-input",
-      taskInputActions.naggerUnpinSelected,
-      (nagger: Nagger) => ({ nagger }),
-    ),
-  },
   nagger: {
     setExpanded: registerAction(
       "navigation",

@@ -1,25 +1,17 @@
 import { createRequiredContext, type Prettify } from "@/shared";
 import type { RegisteredActionClient, planScreenActionRegistry } from "@/services/action-boundary";
-import { useMemo } from "react";
 
-export type PlanScreenCommands = Prettify<ReturnType<typeof useCreatePlanScreenCommands>>;
+export type PlanScreenCommands = Prettify<RegisteredActionClient<typeof planScreenActionRegistry>>;
 
 export const { Provider: PlanScreenCommandsProvider, useRequiredContext: usePlanScreenCommands } =
   createRequiredContext<PlanScreenCommands>("PlanScreenCommandsContext");
 
 type UseCreatePlanScreenCommandsProps = {
-  readonly registeredActions: RegisteredActionClient<typeof planScreenActionRegistry>;
+  readonly registeredActions: PlanScreenCommands;
 };
 
-export function useCreatePlanScreenCommands({ registeredActions }: UseCreatePlanScreenCommandsProps) {
-  return useMemo(
-    () => ({
-      dial: registeredActions.dial,
-      nagger: registeredActions.nagger,
-      taskEntry: registeredActions.taskEntry,
-      taskItem: registeredActions.taskItem,
-      taskLog: registeredActions.taskLog,
-    }),
-    [registeredActions],
-  );
+export function useCreatePlanScreenCommands({
+  registeredActions,
+}: UseCreatePlanScreenCommandsProps): PlanScreenCommands {
+  return registeredActions;
 }
