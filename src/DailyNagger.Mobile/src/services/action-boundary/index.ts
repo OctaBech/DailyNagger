@@ -4,5 +4,10 @@ export {
   planDialActionRegistry,
   planScreenActionRegistry,
 } from "./register";
-export { useRegisteredActions, type RegisteredActionClient } from "./runtime";
+export {
+  useRegisteredActions,
+  type ActionExecutionEvent,
+  type ActionExecutionEventType,
+  type RegisteredActionClient,
+} from "./runtime";
 

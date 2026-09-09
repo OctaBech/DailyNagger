@@ -17,6 +17,8 @@ import {
 import {
   editorDialActionRegistry,
   editorScreenActionRegistry,
+  type ActionExecutionEvent,
+  type ActionExecutionEventType,
   planDialActionRegistry,
   planScreenActionRegistry,
   useRegisteredActions,
@@ -76,6 +78,7 @@ function useCreateServices(): {
   const cultureSettings = useCultureSettings();
   const planMemoryEvents = useEventEmitter<MemoryEventType, void>();
   const editorMemoryEvents = useEventEmitter<MemoryEventType, void>();
+  const actionEvents = useEventEmitter<ActionExecutionEventType, ActionExecutionEvent>();
   const rawPlanMemory = useMemory();
   const planMemory = useSelectionMemory(rawPlanMemory, "planMemory", planMemoryEvents);
   const rawEditorMemory = useMemory();
@@ -115,6 +118,7 @@ function useCreateServices(): {
     editorMemory,
     planInteractionStamp: interactionStamp,
     planMemory,
+    actionEvents,
     sending,
     screen: "plan",
   });
@@ -123,6 +127,7 @@ function useCreateServices(): {
     editorMemory,
     planInteractionStamp: interactionStamp,
     planMemory,
+    actionEvents,
     sending,
     screen: "plan",
   }).dial;
@@ -131,6 +136,7 @@ function useCreateServices(): {
     editorMemory,
     planInteractionStamp: interactionStamp,
     planMemory,
+    actionEvents,
     sending,
     screen: "editor",
   });
@@ -139,6 +145,7 @@ function useCreateServices(): {
     editorMemory,
     planInteractionStamp: interactionStamp,
     planMemory,
+    actionEvents,
     sending,
     screen: "editor",
   }).dial;

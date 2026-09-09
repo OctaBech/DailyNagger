@@ -25,6 +25,7 @@ export type RegisteredActionClient<TRegistry extends RegisteredActionTree> = {
 
 type ExecuteRegisteredAction = <TScope extends ActionScope, TActionArgs, TPublicArgs extends unknown[]>(
   action: RegisteredJsxAction<TScope, TActionArgs, TPublicArgs>,
+  actionKey: string,
   publicArgs: TPublicArgs,
 ) => void;
 
@@ -38,8 +39,10 @@ export function createJsxActions<TRegistry extends RegisteredActionTree>(
     client[groupName] = {};
 
     Object.entries(group).forEach(([actionName, action]) => {
+      const actionKey = `${groupName}/${actionName}`;
+
       client[groupName][actionName] = (...publicArgs: unknown[]) => {
-        execute(action, publicArgs);
+        execute(action, actionKey, publicArgs);
       };
     });
   });
