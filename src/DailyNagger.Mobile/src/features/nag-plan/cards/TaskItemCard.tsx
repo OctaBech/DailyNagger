@@ -2,7 +2,7 @@ import { memo } from "react";
 import { StyleSheet, View } from "react-native";
 import { Card, SelectionLane } from "@/components";
 import { type TaskItem } from "@/models";
-import { usePlanScreenCommands } from "@/services";
+import { usePlanScreenActions } from "@/services";
 import { TaskEntryCard } from "./TaskEntryCard";
 import { nagPlanTheme } from "../theme";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
@@ -21,7 +21,7 @@ const TaskItemCardComponent = ({
   railTone,
 }: TaskItemCardProps) => {
   const { deleteOnce, setDoneAndSetFocus, setExpanded, setFocused } =
-    usePlanScreenCommands().taskItem;
+    usePlanScreenActions().taskItem;
   useDebugRenderFrameCounter("PlanTaskItemCard", taskItem.id);
 
   const isOnceTaskItem = taskItem.rolloverBehavior === "RemoveWhenDone";
@@ -106,4 +106,5 @@ const styles = StyleSheet.create({
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,
   },
 });
+
 

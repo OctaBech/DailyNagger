@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Card, Modal, SelectionLane } from "@/components";
 import { type TaskItem } from "@/models";
-import { useEditorScreenCommands } from "@/services";
+import { useEditorScreenActions } from "@/services";
 import { TaskEntryCard } from "./TaskEntryCard";
 import { TaskItemTail } from "./TaskItemTail";
 import { nagPlanTheme } from "../theme";
@@ -22,7 +22,7 @@ const TaskItemCardComponent = ({
   taskItem,
   railTone,
 }: TaskItemCardProps) => {
-  const { taskItem: taskItemActions } = useEditorScreenCommands();
+  const { taskItem: taskItemActions } = useEditorScreenActions();
   useDebugRenderFrameCounter("EditorTaskItemCard", taskItem.id);
   const [isTagModalVisible, setIsTagModalVisible] = useState(false);
 
@@ -138,4 +138,5 @@ const styles = StyleSheet.create({
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,
   },
 });
+
 

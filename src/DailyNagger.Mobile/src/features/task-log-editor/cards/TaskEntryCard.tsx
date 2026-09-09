@@ -1,6 +1,6 @@
 import { Card, Modal } from "@/components";
 import type { TaskEntry } from "@/models";
-import { useEditorScreenCommands } from "@/services";
+import { useEditorScreenActions } from "@/services";
 import { memo, useState } from "react";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
@@ -10,7 +10,7 @@ type TaskEntryCardProps = {
 };
 
 const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => {
-  const { taskEntry: taskEntryActions } = useEditorScreenCommands();
+  const { taskEntry: taskEntryActions } = useEditorScreenActions();
   useDebugRenderFrameCounter("EditorTaskEntryCard", taskEntry.id);
   const isSelected = taskEntry.clientProps.isSelected;
   const [isValueTypeModalVisible, setIsValueTypeModalVisible] = useState(false);
@@ -56,3 +56,4 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
 };
 
 export const TaskEntryCard = memo(TaskEntryCardComponent);
+

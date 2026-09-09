@@ -1,6 +1,6 @@
 import type { Guid } from "@/shared";
 import { StyleSheet, View } from "react-native";
-import { useEditorScreenCommands, useEditorScreenData } from "@/services";
+import { useEditorScreenActions, useEditorScreenData } from "@/services";
 import { useEffect } from "react";
 import { NagList } from "./NagList";
 import { nagPlanTheme } from "./theme";
@@ -10,7 +10,7 @@ type TaskLogEditorScreenProps = {
 };
 
 export const TaskLogEditorScreen = (props: TaskLogEditorScreenProps) => {
-  const { effects } = useEditorScreenCommands();
+  const { effects } = useEditorScreenActions();
   const editorScreenData = useEditorScreenData();
   const { startEdit } = effects;
 
@@ -33,3 +33,4 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+

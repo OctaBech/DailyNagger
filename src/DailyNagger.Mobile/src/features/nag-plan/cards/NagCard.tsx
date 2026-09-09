@@ -3,7 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { type Nagger } from "@/models";
 import { Card } from "@/components";
 import type { NaggerFrameTone } from "@/components/card";
-import { usePlanScreenCommands } from "@/services";
+import { usePlanScreenActions } from "@/services";
 import { TaskLogCard } from "./TaskLogCard";
 import { nagPlanTheme } from "../theme";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
@@ -17,7 +17,7 @@ type RailTone = "active" | "completed";
 const NagCardComponent = ({ nagger }: NagCardProps) => {
   useDebugRenderFrameCounter("PlanNaggerCard", nagger.id);
 
-  const { setExpanded, setFocused } = usePlanScreenCommands().nagger;
+  const { setExpanded, setFocused } = usePlanScreenActions().nagger;
 
   const isTaskLogCompleted = isCompletedTaskLog(nagger.taskLog);
   const hasTaskItems = nagger.taskLog.descendantTaskItemCount > 0;
@@ -93,3 +93,4 @@ const styles = StyleSheet.create({
     gap: nagPlanTheme.cardDensity.fieldGap,
   },
 });
+

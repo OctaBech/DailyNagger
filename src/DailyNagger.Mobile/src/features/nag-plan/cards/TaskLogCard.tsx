@@ -2,7 +2,7 @@ import { memo, useMemo, useState } from "react";
 import { Card, Modal } from "@/components";
 import { type TaskItem, type TaskLog } from "@/models";
 import { TaskItemCard } from "./TaskItemCard";
-import { usePlanScreenCommands } from "@/services";
+import { usePlanScreenActions } from "@/services";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 import { useTaskStepNameSuggestions } from "@/task-step-suggestions";
 
@@ -17,7 +17,7 @@ const TaskLogCardComponent = ({
   parentNaggerHasFocus = false,
   railTone,
 }: TaskLogCardProps) => {
-  const { addTaskStep, setFocused } = usePlanScreenCommands().taskLog;
+  const { addTaskStep, setFocused } = usePlanScreenActions().taskLog;
   useDebugRenderFrameCounter("PlanTaskLogCard", taskLog.id);
 
   const [isTaskStepNameModalVisible, setIsTaskStepNameModalVisible] = useState(false);
@@ -90,3 +90,4 @@ function addTaskItemNames(names: Set<string>, taskItems: readonly TaskItem[]): v
     addTaskItemNames(names, taskItem.taskItems);
   }
 }
+

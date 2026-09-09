@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import { Card, Modal } from "@/components";
 import { type TaskLog } from "@/models";
 import { TaskItemCard } from "./TaskItemCard";
-import { useEditorScreenCommands } from "@/services";
+import { useEditorScreenActions } from "@/services";
 import { tagTypes } from "@/tagging";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
@@ -17,7 +17,7 @@ const TaskLogCardComponent = ({
   parentNaggerHasFocus = false,
   railTone,
 }: TaskLogCardProps) => {
-  const { taskLog: taskLogActions } = useEditorScreenCommands();
+  const { taskLog: taskLogActions } = useEditorScreenActions();
   useDebugRenderFrameCounter("EditorTaskLogCard", taskLog.id);
   const [isTagModalVisible, setIsTagModalVisible] = useState(false);
   const isSelected = taskLog.clientProps.isSelected;
@@ -60,3 +60,4 @@ const TaskLogCardComponent = ({
 };
 
 export const TaskLogCard = memo(TaskLogCardComponent);
+

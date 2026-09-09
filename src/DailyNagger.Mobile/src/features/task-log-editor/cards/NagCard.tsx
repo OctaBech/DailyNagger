@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { memo, useState } from "react";
 import { type Nagger } from "@/models";
-import { useEditorScreenCommands, useEditorScreenData } from "@/services";
+import { useEditorScreenActions, useEditorScreenData } from "@/services";
 import { TaskLogCard } from "./TaskLogCard";
 import { nagPlanTheme } from "../theme";
 import { Card, Modal } from "@/components";
@@ -15,7 +15,7 @@ type NagCardProps = {
 type RailTone = "active" | "completed";
 
 const NagCardComponent = ({ nagger }: NagCardProps) => {
-  const { nagger: naggerActions } = useEditorScreenCommands();
+  const { nagger: naggerActions } = useEditorScreenActions();
   const { schedule } = useEditorScreenData();
   useDebugRenderFrameCounter("EditorNaggerCard", nagger.id);
 
@@ -128,3 +128,4 @@ const styles = StyleSheet.create({
     gap: nagPlanTheme.cardDensity.fieldGap,
   },
 });
+

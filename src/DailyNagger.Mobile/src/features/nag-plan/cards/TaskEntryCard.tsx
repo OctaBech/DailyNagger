@@ -1,6 +1,6 @@
 import { Card } from "@/components";
 import { type TaskEntry } from "@/models";
-import { usePlanScreenCommands, usePlanScreenData } from "@/services";
+import { usePlanScreenActions, usePlanScreenData } from "@/services";
 import { memo } from "react";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
@@ -11,7 +11,7 @@ type TaskEntryCardProps = {
 
 const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => {
   const { decimalSeparator } = usePlanScreenData();
-  const { setFocused, setValue } = usePlanScreenCommands().taskEntry;
+  const { setFocused, setValue } = usePlanScreenActions().taskEntry;
   useDebugRenderFrameCounter("PlanTaskEntryCard", taskEntry.id);
 
   const isSelected = taskEntry.clientProps.isSelected;
@@ -40,3 +40,4 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
 };
 
 export const TaskEntryCard = memo(TaskEntryCardComponent);
+
