@@ -1,6 +1,4 @@
-import type { Nagger, TaskEntry, TaskItem, TaskLog } from "@/models";
 import { createRequiredContext, type Prettify } from "@/shared";
-import type { CommandDispatcher } from "@/services/command-boundary";
 import type { RegisteredActionClient, planScreenActionRegistry } from "@/services/action-boundary";
 import { useMemo } from "react";
 
@@ -10,65 +8,18 @@ export const { Provider: PlanScreenCommandsProvider, useRequiredContext: usePlan
   createRequiredContext<PlanScreenCommands>("PlanScreenCommandsContext");
 
 type UseCreatePlanScreenCommandsProps = {
-  readonly decimalSeparator: "." | ",";
-  readonly dispatch: CommandDispatcher;
   readonly registeredActions: RegisteredActionClient<typeof planScreenActionRegistry>;
 };
 
-export function useCreatePlanScreenCommands({
-  decimalSeparator,
-  dispatch,
-  registeredActions,
-}: UseCreatePlanScreenCommandsProps) {
+export function useCreatePlanScreenCommands({ registeredActions }: UseCreatePlanScreenCommandsProps) {
   return useMemo(
     () => ({
+      dial: registeredActions.dial,
       nagger: registeredActions.nagger,
-      dial: {
-        pinSelectedNagger: (nagger: Nagger) => {
-          dispatch("plan-input", "nagger/pin-selected", { nagger });
-        },
-        unpinSelectedNagger: (nagger: Nagger) => {
-          dispatch("plan-input", "nagger/unpin-selected", { nagger });
-        },
-      },
-      taskLog: {
-        addTaskStep: (
-          taskLog: TaskLog,
-          name: string,
-          rolloverBehavior: TaskItem["rolloverBehavior"],
-        ) => {
-          dispatch("plan-input", "task-log/add-task-step", { taskLog, name, rolloverBehavior });
-        },
-        setFocused: (taskLog: TaskLog) => {
-          dispatch("plan-view", "task-log/set-focused", { taskLog });
-        },
-      },
-      taskItem: {
-        setExpanded: (taskItem: TaskItem, isExpanded: boolean) => {
-          dispatch("plan-view", "task-item/set-expanded", { taskItem, isExpanded });
-        },
-        setFocused: (taskItem: TaskItem) => {
-          dispatch("plan-view", "task-item/set-focused", { taskItem });
-        },
-        setDoneAndSetFocus: (taskItem: TaskItem, isDone: boolean) => {
-          dispatch("plan-input", "task-item/set-done-and-set-focus", { taskItem, isDone });
-        },
-        deleteOnce: (taskItem: TaskItem) => {
-          dispatch("plan-input", "task-item/delete-once", { taskItem });
-        },
-      },
-      taskEntry: {
-        decimalSeparator,
-        setFocused: (taskEntry: TaskEntry) => {
-          dispatch("plan-view", "task-entry/set-focused", { taskEntry });
-        },
-        setValue: (taskEntry: TaskEntry, newValue: string | null) => {
-          dispatch("plan-input", "task-entry/set-value", { taskEntry, newValue });
-        },
-      },
+      taskEntry: registeredActions.taskEntry,
+      taskItem: registeredActions.taskItem,
+      taskLog: registeredActions.taskLog,
     }),
-    [decimalSeparator, dispatch, registeredActions],
+    [registeredActions],
   );
 }
-
-

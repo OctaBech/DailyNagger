@@ -100,6 +100,7 @@ function useCreateServices(): {
   const startup = useStartup(sending, loading, rollover);
 
   const planScreenData = useCreatePlanScreenData({
+    cultureSettings,
     planMemory,
     startup,
     userMood,
@@ -121,8 +122,6 @@ function useCreateServices(): {
     screen: "plan",
   });
   const planScreenCommands = useCreatePlanScreenCommands({
-    decimalSeparator: cultureSettings.isUsingCommaForDecimals ? "," : ".",
-    dispatch: commandDispatcher,
     registeredActions: planRegisteredActions,
   });
   const editorScreenCommands = useCreateEditorScreenCommands({ dispatch: commandDispatcher });
@@ -146,6 +145,9 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
+
+
+
 
 
 
