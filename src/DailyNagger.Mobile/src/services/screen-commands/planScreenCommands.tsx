@@ -22,12 +22,7 @@ export function useCreatePlanScreenCommands({
 }: UseCreatePlanScreenCommandsProps) {
   return useMemo(
     () => ({
-      nagger: {
-        setExpanded: registeredActions.nagger.setExpanded,
-        setFocused: (nagger: Nagger) => {
-          dispatch("plan-view", "nagger/set-focused", { nagger });
-        },
-      },
+      nagger: registeredActions.nagger,
       dial: {
         pinSelectedNagger: (nagger: Nagger) => {
           dispatch("plan-input", "nagger/pin-selected", { nagger });
@@ -75,3 +70,5 @@ export function useCreatePlanScreenCommands({
     [decimalSeparator, dispatch, registeredActions],
   );
 }
+
+

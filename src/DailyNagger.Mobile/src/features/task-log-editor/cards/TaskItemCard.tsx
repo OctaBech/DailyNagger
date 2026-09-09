@@ -54,7 +54,7 @@ const TaskItemCardComponent = ({
           isTagPickerOpen={isTagModalVisible}
           showTag={false}
           showComponentOutlines
-          forceExpandableIndicator={!canDeleteOnce}
+          forceExpandableIndicator={!isOnceTaskItem}
           muteCheckmark
           checkmarkShape={isOnceTaskItem ? "circle" : "square"}
           onFocus={() => taskItemActions.setFocused(taskItem)}
@@ -138,3 +138,4 @@ const styles = StyleSheet.create({
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,
   },
 });
+

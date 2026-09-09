@@ -46,7 +46,7 @@ function createTaskLog(sourceTaskLog: TaskLog): TaskLog {
           taskItemModel.parentTaskItemId === null
             ? null
             : getNewTaskItemId(taskItemModel.parentTaskItemId),
-        isDone: false,
+        isDone: getRolloverIsDone(taskItemModel),
         taskEntries: taskItemModel.taskEntries,
         taskItems,
         ...emptyInteractionStamp,
@@ -71,6 +71,12 @@ function createTaskLog(sourceTaskLog: TaskLog): TaskLog {
   });
 }
 
+function getRolloverIsDone(taskItem: TaskItem): boolean {
+  if (taskItem.rolloverBehavior === "Keep") return false;
+
+  return taskItem.isDone;
+}
+
 function keepRolloverTaskItems<TTaskItem extends TaskItem>(
   taskItems: readonly TTaskItem[],
 ): readonly TTaskItem[] {
@@ -82,3 +88,4 @@ function keepRolloverTaskItems<TTaskItem extends TaskItem>(
 function countTaskItems(taskItems: readonly TaskItem[]): number {
   return taskItems.reduce((total, taskItem) => total + 1 + taskItem.descendantTaskItemCount, 0);
 }
+
