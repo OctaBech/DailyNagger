@@ -53,3 +53,4 @@ function getUserTimeZone(): string {
 function getUserLocale(): string {
   return Intl.DateTimeFormat().resolvedOptions().locale;
 }
+

@@ -200,3 +200,4 @@ function createSendingConfrontationStateScreenProps(sending: Sending): StateScre
           },
   };
 }
+

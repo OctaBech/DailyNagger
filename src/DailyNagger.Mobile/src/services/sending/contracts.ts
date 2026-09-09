@@ -117,3 +117,4 @@ export type ServerConfrontationPrompt = {
   readonly secondaryActionLabel?: string;
   readonly technicalMessage: string;
 };
+

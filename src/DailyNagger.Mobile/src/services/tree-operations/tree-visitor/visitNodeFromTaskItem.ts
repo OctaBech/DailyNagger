@@ -108,3 +108,4 @@ function requestTargetsTaskItem(request: VisitRequest, taskItem: TaskItemTravers
     request.target.requiredAncestry.parentTaskItemId === taskItem.parentTaskItemId
   );
 }
+

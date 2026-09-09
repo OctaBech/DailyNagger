@@ -5,3 +5,4 @@ export * from "./setTaskEntryFocused";
 export * from "./setTaskItemExpanded";
 export * from "./setTaskItemFocused";
 export * from "./setTaskLogFocused";
+

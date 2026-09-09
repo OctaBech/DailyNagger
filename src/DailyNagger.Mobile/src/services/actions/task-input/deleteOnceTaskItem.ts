@@ -36,3 +36,4 @@ export function deleteOnceTaskItem(
 function isTaskLog(node: TreeNode): node is TaskLog {
   return node.nodeType === "TaskLog";
 }
+

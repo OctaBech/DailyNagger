@@ -62,3 +62,4 @@ function withTaskItems(
     clientProps: { ...taskLog.clientProps, indexHint },
   };
 }
+

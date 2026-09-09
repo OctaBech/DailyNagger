@@ -15,3 +15,4 @@ export type SpeedDialMenu = {
 };
 
 export const emptySpeedDialMenu: SpeedDialMenu = { items: [] };
+

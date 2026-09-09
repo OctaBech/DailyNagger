@@ -82,3 +82,4 @@ export function recordSentryTraceHeader(): string | null {
 
   return `${spanContext.traceId}-${spanContext.spanId}-${sampled}`;
 }
+

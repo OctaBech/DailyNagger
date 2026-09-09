@@ -74,3 +74,4 @@ function getString(value: unknown): string | undefined {
   const trimmed = value.trim();
   return trimmed.length === 0 ? undefined : trimmed;
 }
+

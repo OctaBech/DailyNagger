@@ -64,3 +64,4 @@ function mergeBatchStamps(batch: readonly Parcel[]): BatchProcessingStamp {
     ...(skipPayloadVersionValidation ? { skipPayloadVersionValidation } : {}),
   };
 }
+

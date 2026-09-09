@@ -16,3 +16,4 @@ export function editorTaskItemSetName(
 
   memory.write.setTree(result.newTree);
 }
+

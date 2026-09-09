@@ -23,3 +23,4 @@ export function editorDeleteOnceTaskItem(
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 }
+

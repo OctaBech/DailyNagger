@@ -17,3 +17,4 @@ export function taskItemSetExpanded(
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
+

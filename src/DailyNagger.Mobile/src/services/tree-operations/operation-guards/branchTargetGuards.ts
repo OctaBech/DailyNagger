@@ -111,3 +111,4 @@ function isTaskItemBranchRoot(node: TraversedNode): node is TaskItemTraversedNod
 function isTaskEntryBranchRoot(node: TraversedNode): node is TaskEntryTraversedNode {
   return "parentTaskItemId" in node && !("taskItems" in node) && !("taskEntries" in node);
 }
+

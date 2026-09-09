@@ -28,3 +28,4 @@ export function taskLogAddTaskStep(
   const { freshTaskLog: updatedTaskLog } = tree.readTaskLog(memory, newTaskItem);
   sending.queue(updatedTaskLog);
 }
+

@@ -6,3 +6,4 @@ export function appendPathNode(
 ): readonly TraversedNode[] {
   return [...path, node];
 }
+

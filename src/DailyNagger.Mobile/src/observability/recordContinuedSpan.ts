@@ -59,3 +59,4 @@ export function createSpanContinuation(span: Sentry.Span): SpanContinuation | nu
     sentryTrace,
   };
 }
+

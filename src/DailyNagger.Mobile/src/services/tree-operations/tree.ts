@@ -307,3 +307,4 @@ function tryRefreshPathToNode(tree: Tree, node: TreeNode): TreePath | null {
     return null;
   }
 }
+

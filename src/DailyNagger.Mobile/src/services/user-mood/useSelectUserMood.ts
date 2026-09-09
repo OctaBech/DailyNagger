@@ -38,3 +38,4 @@ export function useSelectUserMood({
     [cultureSettings, sending, setCurrentMood, userMood],
   );
 }
+

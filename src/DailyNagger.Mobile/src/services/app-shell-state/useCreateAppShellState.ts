@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import type { Memory, Startup } from "../contracts";
 import type { AssistantBubble } from "../assistant-bubble";
 import type { Parcel, SendingEventType } from "../sending";
-import type { EditorScreenCommands, PlanScreenCommands } from "../screen-commands";
+import type { EditorScreenActions, PlanScreenActions } from "../screen-actions";
 import type {
   editorDialActionRegistry,
   planDialActionRegistry,
@@ -24,10 +24,10 @@ type UseCreateAppShellStateProps = {
   readonly assistantBubble: AssistantBubble;
   readonly editorDialJsxActions: RegisteredActionClient<typeof editorDialActionRegistry>["dial"];
   readonly editorMemory: Memory;
-  readonly editorScreenCommands: EditorScreenCommands;
+  readonly editorScreenCommands: EditorScreenActions;
   readonly planDialJsxActions: RegisteredActionClient<typeof planDialActionRegistry>["dial"];
   readonly planMemory: Memory;
-  readonly planScreenCommands: PlanScreenCommands;
+  readonly planScreenCommands: PlanScreenActions;
   readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
   readonly startup: Startup;
   readonly selectMood: (mood: UserMoodLabel) => void;
@@ -149,3 +149,4 @@ function addMoodBarSpeedDialAction(
     ],
   };
 }
+

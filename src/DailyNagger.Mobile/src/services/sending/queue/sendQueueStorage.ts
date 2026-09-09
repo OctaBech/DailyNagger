@@ -70,3 +70,4 @@ function discardPersistedQueue(startupWarning: string): SendQueueStorageLoadResu
   storage.remove(queueStorageKey);
   return { queue: [], startupWarning };
 }
+

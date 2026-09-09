@@ -21,3 +21,4 @@ export function addTaskItemToTaskLog(
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 }
+

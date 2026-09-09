@@ -39,3 +39,4 @@ function requestTargetsTaskEntry(
     request.target.requiredAncestry.taskItemId === taskEntry.parentTaskItemId
   );
 }
+

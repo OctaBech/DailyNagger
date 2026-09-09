@@ -148,3 +148,4 @@ function trySetFocusPath(tree: Tree, node: TreeNode, hasFocus: boolean) {
     return null;
   }
 }
+

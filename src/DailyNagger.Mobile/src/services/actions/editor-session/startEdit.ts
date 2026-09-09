@@ -21,3 +21,4 @@ export function editorStartEdit(
 
   editorMemory.write.setTreeAndSelectedPath(editorTree, editorPath);
 }
+

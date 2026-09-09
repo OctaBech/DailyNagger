@@ -7,13 +7,13 @@ import { useSelectUserMood, useUserMoodState } from "./user-mood";
 import { useInteractionStamp } from "./interaction-stamp";
 import { useAssistantBubble } from "./assistant-bubble";
 import {
-  EditorScreenCommandsProvider,
-  type EditorScreenCommands,
-  PlanScreenCommandsProvider,
-  useCreateEditorScreenCommands,
-  useCreatePlanScreenCommands,
-  type PlanScreenCommands,
-} from "./screen-commands";
+  EditorScreenActionsProvider,
+  type EditorScreenActions,
+  PlanScreenActionsProvider,
+  useCreateEditorScreenActions,
+  useCreatePlanScreenActions,
+  type PlanScreenActions,
+} from "./screen-actions";
 import {
   editorDialActionRegistry,
   editorScreenActionRegistry,
@@ -54,21 +54,21 @@ export const ServiceProvider = ({ children }: ServiceProviderProps) => {
 
   return (
     <AppShellStateProvider value={appShellState}>
-      <PlanScreenCommandsProvider value={planScreenCommands}>
-        <EditorScreenCommandsProvider value={editorScreenCommands}>
+      <PlanScreenActionsProvider value={planScreenCommands}>
+        <EditorScreenActionsProvider value={editorScreenCommands}>
           <PlanScreenDataProvider value={planScreenData}>
             <EditorScreenDataProvider value={editorScreenData}>{children}</EditorScreenDataProvider>
           </PlanScreenDataProvider>
-        </EditorScreenCommandsProvider>
-      </PlanScreenCommandsProvider>
+        </EditorScreenActionsProvider>
+      </PlanScreenActionsProvider>
     </AppShellStateProvider>
   );
 };
 
 function useCreateServices(): {
   readonly appShellState: AppShellState;
-  readonly editorScreenCommands: EditorScreenCommands;
-  readonly planScreenCommands: PlanScreenCommands;
+  readonly editorScreenCommands: EditorScreenActions;
+  readonly planScreenCommands: PlanScreenActions;
   readonly planScreenData: PlanScreenData;
   readonly editorScreenData: EditorScreenData;
 } {
@@ -140,10 +140,10 @@ function useCreateServices(): {
     sending,
     screen: "editor",
   }).dial;
-  const planScreenCommands = useCreatePlanScreenCommands({
+  const planScreenCommands = useCreatePlanScreenActions({
     registeredActions: planRegisteredActions,
   });
-  const editorScreenCommands = useCreateEditorScreenCommands({
+  const editorScreenCommands = useCreateEditorScreenActions({
     registeredActions: editorRegisteredActions,
   });
   const appShellState = useCreateAppShellState({
@@ -168,6 +168,7 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
+
 
 
 

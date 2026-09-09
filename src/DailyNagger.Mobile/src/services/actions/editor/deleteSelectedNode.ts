@@ -16,3 +16,4 @@ export function editorDeleteSelectedNode(
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
+

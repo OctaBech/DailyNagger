@@ -57,3 +57,4 @@ function serverRejectedUnrepairableUpdate(error: unknown): error is SendApiReque
   if (!(error instanceof SendApiRequestError)) return false;
   return error.status === 400 || error.status === 404;
 }
+

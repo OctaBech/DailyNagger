@@ -149,3 +149,4 @@ function getIndex(loopIndex: number, indexHint: number): number {
   if (loopIndex === 0) return indexHint;
   return loopIndex - 1;
 }
+

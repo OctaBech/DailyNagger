@@ -15,3 +15,4 @@ export function taskLogSetFocused(
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
+

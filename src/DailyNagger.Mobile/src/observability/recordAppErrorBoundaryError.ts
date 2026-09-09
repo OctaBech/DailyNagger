@@ -17,3 +17,4 @@ export function recordAppErrorBoundaryError(error: Error, errorInfo: ErrorInfo):
     Sentry.captureException(error);
   });
 }
+

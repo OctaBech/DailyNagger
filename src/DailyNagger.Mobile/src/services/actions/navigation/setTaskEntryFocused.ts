@@ -15,3 +15,4 @@ export function taskEntrySetFocused(
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
 
+

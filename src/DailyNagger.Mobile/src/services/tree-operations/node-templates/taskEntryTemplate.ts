@@ -32,3 +32,4 @@ export function createTaskEntry(input: CreateTaskEntryInput): TaskEntry {
     label: input.label,
   };
 }
+

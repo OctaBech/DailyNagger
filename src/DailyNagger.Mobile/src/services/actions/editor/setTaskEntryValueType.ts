@@ -37,3 +37,4 @@ function getTaskEntryValueRolloverBehavior(
 ): "MoveValueToHistory" | "CarryOverValue" {
   return rolloverBehavior === "CarryOverValue" ? "CarryOverValue" : "MoveValueToHistory";
 }
+

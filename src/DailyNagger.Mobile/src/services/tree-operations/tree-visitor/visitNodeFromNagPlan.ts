@@ -58,3 +58,4 @@ function withNaggers(
     clientProps: { ...nagPlan.clientProps, indexHint },
   };
 }
+

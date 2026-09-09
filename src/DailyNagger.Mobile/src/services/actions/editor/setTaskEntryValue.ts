@@ -18,3 +18,4 @@ export function editorTaskEntrySetValue(
 
   memory.write.setTree(newTree);
 }
+

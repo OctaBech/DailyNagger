@@ -50,3 +50,4 @@ function formatTime(date: Date): string {
 }
 
 export type UserMoodState = Prettify<ReturnType<typeof useUserMoodState>>;
+

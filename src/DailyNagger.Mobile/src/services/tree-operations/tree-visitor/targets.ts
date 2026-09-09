@@ -211,3 +211,4 @@ function toWholeTreeResult<TNode extends NagPlanTraversedNode | TaskLogTraversed
     visitedNodes: result.recordedPath,
   };
 }
+

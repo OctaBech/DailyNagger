@@ -15,3 +15,4 @@ export function sendingWithObservability({
     queue: (content) => sending.queue(content, { observability }),
   };
 }
+

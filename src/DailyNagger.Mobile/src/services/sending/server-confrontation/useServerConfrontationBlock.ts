@@ -58,3 +58,4 @@ export function useServerConfrontationBlock() {
 }
 
 export type ServerConfrontationBlock = ReturnType<typeof useServerConfrontationBlock>;
+

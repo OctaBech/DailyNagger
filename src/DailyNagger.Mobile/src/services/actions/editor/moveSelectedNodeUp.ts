@@ -10,3 +10,4 @@ export function editorMoveSelectedNodeUp(
 ): void {
   moveSelectedNode(args, runtimeDependencies, "up");
 }
+

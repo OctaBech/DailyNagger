@@ -188,3 +188,4 @@ function isValidLocalDate(year: number, month: number, day: number): boolean {
 function toJavaScriptDay(weekday: number): number {
   return weekday === 7 ? 0 : weekday;
 }
+

@@ -1,6 +1,6 @@
 export { ServiceProvider } from "./Services";
 export { useAppShellState } from "./app-shell-state";
-export { useEditorScreenCommands, usePlanScreenCommands } from "./screen-commands";
+export { useEditorScreenActions, usePlanScreenActions } from "./screen-actions";
 export { useEditorScreenData, usePlanScreenData } from "./screen-data";
 export {
   emptySpeedDialMenu,
@@ -9,5 +9,6 @@ export {
 } from "./screen-dial-menus";
 export type { AppShellState } from "./app-shell-state";
 export type { EditorScreenData, PlanScreenData } from "./screen-data";
-export type { EditorScreenCommands, PlanScreenCommands } from "./screen-commands";
+export type { EditorScreenActions, PlanScreenActions } from "./screen-actions";
 export type { Parcel, SendingEventType } from "./sending";
+
