@@ -6,6 +6,8 @@ import { apiRequestHeaders } from "./apiRequestHeaders";
 
 type ApiRequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+const maxApiErrorBodyLength = 500;
+
 export class ApiRequestError extends Error {
   readonly requestId: string | null;
 
@@ -19,7 +21,7 @@ export class ApiRequestError extends Error {
     const requestId = getRequestId(request);
 
     super(
-      `API request failed. ${request.method ?? "GET"} ${url}. Status: ${response.status}. RequestId: ${requestId ?? "none"}. DurationMs: ${durationMs}. Body: ${responseBody}`,
+      `API request failed. ${request.method ?? "GET"} ${sanitizeApiErrorUrl(url)}. Status: ${response.status}. RequestId: ${requestId ?? "none"}. DurationMs: ${durationMs}. Body: ${sanitizeApiErrorBody(responseBody)}`,
     );
 
     this.requestId = requestId;
@@ -38,7 +40,7 @@ export class ApiConnectionError extends Error {
     const requestId = getRequestId(request);
 
     super(
-      `API request could not connect. ${request.method ?? "GET"} ${url}. RequestId: ${requestId ?? "none"}. DurationMs: ${durationMs}.`,
+      `API request could not connect. ${request.method ?? "GET"} ${sanitizeApiErrorUrl(url)}. RequestId: ${requestId ?? "none"}. DurationMs: ${durationMs}.`,
     );
 
     this.requestId = requestId;
@@ -170,6 +172,25 @@ function createJsonBody(body: unknown): string | undefined {
   }
 
   return JSON.stringify(body);
+}
+
+function sanitizeApiErrorUrl(url: string): string {
+  try {
+    const parsedUrl = new URL(url);
+    return `${parsedUrl.origin}${parsedUrl.pathname}`;
+  } catch {
+    return url.split("?")[0] ?? "[unknown-url]";
+  }
+}
+
+function sanitizeApiErrorBody(responseBody: string): string {
+  const trimmedBody = responseBody.trim();
+
+  if (trimmedBody.length <= maxApiErrorBodyLength) {
+    return trimmedBody;
+  }
+
+  return `${trimmedBody.slice(0, maxApiErrorBodyLength)}… [truncated]`;
 }
 
 function getRequestId(request: RequestInit): string | null {
