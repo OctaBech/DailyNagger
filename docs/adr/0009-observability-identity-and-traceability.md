@@ -39,6 +39,13 @@ HTTP fields:
 - `statusCode`
 - `elapsedMs`
 
+HTTP error text must be scrubbed before it is written to exceptions or logs:
+
+- query strings are removed from URLs
+- headers are not included
+- response bodies are trimmed and truncated
+- tokens, secrets, and full request payloads are never logged
+
 Ownership rules:
 
 - The command boundary creates `correlationId`.
