@@ -1,6 +1,6 @@
 import { useCallback, useRef, type ReactNode } from "react";
 import { useCultureSettings } from "./culture";
-import { useMemory, useSelectionMemory } from "./memory";
+import { type MemoryEvent, type MemoryEventType, useMemory, useSelectionMemory } from "./memory";
 import { useLoading } from "./loading";
 import { type Parcel, type SendingEventType, useSending } from "./sending";
 import { useSelectUserMood, useUserMoodState } from "./user-mood";
@@ -74,10 +74,11 @@ function useCreateServices(): {
 } {
   // Wiring internal service communication
   const cultureSettings = useCultureSettings();
+  const memoryEvents = useEventEmitter<MemoryEventType, MemoryEvent>();
   const rawPlanMemory = useMemory();
-  const planMemory = useSelectionMemory(rawPlanMemory, "planMemory");
+  const planMemory = useSelectionMemory(rawPlanMemory, "planMemory", memoryEvents);
   const rawEditorMemory = useMemory();
-  const editorMemory = useSelectionMemory(rawEditorMemory, "editorMemory");
+  const editorMemory = useSelectionMemory(rawEditorMemory, "editorMemory", memoryEvents);
 
   const sendingEvents = useEventEmitter<SendingEventType, readonly Parcel[]>();
   const assistantBubble = useAssistantBubble(sendingEvents);

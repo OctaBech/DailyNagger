@@ -4,8 +4,26 @@ import { useCallback, useMemo } from "react";
 import type { Memory } from "./useMemory";
 import { startDebugRenderFrame } from "@/debug/render-frame";
 import { treeOperations } from "@/services/tree-operations";
+import type { EventEmitter } from "@/shared";
 
-export function useSelectionMemory(memory: Memory, debugName = "memory"): Memory {
+export type MemoryEventType =
+  | "clear"
+  | "setSelectedPath"
+  | "setTree"
+  | "setTreeWithoutSelectionRefresh"
+  | "setTreeAndSelectedPath"
+  | "setTreeAndFocusPath";
+
+export type MemoryEvent = {
+  readonly memoryName: string;
+  readonly operation: MemoryEventType;
+};
+
+export function useSelectionMemory(
+  memory: Memory,
+  debugName = "memory",
+  memoryEvents?: EventEmitter<MemoryEventType, MemoryEvent>,
+): Memory {
   const getSelectedPath = memory.read.getSelectedPath;
   const baseClear = memory.write.clear;
   const baseSetSelectedPath = memory.write.setSelectedPath;
@@ -13,26 +31,34 @@ export function useSelectionMemory(memory: Memory, debugName = "memory"): Memory
   const baseSetTreeWithoutSelectionRefresh = memory.write.setTreeWithoutSelectionRefresh;
   const baseSetTreeAndSelectedPath = memory.write.setTreeAndSelectedPath;
 
+  const recordMemoryEvent = useCallback(
+    (operation: MemoryEventType): void => {
+      startDebugRenderFrame(`${debugName}.${operation}`);
+      memoryEvents?.emit(operation, { memoryName: debugName, operation });
+    },
+    [debugName, memoryEvents],
+  );
+
   const clear = useCallback(() => {
-    startDebugRenderFrame(`${debugName}.clear`);
+    recordMemoryEvent("clear");
     baseClear();
-  }, [baseClear, debugName]);
+  }, [baseClear, recordMemoryEvent]);
 
   const setSelectedPath = useCallback(
     (path: TreePath) => {
       const tree = memory.read.tryGetTree();
 
       if (tree === null) {
-        startDebugRenderFrame(`${debugName}.setSelectedPath`);
+        recordMemoryEvent("setSelectedPath");
         baseSetSelectedPath(path);
         return;
       }
 
       const result = moveSelection(tree, getSelectedPath(), path);
-      startDebugRenderFrame(`${debugName}.setSelectedPath`);
+      recordMemoryEvent("setSelectedPath");
       baseSetTreeAndSelectedPath(result.tree, result.treePath);
     },
-    [baseSetSelectedPath, baseSetTreeAndSelectedPath, debugName, getSelectedPath, memory.read],
+    [baseSetSelectedPath, baseSetTreeAndSelectedPath, getSelectedPath, memory.read, recordMemoryEvent],
   );
 
   const setTree = useCallback(
@@ -41,7 +67,7 @@ export function useSelectionMemory(memory: Memory, debugName = "memory"): Memory
       const selectedNode = treeSelection.tryGetSelectedNode(currentPath);
 
       if (selectedNode === null) {
-        startDebugRenderFrame(`${debugName}.setTree`);
+        recordMemoryEvent("setTree");
         baseSetTree(tree);
         return;
       }
@@ -49,41 +75,41 @@ export function useSelectionMemory(memory: Memory, debugName = "memory"): Memory
       const result = trySetFocusPath(tree, selectedNode, true);
 
       if (result === null) {
-        startDebugRenderFrame(`${debugName}.setTree`);
+        recordMemoryEvent("setTree");
         baseSetTreeAndSelectedPath(tree, []);
         return;
       }
 
-      startDebugRenderFrame(`${debugName}.setTree`);
+      recordMemoryEvent("setTree");
       baseSetTreeAndSelectedPath(result.newTree, result.newPath);
     },
-    [baseSetTree, baseSetTreeAndSelectedPath, debugName, getSelectedPath],
+    [baseSetTree, baseSetTreeAndSelectedPath, getSelectedPath, recordMemoryEvent],
   );
 
   const setTreeWithoutSelectionRefresh = useCallback(
     (tree: Tree) => {
-      startDebugRenderFrame(`${debugName}.setTreeWithoutSelectionRefresh`);
+      recordMemoryEvent("setTreeWithoutSelectionRefresh");
       baseSetTreeWithoutSelectionRefresh(tree);
     },
-    [baseSetTreeWithoutSelectionRefresh, debugName],
+    [baseSetTreeWithoutSelectionRefresh, recordMemoryEvent],
   );
 
   const setTreeAndSelectedPath = useCallback(
     (tree: Tree, path: TreePath) => {
       const result = moveSelection(tree, getSelectedPath(), path);
-      startDebugRenderFrame(`${debugName}.setTreeAndSelectedPath`);
+      recordMemoryEvent("setTreeAndSelectedPath");
       baseSetTreeAndSelectedPath(result.tree, result.treePath);
     },
-    [baseSetTreeAndSelectedPath, debugName, getSelectedPath],
+    [baseSetTreeAndSelectedPath, getSelectedPath, recordMemoryEvent],
   );
 
   const setTreeAndFocusPath = useCallback(
     (tree: Tree, path: TreePath) => {
       const result = moveSelection(tree, getSelectedPath(), path);
-      startDebugRenderFrame(`${debugName}.setTreeAndFocusPath`);
+      recordMemoryEvent("setTreeAndFocusPath");
       baseSetTreeAndSelectedPath(result.tree, result.treePath);
     },
-    [baseSetTreeAndSelectedPath, debugName, getSelectedPath],
+    [baseSetTreeAndSelectedPath, getSelectedPath, recordMemoryEvent],
   );
 
   const write = useMemo(() => {

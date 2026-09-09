@@ -7,7 +7,6 @@ export {
 export { sendingWithObservability } from "./createCommandScopedSending";
 export { recordAppErrorBoundaryError } from "./recordAppErrorBoundaryError";
 export { recordApiRequest, recordSentryTraceHeader } from "./recordApiRequest";
-export { recordMemoryOperation } from "./recordMemoryOperation";
 export {
   recordParcelCoalesced,
   recordParcelQueued,
