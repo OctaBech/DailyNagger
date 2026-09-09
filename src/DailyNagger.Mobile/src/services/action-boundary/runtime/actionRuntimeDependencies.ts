@@ -1,37 +1,35 @@
-import type { ActionSending, CultureSettings, InteractionStamp, Memory } from "@/services/contracts";
-import type {
-  ActionScope,
-  RuntimeDependenciesForActionScope,
-} from "./actionModel";
+import type { RuntimeDependencyInputs } from "./runtimeDependencyInputs";
 import type {
   editorActions,
   editorSessionActions,
   navigationActions,
   taskInputActions,
-} from "../actions";
+} from "@/services/actions";
 
+export type ActionScope = "navigation" | "task-input" | "editor" | "editor-session";
 export type ActionRuntimeDependencyScreen = "plan" | "editor";
 
-type ActionRuntimeDependencyInputs = {
-  readonly cultureSettings: CultureSettings;
-  readonly planMemory: Memory;
-  readonly editorMemory: Memory;
-  readonly planInteractionStamp: InteractionStamp;
-  readonly sending?: ActionSending;
-};
+export type RuntimeDependenciesForActionScope<TScope extends ActionScope> =
+  TScope extends "navigation"
+    ? navigationActions.NavigationRuntimeDependencies
+    : TScope extends "task-input"
+      ? taskInputActions.TaskInputRuntimeDependencies
+      : TScope extends "editor"
+        ? editorActions.EditorRuntimeDependencies
+        : TScope extends "editor-session"
+          ? editorSessionActions.EditorSessionRuntimeDependencies
+          : never;
 
 export function getActionRuntimeDependencies(
   screen: ActionRuntimeDependencyScreen,
   scope: ActionScope,
-  inputs: ActionRuntimeDependencyInputs,
-):
-  | RuntimeDependenciesForActionScope<ActionScope> {
+  inputs: RuntimeDependencyInputs,
+): RuntimeDependenciesForActionScope<ActionScope> {
   switch (`${screen}:${scope}`) {
     case "plan:navigation":
       return { memory: inputs.planMemory } satisfies navigationActions.NavigationRuntimeDependencies;
 
     case "plan:task-input":
-      if (inputs.sending === undefined) throw new Error("Task input actions require sending.");
       return {
         memory: inputs.planMemory,
         sending: inputs.sending,
@@ -48,7 +46,6 @@ export function getActionRuntimeDependencies(
       return { memory: inputs.editorMemory } satisfies navigationActions.NavigationRuntimeDependencies;
 
     case "editor:editor-session":
-      if (inputs.sending === undefined) throw new Error("Editor session actions require sending.");
       return {
         editorMemory: inputs.editorMemory,
         planMemory: inputs.planMemory,
@@ -59,3 +56,5 @@ export function getActionRuntimeDependencies(
       throw new Error(`Screen '${screen}' cannot execute '${scope}' actions.`);
   }
 }
+
+

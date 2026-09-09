@@ -1,7 +1,8 @@
-import type { ActionSending, InteractionStamp, Memory } from "../../contracts";
+import type { InteractionStamp, Memory, Sending } from "../../contracts";
 
 export type TaskInputRuntimeDependencies = {
   readonly memory: Memory;
-  readonly sending: ActionSending;
+  readonly sending: Sending;
   readonly interactionStamp: InteractionStamp;
 };
+

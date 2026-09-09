@@ -68,6 +68,26 @@ The stable callback belongs around the dispatcher function exposed to JSX. The
 runtime dependency factory is internal to dispatch and does not need to be a
 hook or stable callback.
 
+In the registered-action model, render-time and press-time stay separate:
+
+```text
+render-time:
+  useRegisteredActions receives runtime inputs
+  useRegisteredActions creates JSX-callable functions
+  those functions remember the runtime inputs by closure
+
+press-time:
+  JSX calls the function, for example setExpanded(nagger, true)
+  the stable callback runs
+  public args are converted to action args
+  runtime dependencies are selected
+  the real action function is called
+```
+
+The runtime inputs are remembered before the user presses anything, but the
+runtime dependency package is selected and used only when the callable action is
+executed.
+
 The terms mean:
 
 - command args come from JSX
@@ -132,6 +152,11 @@ Each entry connects three things:
 
 The registry is the single place where a command becomes part of the command
 boundary.
+The registry uses a small `registerAction(...)` function instead of plain object
+literals. The function type-checks the scope, the real action function, and the
+public JSX arguments at the registration point. That keeps registration compact
+without defining action argument types twice.
+
 
 Command scopes use the same names as the action packages they are allowed to
 call.
@@ -202,3 +227,4 @@ second source of truth for command arguments.
 Existing code may temporarily violate this decision. Refactors should move
 toward this model without mixing unrelated behavior changes into the same
 commit.
+

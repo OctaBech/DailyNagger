@@ -117,6 +117,7 @@ function useCreateServices(): {
     editorMemory,
     planInteractionStamp: interactionStamp,
     planMemory,
+    sending,
     screen: "plan",
   });
   const planScreenCommands = useCreatePlanScreenCommands({
@@ -145,3 +146,6 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
+
+
+

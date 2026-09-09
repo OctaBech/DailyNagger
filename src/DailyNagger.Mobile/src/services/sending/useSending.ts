@@ -34,7 +34,7 @@ import { trySendRequest } from "./request/trySendRequest";
 import { naggerToDto, taskLogToDto } from "@/services/model-conversion";
 import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from "./error-questions";
 import { sendTimerConfig } from "./sendTimerConfig";
-import { recordParcelQueued, recordSendingDecision, type Observability } from "@/observability";
+import { recordLegacyObservability, recordParcelQueued, recordSendingDecision, type Observability } from "@/observability";
 import { createParcelVersionStamp, restampBatchForForcedSend } from "@/services/parcel-versioning";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
@@ -56,7 +56,7 @@ export function useSending(
 
   const queue = useStableCallback(toPostOffice);
 
-  function postOffice(content: SendableContent, options: SendingQueueOptions) {
+  function postOffice(content: SendableContent, options?: SendingQueueOptions) {
     const queuedAt = new Date().toISOString();
 
     const formula = getFormulaForContent(content);
@@ -67,7 +67,7 @@ export function useSending(
 
     const unrecordedParcel = {
       formula,
-      observability: options.observability,
+      observability: options?.observability ?? recordLegacyObservability([]),
       stamp: {
         parcelId: newGuid(),
         queuedAt,
@@ -216,7 +216,7 @@ export function useSending(
     return sendQueue.hasUpdateBelongingTo(versionOwnerType, versionOwnerId);
   }
 
-  function toPostOffice(content: SendableContent, options: SendingQueueOptions): void {
+  function toPostOffice(content: SendableContent, options?: SendingQueueOptions): void {
     postOffice(content, options);
   }
 
@@ -241,3 +241,4 @@ export type ActionSending = Prettify<
     readonly queue: (content: SendableContent) => void;
   }
 >;
+
