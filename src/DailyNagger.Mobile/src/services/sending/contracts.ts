@@ -106,6 +106,8 @@ export type SendingEventType =
   | "batch-sent"
   | "batch-rejected-current-version"
   | "batch-rejected-unrepairable"
+  | "batch-blocked-current-version"
+  | "batch-blocked-unrepairable"
   | "batch-failed-to-connect"
   | "batch-forced"
   | "batch-discarded";

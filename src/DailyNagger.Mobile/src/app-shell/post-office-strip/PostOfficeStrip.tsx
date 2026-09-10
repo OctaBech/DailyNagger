@@ -96,6 +96,7 @@ function handleSendingEvent(
         postBoxIsClosed: false,
       };
     case "batch-rejected-current-version":
+    case "batch-blocked-current-version":
       return {
         ...state,
         visualParcels: markBatchWaitingForUserDecision(
@@ -105,6 +106,7 @@ function handleSendingEvent(
         ),
       };
     case "batch-rejected-unrepairable":
+    case "batch-blocked-unrepairable":
       return {
         ...state,
         visualParcels: markBatchWaitingForUserDecision(

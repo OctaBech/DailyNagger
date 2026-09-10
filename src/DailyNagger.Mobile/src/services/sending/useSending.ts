@@ -139,6 +139,7 @@ export function useSending(
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-rejected-current-version", batch);
         recordSendingDecision(batch, "version-conflict-blocked");
+        sendingEvents.emit("batch-blocked-current-version", batch);
 
         const decision = await askHowToHandleVersioningError(
           serverConfrontationBlock,
@@ -168,6 +169,7 @@ export function useSending(
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-rejected-unrepairable", batch);
         recordSendingDecision(batch, "unrepairable-blocked");
+        sendingEvents.emit("batch-blocked-unrepairable", batch);
 
         await askHowToHandleUnrepairableUpdate(serverConfrontationBlock, sendResult.error);
         recordSendingDecision(batch, "unrepairable-discarded");
