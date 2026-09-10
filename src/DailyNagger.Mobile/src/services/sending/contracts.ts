@@ -110,6 +110,8 @@ export type SendingEventType =
   | "batch-blocked-unrepairable"
   | "batch-failed-to-connect"
   | "batch-forced"
+  | "batch-discarded-current-version"
+  | "batch-discarded-unrepairable"
   | "batch-discarded";
 
 export type ServerConfrontationPrompt = {

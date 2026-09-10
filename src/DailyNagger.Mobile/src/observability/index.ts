@@ -17,4 +17,5 @@ export {
 export { recordRolloverOperation } from "./recordRolloverOperation";
 export { recordStartupOperation, recordStartupStep } from "./recordStartupOperation";
 export { recordUserMoodOperation } from "./recordUserMoodOperation";
+export { useSendingObservability } from "./useSendingObservability";
 

@@ -34,7 +34,7 @@ import { trySendRequest } from "./request/trySendRequest";
 import { naggerToDto, taskLogToDto } from "@/services/model-conversion";
 import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from "./error-questions";
 import { sendTimerConfig } from "./sendTimerConfig";
-import { recordLegacyObservability, recordParcelQueued, recordSendingDecision, type Observability } from "@/observability";
+import { recordLegacyObservability, recordParcelQueued, type Observability } from "@/observability";
 import { createParcelVersionStamp, restampBatchForForcedSend } from "@/services/parcel-versioning";
 
 type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
@@ -128,7 +128,6 @@ export function useSending(
 
     switch (sendResult.kind) {
       case "sent":
-        recordSendingDecision(batch, "sent");
         sendQueue.removeActiveBatch();
         sendingEvents.emit("batch-sent", batch);
         sendTimer.resetBackoff();
@@ -138,7 +137,6 @@ export function useSending(
       case "server-rejected-current-version":
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-rejected-current-version", batch);
-        recordSendingDecision(batch, "version-conflict-blocked");
         sendingEvents.emit("batch-blocked-current-version", batch);
 
         const decision = await askHowToHandleVersioningError(
@@ -147,7 +145,6 @@ export function useSending(
         );
 
         if (decision === "force-batch") {
-          recordSendingDecision(batch, "version-conflict-force");
           sendQueue.replaceActiveBatch(
             restampBatchForForcedSend({
               batch,
@@ -157,8 +154,8 @@ export function useSending(
           );
           sendingEvents.emit("batch-forced", batch);
         } else {
-          recordSendingDecision(batch, "version-conflict-discard");
           sendQueue.removeActiveBatch();
+          sendingEvents.emit("batch-discarded-current-version", batch);
           sendingEvents.emit("batch-discarded", batch);
         }
 
@@ -168,12 +165,11 @@ export function useSending(
       case "server-rejected-unrepairable-update":
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-rejected-unrepairable", batch);
-        recordSendingDecision(batch, "unrepairable-blocked");
         sendingEvents.emit("batch-blocked-unrepairable", batch);
 
         await askHowToHandleUnrepairableUpdate(serverConfrontationBlock, sendResult.error);
-        recordSendingDecision(batch, "unrepairable-discarded");
         sendQueue.removeActiveBatch();
+        sendingEvents.emit("batch-discarded-unrepairable", batch);
         sendingEvents.emit("batch-discarded", batch);
         sendTimer.set("debounced", processSendQueue);
         return true;
@@ -181,7 +177,6 @@ export function useSending(
       case "failed-to-connect":
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-failed-to-connect", batch);
-        recordSendingDecision(batch, "connection-lost-backoff");
         sendQueue.releaseActiveBatch();
         sendTimer.set("delayedAfterFailure", processSendQueue);
         return false;

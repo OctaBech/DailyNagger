@@ -130,6 +130,8 @@ function handleSendingEvent(
           postOfficeStripConfig.forcedEmoji,
         ),
       };
+    case "batch-discarded-current-version":
+    case "batch-discarded-unrepairable":
     case "batch-discarded":
       return {
         ...state,
