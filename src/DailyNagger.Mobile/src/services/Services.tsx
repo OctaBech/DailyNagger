@@ -24,7 +24,7 @@ import {
   useRegisteredActions,
 } from "./action-boundary";
 import type { UserMoodLabel } from "@/models";
-import { useSendingObservability } from "@/observability";
+import { useDailyNaggerObservability } from "@/observability";
 import { useEventEmitter } from "@/shared";
 import { useRollover } from "./rollover";
 import { useStartup } from "./startup";
@@ -86,7 +86,12 @@ function useCreateServices(): {
   const editorMemory = useSelectionMemory(rawEditorMemory, "editorMemory", editorMemoryEvents);
 
   const sendingEvents = useEventEmitter<SendingEventType, readonly Parcel[]>();
-  useSendingObservability(sendingEvents);
+  useDailyNaggerObservability({
+    actionEvents,
+    editorMemoryEvents,
+    planMemoryEvents,
+    sendingEvents,
+  });
   const assistantBubble = useAssistantBubble(sendingEvents);
   const userMood = useUserMoodState();
   const interactionStamp = useInteractionStamp(cultureSettings, userMood);
@@ -179,16 +184,3 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

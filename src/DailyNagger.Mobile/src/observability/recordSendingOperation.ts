@@ -25,13 +25,13 @@ type SendingRequestDetails = {
 };
 
 type SendingDecision =
-  | "connection-lost-backoff"
-  | "sent"
-  | "unrepairable-blocked"
-  | "unrepairable-discarded"
-  | "version-conflict-blocked"
-  | "version-conflict-discard"
-  | "version-conflict-force";
+  | "batch-blocked-current-version"
+  | "batch-blocked-unrepairable"
+  | "batch-discarded-current-version"
+  | "batch-discarded-unrepairable"
+  | "batch-failed-to-connect"
+  | "batch-forced"
+  | "batch-sent";
 
 type ObservableBatchItem = {
   readonly observability: Observability;

@@ -21,19 +21,19 @@ function getSendingDecision(
 ): Parameters<typeof recordSendingDecision>[1] | null {
   switch (eventType) {
     case "batch-sent":
-      return "sent";
+      return "batch-sent";
     case "batch-blocked-current-version":
-      return "version-conflict-blocked";
+      return "batch-blocked-current-version";
     case "batch-forced":
-      return "version-conflict-force";
+      return "batch-forced";
     case "batch-discarded-current-version":
-      return "version-conflict-discard";
+      return "batch-discarded-current-version";
     case "batch-blocked-unrepairable":
-      return "unrepairable-blocked";
+      return "batch-blocked-unrepairable";
     case "batch-discarded-unrepairable":
-      return "unrepairable-discarded";
+      return "batch-discarded-unrepairable";
     case "batch-failed-to-connect":
-      return "connection-lost-backoff";
+      return "batch-failed-to-connect";
     case "parcel-queued":
     case "parcel-coalesced":
     case "batch-rejected-current-version":
