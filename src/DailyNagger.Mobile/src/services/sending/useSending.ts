@@ -94,7 +94,7 @@ export function useSending(
         sendingEvents.emit("parcel-queued", [addResult.parcel]);
         break;
       case "coalesced":
-        sendingEvents.emit("parcel-coalesced", [addResult.oldParcel, addResult.newParcel]);
+        sendingEvents.emit("parcel-coalesced", [addResult.oldParcel, addResult.coalescedParcel]);
         break;
     }
 

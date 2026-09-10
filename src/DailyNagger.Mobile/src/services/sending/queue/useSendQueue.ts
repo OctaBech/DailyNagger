@@ -25,7 +25,12 @@ export function useSendQueue() {
     queueRef.current[index] = coalescedParcel;
     persistQueue();
 
-    return { kind: "coalesced", oldParcel, newParcel: coalescedParcel };
+    return {
+      kind: "coalesced",
+      oldParcel,
+      incomingParcel: newParcel,
+      coalescedParcel,
+    };
   }
 
   function coalesceParcelStamps(oldParcel: Parcel, newParcel: Parcel): Parcel {
@@ -181,6 +186,7 @@ type AddParcelResult =
   | {
       readonly kind: "coalesced";
       readonly oldParcel: Parcel;
-      readonly newParcel: Parcel;
+      readonly incomingParcel: Parcel;
+      readonly coalescedParcel: Parcel;
     };
 
