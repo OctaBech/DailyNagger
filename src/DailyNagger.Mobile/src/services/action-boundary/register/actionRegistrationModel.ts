@@ -1,4 +1,4 @@
-import type { ActionScope, RuntimeDependenciesForActionScope } from "@/services/action-boundary/runtime";
+import type { ActionScope, RuntimeDependenciesForActionScope } from "@/services/action-boundary/action-dependencies";
 
 export type RegisteredJsxAction<
   TScope extends ActionScope,
@@ -24,6 +24,7 @@ export function registerAction<
 ): RegisteredJsxAction<TScope, TActionArgs, TPublicArgs> {
   return { scope, run, toActionArgs };
 }
+
 
 
 

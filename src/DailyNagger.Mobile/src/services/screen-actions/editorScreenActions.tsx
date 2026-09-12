@@ -1,7 +1,7 @@
 import { createRequiredContext, type Prettify } from "@/shared";
-import type { RegisteredActionClient, editorScreenActionRegistry } from "@/services/action-boundary";
+import type { JsxActionPack, editorScreenActionRegistry } from "@/services/action-boundary";
 
-export type EditorScreenActions = Prettify<RegisteredActionClient<typeof editorScreenActionRegistry>>;
+export type EditorScreenActions = Prettify<JsxActionPack<typeof editorScreenActionRegistry>>;
 
 export const {
   Provider: EditorScreenActionsProvider,
@@ -17,4 +17,6 @@ export function useCreateEditorScreenActions({
 }: UseCreateEditorScreenActionsProps): EditorScreenActions {
   return registeredActions;
 }
+
+
 

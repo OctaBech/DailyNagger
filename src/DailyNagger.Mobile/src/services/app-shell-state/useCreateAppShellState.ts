@@ -7,7 +7,7 @@ import type { EditorScreenActions, PlanScreenActions } from "../screen-actions";
 import type {
   editorDialActionRegistry,
   planDialActionRegistry,
-  RegisteredActionClient,
+  JsxActionPack,
 } from "@/services/action-boundary";
 import {
   useCreateEditorScreenDialMenu,
@@ -22,10 +22,10 @@ import type { EventEmitter, Guid } from "@/shared";
 
 type UseCreateAppShellStateProps = {
   readonly assistantBubble: AssistantBubble;
-  readonly editorDialJsxActions: RegisteredActionClient<typeof editorDialActionRegistry>["dial"];
+  readonly editorDialJsxActions: JsxActionPack<typeof editorDialActionRegistry>["dial"];
   readonly editorMemory: Memory;
   readonly editorScreenCommands: EditorScreenActions;
-  readonly planDialJsxActions: RegisteredActionClient<typeof planDialActionRegistry>["dial"];
+  readonly planDialJsxActions: JsxActionPack<typeof planDialActionRegistry>["dial"];
   readonly planMemory: Memory;
   readonly planScreenCommands: PlanScreenActions;
   readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
@@ -149,4 +149,7 @@ function addMoodBarSpeedDialAction(
     ],
   };
 }
+
+
+
 

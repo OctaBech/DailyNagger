@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
-import type { RegisteredActionClient, editorDialActionRegistry } from "@/services/action-boundary";
+import type { JsxActionPack, editorDialActionRegistry } from "@/services/action-boundary";
 import type { SpeedDialMenu } from "./SpeedDialMenu";
 
-type EditorDialJsxActions = RegisteredActionClient<typeof editorDialActionRegistry>["dial"];
+type EditorDialJsxActions = JsxActionPack<typeof editorDialActionRegistry>["dial"];
 
 type UseCreateEditorScreenDialMenuProps = {
   readonly editorDialJsxActions: EditorDialJsxActions;
@@ -148,4 +148,7 @@ export function useCreateEditorScreenDialMenu({
     unpinSelectedNagger,
   ]);
 }
+
+
+
 

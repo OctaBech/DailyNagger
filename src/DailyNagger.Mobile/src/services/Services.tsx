@@ -21,7 +21,7 @@ import {
   type ActionExecutionEventType,
   planDialActionRegistry,
   planScreenActionRegistry,
-  useRegisteredActions,
+  useActionBoundary,
 } from "./action-boundary";
 import type { UserMoodLabel } from "@/models";
 import { useDailyNaggerObservability } from "@/observability";
@@ -120,7 +120,7 @@ function useCreateServices(): {
     userMood,
   });
   const editorScreenData = useCreateEditorScreenData({ editorMemory, cultureSettings });
-  const planRegisteredActions = useRegisteredActions(planScreenActionRegistry, {
+  const planRegisteredActions = useActionBoundary(planScreenActionRegistry, {
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -129,7 +129,7 @@ function useCreateServices(): {
     sending,
     screen: "plan",
   });
-  const planDialJsxActions = useRegisteredActions(planDialActionRegistry, {
+  const planDialJsxActions = useActionBoundary(planDialActionRegistry, {
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -138,7 +138,7 @@ function useCreateServices(): {
     sending,
     screen: "plan",
   }).dial;
-  const editorRegisteredActions = useRegisteredActions(editorScreenActionRegistry, {
+  const editorRegisteredActions = useActionBoundary(editorScreenActionRegistry, {
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -147,7 +147,7 @@ function useCreateServices(): {
     sending,
     screen: "editor",
   });
-  const editorDialJsxActions = useRegisteredActions(editorDialActionRegistry, {
+  const editorDialJsxActions = useActionBoundary(editorDialActionRegistry, {
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -184,3 +184,5 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
+
+

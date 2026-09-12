@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { Guid } from "@/shared";
-import type { RegisteredActionClient, planDialActionRegistry } from "@/services/action-boundary";
+import type { JsxActionPack, planDialActionRegistry } from "@/services/action-boundary";
 import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
 
-type PlanDialJsxActions = RegisteredActionClient<typeof planDialActionRegistry>["dial"];
+type PlanDialJsxActions = JsxActionPack<typeof planDialActionRegistry>["dial"];
 
 type UseCreatePlanScreenDialMenuProps = {
   readonly planDialJsxActions: PlanDialJsxActions;
@@ -88,4 +88,7 @@ export function useCreatePlanScreenDialMenu({
     unpinSelectedNagger,
   ]);
 }
+
+
+
 
