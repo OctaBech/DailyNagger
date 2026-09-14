@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useRouter } from "expo-router";
 import type { Memory, Startup } from "../contracts";
 import type { AssistantBubble } from "../assistant-bubble";
-import type { Parcel, SendingEventType } from "../sending";
+import type { Parcel, Sending, SendingEventType } from "../sending";
 import type { EditorScreenActions, PlanScreenActions } from "../screen-actions";
 import type {
   editorDialActionRegistry,
@@ -19,6 +19,7 @@ import { treeSelection, type UserMoodLabel } from "@/models";
 import { userMoodConfig } from "@/config";
 import { appRoutes } from "@/navigation";
 import type { EventEmitter, Guid } from "@/shared";
+import type { StateScreenProps } from "@/components/primitives";
 
 type UseCreateAppShellStateProps = {
   readonly assistantBubble: AssistantBubble;
@@ -28,6 +29,7 @@ type UseCreateAppShellStateProps = {
   readonly planDialJsxActions: JsxActionPack<typeof planDialActionRegistry>["dial"];
   readonly planMemory: Memory;
   readonly planScreenCommands: PlanScreenActions;
+  readonly sending: Sending;
   readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
   readonly startup: Startup;
   readonly selectMood: (mood: UserMoodLabel) => void;
@@ -42,6 +44,7 @@ export function useCreateAppShellState({
   planDialJsxActions,
   planMemory,
   planScreenCommands,
+  sending,
   sendingEvents,
   startup,
   selectMood,
@@ -98,10 +101,12 @@ export function useCreateAppShellState({
     () => addMoodBarSpeedDialAction(editorSpeedDialMenu, selectedMoodEmoji),
     [editorSpeedDialMenu, selectedMoodEmoji],
   );
+  const pendingSendingPrompt = createPendingSendingPrompt(sending);
 
   return useMemo(
     () => ({
       globalOverlaysAreEnabled: !startup.hasBlockingState,
+      pendingSendingPrompt,
       sendingEvents,
       assistantBubble,
       moodBar: {
@@ -120,6 +125,7 @@ export function useCreateAppShellState({
       assistantBubble,
       editorSpeedDialMenuWithShellActions,
       planSpeedDialMenuWithShellActions,
+      pendingSendingPrompt,
       selectMood,
       sendingEvents,
       startup.hasBlockingState,
@@ -129,6 +135,31 @@ export function useCreateAppShellState({
       selectedMoodEmoji,
     ],
   );
+}
+
+function createPendingSendingPrompt(sending: Sending): StateScreenProps | null {
+  const prompt = sending.pendingSendingPrompt.state;
+  if (prompt === null) return null;
+
+  return {
+    title: prompt.title,
+    message: prompt.message,
+    detail: __DEV__ ? prompt.technicalMessage : undefined,
+    primaryAction: {
+      label: prompt.primaryActionLabel,
+      accessibilityLabel: prompt.primaryActionLabel,
+      onPress: sending.pendingSendingPrompt.accept,
+    },
+    secondaryAction:
+      prompt.secondaryActionLabel === undefined
+        ? undefined
+        : {
+            label: prompt.secondaryActionLabel,
+            accessibilityLabel: prompt.secondaryActionLabel,
+            kind: "secondary",
+            onPress: sending.pendingSendingPrompt.chooseSecondaryAction,
+          },
+  };
 }
 
 function addMoodBarSpeedDialAction(
@@ -149,6 +180,7 @@ function addMoodBarSpeedDialAction(
     ],
   };
 }
+
 
 
 

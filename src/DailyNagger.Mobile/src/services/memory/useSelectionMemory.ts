@@ -5,14 +5,7 @@ import type { Memory } from "./useMemory";
 import { startDebugRenderFrame } from "@/debug/render-frame";
 import { treeOperations } from "@/services/tree-operations";
 import type { EventEmitter } from "@/shared";
-
-export type MemoryEventType =
-  | "clear"
-  | "setSelectedPath"
-  | "setTree"
-  | "setTreeWithoutSelectionRefresh"
-  | "setTreeAndSelectedPath"
-  | "setTreeAndFocusPath";
+import type { MemoryEventType } from "./events";
 
 export function useSelectionMemory(
   memory: Memory,
@@ -35,7 +28,7 @@ export function useSelectionMemory(
   );
 
   const clear = useCallback(() => {
-    recordMemoryEvent("clear");
+      recordMemoryEvent("cleared");
     baseClear();
   }, [baseClear, recordMemoryEvent]);
 
@@ -44,13 +37,13 @@ export function useSelectionMemory(
       const tree = memory.read.tryGetTree();
 
       if (tree === null) {
-        recordMemoryEvent("setSelectedPath");
+        recordMemoryEvent("saved.selected.path");
         baseSetSelectedPath(path);
         return;
       }
 
       const result = moveSelection(tree, getSelectedPath(), path);
-      recordMemoryEvent("setSelectedPath");
+      recordMemoryEvent("saved.selected.path");
       baseSetTreeAndSelectedPath(result.tree, result.treePath);
     },
     [baseSetSelectedPath, baseSetTreeAndSelectedPath, getSelectedPath, memory.read, recordMemoryEvent],
@@ -62,7 +55,7 @@ export function useSelectionMemory(
       const selectedNode = treeSelection.tryGetSelectedNode(currentPath);
 
       if (selectedNode === null) {
-        recordMemoryEvent("setTree");
+        recordMemoryEvent("saved.tree");
         baseSetTree(tree);
         return;
       }
@@ -70,12 +63,12 @@ export function useSelectionMemory(
       const result = trySetFocusPath(tree, selectedNode, true);
 
       if (result === null) {
-        recordMemoryEvent("setTree");
+        recordMemoryEvent("saved.tree");
         baseSetTreeAndSelectedPath(tree, []);
         return;
       }
 
-      recordMemoryEvent("setTree");
+      recordMemoryEvent("saved.tree");
       baseSetTreeAndSelectedPath(result.newTree, result.newPath);
     },
     [baseSetTree, baseSetTreeAndSelectedPath, getSelectedPath, recordMemoryEvent],
@@ -83,7 +76,7 @@ export function useSelectionMemory(
 
   const setTreeWithoutSelectionRefresh = useCallback(
     (tree: Tree) => {
-      recordMemoryEvent("setTreeWithoutSelectionRefresh");
+      recordMemoryEvent("saved.tree.without.selection.refresh");
       baseSetTreeWithoutSelectionRefresh(tree);
     },
     [baseSetTreeWithoutSelectionRefresh, recordMemoryEvent],
@@ -92,7 +85,7 @@ export function useSelectionMemory(
   const setTreeAndSelectedPath = useCallback(
     (tree: Tree, path: TreePath) => {
       const result = moveSelection(tree, getSelectedPath(), path);
-      recordMemoryEvent("setTreeAndSelectedPath");
+      recordMemoryEvent("saved.tree.and.path");
       baseSetTreeAndSelectedPath(result.tree, result.treePath);
     },
     [baseSetTreeAndSelectedPath, getSelectedPath, recordMemoryEvent],
@@ -101,7 +94,7 @@ export function useSelectionMemory(
   const setTreeAndFocusPath = useCallback(
     (tree: Tree, path: TreePath) => {
       const result = moveSelection(tree, getSelectedPath(), path);
-      recordMemoryEvent("setTreeAndFocusPath");
+      recordMemoryEvent("saved.tree.and.focus.path");
       baseSetTreeAndSelectedPath(result.tree, result.treePath);
     },
     [baseSetTreeAndSelectedPath, getSelectedPath, recordMemoryEvent],
@@ -169,4 +162,6 @@ function trySetFocusPath(tree: Tree, node: TreeNode, hasFocus: boolean) {
     return null;
   }
 }
+
+
 

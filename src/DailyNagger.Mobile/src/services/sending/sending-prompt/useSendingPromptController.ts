@@ -1,20 +1,20 @@
 import { useRef, useState } from "react";
-import type { ServerConfrontationPrompt } from "../contracts";
+import type { PendingSendingPrompt } from "@/models";
 
-export function useServerConfrontationBlock() {
-  const promptRef = useRef<ServerConfrontationPrompt | null>(null);
-  const [prompt, setPromptState] = useState<ServerConfrontationPrompt | null>(null);
+export function useSendingPromptController() {
+  const promptRef = useRef<PendingSendingPrompt | null>(null);
+  const [prompt, setPromptState] = useState<PendingSendingPrompt | null>(null);
   const resolveRef = useRef<((didUserAccept: boolean) => void) | null>(null);
 
-  function hasActiveConfrontation(): boolean {
+  function hasPendingSendingPrompt(): boolean {
     return promptRef.current !== null;
   }
 
-  function getCurrent(): ServerConfrontationPrompt | null {
+  function getCurrent(): PendingSendingPrompt | null {
     return promptRef.current;
   }
 
-  function askUserForPermission(promptToShow: ServerConfrontationPrompt): Promise<boolean> {
+  function askUserForSendingDecision(promptToShow: PendingSendingPrompt): Promise<boolean> {
     set(promptToShow);
 
     return new Promise((resolve) => {
@@ -41,21 +41,21 @@ export function useServerConfrontationBlock() {
     resolve?.(didUserAccept);
   }
 
-  function set(nextPrompt: ServerConfrontationPrompt | null): void {
+  function set(nextPrompt: PendingSendingPrompt | null): void {
     promptRef.current = nextPrompt;
     setPromptState(nextPrompt);
   }
 
   return {
     accept,
-    askUserForPermission,
+    askUserForSendingDecision,
     clear,
     getCurrent,
-    hasActiveConfrontation,
+    hasPendingSendingPrompt,
     chooseSecondaryAction,
     state: prompt,
   };
 }
 
-export type ServerConfrontationBlock = ReturnType<typeof useServerConfrontationBlock>;
+export type SendingPromptController = ReturnType<typeof useSendingPromptController>;
 

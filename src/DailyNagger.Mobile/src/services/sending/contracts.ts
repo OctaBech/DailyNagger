@@ -114,11 +114,4 @@ export type SendingEventType =
   | "batch-discarded-unrepairable"
   | "batch-discarded";
 
-export type ServerConfrontationPrompt = {
-  readonly title: string;
-  readonly message: string;
-  readonly primaryActionLabel: string;
-  readonly secondaryActionLabel?: string;
-  readonly technicalMessage: string;
-};
 

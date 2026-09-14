@@ -1,8 +1,10 @@
 import type { ActionRuntimeDependencyScreen } from "./action-dependencies";
 import type { RuntimeDependencyInputs } from "./action-dependencies";
-import { useBuildJsxActionPack, type JsxActionPack, type RegisteredActionTree } from "./useBuildJsxActionPack";
+import { useBuildJsxActionPack } from "./useBuildJsxActionPack";
+import type { JsxActionPack, RegisteredActionTree } from "./jsxActionPackModel";
 import { useExecuteJsxAction } from "./useExecuteJsxAction";
-import type { ActionEvents, ActionExecutionWrapper } from "./events";
+import type { ActionEvents } from "./events";
+import type { ActionExecutionWrapper } from "./middleware";
 
 type UseActionBoundaryProps = RuntimeDependencyInputs & {
   readonly actionEvents?: ActionEvents;
@@ -18,3 +20,5 @@ export function useActionBoundary<TRegistry extends RegisteredActionTree>(
 
   return useBuildJsxActionPack(registry, executeJsxAction);
 }
+
+

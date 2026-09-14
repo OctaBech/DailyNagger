@@ -6,8 +6,9 @@ import type {
   RuntimeDependenciesForActionScope,
 } from "./action-dependencies";
 import { getActionRuntimeDependencies } from "./action-dependencies/actionRuntimeDependencies";
-import type { ActionEvents, ActionExecutionContext, ActionExecutionWrapper } from "./events";
-import type { JsxAction } from "./useBuildJsxActionPack";
+import type { ActionEvents, ActionExecutionContext } from "./events";
+import type { ActionExecutionWrapper } from "./middleware";
+import type { JsxAction } from "./jsxActionPackModel";
 
 type UseExecuteJsxActionProps = RuntimeDependencyInputs & {
   readonly actionEvents?: ActionEvents;
@@ -21,20 +22,38 @@ export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
   function executeJsxAction<TActionScope extends ActionScope, TActionArgs, TJsxArgs extends unknown[]>(
     jsxAction: JsxAction<TActionScope, TActionArgs, TJsxArgs>,
   ): void {
+    // Build action arguments from JSX arguments.
     const actionArgs = jsxAction.action.toActionArgs(...jsxAction.publicArgs);
+
+    // Hydrate dependencies for the action scope.
     const runtimeDependencies = getActionRuntimeDependencies(
       environment.screen,
       jsxAction.action.scope,
       environment,
     );
+
+    // Create the causality context for this execution.
     const context = createActionExecutionContext(jsxAction.actionKey, jsxAction.action.scope);
 
-    runActionWithEvents(environment, context, () =>
-      jsxAction.action.run(
-        actionArgs,
-        runtimeDependencies as RuntimeDependenciesForActionScope<TActionScope>,
-      ),
-    );
+    environment.actionEvents?.emit("action-started", context);
+
+    try {
+      // This is an extension point where external tools can wrap the action execution.
+      // For example, observability uses this point to start a span.
+      // Without a wrapper, run() is called normally.
+      const result = (environment.actionExecutionWrapper ?? runActionWithoutWrapping)(context, () =>
+        jsxAction.action.run(
+          actionArgs,
+          runtimeDependencies as RuntimeDependenciesForActionScope<TActionScope>,
+        ),
+      );
+
+      environment.actionEvents?.emit("action-finished", context);
+      return result;
+    } catch (error) {
+      environment.actionEvents?.emit("action-failed", { ...context, error });
+      throw error;
+    }
   }
 
   return useStableCallback(executeJsxAction);
@@ -54,25 +73,6 @@ function createActionExecutionContext(
   };
 }
 
-function runActionWithEvents<TResult>(
-  props: UseExecuteJsxActionProps,
-  context: ActionExecutionContext,
-  run: () => TResult,
-): TResult {
-  props.actionEvents?.emit("action-started", context);
-
-  try {
-    const result = (props.actionExecutionWrapper ?? runActionWithoutWrapping)(context, run);
-    props.actionEvents?.emit("action-finished", context);
-    return result;
-  } catch (error) {
-    props.actionEvents?.emit("action-failed", { ...context, error });
-    throw error;
-  }
-}
-
 const runActionWithoutWrapping: ActionExecutionWrapper = (_context, run) => run();
-
-
 
 

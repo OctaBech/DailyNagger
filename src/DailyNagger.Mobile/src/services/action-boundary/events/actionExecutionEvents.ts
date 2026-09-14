@@ -16,7 +16,4 @@ export type ActionExecutionEvent = ActionExecutionContext & {
 
 export type ActionEvents = EventEmitter<ActionExecutionEventType, ActionExecutionEvent>;
 
-export type ActionExecutionWrapper = <TResult>(
-  context: ActionExecutionContext,
-  run: () => TResult,
-) => TResult;
+

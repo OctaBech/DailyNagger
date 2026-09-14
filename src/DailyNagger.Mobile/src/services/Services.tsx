@@ -86,7 +86,7 @@ function useCreateServices(): {
   const editorMemory = useSelectionMemory(rawEditorMemory, "editorMemory", editorMemoryEvents);
 
   const sendingEvents = useEventEmitter<SendingEventType, readonly Parcel[]>();
-  useDailyNaggerObservability({
+  const observability = useDailyNaggerObservability({
     actionEvents,
     editorMemoryEvents,
     planMemoryEvents,
@@ -126,6 +126,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
+    actionExecutionWrapper: observability.actionExecutionWrapper,
     sending,
     screen: "plan",
   });
@@ -135,6 +136,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
+    actionExecutionWrapper: observability.actionExecutionWrapper,
     sending,
     screen: "plan",
   }).dial;
@@ -144,6 +146,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
+    actionExecutionWrapper: observability.actionExecutionWrapper,
     sending,
     screen: "editor",
   });
@@ -153,6 +156,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
+    actionExecutionWrapper: observability.actionExecutionWrapper,
     sending,
     screen: "editor",
   }).dial;
@@ -170,6 +174,7 @@ function useCreateServices(): {
     planDialJsxActions,
     planMemory,
     planScreenCommands,
+    sending,
     sendingEvents,
     startup,
     selectMood,
@@ -184,5 +189,6 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
+
 
 

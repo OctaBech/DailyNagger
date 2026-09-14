@@ -4,9 +4,11 @@ import type { Parcel, SendingEventType } from "../sending";
 import type { SpeedDialMenu } from "../screen-dial-menus";
 import type { EventEmitter, Prettify } from "@/shared";
 import type { UserMoodLabel, UserMoodOption } from "@/models";
+import type { StateScreenProps } from "@/components/primitives";
 
 export type AppShellState = Prettify<{
   readonly globalOverlaysAreEnabled: boolean;
+  readonly pendingSendingPrompt: StateScreenProps | null;
   readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
   readonly assistantBubble: AssistantBubble;
   readonly moodBar: {

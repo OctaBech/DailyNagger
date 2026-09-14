@@ -20,6 +20,7 @@ import {
 import { appRoutes } from "@/navigation";
 import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
 import { appLayout } from "@/config";
+import { SendingPromptOverlay } from "./sending-prompt";
 
 type AppShellProps = {
   children: ReactNode;
@@ -92,6 +93,7 @@ export const AppShell = ({ children }: AppShellProps) => {
               />
             </View>
           ) : null}
+          <SendingPromptOverlay prompt={appShellState.pendingSendingPrompt} />
           <SpeedDial menu={speedDialMenu} onItemSelected={handleSpeedDialItemSelected} />
           <ScreenPositionHandoffDebug />
           {appShellState.globalOverlaysAreEnabled ? (
@@ -130,3 +132,4 @@ function hideUnavailableShellItems(
     }),
   };
 }
+

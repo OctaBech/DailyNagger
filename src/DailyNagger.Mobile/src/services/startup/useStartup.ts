@@ -98,12 +98,9 @@ export function useStartup(sending: Sending, loading: Loading, rollover: Rollove
     start();
   }, [start]);
 
-  const sendingConfrontation = sending.serverConfrontation.state;
   let stateScreenProps: StateScreenProps | null = null;
 
-  if (sendingConfrontation !== null) {
-    stateScreenProps = createSendingConfrontationStateScreenProps(sending);
-  } else if (state.blockingState?.kind === "server-unavailable") {
+  if (state.blockingState?.kind === "server-unavailable") {
     stateScreenProps = {
       title: "Server unavailable",
       message:
@@ -125,7 +122,7 @@ export function useStartup(sending: Sending, loading: Loading, rollover: Rollove
     };
   }
 
-  const hasBlockingState = sendingConfrontation !== null || state.blockingState !== null;
+  const hasBlockingState = state.blockingState !== null;
 
   return {
     isReady: state.status === "ready",
@@ -176,28 +173,4 @@ function startupReducer(state: StartupState, event: StartupEvent): StartupState 
   }
 }
 
-function createSendingConfrontationStateScreenProps(sending: Sending): StateScreenProps | null {
-  const confrontation = sending.serverConfrontation.state;
-  if (confrontation === null) return null;
-
-  return {
-    title: confrontation.title,
-    message: confrontation.message,
-    detail: __DEV__ ? confrontation.technicalMessage : undefined,
-    primaryAction: {
-      label: confrontation.primaryActionLabel,
-      accessibilityLabel: confrontation.primaryActionLabel,
-      onPress: sending.serverConfrontation.accept,
-    },
-    secondaryAction:
-      confrontation.secondaryActionLabel === undefined
-        ? undefined
-        : {
-            label: confrontation.secondaryActionLabel,
-            accessibilityLabel: confrontation.secondaryActionLabel,
-            kind: "secondary",
-            onPress: sending.serverConfrontation.chooseSecondaryAction,
-          },
-  };
-}
 

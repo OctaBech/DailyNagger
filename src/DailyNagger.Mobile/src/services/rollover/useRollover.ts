@@ -54,10 +54,10 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
     if (isNaggerOverdue(nagger, cultureSettings) === false) continue;
 
     // Do not rollover a Nagger if it has pending server updates
-    if (sending.hasUpdateBelongingTo("nagger", nagger.id)) continue;
+    if (sending.hasUpdateBelongingToRootNode("nagger", nagger.id)) continue;
 
     // Do not rollover a nagger if its TaskLog has pending server updates
-    if (sending.hasUpdateBelongingTo("task-log", nagger.taskLog.id)) continue;
+    if (sending.hasUpdateBelongingToRootNode("task-log", nagger.taskLog.id)) continue;
 
     rolloverActions.closeTaskLogForRollover(
       {

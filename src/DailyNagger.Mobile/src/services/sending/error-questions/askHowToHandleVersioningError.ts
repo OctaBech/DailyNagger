@@ -1,13 +1,13 @@
 import type { SendApiRequestError } from "@/api/client/sendApiRequest";
-import type { ServerConfrontationBlock } from "../server-confrontation/useServerConfrontationBlock";
+import type { SendingPromptController } from "../sending-prompt/useSendingPromptController";
 
 export type VersioningErrorDecision = "force-batch" | "discard-batch";
 
 export async function askHowToHandleVersioningError(
-  serverConfrontationBlock: ServerConfrontationBlock,
+  sendingPromptController: SendingPromptController,
   error: SendApiRequestError,
 ): Promise<VersioningErrorDecision> {
-  const shouldForceBatch = await serverConfrontationBlock.askUserForPermission({
+  const shouldForceBatch = await sendingPromptController.askUserForSendingDecision({
     title: "Version conflict",
     message:
       "The server has a newer version. DailyNagger can force this batch through or discard it.",
@@ -18,4 +18,7 @@ export async function askHowToHandleVersioningError(
 
   return shouldForceBatch ? "force-batch" : "discard-batch";
 }
+
+
+
 

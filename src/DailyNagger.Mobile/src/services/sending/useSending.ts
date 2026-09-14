@@ -29,7 +29,7 @@ import { createUserMoodFormula } from "./queueUserMood";
 import { useSendQueue } from "./queue";
 import { createSendBatchRequest } from "./request/createSendBatchRequest";
 import { logServerRejectedQueuedUpdate } from "./logging/logServerRejectedQueuedUpdate";
-import { useServerConfrontationBlock } from "./server-confrontation/useServerConfrontationBlock";
+import { useSendingPromptController } from "./sending-prompt/useSendingPromptController";
 import { trySendRequest } from "./request/trySendRequest";
 import { naggerToDto, taskLogToDto } from "@/services/model-conversion";
 import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from "./error-questions";
@@ -52,7 +52,7 @@ export function useSending(
   const sendTimer = useTimer(sendTimerConfig);
   const clientIdentity = useClientIdentity();
   const sendLoopLock = useLock();
-  const serverConfrontationBlock = useServerConfrontationBlock();
+  const sendingPromptController = useSendingPromptController();
 
   const queue = useStableCallback(toPostOffice);
 
@@ -117,7 +117,7 @@ export function useSending(
     sendTimer.stop();
 
     if (!sendQueue.hasElements()) return true;
-    if (serverConfrontationBlock.hasActiveConfrontation()) return false;
+    if (sendingPromptController.hasPendingSendingPrompt()) return false;
     if (!sendLoopLock.tryLock()) return false;
 
     const batch = sendQueue.startNextBatch();
@@ -140,7 +140,7 @@ export function useSending(
         sendingEvents.emit("batch-blocked-current-version", batch);
 
         const decision = await askHowToHandleVersioningError(
-          serverConfrontationBlock,
+          sendingPromptController,
           sendResult.error,
         );
 
@@ -167,7 +167,7 @@ export function useSending(
         sendingEvents.emit("batch-rejected-unrepairable", batch);
         sendingEvents.emit("batch-blocked-unrepairable", batch);
 
-        await askHowToHandleUnrepairableUpdate(serverConfrontationBlock, sendResult.error);
+        await askHowToHandleUnrepairableUpdate(sendingPromptController, sendResult.error);
         sendQueue.removeActiveBatch();
         sendingEvents.emit("batch-discarded-unrepairable", batch);
         sendingEvents.emit("batch-discarded", batch);
@@ -178,7 +178,7 @@ export function useSending(
         logServerRejectedQueuedUpdate(sendResult.error, batch);
         sendingEvents.emit("batch-failed-to-connect", batch);
         sendQueue.releaseActiveBatch();
-        sendTimer.set("delayedAfterFailure", processSendQueue);
+        sendTimer.set("lostConnectionBackoff", processSendQueue);
         return false;
 
       default:
@@ -209,8 +209,8 @@ export function useSending(
     sendingEvents.emit("parcel-queued", queuedParcels);
   }
 
-  function hasUpdateBelongingTo(versionOwnerType: OwnerType, versionOwnerId: Guid): boolean {
-    return sendQueue.hasUpdateBelongingTo(versionOwnerType, versionOwnerId);
+  function hasUpdateBelongingToRootNode(versionOwnerType: OwnerType, versionOwnerId: Guid): boolean {
+    return sendQueue.hasUpdateBelongingToRootNode(versionOwnerType, versionOwnerId);
   }
 
   function toPostOffice(content: SendableContent, options?: SendingQueueOptions): void {
@@ -218,13 +218,13 @@ export function useSending(
   }
 
   return {
-    serverConfrontation: {
-      state: serverConfrontationBlock.state,
-      accept: serverConfrontationBlock.accept,
-      chooseSecondaryAction: serverConfrontationBlock.chooseSecondaryAction,
+    pendingSendingPrompt: {
+      state: sendingPromptController.state,
+      accept: sendingPromptController.accept,
+      chooseSecondaryAction: sendingPromptController.chooseSecondaryAction,
     },
     queue,
-    hasUpdateBelongingTo,
+    hasUpdateBelongingToRootNode,
     flushQueue,
   };
 }
@@ -238,5 +238,8 @@ export type ActionSending = Prettify<
     readonly queue: (content: SendableContent) => void;
   }
 >;
+
+
+
 
 

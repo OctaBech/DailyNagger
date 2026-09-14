@@ -5,7 +5,7 @@ export const sendTimerConfig = {
     kind: "fixed",
     ms: appTiming.sendQueue.debounceDelayMs,
   },
-  delayedAfterFailure: {
+  lostConnectionBackoff: {
     kind: "backoff",
     initialMs: appTiming.sendQueue.initialRetryDelayMs,
     multiplier: appTiming.sendQueue.retryBackoffMultiplier,

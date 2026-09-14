@@ -1,15 +1,19 @@
 import { useEffect } from "react";
 import type { MemoryEventType } from "@/services/memory";
 import type { EventEmitter } from "@/shared";
+import { recordBreadcrumb } from "../sentry";
 
 export function useMemoryObservability(
   memoryEvents: EventEmitter<MemoryEventType, void>,
+  memoryName: string,
 ): void {
   useEffect(() => {
     return memoryEvents.subscribe((eventType) => {
-      // Memory reports that a write happened. Observability decides later
-      // whether that fact becomes a breadcrumb, metric, or nothing.
-      void eventType;
+      recordBreadcrumb({
+        category: "memory",
+        data: { memoryName },
+        message: `${memoryName}.${eventType}`,
+      });
     });
-  }, [memoryEvents]);
+  }, [memoryEvents, memoryName]);
 }

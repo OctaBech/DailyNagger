@@ -3,5 +3,4 @@ export type {
   ActionExecutionContext,
   ActionExecutionEvent,
   ActionExecutionEventType,
-  ActionExecutionWrapper,
 } from "./actionExecutionEvents";

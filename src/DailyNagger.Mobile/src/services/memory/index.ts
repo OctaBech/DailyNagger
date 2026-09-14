@@ -1,6 +1,3 @@
-export {
-  useSelectionMemory,
-  type MemoryEventType,
-} from "./useSelectionMemory";
+export { useSelectionMemory } from "./useSelectionMemory";
 export { useMemory, type Memory } from "./useMemory";
-
+export type { MemoryEventType } from "./events";

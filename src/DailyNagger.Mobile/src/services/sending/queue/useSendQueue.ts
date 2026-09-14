@@ -70,7 +70,7 @@ export function useSendQueue() {
     return queueRef.current;
   }
 
-  function hasUpdateBelongingTo(versionOwnerType: OwnerType, versionOwnerId: Guid): boolean {
+  function hasUpdateBelongingToRootNode(versionOwnerType: OwnerType, versionOwnerId: Guid): boolean {
     return queueRef.current.some(
       (queuedSend) =>
         queuedSend.formula.ownerType === versionOwnerType &&
@@ -169,7 +169,7 @@ export function useSendQueue() {
     getAll,
     startNextBatch,
     hasElements,
-    hasUpdateBelongingTo,
+    hasUpdateBelongingToRootNode,
     clear,
     count,
     startupWarning: loadedQueue.startupWarning,
