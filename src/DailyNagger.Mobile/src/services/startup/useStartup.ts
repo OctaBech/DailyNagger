@@ -5,11 +5,11 @@ import type { Loading } from "../loading";
 import type { Rollover } from "../rollover";
 import type { Sending } from "../sending";
 import type { StartupEvents } from "./events";
+import type { StartupMiddleware } from "./startupMiddleware";
 import {
   createStartupExecutionContext,
   runWithStartupMiddleware,
-  type StartupMiddleware,
-} from "./middleware";
+} from "./runStartupMiddleware";
 import {
   blockStartupBecauseServerIsUnavailable,
   flushQueue,
@@ -135,3 +135,7 @@ export function useStartup(
     retry,
   };
 }
+
+
+
+

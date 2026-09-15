@@ -1,6 +1,6 @@
 import { runWithOptionalMiddleware } from "@/middleware";
-import type { StartupExecutionContext } from "../events";
-import type { StartupMiddleware } from "./contracts";
+import type { StartupExecutionContext } from "./events";
+import type { StartupMiddleware } from "./startupMiddleware";
 
 export async function runWithStartupMiddleware<TResult>(
   startupMiddleware: StartupMiddleware | undefined,
@@ -18,3 +18,4 @@ export function createStartupExecutionContext(): StartupExecutionContext {
     startedAt,
   };
 }
+

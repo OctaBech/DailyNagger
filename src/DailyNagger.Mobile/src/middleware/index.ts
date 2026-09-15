@@ -1,6 +1,7 @@
 export {
   type AsyncExecutionMiddleware,
   type ExecutionMiddleware,
+  type MiddlewareExecutionContext,
   runWithOptionalMiddleware,
 } from "./executionMiddleware";
 export {

@@ -1,7 +1,7 @@
 import { createMMKV } from "react-native-mmkv";
 import { z } from "zod";
 import { parcelSchema, type Parcel } from "./contracts";
-import type { ParcelQueueMiddlewareContext } from "./middleware";
+import type { ParcelQueueMiddlewareContext } from "./parcelQueueMiddleware";
 
 const storage = createMMKV({ id: "daily-nagger-send-queue" });
 const queueStorageKey = "sendQueue";
@@ -89,3 +89,4 @@ function discardPersistedQueue(startupWarning: string): PersistentStorageLoadRes
   storage.remove(queueStorageKey);
   return { queueEntries: [], startupWarning };
 }
+

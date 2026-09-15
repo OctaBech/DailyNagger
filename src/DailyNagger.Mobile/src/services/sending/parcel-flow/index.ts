@@ -16,4 +16,5 @@ export { useSendParcelBatch } from "./useSendParcelBatch";
 
 export { useParcelFlowEvents } from "./events";
 export type { ParcelFlowEvent, ParcelFlowEvents, ParcelFlowEventType } from "./events";
-export type { ParcelQueueMiddleware, ParcelQueueMiddlewareContext } from "./middleware";
+export type { ParcelQueueMiddleware, ParcelQueueMiddlewareContext } from "./parcelQueueMiddleware";
+

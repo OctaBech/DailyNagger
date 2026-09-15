@@ -10,4 +10,5 @@ export type {
   ActionExecutionEvent,
   ActionExecutionEventType,
 } from "./events";
-export type { ActionExecutionWrapper } from "./middleware";
+export type { ActionExecutionWrapper } from "./actionExecutionMiddleware";
+

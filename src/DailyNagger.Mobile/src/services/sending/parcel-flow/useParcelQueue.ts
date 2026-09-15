@@ -14,7 +14,7 @@ import type {
   SendParcelBatch,
 } from "./contracts";
 import { emitParcelBatchEvent, type ParcelFlowEvents } from "./events";
-import type { ParcelQueueMiddleware } from "./middleware";
+import type { ParcelQueueMiddleware } from "./parcelQueueMiddleware";
 import { persistentStorage, type QueuedParcel } from "./persistentStorage";
 
 export function useParcelQueue(
@@ -294,5 +294,6 @@ export function useParcelQueue(
 }
 
 export type ParcelQueue = ReturnType<typeof useParcelQueue>;
+
 
 

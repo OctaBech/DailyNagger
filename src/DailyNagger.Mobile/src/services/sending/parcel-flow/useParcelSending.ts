@@ -8,7 +8,7 @@ import { useCreateParcel } from "./useCreateParcel";
 import { useParcelQueue } from "./useParcelQueue";
 import { useSendParcelBatch } from "./useSendParcelBatch";
 import { useParcelFlowEvents, type ParcelFlowEvents } from "./events";
-import type { ParcelQueueMiddleware } from "./middleware";
+import type { ParcelQueueMiddleware } from "./parcelQueueMiddleware";
 
 export function useParcelSending(
   versionMemory: Memory,
@@ -66,3 +66,4 @@ export function useParcelSending(
 type FlushQueueResult = { readonly kind: "flushed" } | { readonly kind: "server-unreachable" };
 
 export type ParcelSending = ReturnType<typeof useParcelSending>;
+

@@ -3,7 +3,7 @@ import { useBuildJsxActionPack } from "./useBuildJsxActionPack";
 import type { JsxActionPack, RegisteredActionTree } from "./jsxActionPackModel";
 import { useExecuteJsxAction } from "./useExecuteJsxAction";
 import type { ActionEvents } from "./events";
-import type { ActionExecutionWrapper } from "./middleware";
+import type { ActionExecutionWrapper } from "./actionExecutionMiddleware";
 
 type UseActionBoundaryProps = RuntimeDependencyInputs & {
   readonly actionEvents?: ActionEvents;
@@ -19,5 +19,6 @@ export function useActionBoundary<TRegistry extends RegisteredActionTree>(
 
   return useBuildJsxActionPack(registry, executeJsxAction);
 }
+
 
 
