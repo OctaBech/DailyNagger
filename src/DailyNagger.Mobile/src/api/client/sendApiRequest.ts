@@ -3,7 +3,6 @@ import type { ClientIdentity } from "@/models/clientIdentity";
 import { environment } from "@/config";
 import type { ClientIdentityDto, VersionedMutationResponse } from "@/api/dto";
 import { apiRequest, ApiRequestError } from "./apiRequest";
-import type { Observability } from "@/observability";
 
 export class SendApiRequestError extends Error {
   readonly currentVersion: number | null;
@@ -24,7 +23,6 @@ export type SendApiRequest = {
   readonly processing: {
     readonly queuedAt: string;
     readonly batchSize: number;
-    readonly observability: Observability;
     readonly parcelId: string;
     readonly baseVersion?: number;
     readonly nextVersion?: number;
@@ -52,7 +50,6 @@ export async function sendApiRequest(request: SendApiRequest): Promise<Versioned
       method,
       path: endpoint,
       body,
-      observability: processing.observability,
     });
 
     if (result.kind !== "ok") {

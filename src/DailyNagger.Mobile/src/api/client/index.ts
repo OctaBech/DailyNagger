@@ -7,3 +7,8 @@ export { SendApiRequestError, sendApiRequest } from "./sendApiRequest";
 export type { SendApiRequest } from "./sendApiRequest";
 export { apiRequestHeaders } from "./apiRequestHeaders";
 export type { TaskStepNameSuggestionDto } from "@api-contracts";
+export {
+  apiRequestEvents,
+  type ApiRequestEvent,
+  type ApiRequestEventType,
+} from "./apiRequestEvents";

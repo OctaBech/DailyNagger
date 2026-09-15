@@ -10,73 +10,96 @@ type EventListener<TEventType extends string, TPayload> = (
   payload: TPayload,
 ) => void;
 
+export function createEventEmitter<TEventType extends string, TPayload>() {
+  const subscribers = new Map<
+    SubscriberKey<TEventType>,
+    Set<EventListener<TEventType, TPayload>>
+  >();
+
+  function getOrCreateSubscribers(
+    subscriberKey: SubscriberKey<TEventType>,
+  ): Set<EventListener<TEventType, TPayload>> {
+    const existingSubscribers = subscribers.get(subscriberKey);
+    if (existingSubscribers !== undefined) return existingSubscribers;
+
+    const newSubscribers = new Set<EventListener<TEventType, TPayload>>();
+
+    subscribers.set(subscriberKey, newSubscribers);
+
+    return newSubscribers;
+  }
+
+  function addSubscriber(
+    subscriberKey: SubscriberKey<TEventType>,
+    listener: EventListener<TEventType, TPayload>,
+  ): () => void {
+    const eventSubscribers = getOrCreateSubscribers(subscriberKey);
+
+    eventSubscribers.add(listener);
+
+    return () => {
+      eventSubscribers.delete(listener);
+    };
+  }
+
+  function notifySubscribers(
+    subscriberKey: SubscriberKey<TEventType>,
+    eventType: TEventType,
+    payload: TPayload,
+  ): void {
+    const eventSubscribers = subscribers.get(subscriberKey);
+    if (eventSubscribers === undefined) return;
+
+    for (const subscriber of eventSubscribers) {
+      subscriber(eventType, payload);
+    }
+  }
+
+  function emit(eventType: TEventType, payload: TPayload): void {
+    notifySubscribers(allEventsKey, eventType, payload);
+    notifySubscribers(eventType, eventType, payload);
+  }
+
+  function subscribe(listener: EventListener<TEventType, TPayload>): () => void {
+    return addSubscriber(allEventsKey, listener);
+  }
+
+  function subscribeTo(
+    eventType: TEventType,
+    listener: EventListener<TEventType, TPayload>,
+  ): () => void {
+    return addSubscriber(eventType, listener);
+  }
+
+  return {
+    emit,
+    subscribe,
+    subscribeTo,
+  };
+}
+
 export function useEventEmitter<TEventType extends string, TPayload>() {
-  const subscribersRef = useRef(
-    new Map<SubscriberKey<TEventType>, Set<EventListener<TEventType, TPayload>>>(),
+  const emitterRef = useRef<ReturnType<typeof createEventEmitter<TEventType, TPayload>> | null>(
+    null,
   );
 
-  const getOrCreateSubscribers = useCallback(
-    (subscriberKey: SubscriberKey<TEventType>): Set<EventListener<TEventType, TPayload>> => {
-      const existingSubscribers = subscribersRef.current.get(subscriberKey);
-      if (existingSubscribers !== undefined) return existingSubscribers;
+  if (emitterRef.current === null) {
+    emitterRef.current = createEventEmitter<TEventType, TPayload>();
+  }
 
-      const newSubscribers = new Set<EventListener<TEventType, TPayload>>();
+  const emit = useCallback((eventType: TEventType, payload: TPayload): void => {
+    emitterRef.current?.emit(eventType, payload);
+  }, []);
 
-      subscribersRef.current.set(subscriberKey, newSubscribers);
-
-      return newSubscribers;
-    },
-    [],
-  );
-
-  const addSubscriber = useCallback(
-    (
-      subscriberKey: SubscriberKey<TEventType>,
-      listener: EventListener<TEventType, TPayload>,
-    ): (() => void) => {
-      const subscribers = getOrCreateSubscribers(subscriberKey);
-
-      subscribers.add(listener);
-
-      return () => {
-        subscribers.delete(listener);
-      };
-    },
-    [getOrCreateSubscribers],
-  );
-
-  const notifySubscribers = useCallback(
-    (subscriberKey: SubscriberKey<TEventType>, eventType: TEventType, payload: TPayload): void => {
-      const subscribers = subscribersRef.current.get(subscriberKey);
-      if (subscribers === undefined) return;
-
-      for (const subscriber of subscribers) {
-        subscriber(eventType, payload);
-      }
-    },
-    [],
-  );
-
-  const emit = useCallback(
-    (eventType: TEventType, payload: TPayload): void => {
-      notifySubscribers(allEventsKey, eventType, payload);
-      notifySubscribers(eventType, eventType, payload);
-    },
-    [notifySubscribers],
-  );
-
-  const subscribe = useCallback(
-    (listener: EventListener<TEventType, TPayload>): (() => void) => {
-      return addSubscriber(allEventsKey, listener);
-    },
-    [addSubscriber],
-  );
+  const subscribe = useCallback((listener: EventListener<TEventType, TPayload>): (() => void) => {
+    return emitterRef.current?.subscribe(listener) ?? (() => undefined);
+  }, []);
 
   const subscribeTo = useCallback(
     (eventType: TEventType, listener: EventListener<TEventType, TPayload>): (() => void) => {
-      return addSubscriber(eventType, listener);
+      return emitterRef.current?.subscribeTo(eventType, listener) ?? (() => undefined);
     },
-    [addSubscriber],
+    [],
   );
 
   return useMemo(
@@ -90,7 +113,7 @@ export function useEventEmitter<TEventType extends string, TPayload>() {
 }
 
 export type EventEmitter<TEventType extends string, TPayload> = Prettify<
-  ReturnType<typeof useEventEmitter<TEventType, TPayload>>
+  ReturnType<typeof createEventEmitter<TEventType, TPayload>>
 >;
 
 export type { EventListener };

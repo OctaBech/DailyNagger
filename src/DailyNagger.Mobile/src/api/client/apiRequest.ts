@@ -1,8 +1,9 @@
 import { environment } from "@/config";
 import { newGuid } from "@/shared";
-import { recordApiRequest, recordSentryTraceHeader, type Observability } from "@/observability";
+import { getActiveSentryTraceHeader } from "@/observability/sentry";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
 import { apiRequestHeaders } from "./apiRequestHeaders";
+import { apiRequestEvents } from "./apiRequestEvents";
 
 type ApiRequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -50,7 +51,6 @@ export class ApiConnectionError extends Error {
 type ApiRequestOptions = {
   readonly body?: unknown;
   readonly method: ApiRequestMethod;
-  readonly observability?: Observability;
   readonly path: string;
 };
 
@@ -75,30 +75,48 @@ export async function apiRequest<TResponse>(
   const url = createApiUrl(options.path);
   const requestId = newGuid();
   const startedAt = performance.now();
+  const eventBase = {
+    method: options.method,
+    path: sanitizeApiEventPath(options.path),
+    requestId,
+  };
 
-  return recordApiRequest(
-    options.observability,
-    { method: options.method, path: options.path, requestId, url },
-    async () => {
-      const request = createApiRequest(options, requestId);
-      const response = await sendApiFetch(url, request, startedAt);
+  apiRequestEvents.emit("api.request.started", eventBase);
 
-      if (!response.ok) {
-        const responseBody = await response.text();
-        throw new ApiRequestError(url, request, response, responseBody, getDurationMs(startedAt));
-      }
+  try {
+    const request = createApiRequest(options, requestId);
+    const response = await sendApiFetch(url, request, startedAt);
+    const durationMs = getDurationMs(startedAt);
 
-      if (response.status === 202) {
-        return { kind: "accepted", status: 202, body: null };
-      }
+    if (!response.ok) {
+      const responseBody = await response.text();
+      throw new ApiRequestError(url, request, response, responseBody, durationMs);
+    }
 
-      if (response.status === 204) {
-        return { kind: "no-content", status: 204, body: null };
-      }
+    apiRequestEvents.emit("api.request.finished", {
+      ...eventBase,
+      durationMs,
+      status: response.status,
+    });
 
-      return { kind: "ok", status: response.status, body: await response.json() };
-    },
-  );
+    if (response.status === 202) {
+      return { kind: "accepted", status: 202, body: null };
+    }
+
+    if (response.status === 204) {
+      return { kind: "no-content", status: 204, body: null };
+    }
+
+    return { kind: "ok", status: response.status, body: await response.json() };
+  } catch (error) {
+    apiRequestEvents.emit("api.request.failed", {
+      ...eventBase,
+      durationMs: getDurationMs(startedAt),
+      error,
+    });
+
+    throw error;
+  }
 }
 
 async function sendApiFetch(
@@ -116,7 +134,7 @@ async function sendApiFetch(
 function createApiRequest(options: ApiRequestOptions, requestId: string): RequestInit {
   return {
     method: options.method,
-    headers: createApiHeaders(options.body, requestId, options.observability),
+    headers: createApiHeaders(options.body, requestId),
     body: createJsonBody(options.body),
   };
 }
@@ -128,14 +146,9 @@ function createApiUrl(path: string): string {
   return `${baseUrl}/${normalizedPath}`;
 }
 
-function createApiHeaders(
-  body: unknown,
-  requestId: string,
-  observability: Observability | undefined,
-): Record<string, string> {
+function createApiHeaders(body: unknown, requestId: string): Record<string, string> {
   const headers = {
     ...createBaseApiHeaders(requestId),
-    ...createCausalityHeaders(observability),
     ...createSentryTraceHeaders(),
   };
 
@@ -146,17 +159,8 @@ function createApiHeaders(
   return headers;
 }
 
-function createCausalityHeaders(observability: Observability | undefined): Record<string, string> {
-  if (observability === undefined) return {};
-
-  return {
-    [apiRequestHeaders.causalityId]: observability.context.causality.id,
-    [apiRequestHeaders.causalityKeys]: observability.causalityKeys.join(","),
-  };
-}
-
 function createSentryTraceHeaders(): Record<string, string> {
-  const sentryTrace = recordSentryTraceHeader();
+  const sentryTrace = getActiveSentryTraceHeader();
   const headers: Record<string, string> = {};
 
   if (sentryTrace !== null) {
@@ -174,6 +178,9 @@ function createJsonBody(body: unknown): string | undefined {
   return JSON.stringify(body);
 }
 
+function sanitizeApiEventPath(path: string): string {
+  return path.split("?")[0] ?? path;
+}
 function sanitizeApiErrorUrl(url: string): string {
   try {
     const parsedUrl = new URL(url);
