@@ -5,6 +5,7 @@ import type { ParcelFlowEvents, ParcelQueueMiddleware } from "@/services/sending
 import type { StartupEvents } from "@/services/startup";
 import type { EventEmitter } from "@/shared";
 import {
+  useAppErrorBoundaryObservability,
   useApiRequestObservability,
   useActionBoundaryObservability,
   useMemoryObservability,
@@ -33,6 +34,7 @@ type DailyNaggerObservability = {
 export function useDailyNaggerObservability(
   input: DailyNaggerObservabilityInput,
 ): DailyNaggerObservability {
+  useAppErrorBoundaryObservability();
   useApiRequestObservability();
   const actionMiddlewareWrapperFunction = useActionBoundaryObservability(input.actionEvents);
   useMemoryObservability(input.planMemoryEvents, "planMemory");
