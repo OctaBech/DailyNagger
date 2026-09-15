@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Guid } from "@/shared";
 import { useTimer } from "@/shared";
 import type { OwnerType } from "../contracts";
@@ -26,13 +26,22 @@ export function useParcelQueue(
   const activeBatchLengthRef = useRef(0);
   const parcelBatchTimer = useTimer(sendTimerConfig);
 
+  const announceQueueContent = useCallback((): void => {
+    for (const parcel of parcelsRef.current) {
+      parcelFlowEvents?.emit("parcel.queued", {
+        parcel,
+        parcels: [parcel],
+      });
+    }
+  }, [parcelFlowEvents]);
+
   useEffect(() => {
     if (loadedQueue.startupWarning !== null) {
       parcelFlowEvents?.emit("sending.queue.mmkv_restore_failed", {});
     }
 
     announceQueueContent();
-  }, [loadedQueue.startupWarning, parcelFlowEvents]);
+  }, [announceQueueContent, loadedQueue.startupWarning, parcelFlowEvents]);
 
   function insertParcel(parcel: Parcel): void {
     // 1. Look for a queued parcel that the new parcel can replace.
@@ -158,15 +167,6 @@ export function useParcelQueue(
       (parcel) =>
         parcel.formula.ownerType === versionOwnerType && parcel.formula.ownerId === versionOwnerId,
     );
-  }
-
-  function announceQueueContent(): void {
-    for (const parcel of parcelsRef.current) {
-      parcelFlowEvents?.emit("parcel.queued", {
-        parcel,
-        parcels: [parcel],
-      });
-    }
   }
 
   function persistParcels(): void {

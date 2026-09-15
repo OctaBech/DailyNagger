@@ -16,7 +16,7 @@ import {
 } from "../screen-dial-menus";
 import type { UserMoodState } from "../user-mood";
 import { treeSelection, type UserMoodLabel } from "@/models";
-import { userMoodConfig } from "@/config";
+import { getUserMoodEmoji, userMoodConfig } from "@/config";
 import { appRoutes } from "@/navigation";
 import type { Guid } from "@/shared";
 import type { StateScreenProps } from "@/components/primitives";
@@ -77,8 +77,7 @@ export function useCreateAppShellState({
     () => treeSelection.deriveSelectedNodes(editorSelectedPath),
     [editorSelectedPath],
   );
-  const selectedMoodEmoji =
-    userMood.options.find((option) => option.label === userMood.state.selectedMood)?.emoji ?? null;
+  const selectedMoodEmoji = getUserMoodEmoji(userMood.state.selectedMood);
   const planSpeedDialMenu = useCreatePlanScreenDialMenu({
     planDialJsxActions,
     actionsAreAvailable: startup.isReady && userMood.state.selectedMood !== null,
@@ -110,7 +109,6 @@ export function useCreateAppShellState({
       sendingEvents,
       assistantBubble,
       moodBar: {
-        options: userMood.options,
         selectedMood: userMood.state.selectedMood,
         selectedEmoji: selectedMoodEmoji,
         selectedAt: userMood.state.selectedAt,
@@ -129,7 +127,6 @@ export function useCreateAppShellState({
       selectMood,
       sendingEvents,
       startup.hasBlockingState,
-      userMood.options,
       userMood.state.selectedAt,
       userMood.state.selectedMood,
       selectedMoodEmoji,

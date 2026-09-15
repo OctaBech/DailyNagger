@@ -1,2 +1,2 @@
-export { userMoodOptions, type UserMoodLabel, type UserMoodOption } from "./userMoodOptions";
+export type { UserMoodLabel, UserMoodOption } from "./userMoodOptions";
 export { isUserMood, type UserMood } from "./userMood";

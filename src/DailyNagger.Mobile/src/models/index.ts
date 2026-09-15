@@ -27,7 +27,6 @@ export {
 export type { ClientIdentity } from "./clientIdentity";
 export {
   isUserMood,
-  userMoodOptions,
   type UserMood,
   type UserMoodLabel,
   type UserMoodOption,

@@ -1,4 +1,4 @@
-import { userMoodOptions, type UserMood, type UserMoodLabel } from "@/models";
+import type { UserMood, UserMoodLabel } from "@/models";
 import { newGuid, type Prettify } from "@/shared";
 import { useState } from "react";
 
@@ -25,7 +25,6 @@ export function useUserMoodState() {
   }
 
   return {
-    options: userMoodOptions,
     state: {
       selectedMood,
       selectedAt,

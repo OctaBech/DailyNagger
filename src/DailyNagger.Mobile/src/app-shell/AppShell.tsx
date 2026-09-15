@@ -85,7 +85,6 @@ export const AppShell = ({ children }: AppShellProps) => {
             >
               <MoodBar
                 visible
-                options={appShellState.moodBar.options}
                 selected={appShellState.moodBar.selectedMood}
                 selectedAt={appShellState.moodBar.selectedAt}
                 onSelect={appShellState.moodBar.select}

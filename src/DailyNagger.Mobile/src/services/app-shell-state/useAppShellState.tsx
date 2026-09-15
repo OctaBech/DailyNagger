@@ -3,7 +3,7 @@ import type { AssistantBubble } from "../assistant-bubble";
 import type { ParcelFlowEvents } from "../sending";
 import type { SpeedDialMenu } from "../screen-dial-menus";
 import type { Prettify } from "@/shared";
-import type { UserMoodLabel, UserMoodOption } from "@/models";
+import type { UserMoodLabel } from "@/models";
 import type { StateScreenProps } from "@/components/primitives";
 
 export type AppShellState = Prettify<{
@@ -12,7 +12,6 @@ export type AppShellState = Prettify<{
   readonly sendingEvents: ParcelFlowEvents;
   readonly assistantBubble: AssistantBubble;
   readonly moodBar: {
-    readonly options: readonly UserMoodOption[];
     readonly selectedMood: UserMoodLabel | null;
     readonly selectedEmoji: string | null;
     readonly selectedAt: string | null;
