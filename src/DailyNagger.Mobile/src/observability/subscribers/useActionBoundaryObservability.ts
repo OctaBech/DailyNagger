@@ -1,15 +1,12 @@
 import { useCallback, useEffect } from "react";
-import type {
-  ActionExecutionEvent,
-  ActionExecutionEventType,
-  ActionExecutionWrapper,
-} from "@/services/action-boundary";
+import type { MiddlewareWrapperFunction } from "@/middleware";
+import type { ActionExecutionEvent, ActionExecutionEventType } from "@/services/action-boundary";
 import type { EventEmitter } from "@/shared";
 import { recordSpanValue, startNewSpan } from "../sentry";
 
 export function useActionBoundaryObservability(
   actionEvents: EventEmitter<ActionExecutionEventType, ActionExecutionEvent>,
-): ActionExecutionWrapper {
+): MiddlewareWrapperFunction {
   useEffect(() => {
     return actionEvents.subscribe((eventType, event) => {
       // The action boundary now exposes its lifecycle through events.
@@ -20,13 +17,12 @@ export function useActionBoundaryObservability(
 
   return useCallback((context, run) => {
     return startNewSpan({
-      name: context.actionKey,
+      name: context.metadata?.actionKey ?? context.causalityKey,
       operation: "dn.action",
       run: () => {
-        recordSpanValue("dn.action.key", context.actionKey);
-        recordSpanValue("dn.action.scope", context.actionScope);
+        recordSpanValue("dn.action.key", context.metadata?.actionKey);
+        recordSpanValue("dn.action.scope", context.metadata?.actionScope);
         recordSpanValue("dn.causality.key", context.causalityKey);
-        recordSpanValue("dn.action.started_at", context.startedAt);
 
         return run();
       },

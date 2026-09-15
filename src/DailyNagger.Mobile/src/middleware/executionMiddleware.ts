@@ -1,36 +1,24 @@
+export type MiddlewareMetadata = Readonly<Record<string, string>>;
+
 export type MiddlewareExecutionContext = {
   readonly causalityKey: string;
+  readonly metadata?: MiddlewareMetadata;
 };
 
-export type ExecutionMiddleware<TContext extends MiddlewareExecutionContext> = <TResult>(
-  context: TContext,
+export type MiddlewareWrapperFunction = <TResult>(
+  context: MiddlewareExecutionContext,
   run: () => TResult,
 ) => TResult;
 
-export type AsyncExecutionMiddleware<TContext extends MiddlewareExecutionContext> = <TResult>(
-  context: TContext,
-  run: () => Promise<TResult>,
-) => Promise<TResult>;
+export function runWithMiddleware<TResult>(
+  causalityKey: string,
+  run: (context: MiddlewareExecutionContext) => TResult,
+  middlewareWrapperFunction: MiddlewareWrapperFunction,
+  metadata?: MiddlewareMetadata,
+): TResult {
+  const context = metadata === undefined ? { causalityKey } : { causalityKey, metadata };
 
-export function runWithOptionalMiddleware<TContext extends MiddlewareExecutionContext, TResult>(
-  middleware: ExecutionMiddleware<TContext> | undefined,
-  context: TContext,
-  run: () => TResult,
-): TResult;
-export function runWithOptionalMiddleware<TContext extends MiddlewareExecutionContext, TResult>(
-  middleware: AsyncExecutionMiddleware<TContext> | undefined,
-  context: TContext,
-  run: () => Promise<TResult>,
-): Promise<TResult>;
-export function runWithOptionalMiddleware<TContext extends MiddlewareExecutionContext, TResult>(
-  middleware:
-    | ((context: TContext, run: () => TResult) => TResult)
-    | ((context: TContext, run: () => Promise<TResult>) => Promise<TResult>)
-    | undefined,
-  context: TContext,
-  run: (() => TResult) | (() => Promise<TResult>),
-): TResult | Promise<TResult> {
-  if (middleware === undefined) return run();
-
-  return middleware(context, run as () => TResult & Promise<TResult>);
+  return middlewareWrapperFunction(context, () => run(context));
 }
+
+export const runWithoutMiddleware: MiddlewareWrapperFunction = (_context, run) => run();

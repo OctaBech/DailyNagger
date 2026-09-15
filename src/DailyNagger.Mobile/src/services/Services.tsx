@@ -112,19 +112,26 @@ function useCreateServices(): {
 
   const selectMood = useSelectUserMood({
     cultureSettings,
+    middlewareWrapperFunction: observabilityWithStartup.userMoodMiddlewareWrapperFunction,
     sending,
     setCurrentMood,
     userMood,
   });
 
-  const rollover = useRollover(cultureSettings, planMemory, editorMemory, sending);
+  const rollover = useRollover(
+    cultureSettings,
+    planMemory,
+    editorMemory,
+    sending,
+    observabilityWithStartup.rolloverNaggerMiddlewareWrapperFunction,
+  );
   const loading = useLoading(planMemory);
 
   const startup = useStartup(
     sending,
     loading,
     rollover,
-    observabilityWithStartup.startupMiddleware,
+    observabilityWithStartup.startupMiddlewareWrapperFunction,
     startupEvents,
   );
 
@@ -141,7 +148,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
+    middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
     screen: "plan",
   });
@@ -151,7 +158,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
+    middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
     screen: "plan",
   }).dial;
@@ -161,7 +168,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
+    middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
     screen: "editor",
   });
@@ -171,7 +178,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
+    middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
     screen: "editor",
   }).dial;

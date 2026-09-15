@@ -1,45 +1,27 @@
 import { useCallback, useEffect } from "react";
-import type {
-  StartupEvent,
-  StartupEvents,
-  StartupEventType,
-  StartupExecutionContext,
-  StartupMiddleware,
-} from "@/services/startup";
+import type { MiddlewareWrapperFunction } from "@/middleware";
+import type { StartupEvent, StartupEvents, StartupEventType } from "@/services/startup";
 import { assertNever } from "@/shared";
 import { recordBreadcrumb, recordSpanValue, startNewSpan } from "../sentry";
 
-export function useStartupObservability(startupEvents: StartupEvents): StartupMiddleware {
+export function useStartupObservability(startupEvents: StartupEvents): MiddlewareWrapperFunction {
   useEffect(() => {
     return startupEvents.subscribe((eventType, event) => {
       recordStartupEvent(eventType, event);
     });
   }, [startupEvents]);
 
-  const runStartup: StartupMiddleware["runStartup"] = useCallback(
-    <TResult>(context: StartupExecutionContext, run: () => Promise<TResult>) => {
-      return recordStartupRun(context, run);
-    },
-    [],
-  );
+  return useCallback((context, run) => {
+    return startNewSpan({
+      name: "startup/run",
+      operation: "dn.startup",
+      run: () => {
+        recordSpanValue("dn.causality.key", context.causalityKey);
 
-  return { runStartup };
-}
-
-function recordStartupRun<TResult>(
-  context: StartupExecutionContext,
-  run: () => Promise<TResult>,
-): Promise<TResult> {
-  return startNewSpan({
-    name: "startup/run",
-    operation: "dn.startup",
-    run: async () => {
-      recordSpanValue("dn.causality.key", context.causalityKey);
-      recordSpanValue("dn.startup.started_at", context.startedAt);
-
-      return run();
-    },
-  });
+        return run();
+      },
+    });
+  }, []);
 }
 
 function recordStartupEvent(eventType: StartupEventType, event: StartupEvent): void {
@@ -94,12 +76,9 @@ function recordStartupBreadcrumb(
     category: "startup",
     data: {
       "dn.causality.key": event.causalityKey,
-      "dn.startup.started_at": event.startedAt,
       "dn.startup.step": event.step,
     },
     level,
     message: eventType,
   });
 }
-
-

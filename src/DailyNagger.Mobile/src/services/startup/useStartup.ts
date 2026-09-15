@@ -1,15 +1,15 @@
 import type { StateScreenProps } from "@/components/primitives";
+import {
+  runWithMiddleware,
+  type MiddlewareExecutionContext,
+  type MiddlewareWrapperFunction,
+} from "@/middleware";
 import { useRefLatestValue } from "@/shared";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { Loading } from "../loading";
 import type { Rollover } from "../rollover";
 import type { Sending } from "../sending";
 import type { StartupEvents } from "./events";
-import type { StartupMiddleware } from "./startupMiddleware";
-import {
-  createStartupExecutionContext,
-  runWithStartupMiddleware,
-} from "./runStartupMiddleware";
 import {
   blockStartupBecauseServerIsUnavailable,
   flushQueue,
@@ -24,7 +24,7 @@ export function useStartup(
   sending: Sending,
   loading: Loading,
   rollover: Rollover,
-  startupMiddleware: StartupMiddleware | undefined,
+  middlewareWrapperFunction: MiddlewareWrapperFunction,
   startupEvents: StartupEvents,
 ) {
   const isRunningRef = useRef(false);
@@ -33,81 +33,86 @@ export function useStartup(
   const rolloverRef = useRefLatestValue(rollover);
   const [state, dispatch] = useReducer(startupReducer, initialStartupState);
 
-  const runStartup = useCallback(async (): Promise<void> => {
+  const runStartupRunbook = useCallback(
+    async (context: MiddlewareExecutionContext): Promise<void> => {
+      startupEvents.emit("startup.started", context);
+
+      // 1. Send any saved local updates before loading fresh server state.
+      if (
+        (await runStartupStep(startupEvents, context, "flush-before-load", () =>
+          flushQueue(sendingRef.current),
+        )) === false
+      ) {
+        blockStartupBecauseServerIsUnavailable(startupEvents, context, dispatch);
+        return;
+      }
+
+      // 2. Load the current plan from the server.
+      const loadResult = await runStartupStep(startupEvents, context, "load-plan", () =>
+        loadingRef.current.loadPlan(),
+      );
+
+      // 3. Stop startup if loading needs a user-facing recovery screen.
+      if (loadResult.kind === "blocked") {
+        dispatch({
+          type: "plan-load-blocked",
+          stateScreenProps: loadResult.stateScreenProps,
+        });
+        startupEvents.emit("startup.blocked.plan_load", context);
+        return;
+      }
+
+      // 4. Apply rollover rules after a clean plan load.
+      await runStartupStep(startupEvents, context, "rollover", () =>
+        rolloverRef.current.rolloverDueNaggers(),
+      );
+
+      // 5. Send rollover updates before the app becomes interactive.
+      if (
+        (await runStartupStep(startupEvents, context, "flush-after-rollover", () =>
+          flushQueue(sendingRef.current),
+        )) === false
+      ) {
+        blockStartupBecauseServerIsUnavailable(startupEvents, context, dispatch);
+        return;
+      }
+
+      // 6. Startup is complete; screens and actions may now run normally.
+      dispatch({ type: "startup-succeeded" });
+      startupEvents.emit("startup.ready", context);
+    },
+    [loadingRef, rolloverRef, sendingRef, startupEvents],
+  );
+
+  const bootstrapStartup = useCallback(async (): Promise<void> => {
     if (isRunningRef.current) return;
 
-    // 1. Mark startup as running and create one causality context for the whole run.
     isRunningRef.current = true;
     dispatch({ type: "startup-started" });
 
-    const context = createStartupExecutionContext();
-    startupEvents.emit("startup.started", context);
+    const causalityKey = `startup/run:${new Date().toISOString()}`;
 
     try {
-      await runWithStartupMiddleware(startupMiddleware, context, async () => {
-        // 2. Send any saved local updates before loading fresh server state.
-        if (
-          (await runStartupStep(startupEvents, context, "flush-before-load", () =>
-            flushQueue(sendingRef.current),
-          )) === false
-        ) {
-          blockStartupBecauseServerIsUnavailable(startupEvents, context, dispatch);
-          return;
-        }
-
-        // 3. Load the current plan from the server.
-        const loadResult = await runStartupStep(startupEvents, context, "load-plan", () =>
-          loadingRef.current.loadPlan(),
-        );
-
-        // 4. Stop startup if loading needs a user-facing recovery screen.
-        if (loadResult.kind === "blocked") {
-          dispatch({
-            type: "plan-load-blocked",
-            stateScreenProps: loadResult.stateScreenProps,
-          });
-          startupEvents.emit("startup.blocked.plan_load", context);
-          return;
-        }
-
-        // 5. Apply rollover rules after a clean plan load.
-        await runStartupStep(startupEvents, context, "rollover", () =>
-          rolloverRef.current.rolloverDueNaggers(),
-        );
-
-        // 6. Send rollover updates before the app becomes interactive.
-        if (
-          (await runStartupStep(startupEvents, context, "flush-after-rollover", () =>
-            flushQueue(sendingRef.current),
-          )) === false
-        ) {
-          blockStartupBecauseServerIsUnavailable(startupEvents, context, dispatch);
-          return;
-        }
-
-        // 7. Startup is complete; screens and actions may now run normally.
-        dispatch({ type: "startup-succeeded" });
-        startupEvents.emit("startup.ready", context);
-      });
+      await runWithMiddleware(causalityKey, runStartupRunbook, middlewareWrapperFunction);
     } catch (error) {
-      startupEvents.emit("startup.failed", { ...context, error });
+      startupEvents.emit("startup.failed", { causalityKey, error });
       throw error;
     } finally {
       isRunningRef.current = false;
     }
-  }, [loadingRef, rolloverRef, sendingRef, startupEvents, startupMiddleware]);
+  }, [middlewareWrapperFunction, runStartupRunbook, startupEvents]);
 
   const start = useCallback((): void => {
     if (state.status !== "not-started") return;
 
-    void runStartup();
-  }, [runStartup, state.status]);
+    void bootstrapStartup();
+  }, [bootstrapStartup, state.status]);
 
   const retry = useCallback((): void => {
     if (state.status !== "blocked") return;
 
-    void runStartup();
-  }, [runStartup, state.status]);
+    void bootstrapStartup();
+  }, [bootstrapStartup, state.status]);
 
   useEffect(() => {
     start();

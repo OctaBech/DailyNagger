@@ -7,5 +7,3 @@ export type {
   StartupExecutionContext,
   StartupStep,
 } from "./events";
-export type { StartupMiddleware } from "./startupMiddleware";
-

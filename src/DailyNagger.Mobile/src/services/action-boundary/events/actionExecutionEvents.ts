@@ -1,19 +1,12 @@
 import type { EventEmitter } from "@/shared";
-import type { ActionScope } from "../action-dependencies/actionRuntimeDependencies";
+import type { MiddlewareExecutionContext } from "@/middleware";
 
 export type ActionExecutionEventType = "action-started" | "action-finished" | "action-failed";
 
-export type ActionExecutionContext = {
-  readonly actionKey: string;
-  readonly actionScope: ActionScope;
-  readonly causalityKey: string;
-  readonly startedAt: string;
-};
+export type ActionExecutionContext = MiddlewareExecutionContext;
 
 export type ActionExecutionEvent = ActionExecutionContext & {
   readonly error?: unknown;
 };
 
 export type ActionEvents = EventEmitter<ActionExecutionEventType, ActionExecutionEvent>;
-
-

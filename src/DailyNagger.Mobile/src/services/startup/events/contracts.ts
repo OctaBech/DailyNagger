@@ -1,4 +1,5 @@
 import type { EventEmitter } from "@/shared";
+import type { MiddlewareExecutionContext } from "@/middleware";
 
 export type StartupStep = "flush-before-load" | "load-plan" | "rollover" | "flush-after-rollover";
 
@@ -12,10 +13,7 @@ export type StartupEventType =
   | `startup.${StartupStep}.finished`
   | `startup.${StartupStep}.failed`;
 
-export type StartupExecutionContext = {
-  readonly causalityKey: string;
-  readonly startedAt: string;
-};
+export type StartupExecutionContext = MiddlewareExecutionContext;
 
 export type StartupEvent = StartupExecutionContext & {
   readonly error?: unknown;

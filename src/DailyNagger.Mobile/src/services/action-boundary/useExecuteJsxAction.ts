@@ -1,4 +1,8 @@
-import { runWithOptionalMiddleware } from "@/middleware";
+import {
+  runWithMiddleware,
+  type MiddlewareExecutionContext,
+  type MiddlewareWrapperFunction,
+} from "@/middleware";
 import { useStableCallback } from "@/shared";
 import type {
   ActionRuntimeDependencyScreen,
@@ -7,13 +11,12 @@ import type {
   RuntimeDependenciesForActionScope,
 } from "./action-dependencies";
 import { getActionRuntimeDependencies } from "./action-dependencies/actionRuntimeDependencies";
-import type { ActionEvents, ActionExecutionContext } from "./events";
-import type { ActionExecutionWrapper } from "./actionExecutionMiddleware";
+import type { ActionEvents } from "./events";
 import type { JsxAction } from "./jsxActionPackModel";
 
 type UseExecuteJsxActionProps = RuntimeDependencyInputs & {
   readonly actionEvents?: ActionEvents;
-  readonly actionExecutionWrapper?: ActionExecutionWrapper;
+  readonly middlewareWrapperFunction: MiddlewareWrapperFunction;
   readonly screen: ActionRuntimeDependencyScreen;
 };
 
@@ -33,49 +36,42 @@ export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
       environment,
     );
 
-    // Create the causality context for this execution.
-    const context = createActionExecutionContext(jsxAction.actionKey, jsxAction.action.scope);
-
-    environment.actionEvents?.emit("action-started", context);
+    const executionContexts: MiddlewareExecutionContext[] = [];
 
     try {
-      // This is an extension point where external tools can wrap the action execution.
-      // For example, observability uses this point to start a span.
-      // Without a wrapper, run() is called normally.
-      const result = runWithOptionalMiddleware(environment.actionExecutionWrapper, context, () =>
-        jsxAction.action.run(
-          actionArgs,
-          runtimeDependencies as RuntimeDependenciesForActionScope<TActionScope>,
-        ),
-      );
+      return runWithMiddleware(
+        `action/${jsxAction.actionKey}:${new Date().toISOString()}`,
+        (context) => {
+          executionContexts.push(context);
+          environment.actionEvents?.emit("action-started", context);
 
-      environment.actionEvents?.emit("action-finished", context);
-      return result;
+          jsxAction.action.run(
+            actionArgs,
+            runtimeDependencies as RuntimeDependenciesForActionScope<TActionScope>,
+          );
+
+          environment.actionEvents?.emit("action-finished", context);
+        },
+        environment.middlewareWrapperFunction,
+        {
+          actionKey: jsxAction.actionKey,
+          actionScope: jsxAction.action.scope,
+        },
+      );
     } catch (error) {
-      environment.actionEvents?.emit("action-failed", { ...context, error });
+      const activeContext = executionContexts[0];
+
+      environment.actionEvents?.emit("action-failed", {
+        causalityKey: activeContext?.causalityKey ?? `action/${jsxAction.actionKey}:failed-before-context`,
+        error,
+        metadata: activeContext?.metadata ?? {
+          actionKey: jsxAction.actionKey,
+          actionScope: jsxAction.action.scope,
+        },
+      });
       throw error;
     }
   }
 
   return useStableCallback(executeJsxAction);
 }
-
-function createActionExecutionContext(
-  actionKey: string,
-  actionScope: ActionScope,
-): ActionExecutionContext {
-  const startedAt = new Date().toISOString();
-
-  return {
-    actionKey,
-    actionScope,
-    causalityKey: `${actionKey}:${startedAt}`,
-    startedAt,
-  };
-}
-
-
-
-
-
-

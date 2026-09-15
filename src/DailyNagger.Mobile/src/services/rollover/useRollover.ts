@@ -1,11 +1,12 @@
 import type { Nagger, Tree } from "@/models";
 import type { Memory } from "@/services/memory";
 import type { CultureSettings } from "@/services/culture";
-import { rolloverActions } from "@/services/actions";
 import type { Sending } from "@/services/sending";
 import { useEffect } from "react";
 import { appTiming } from "@/config";
+import { runWithMiddleware, type MiddlewareWrapperFunction } from "@/middleware";
 import { useRefLatestValue } from "@/shared";
+import { rolloverOneNagger } from "./rolloverOneNagger";
 
 export type Rollover = ReturnType<typeof useRollover>;
 
@@ -14,8 +15,15 @@ export const useRollover = (
   planMemory: Memory,
   editorMemory: Memory,
   sending: Sending,
+  middlewareWrapperFunction: MiddlewareWrapperFunction,
 ) => {
-  const contextRef = useRefLatestValue({ cultureSettings, planMemory, editorMemory, sending });
+  const contextRef = useRefLatestValue({
+    cultureSettings,
+    editorMemory,
+    middlewareWrapperFunction,
+    planMemory,
+    sending,
+  });
 
   useEffect(() => {
     if (planMemory.state.tree === null) return;
@@ -38,10 +46,11 @@ type RolloverDueNaggersProps = {
   editorMemory: Memory;
   cultureSettings: CultureSettings;
   sending: Sending;
+  middlewareWrapperFunction: MiddlewareWrapperFunction;
 };
 
 async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void> {
-  const { planMemory, editorMemory, cultureSettings, sending } = props;
+  const { planMemory, editorMemory, cultureSettings, sending, middlewareWrapperFunction } = props;
 
   const tree = readTreeOrNull(planMemory);
   if (tree === null) return;
@@ -58,21 +67,24 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
     // Do not rollover a nagger if its TaskLog has pending server updates
     if (sending.hasUpdateBelongingToRootNode("task-log", nagger.taskLog.id)) continue;
 
-    rolloverActions.closeTaskLogForRollover(
+    const startedAt = new Date().toISOString();
+
+    await runWithMiddleware(
+      `rollover/nagger:${nagger.id}:${startedAt}`,
+      async () =>
+        rolloverOneNagger(
+          {
+            cultureSettings,
+            planMemory,
+            sending,
+          },
+          nagger,
+        ),
+      middlewareWrapperFunction,
       {
-        cultureSettings,
-        planMemory,
-        sending,
+          naggerId: nagger.id,
+          taskLogId: nagger.taskLog.id,
       },
-      nagger,
-    );
-    rolloverActions.rolloverNagger(
-      {
-        cultureSettings,
-        planMemory,
-        sending,
-      },
-      nagger,
     );
 
     await yieldToUi();
@@ -109,5 +121,6 @@ function getNaggerExpiresAt(activeLogDueOn: string, cultureSettings: CultureSett
 function yieldToUi() {
   return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
+
 
 

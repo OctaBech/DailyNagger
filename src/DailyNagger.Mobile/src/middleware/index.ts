@@ -1,8 +1,9 @@
 export {
-  type AsyncExecutionMiddleware,
-  type ExecutionMiddleware,
   type MiddlewareExecutionContext,
-  runWithOptionalMiddleware,
+  type MiddlewareMetadata,
+  type MiddlewareWrapperFunction,
+  runWithMiddleware,
+  runWithoutMiddleware,
 } from "./executionMiddleware";
 export {
   type HibernatingMiddleware,

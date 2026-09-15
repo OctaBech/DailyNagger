@@ -1,17 +1,16 @@
-import type {
-  ActionExecutionEvent,
-  ActionExecutionEventType,
-  ActionExecutionWrapper,
-} from "@/services/action-boundary";
+import type { MiddlewareWrapperFunction } from "@/middleware";
+import type { ActionExecutionEvent, ActionExecutionEventType } from "@/services/action-boundary";
 import type { MemoryEventType } from "@/services/memory";
 import type { ParcelFlowEvents, ParcelQueueMiddleware } from "@/services/sending";
-import type { StartupEvents, StartupMiddleware } from "@/services/startup";
+import type { StartupEvents } from "@/services/startup";
 import type { EventEmitter } from "@/shared";
 import {
   useActionBoundaryObservability,
   useMemoryObservability,
+  useRolloverObservability,
   useSendingObservability,
   useStartupObservability,
+  useUserMoodObservability,
 } from "./subscribers";
 
 type DailyNaggerObservabilityInput = {
@@ -23,19 +22,29 @@ type DailyNaggerObservabilityInput = {
 };
 
 type DailyNaggerObservability = {
-  readonly actionExecutionWrapper: ActionExecutionWrapper;
+  readonly actionMiddlewareWrapperFunction: MiddlewareWrapperFunction;
   readonly parcelQueueMiddleware: ParcelQueueMiddleware;
-  readonly startupMiddleware: StartupMiddleware;
+  readonly rolloverNaggerMiddlewareWrapperFunction: MiddlewareWrapperFunction;
+  readonly startupMiddlewareWrapperFunction: MiddlewareWrapperFunction;
+  readonly userMoodMiddlewareWrapperFunction: MiddlewareWrapperFunction;
 };
 
 export function useDailyNaggerObservability(
   input: DailyNaggerObservabilityInput,
 ): DailyNaggerObservability {
-  const actionExecutionWrapper = useActionBoundaryObservability(input.actionEvents);
+  const actionMiddlewareWrapperFunction = useActionBoundaryObservability(input.actionEvents);
   useMemoryObservability(input.planMemoryEvents, "planMemory");
   useMemoryObservability(input.editorMemoryEvents, "editorMemory");
   const parcelQueueMiddleware = useSendingObservability(input.parcelFlowEvents);
-  const startupMiddleware = useStartupObservability(input.startupEvents);
+  const rolloverNaggerMiddlewareWrapperFunction = useRolloverObservability();
+  const startupMiddlewareWrapperFunction = useStartupObservability(input.startupEvents);
+  const userMoodMiddlewareWrapperFunction = useUserMoodObservability();
 
-  return { actionExecutionWrapper, parcelQueueMiddleware, startupMiddleware };
+  return {
+    actionMiddlewareWrapperFunction,
+    parcelQueueMiddleware,
+    rolloverNaggerMiddlewareWrapperFunction,
+    startupMiddlewareWrapperFunction,
+    userMoodMiddlewareWrapperFunction,
+  };
 }
