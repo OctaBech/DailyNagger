@@ -1,15 +1,15 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { AssistantBubble } from "../assistant-bubble";
-import type { Parcel, SendingEventType } from "../sending";
+import type { ParcelFlowEvents } from "../sending";
 import type { SpeedDialMenu } from "../screen-dial-menus";
-import type { EventEmitter, Prettify } from "@/shared";
+import type { Prettify } from "@/shared";
 import type { UserMoodLabel, UserMoodOption } from "@/models";
 import type { StateScreenProps } from "@/components/primitives";
 
 export type AppShellState = Prettify<{
   readonly globalOverlaysAreEnabled: boolean;
   readonly pendingSendingPrompt: StateScreenProps | null;
-  readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
+  readonly sendingEvents: ParcelFlowEvents;
   readonly assistantBubble: AssistantBubble;
   readonly moodBar: {
     readonly options: readonly UserMoodOption[];
@@ -44,4 +44,5 @@ export function useAppShellState(): AppShellState {
 
   return appShellState;
 }
+
 

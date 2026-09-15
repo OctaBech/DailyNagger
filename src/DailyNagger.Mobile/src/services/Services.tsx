@@ -2,7 +2,7 @@ import { useCallback, useRef, type ReactNode } from "react";
 import { useCultureSettings } from "./culture";
 import { type MemoryEventType, useMemory, useSelectionMemory } from "./memory";
 import { useLoading } from "./loading";
-import { type Parcel, type SendingEventType, useSending } from "./sending";
+import { useSending } from "./sending";
 import { useSelectUserMood, useUserMoodState } from "./user-mood";
 import { useInteractionStamp } from "./interaction-stamp";
 import { useAssistantBubble } from "./assistant-bubble";
@@ -85,14 +85,6 @@ function useCreateServices(): {
   const rawEditorMemory = useMemory();
   const editorMemory = useSelectionMemory(rawEditorMemory, "editorMemory", editorMemoryEvents);
 
-  const sendingEvents = useEventEmitter<SendingEventType, readonly Parcel[]>();
-  const observability = useDailyNaggerObservability({
-    actionEvents,
-    editorMemoryEvents,
-    planMemoryEvents,
-    sendingEvents,
-  });
-  const assistantBubble = useAssistantBubble(sendingEvents);
   const userMood = useUserMoodState();
   const interactionStamp = useInteractionStamp(cultureSettings, userMood);
   const currentMoodRef = useRef<UserMoodLabel | null>(null);
@@ -100,7 +92,16 @@ function useCreateServices(): {
   const setCurrentMood = useCallback((mood: UserMoodLabel) => {
     currentMoodRef.current = mood;
   }, []);
-  const sending = useSending(planMemory, sendingEvents, getCurrentMood);
+
+  const sending = useSending(planMemory, getCurrentMood);
+  const observability = useDailyNaggerObservability({
+    actionEvents,
+    editorMemoryEvents,
+    parcelFlowEvents: sending.parcelFlowEvents,
+    planMemoryEvents,
+  });
+  const assistantBubble = useAssistantBubble(sending.parcelFlowEvents);
+
   const selectMood = useSelectUserMood({
     cultureSettings,
     sending,
@@ -175,7 +176,7 @@ function useCreateServices(): {
     planMemory,
     planScreenCommands,
     sending,
-    sendingEvents,
+    sendingEvents: sending.parcelFlowEvents,
     startup,
     selectMood,
     userMood,
@@ -189,6 +190,3 @@ function useCreateServices(): {
     editorScreenData,
   };
 }
-
-
-

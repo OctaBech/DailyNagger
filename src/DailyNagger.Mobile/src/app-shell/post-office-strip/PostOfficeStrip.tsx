@@ -1,12 +1,12 @@
 import { postOfficeStripConfig } from "@/config";
 import { userMoodOptions } from "@/models";
-import type { Parcel, SendingEventType } from "@/services";
+import type { Parcel, ParcelFlowEvent, ParcelFlowEventType, ParcelFlowEvents } from "@/services";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import type { EventEmitter, Guid } from "@/shared";
+import type { Guid } from "@/shared";
 
 type PostOfficeStripProps = {
-  readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
+  readonly sendingEvents: ParcelFlowEvents;
   readonly bottomOffset?: number;
 };
 
@@ -47,17 +47,15 @@ export const PostOfficeStrip = (props: PostOfficeStripProps) => {
   );
 };
 
-function usePostOfficeStrip(
-  sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>,
-): PostOfficeStripState {
+function usePostOfficeStrip(sendingEvents: ParcelFlowEvents): PostOfficeStripState {
   const [state, setState] = useState<PostOfficeStripState>({
     visualParcels: [],
     postBoxIsClosed: false,
   });
 
   useEffect(() => {
-    return sendingEvents.subscribe((eventType, parcels) => {
-      setState((currentState) => handleSendingEvent(eventType, parcels, currentState));
+    return sendingEvents.subscribe((eventType, event) => {
+      setState((currentState) => handleSendingEvent(eventType, event, currentState));
     });
   }, [sendingEvents]);
 
@@ -76,72 +74,90 @@ function usePostOfficeStrip(
 }
 
 function handleSendingEvent(
-  eventType: SendingEventType,
-  parcels: readonly Parcel[],
+  eventType: ParcelFlowEventType,
+  event: ParcelFlowEvent,
   state: PostOfficeStripState,
 ): PostOfficeStripState {
   switch (eventType) {
-    case "parcel-queued":
-      return { ...state, visualParcels: addQueuedParcels(state.visualParcels, parcels) };
-    case "parcel-coalesced":
-      return { ...state, visualParcels: markCoalescedParcel(state.visualParcels, parcels) };
-    case "batch-sent":
+    case "parcel.queued":
+      return {
+        ...state,
+        visualParcels: addQueuedParcels(state.visualParcels, getEventParcels(event)),
+      };
+
+    case "parcel.coalesced":
+      return {
+        ...state,
+        visualParcels: markCoalescedParcel(state.visualParcels, getEventParcels(event)),
+      };
+
+    case "parcel.batch.waiting":
+      return {
+        ...state,
+        visualParcels: markBatchWaitingAtPostBox(state.visualParcels, getEventParcels(event)),
+      };
+
+    case "parcel.batch.sent":
       return {
         ...state,
         visualParcels: markBatchResult(
           state.visualParcels,
-          parcels,
+          getEventParcels(event),
           postOfficeStripConfig.sentEmoji,
         ),
         postBoxIsClosed: false,
       };
-    case "batch-rejected-current-version":
-    case "batch-blocked-current-version":
+
+    case "parcel.batch.failed_to_connect":
       return {
         ...state,
-        visualParcels: markBatchWaitingForUserDecision(
-          state.visualParcels,
-          parcels,
-          postOfficeStripConfig.rejectedEmoji,
-        ),
-      };
-    case "batch-rejected-unrepairable":
-    case "batch-blocked-unrepairable":
-      return {
-        ...state,
-        visualParcels: markBatchWaitingForUserDecision(
-          state.visualParcels,
-          parcels,
-          postOfficeStripConfig.rejectedEmoji,
-        ),
-      };
-    case "batch-failed-to-connect":
-      return {
-        ...state,
-        visualParcels: markBatchWaitingAtPostBox(state.visualParcels, parcels),
+        visualParcels: markBatchWaitingAtPostBox(state.visualParcels, getEventParcels(event)),
         postBoxIsClosed: true,
       };
-    case "batch-forced":
+
+    case "parcel.batch.blocked_by_version_conflict":
+    case "parcel.batch.blocked_by_unrepairable_update":
+      return {
+        ...state,
+        visualParcels: markBatchWaitingForUserDecision(
+          state.visualParcels,
+          getEventParcels(event),
+          postOfficeStripConfig.rejectedEmoji,
+        ),
+      };
+
+    case "parcel.batch.forced":
       return {
         ...state,
         visualParcels: markBatchResult(
           state.visualParcels,
-          parcels,
+          getEventParcels(event),
           postOfficeStripConfig.forcedEmoji,
         ),
       };
-    case "batch-discarded-current-version":
-    case "batch-discarded-unrepairable":
-    case "batch-discarded":
+
+    case "parcel.batch.discarded":
       return {
         ...state,
         visualParcels: markBatchResult(
           state.visualParcels,
-          parcels,
+          getEventParcels(event),
           postOfficeStripConfig.discardedEmoji,
         ),
       };
+
+    case "parcel.created":
+    case "sending.queue.mmkv_restore_failed":
+      return state;
   }
+}
+
+function getEventParcels(event: ParcelFlowEvent): readonly Parcel[] {
+  if (event.parcels !== undefined) return event.parcels;
+  if (event.batch !== undefined) return event.batch.parcels;
+  if (event.parcel !== undefined) return [event.parcel];
+
+  return [];
 }
 
 function addQueuedParcels(
@@ -453,3 +469,5 @@ const styles = StyleSheet.create({
     userSelect: "none",
   },
 });
+
+

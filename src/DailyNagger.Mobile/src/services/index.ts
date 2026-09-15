@@ -10,5 +10,6 @@ export {
 export type { AppShellState } from "./app-shell-state";
 export type { EditorScreenData, PlanScreenData } from "./screen-data";
 export type { EditorScreenActions, PlanScreenActions } from "./screen-actions";
-export type { Parcel, SendingEventType } from "./sending";
+export type { Parcel, ParcelFlowEvent, ParcelFlowEvents, ParcelFlowEventType, SendingEventType } from "./sending";
+
 

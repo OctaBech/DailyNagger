@@ -7,8 +7,8 @@ import type { ClientIdentity } from "@/models/clientIdentity";
 import { assertNever } from "@/shared";
 import { askHowToHandleUnrepairableUpdate, askHowToHandleVersioningError } from "../error-questions";
 import type { SendingPromptController } from "../sending-prompt/useSendingPromptController";
-import type { Parcel, ParcelBatch, SendBatchResult, SendParcelBatch } from "./contracts";
-import type { ParcelFlowEvents } from "./events";
+import type { ParcelBatch, SendBatchResult, SendParcelBatch } from "./contracts";
+import { emitParcelBatchEvent, type ParcelFlowEvents } from "./events";
 
 export function useSendParcelBatch(
   sendingPromptController: SendingPromptController,
@@ -19,41 +19,51 @@ export function useSendParcelBatch(
 
     while (true) {
       // 1. Try to send the current batch.
-      parcelFlowEvents?.emit("parcel.batch.send.started", { batch: currentBatch });
       const sendResult = await trySendBatch(currentBatch);
-      parcelFlowEvents?.emit("parcel.batch.send.finished", {
-        batch: currentBatch,
-        result: sendResult,
-      });
 
       // 2. A sent batch can be removed from the queue.
       if (sendResult.kind === "sent") {
+        emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.sent", currentBatch);
         return "remove-active-batch-and-drain-next";
       }
 
       // 3. Lost connection keeps the batch in the queue and uses backoff.
       if (sendResult.kind === "failed-to-connect") {
+        emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.failed_to_connect", currentBatch);
         return "keep-active-batch-and-backoff";
       }
 
       // 4. Unrepairable server rejections are shown to the user and then discarded.
       if (sendResult.kind === "server-rejected-unrepairable-update") {
+        emitParcelBatchEvent(
+          parcelFlowEvents,
+          "parcel.batch.blocked_by_unrepairable_update",
+          currentBatch,
+        );
         await askHowToHandleUnrepairableUpdate(sendingPromptController, sendResult.error);
+        emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.discarded", currentBatch);
         return "remove-active-batch-and-drain-next";
       }
 
       // 5. Version conflicts can be discarded or force-restamped and retried immediately.
       if (sendResult.kind === "server-rejected-current-version") {
+        emitParcelBatchEvent(
+          parcelFlowEvents,
+          "parcel.batch.blocked_by_version_conflict",
+          currentBatch,
+        );
         const decision = await askHowToHandleVersioningError(
           sendingPromptController,
           sendResult.error,
         );
 
         if (decision === "discard-batch") {
+          emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.discarded", currentBatch);
           return "remove-active-batch-and-drain-next";
         }
 
         currentBatch = restampBatchForForcedSend(currentBatch, sendResult.serverVersion);
+        emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.forced", currentBatch);
         continue;
       }
 

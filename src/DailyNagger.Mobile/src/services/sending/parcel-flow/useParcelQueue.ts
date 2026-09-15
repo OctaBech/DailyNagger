@@ -12,7 +12,7 @@ import type {
   ProcessNextParcelBatchOptions,
   SendParcelBatch,
 } from "./contracts";
-import type { ParcelFlowEvents } from "./events";
+import { emitParcelBatchEvent, type ParcelFlowEvents } from "./events";
 import type { ParcelQueueMiddleware } from "./middleware";
 import { persistentStorage } from "./persistentStorage";
 
@@ -27,9 +27,11 @@ export function useParcelQueue(
   const parcelBatchTimer = useTimer(sendTimerConfig);
 
   useEffect(() => {
-    if (loadedQueue.startupWarning === null) return;
+    if (loadedQueue.startupWarning !== null) {
+      parcelFlowEvents?.emit("sending.queue.mmkv_restore_failed", {});
+    }
 
-    parcelFlowEvents?.emit("sending.queue.mmkv_restore_failed", {});
+    announceQueueContent();
   }, [loadedQueue.startupWarning, parcelFlowEvents]);
 
   function insertParcel(parcel: Parcel): void {
@@ -46,7 +48,15 @@ export function useParcelQueue(
 
     parcelsRef.current.push(queuedParcel);
     persistParcels();
-    parcelFlowEvents?.emit("parcel.inserted", { parcel: queuedParcel, parcels: [queuedParcel] });
+    if (oldParcel === null) {
+      parcelFlowEvents?.emit("parcel.queued", { parcel: queuedParcel, parcels: [queuedParcel] });
+    } else {
+      parcelFlowEvents?.emit("parcel.coalesced", {
+        parcel: queuedParcel,
+        replacedParcel: oldParcel,
+        parcels: [oldParcel, queuedParcel],
+      });
+    }
     scheduleNextParcelBatch("debounced");
   }
 
@@ -69,7 +79,6 @@ export function useParcelQueue(
     }
 
     const [oldParcel] = parcelsRef.current.splice(coalescingIndex, 1);
-    parcelFlowEvents?.emit("parcel.removed.by.coalescing", { parcel: oldParcel, parcels: [oldParcel] });
     return oldParcel;
   }
 
@@ -107,7 +116,7 @@ export function useParcelQueue(
     } satisfies ParcelBatch;
 
     activeBatchLengthRef.current = parcels.length;
-    parcelFlowEvents?.emit("parcel.batch.started", { parcels, batch });
+    emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.waiting", batch);
     return batch;
   }
 
@@ -149,6 +158,15 @@ export function useParcelQueue(
       (parcel) =>
         parcel.formula.ownerType === versionOwnerType && parcel.formula.ownerId === versionOwnerId,
     );
+  }
+
+  function announceQueueContent(): void {
+    for (const parcel of parcelsRef.current) {
+      parcelFlowEvents?.emit("parcel.queued", {
+        parcel,
+        parcels: [parcel],
+      });
+    }
   }
 
   function persistParcels(): void {

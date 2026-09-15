@@ -2,7 +2,7 @@ import type { Guid } from "@/shared";
 import type { UserMoodLabel } from "@/models";
 import type { Memory } from "../../contracts";
 import type { OwnerType } from "../contracts";
-import type { Parcel, SendableContent } from "./contracts";
+import type { SendableContent } from "./contracts";
 import { useSendingPromptController } from "../sending-prompt/useSendingPromptController";
 import { useCreateParcel } from "./useCreateParcel";
 import { useParcelQueue } from "./useParcelQueue";
@@ -34,12 +34,19 @@ export function useParcelSending(
     return parcelQueue.processNextParcelBatch({ drain: true });
   }
 
+  async function flushQueue(): Promise<FlushQueueResult> {
+    const serverWasReachable = await drainQueue();
+
+    return serverWasReachable ? { kind: "flushed" } : { kind: "server-unreachable" };
+  }
+
   function hasUpdateBelongingToRootNode(versionOwnerType: OwnerType, versionOwnerId: Guid): boolean {
     return parcelQueue.hasUpdateBelongingToRootNode(versionOwnerType, versionOwnerId);
   }
 
   return {
     drainQueue,
+    flushQueue,
     hasUpdateBelongingToRootNode,
     queue,
     parcelFlowEvents,
@@ -51,7 +58,10 @@ export function useParcelSending(
   };
 }
 
+type FlushQueueResult = { readonly kind: "flushed" } | { readonly kind: "server-unreachable" };
+
 export type ParcelSending = ReturnType<typeof useParcelSending>;
+
 
 
 

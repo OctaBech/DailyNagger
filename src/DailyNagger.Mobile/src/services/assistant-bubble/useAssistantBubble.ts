@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { type EventEmitter, type Prettify } from "@/shared";
-import type { Parcel, SendingEventType } from "../sending";
+import { type Prettify } from "@/shared";
+import type { ParcelFlowEvents } from "../sending";
 
 type AssistantBubbleKind = "error" | "success";
 
@@ -11,29 +11,27 @@ type AssistantBubbleMessage = {
 
 export type AssistantBubble = Prettify<ReturnType<typeof useAssistantBubble>>;
 
-export function useAssistantBubble(
-  sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>,
-) {
+export function useAssistantBubble(parcelFlowEvents: ParcelFlowEvents) {
   const [message, setMessage] = useState<AssistantBubbleMessage | null>(null);
   const hasConnectionRef = useRef(true);
 
   useEffect(() => {
-    return sendingEvents.subscribe((eventType) => {
+    return parcelFlowEvents.subscribe((eventType) => {
       switch (eventType) {
-        case "batch-failed-to-connect":
+        case "parcel.batch.failed_to_connect":
           if (hasConnectionRef.current === false) return;
           hasConnectionRef.current = false;
           setMessage({ kind: "error", message: "Connection lost" });
           return;
 
-        case "batch-sent":
+        case "parcel.batch.sent":
           if (hasConnectionRef.current === true) return;
           hasConnectionRef.current = true;
           setMessage({ kind: "success", message: "Connection restored" });
           return;
       }
     });
-  }, [sendingEvents]);
+  }, [parcelFlowEvents]);
 
   function hasMessage(): boolean {
     return message !== null;
@@ -58,4 +56,3 @@ export function useAssistantBubble(
     dismiss,
   };
 }
-

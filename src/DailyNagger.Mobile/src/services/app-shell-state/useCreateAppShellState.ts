@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useRouter } from "expo-router";
 import type { Memory, Startup } from "../contracts";
 import type { AssistantBubble } from "../assistant-bubble";
-import type { Parcel, Sending, SendingEventType } from "../sending";
+import type { ParcelFlowEvents, Sending } from "../sending";
 import type { EditorScreenActions, PlanScreenActions } from "../screen-actions";
 import type {
   editorDialActionRegistry,
@@ -18,7 +18,7 @@ import type { UserMoodState } from "../user-mood";
 import { treeSelection, type UserMoodLabel } from "@/models";
 import { userMoodConfig } from "@/config";
 import { appRoutes } from "@/navigation";
-import type { EventEmitter, Guid } from "@/shared";
+import type { Guid } from "@/shared";
 import type { StateScreenProps } from "@/components/primitives";
 
 type UseCreateAppShellStateProps = {
@@ -30,7 +30,7 @@ type UseCreateAppShellStateProps = {
   readonly planMemory: Memory;
   readonly planScreenCommands: PlanScreenActions;
   readonly sending: Sending;
-  readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
+  readonly sendingEvents: ParcelFlowEvents;
   readonly startup: Startup;
   readonly selectMood: (mood: UserMoodLabel) => void;
   readonly userMood: UserMoodState;
@@ -180,6 +180,7 @@ function addMoodBarSpeedDialAction(
     ],
   };
 }
+
 
 
 

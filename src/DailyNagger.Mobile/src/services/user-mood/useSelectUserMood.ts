@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import type { CultureSettings } from "../culture";
 import type { Sending } from "../sending";
 import type { UserMoodLabel } from "@/models";
-import { recordUserMoodOperation } from "@/observability";
 import type { UserMoodState } from "./useUserMoodState";
 
 type UseSelectUserMoodProps = {
@@ -28,14 +27,8 @@ export function useSelectUserMood({
 
       setCurrentMood(selection.mood);
       userMood.select(selection);
-      sending.queue(selection, {
-        observability: recordUserMoodOperation({
-          operation: "select",
-          selectionId: selection.id,
-        }),
-      });
+      sending.queue(selection);
     },
     [cultureSettings, sending, setCurrentMood, userMood],
   );
 }
-

@@ -1,8 +1,8 @@
 import { useStableCallback } from "@/shared";
-import type { RuntimeDependencyInputs } from "./action-dependencies";
 import type {
   ActionRuntimeDependencyScreen,
   ActionScope,
+  RuntimeDependencyInputs,
   RuntimeDependenciesForActionScope,
 } from "./action-dependencies";
 import { getActionRuntimeDependencies } from "./action-dependencies/actionRuntimeDependencies";

@@ -4,17 +4,19 @@ import type {
   ActionExecutionWrapper,
 } from "@/services/action-boundary";
 import type { MemoryEventType } from "@/services/memory";
-import type { Parcel, SendingEventType } from "@/services/sending";
+import type { ParcelFlowEvents } from "@/services/sending";
 import type { EventEmitter } from "@/shared";
-import { useActionBoundaryObservability } from "./subscribers";
-import { useMemoryObservability } from "./subscribers";
-import { useSendingObservability } from "./subscribers";
+import {
+  useActionBoundaryObservability,
+  useMemoryObservability,
+  useSendingObservability,
+} from "./subscribers";
 
 type DailyNaggerObservabilityInput = {
   readonly actionEvents: EventEmitter<ActionExecutionEventType, ActionExecutionEvent>;
   readonly editorMemoryEvents: EventEmitter<MemoryEventType, void>;
   readonly planMemoryEvents: EventEmitter<MemoryEventType, void>;
-  readonly sendingEvents: EventEmitter<SendingEventType, readonly Parcel[]>;
+  readonly parcelFlowEvents: ParcelFlowEvents;
 };
 
 type DailyNaggerObservability = {
@@ -27,8 +29,9 @@ export function useDailyNaggerObservability(
   const actionExecutionWrapper = useActionBoundaryObservability(input.actionEvents);
   useMemoryObservability(input.planMemoryEvents, "planMemory");
   useMemoryObservability(input.editorMemoryEvents, "editorMemory");
-  useSendingObservability(input.sendingEvents);
+  useSendingObservability(input.parcelFlowEvents);
 
   return { actionExecutionWrapper };
 }
+
 

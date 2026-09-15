@@ -35,15 +35,6 @@ export type ProcessNextParcelBatchOptions = {
   readonly drain?: boolean;
 };
 
-export type SendParcelBatchEventType =
-  | "parcel.batch.send.started"
-  | "parcel.batch.send.finished";
-
-export type SendParcelBatchEvent = {
-  readonly batch: ParcelBatch;
-  readonly result?: SendBatchResult;
-};
-
 export type SendParcelBatch = (batch: ParcelBatch) => Promise<ParcelQueueInstruction>;
 
 export type SendBatchResult =

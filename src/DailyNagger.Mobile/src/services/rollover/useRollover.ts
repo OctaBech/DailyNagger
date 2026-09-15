@@ -6,7 +6,6 @@ import type { Sending } from "@/services/sending";
 import { useEffect } from "react";
 import { appTiming } from "@/config";
 import { useRefLatestValue } from "@/shared";
-import { recordRolloverOperation, sendingWithObservability } from "@/observability";
 
 export type Rollover = ReturnType<typeof useRollover>;
 
@@ -63,14 +62,7 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
       {
         cultureSettings,
         planMemory,
-        sending: sendingWithObservability({
-          observability: recordRolloverOperation({
-            key: `task-log:${nagger.taskLog.id}/rollover-close`,
-            label: "Closed task log for rollover",
-            operation: "close-task-log",
-          }),
-          sending,
-        }),
+        sending,
       },
       nagger,
     );
@@ -78,14 +70,7 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
       {
         cultureSettings,
         planMemory,
-        sending: sendingWithObservability({
-          observability: recordRolloverOperation({
-            key: `nagger:${nagger.id}/rollover`,
-            label: "Rolled over nagger",
-            operation: "nagger",
-          }),
-          sending,
-        }),
+        sending,
       },
       nagger,
     );
@@ -124,4 +109,5 @@ function getNaggerExpiresAt(activeLogDueOn: string, cultureSettings: CultureSett
 function yieldToUi() {
   return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
+
 
