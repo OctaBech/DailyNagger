@@ -1,86 +1,101 @@
 import type { StateScreenProps } from "@/components/primitives";
-import { assertNever, useRefLatestValue } from "@/shared";
-import type { Dispatch } from "react";
+import { useRefLatestValue } from "@/shared";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { Loading } from "../loading";
 import type { Rollover } from "../rollover";
 import type { Sending } from "../sending";
-import { recordStartupOperation, recordStartupStep } from "@/observability";
-
-type StartupState = {
-  readonly status: StartupStatus;
-  readonly blockingState: StartupBlockingState | null;
-};
-
-type StartupStatus = "not-started" | "running" | "blocked" | "ready";
-
-type StartupBlockingState =
-  | { readonly kind: "server-unavailable" }
-  | { readonly kind: "plan-load-blocked"; readonly stateScreenProps: StateScreenProps };
-
-type StartupEvent =
-  | { readonly type: "startup-started" }
-  | { readonly type: "server-unreachable" }
-  | { readonly type: "plan-load-blocked"; readonly stateScreenProps: StateScreenProps }
-  | { readonly type: "startup-succeeded" };
+import type { StartupEvents } from "./events";
+import {
+  createStartupExecutionContext,
+  runWithStartupMiddleware,
+  type StartupMiddleware,
+} from "./middleware";
+import {
+  blockStartupBecauseServerIsUnavailable,
+  flushQueue,
+  runStartupStep,
+} from "./startupExecution";
+import { initialStartupState, startupReducer } from "./startupState";
+import { createStartupStateScreenContent } from "./startupStateScreen";
 
 export type Startup = ReturnType<typeof useStartup>;
 
-export function useStartup(sending: Sending, loading: Loading, rollover: Rollover) {
+export function useStartup(
+  sending: Sending,
+  loading: Loading,
+  rollover: Rollover,
+  startupMiddleware: StartupMiddleware | undefined,
+  startupEvents: StartupEvents,
+) {
   const isRunningRef = useRef(false);
   const sendingRef = useRefLatestValue(sending);
   const loadingRef = useRefLatestValue(loading);
   const rolloverRef = useRefLatestValue(rollover);
-
-  const [state, dispatch] = useReducer(startupReducer, {
-    status: "not-started",
-    blockingState: null,
-  });
+  const [state, dispatch] = useReducer(startupReducer, initialStartupState);
 
   const runStartup = useCallback(async (): Promise<void> => {
     if (isRunningRef.current) return;
 
+    // 1. Mark startup as running and create one causality context for the whole run.
     isRunningRef.current = true;
     dispatch({ type: "startup-started" });
-    const observability = recordStartupOperation();
+
+    const context = createStartupExecutionContext();
+    startupEvents.emit("startup.started", context);
 
     try {
-      if (
-        (await recordStartupStep(observability, "flush-before-load", () =>
-          flushQueueOrBlockStartup(sendingRef.current, dispatch),
-        )) === false
-      ) {
-        return;
-      }
+      await runWithStartupMiddleware(startupMiddleware, context, async () => {
+        // 2. Send any saved local updates before loading fresh server state.
+        if (
+          (await runStartupStep(startupEvents, context, "flush-before-load", () =>
+            flushQueue(sendingRef.current),
+          )) === false
+        ) {
+          blockStartupBecauseServerIsUnavailable(startupEvents, context, dispatch);
+          return;
+        }
 
-      const loadResult = await recordStartupStep(observability, "load-plan", () =>
-        loadingRef.current.loadPlan(),
-      );
+        // 3. Load the current plan from the server.
+        const loadResult = await runStartupStep(startupEvents, context, "load-plan", () =>
+          loadingRef.current.loadPlan(),
+        );
 
-      if (loadResult.kind === "blocked") {
-        dispatch({
-          type: "plan-load-blocked",
-          stateScreenProps: loadResult.stateScreenProps,
-        });
-        return;
-      }
+        // 4. Stop startup if loading needs a user-facing recovery screen.
+        if (loadResult.kind === "blocked") {
+          dispatch({
+            type: "plan-load-blocked",
+            stateScreenProps: loadResult.stateScreenProps,
+          });
+          startupEvents.emit("startup.blocked.plan_load", context);
+          return;
+        }
 
-      await recordStartupStep(observability, "rollover", () =>
-        rolloverRef.current.rolloverDueNaggers(),
-      );
-      if (
-        (await recordStartupStep(observability, "flush-after-rollover", () =>
-          flushQueueOrBlockStartup(sendingRef.current, dispatch),
-        )) === false
-      ) {
-        return;
-      }
+        // 5. Apply rollover rules after a clean plan load.
+        await runStartupStep(startupEvents, context, "rollover", () =>
+          rolloverRef.current.rolloverDueNaggers(),
+        );
 
-      dispatch({ type: "startup-succeeded" });
+        // 6. Send rollover updates before the app becomes interactive.
+        if (
+          (await runStartupStep(startupEvents, context, "flush-after-rollover", () =>
+            flushQueue(sendingRef.current),
+          )) === false
+        ) {
+          blockStartupBecauseServerIsUnavailable(startupEvents, context, dispatch);
+          return;
+        }
+
+        // 7. Startup is complete; screens and actions may now run normally.
+        dispatch({ type: "startup-succeeded" });
+        startupEvents.emit("startup.ready", context);
+      });
+    } catch (error) {
+      startupEvents.emit("startup.failed", { ...context, error });
+      throw error;
     } finally {
       isRunningRef.current = false;
     }
-  }, [loadingRef, rolloverRef, sendingRef]);
+  }, [loadingRef, rolloverRef, sendingRef, startupEvents, startupMiddleware]);
 
   const start = useCallback((): void => {
     if (state.status !== "not-started") return;
@@ -98,79 +113,25 @@ export function useStartup(sending: Sending, loading: Loading, rollover: Rollove
     start();
   }, [start]);
 
-  let stateScreenProps: StateScreenProps | null = null;
-
-  if (state.blockingState?.kind === "server-unavailable") {
-    stateScreenProps = {
-      title: "Server unavailable",
-      message:
-        "DailyNagger could not connect to the server. Check that the backend is running and try again.",
-      primaryAction: {
-        label: "Try again",
-        accessibilityLabel: "Try startup again",
-        onPress: retry,
-      },
-    };
-  } else if (state.blockingState?.kind === "plan-load-blocked") {
-    stateScreenProps = {
-      ...state.blockingState.stateScreenProps,
-      primaryAction: {
-        label: state.blockingState.stateScreenProps.showSpinner ? "Try now" : "Try again",
-        accessibilityLabel: "Try startup again",
-        onPress: retry,
-      },
-    };
-  }
-
+  const stateScreenContent = createStartupStateScreenContent(state);
+  const stateScreenProps: StateScreenProps | null =
+    stateScreenContent === null
+      ? null
+      : {
+          ...stateScreenContent,
+          primaryAction: {
+            label: stateScreenContent.primaryActionLabel,
+            accessibilityLabel: "Try startup again",
+            onPress: retry,
+          },
+        };
   const hasBlockingState = state.blockingState !== null;
 
   return {
     isReady: state.status === "ready",
     hasBlockingState,
     stateScreenProps,
+    startupEvents,
     retry,
   };
 }
-
-async function flushQueueOrBlockStartup(
-  sending: Sending,
-  dispatch: Dispatch<StartupEvent>,
-): Promise<boolean> {
-  const flushResult = await sending.flushQueue();
-
-  if (flushResult.kind !== "server-unreachable") return true;
-
-  dispatch({ type: "server-unreachable" });
-  return false;
-}
-
-function startupReducer(state: StartupState, event: StartupEvent): StartupState {
-  switch (event.type) {
-    case "startup-started":
-      return { status: "running", blockingState: null };
-
-    case "server-unreachable":
-      return {
-        status: "blocked",
-        blockingState: { kind: "server-unavailable" },
-      };
-
-    case "plan-load-blocked":
-      return {
-        status: "blocked",
-        blockingState: {
-          kind: "plan-load-blocked",
-          stateScreenProps: event.stateScreenProps,
-        },
-      };
-
-    case "startup-succeeded":
-      return { status: "ready", blockingState: null };
-
-    default:
-      assertNever(event);
-      return state;
-  }
-}
-
-

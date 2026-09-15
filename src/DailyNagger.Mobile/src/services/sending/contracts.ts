@@ -1,8 +1,6 @@
 import type { Guid, JsonValue } from "@/shared";
 import type { ClientIdentity } from "@/models/clientIdentity";
 import type { UserMoodLabel } from "@/models";
-import type { Observability, ObservabilityContext, SpanContinuation } from "@/observability";
-import { recordLegacyObservability } from "@/observability";
 import { z } from "zod";
 
 export type OwnerType = "nagger" | "task-log";
@@ -25,28 +23,6 @@ const clientIdentitySchema = z.object({
   deviceName: z.string(),
   deviceModel: z.string(),
 }) satisfies z.ZodType<ClientIdentity>;
-
-const observabilityContextSchema = z.object({
-  causality: z.object({
-    id: z.string() as z.ZodType<Guid>,
-    key: z.string(),
-    kind: z.string(),
-    label: z.string(),
-    occurredAt: z.iso.datetime(),
-    source: z.string(),
-  }),
-}) satisfies z.ZodType<ObservabilityContext>;
-
-const spanContinuationSchema = z.object({
-  baggage: z.string().nullable(),
-  sentryTrace: z.string(),
-}) satisfies z.ZodType<SpanContinuation>;
-
-const parcelObservabilitySchema = z.object({
-  context: observabilityContextSchema,
-  causalityKeys: z.array(z.string()),
-  spanContinuation: spanContinuationSchema.nullable().optional().default(null),
-}) satisfies z.ZodType<Observability>;
 
 export const formulaSchema = z.object({
   type: z.string(),
@@ -77,41 +53,6 @@ export const stampSchema = persistedStampSchema.transform(
   ({ commandTraceKeys, causalityKeys, ...stamp }) => stamp,
 );
 
-export const parcelSchema = z
-  .object({
-    formula: formulaSchema,
-    observability: parcelObservabilitySchema.optional(),
-    stamp: persistedStampSchema,
-  })
-  .transform(({ observability, stamp, ...parcel }) => {
-    const { commandTraceKeys, causalityKeys, ...normalizedStamp } = stamp;
-
-    return {
-      ...parcel,
-      observability:
-        observability ?? recordLegacyObservability(causalityKeys ?? commandTraceKeys ?? []),
-      stamp: normalizedStamp,
-    };
-  });
-
 export type Formula = z.infer<typeof formulaSchema>;
 
 export type Stamp = z.infer<typeof stampSchema>;
-
-export type Parcel = z.infer<typeof parcelSchema>;
-
-export type SendingEventType =
-  | "parcel-queued"
-  | "parcel-coalesced"
-  | "batch-sent"
-  | "batch-rejected-current-version"
-  | "batch-rejected-unrepairable"
-  | "batch-blocked-current-version"
-  | "batch-blocked-unrepairable"
-  | "batch-failed-to-connect"
-  | "batch-forced"
-  | "batch-discarded-current-version"
-  | "batch-discarded-unrepairable"
-  | "batch-discarded";
-
-

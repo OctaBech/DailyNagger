@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { hibernateMiddlewareContext, runWithAwakenedMiddlewareContext } from "@/middleware";
 import type { Guid } from "@/shared";
 import { useTimer } from "@/shared";
 import type { OwnerType } from "../contracts";
@@ -14,7 +15,7 @@ import type {
 } from "./contracts";
 import { emitParcelBatchEvent, type ParcelFlowEvents } from "./events";
 import type { ParcelQueueMiddleware } from "./middleware";
-import { persistentStorage } from "./persistentStorage";
+import { persistentStorage, type QueuedParcel } from "./persistentStorage";
 
 export function useParcelQueue(
   sendParcelBatch: SendParcelBatch,
@@ -22,15 +23,15 @@ export function useParcelQueue(
   parcelQueueMiddleware: ParcelQueueMiddleware = {},
 ) {
   const [loadedQueue] = useState(() => persistentStorage.load());
-  const parcelsRef = useRef<Parcel[]>(loadedQueue.parcels);
+  const queueEntriesRef = useRef<QueuedParcel[]>(loadedQueue.queueEntries);
   const activeBatchLengthRef = useRef(0);
   const parcelBatchTimer = useTimer(sendTimerConfig);
 
   const announceQueueContent = useCallback((): void => {
-    for (const parcel of parcelsRef.current) {
+    for (const queueEntry of queueEntriesRef.current) {
       parcelFlowEvents?.emit("parcel.queued", {
-        parcel,
-        parcels: [parcel],
+        parcel: queueEntry.parcel,
+        parcels: [queueEntry.parcel],
       });
     }
   }, [parcelFlowEvents]);
@@ -48,22 +49,26 @@ export function useParcelQueue(
     const coalescingIndex = findCoalescingIndex(parcel);
 
     // 2. Remove the old parcel first, so the queue story is always remove -> append.
-    const oldParcel = removeCoalescingParcel(coalescingIndex);
+    const oldQueueEntry = removeCoalescingQueueEntry(coalescingIndex);
+    const oldParcel = oldQueueEntry?.parcel ?? null;
 
-    // 3. Insert the new payload last, with backend versioning merged from both parcels.
+    // 3. Insert the new parcel last, with backend versioning merged from both parcels.
     const parcelToInsert =
       oldParcel === null ? parcel : withMergedVersioning([oldParcel, parcel], parcel);
-    const queuedParcel = addMiddlewarePayload(parcelToInsert);
+    const queueEntry = createQueueEntry(parcelToInsert);
 
-    parcelsRef.current.push(queuedParcel);
-    persistParcels();
+    queueEntriesRef.current.push(queueEntry);
+    persistQueueEntries();
     if (oldParcel === null) {
-      parcelFlowEvents?.emit("parcel.queued", { parcel: queuedParcel, parcels: [queuedParcel] });
+      parcelFlowEvents?.emit("parcel.queued", {
+        parcel: queueEntry.parcel,
+        parcels: [queueEntry.parcel],
+      });
     } else {
       parcelFlowEvents?.emit("parcel.coalesced", {
-        parcel: queuedParcel,
+        parcel: queueEntry.parcel,
         replacedParcel: oldParcel,
-        parcels: [oldParcel, queuedParcel],
+        parcels: [oldParcel, queueEntry.parcel],
       });
     }
     scheduleNextParcelBatch("debounced");
@@ -82,13 +87,13 @@ export function useParcelQueue(
     });
   }
 
-  function removeCoalescingParcel(coalescingIndex: number): Parcel | null {
+  function removeCoalescingQueueEntry(coalescingIndex: number): QueuedParcel | null {
     if (coalescingIndex === -1) {
       return null;
     }
 
-    const [oldParcel] = parcelsRef.current.splice(coalescingIndex, 1);
-    return oldParcel;
+    const [oldQueueEntry] = queueEntriesRef.current.splice(coalescingIndex, 1);
+    return oldQueueEntry;
   }
 
   async function processNextParcelBatch(
@@ -103,7 +108,11 @@ export function useParcelQueue(
     const batch = createNextParcelBatch();
 
     // 2. The sender handles server communication and returns a queue instruction.
-    const instruction = await runParcelBatchSend(batch, () => sendParcelBatch(batch));
+    const instruction = await runWithAwakenedMiddlewareContext(
+      parcelQueueMiddleware,
+      batch.middlewareContexts,
+      () => sendParcelBatch(batch),
+    );
 
     // 3. The queue applies the instruction and decides whether to schedule more work.
     await applyParcelBatchInstruction(instruction, options);
@@ -116,10 +125,12 @@ export function useParcelQueue(
     const firstParcel = getFirstQueuedParcel();
 
     // 2. The queue chooses the batch boundary.
-    const parcels = takeBatchFromQueueFront(firstParcel);
+    const queueEntries = takeBatchFromQueueFront(firstParcel);
+    const parcels = queueEntries.map((queueEntry) => queueEntry.parcel);
 
     // 3. The owner of the batch boundary also owns the backend version range.
     const batch = {
+      middlewareContexts: queueEntries.map((queueEntry) => queueEntry.middlewareContext),
       parcels,
       versioning: mergeParcelVersioning(parcels),
     } satisfies ParcelBatch;
@@ -159,26 +170,30 @@ export function useParcelQueue(
   }
 
   function hasElements(): boolean {
-    return parcelsRef.current.length > 0;
+    return queueEntriesRef.current.length > 0;
   }
 
-  function hasUpdateBelongingToRootNode(versionOwnerType: OwnerType, versionOwnerId: Guid): boolean {
-    return parcelsRef.current.some(
-      (parcel) =>
-        parcel.formula.ownerType === versionOwnerType && parcel.formula.ownerId === versionOwnerId,
+  function hasUpdateBelongingToRootNode(
+    versionOwnerType: OwnerType,
+    versionOwnerId: Guid,
+  ): boolean {
+    return queueEntriesRef.current.some(
+      (queueEntry) =>
+        queueEntry.parcel.formula.ownerType === versionOwnerType &&
+        queueEntry.parcel.formula.ownerId === versionOwnerId,
     );
   }
 
-  function persistParcels(): void {
-    persistentStorage.save(parcelsRef.current);
+  function persistQueueEntries(): void {
+    persistentStorage.save(queueEntriesRef.current);
   }
 
   function removeActiveBatch(): void {
     if (activeBatchLengthRef.current === 0) return;
 
-    parcelsRef.current.splice(0, activeBatchLengthRef.current);
+    queueEntriesRef.current.splice(0, activeBatchLengthRef.current);
     activeBatchLengthRef.current = 0;
-    persistParcels();
+    persistQueueEntries();
   }
 
   function releaseActiveBatch(): void {
@@ -198,41 +213,45 @@ export function useParcelQueue(
     };
   }
 
-  function addMiddlewarePayload(parcel: Parcel): Parcel {
+  function createQueueEntry(parcel: Parcel): QueuedParcel {
     return {
-      ...parcelQueueMiddleware.getPayloadForQueuedParcel?.(parcel),
-      ...parcel,
+      middlewareContext: hibernateMiddlewareContext(parcelQueueMiddleware),
+      parcel,
     };
   }
 
-  function runParcelBatchSend(
-    batch: ParcelBatch,
-    run: () => Promise<ParcelQueueInstruction>,
-  ): Promise<ParcelQueueInstruction> {
-    return parcelQueueMiddleware.runParcelBatchSend?.(batch, run) ?? run();
-  }
 
   function getFirstQueuedParcel(): Parcel {
-    const firstParcel = parcelsRef.current[0];
+    const firstQueueEntry = queueEntriesRef.current[0];
 
-    if (firstParcel === undefined) {
+    if (firstQueueEntry === undefined) {
       throw new Error("Cannot start parcel batch because the queue is empty.");
     }
 
-    return firstParcel;
+    return firstQueueEntry.parcel;
   }
 
-  function takeBatchFromQueueFront(firstParcel: Parcel): Parcel[] {
-    if (!firstParcel.formula.canBatch) return [firstParcel];
+  function takeBatchFromQueueFront(firstParcel: Parcel): QueuedParcel[] {
+    if (!firstParcel.formula.canBatch) return [getFirstQueueEntry()];
 
-    const batch: Parcel[] = [];
+    const batch: QueuedParcel[] = [];
 
-    for (const parcel of parcelsRef.current) {
-      if (!belongsToSameBatch(parcel, firstParcel)) break;
-      batch.push(parcel);
+    for (const queueEntry of queueEntriesRef.current) {
+      if (!belongsToSameBatch(queueEntry.parcel, firstParcel)) break;
+      batch.push(queueEntry);
     }
 
     return batch;
+  }
+
+  function getFirstQueueEntry(): QueuedParcel {
+    const firstQueueEntry = queueEntriesRef.current[0];
+
+    if (firstQueueEntry === undefined) {
+      throw new Error("Cannot start parcel batch because the queue is empty.");
+    }
+
+    return firstQueueEntry;
   }
 
   function belongsToSameBatch(parcel: Parcel, firstParcel: Parcel): boolean {
@@ -246,8 +265,13 @@ export function useParcelQueue(
   // Coalescing only looks inside the inactive queue.
   // Active batches are already being sent and must not be rewritten under the sender.
   function findCoalescingIndex(newParcel: Parcel): number {
-    for (let index = parcelsRef.current.length - 1; index >= activeBatchLengthRef.current; index--) {
-      const queuedParcel = parcelsRef.current[index];
+    for (
+      let index = queueEntriesRef.current.length - 1;
+      index >= activeBatchLengthRef.current;
+      index--
+    ) {
+      const queuedParcel = queueEntriesRef.current[index]?.parcel;
+      if (queuedParcel === undefined) continue;
 
       const sameVersionOwner =
         queuedParcel.formula.ownerType === newParcel.formula.ownerType &&
@@ -270,3 +294,5 @@ export function useParcelQueue(
 }
 
 export type ParcelQueue = ReturnType<typeof useParcelQueue>;
+
+

@@ -1,2 +1,1 @@
-export type { ParcelQueueMiddleware, ParcelQueueMiddlewarePayload } from "./contracts";
-
+export type { ParcelQueueMiddleware, ParcelQueueMiddlewareContext } from "./contracts";

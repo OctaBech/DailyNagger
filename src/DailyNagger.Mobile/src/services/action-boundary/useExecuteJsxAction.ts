@@ -1,3 +1,4 @@
+import { runWithOptionalMiddleware } from "@/middleware";
 import { useStableCallback } from "@/shared";
 import type {
   ActionRuntimeDependencyScreen,
@@ -41,7 +42,7 @@ export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
       // This is an extension point where external tools can wrap the action execution.
       // For example, observability uses this point to start a span.
       // Without a wrapper, run() is called normally.
-      const result = (environment.actionExecutionWrapper ?? runActionWithoutWrapping)(context, () =>
+      const result = runWithOptionalMiddleware(environment.actionExecutionWrapper, context, () =>
         jsxAction.action.run(
           actionArgs,
           runtimeDependencies as RuntimeDependenciesForActionScope<TActionScope>,
@@ -73,6 +74,7 @@ function createActionExecutionContext(
   };
 }
 
-const runActionWithoutWrapping: ActionExecutionWrapper = (_context, run) => run();
+
+
 
 

@@ -3,6 +3,7 @@ import type { SendApiRequestError } from "@/api/client/sendApiRequest";
 import { z } from "zod";
 import { formulaSchema, stampSchema, type Formula, type Stamp } from "../contracts";
 import type { MergedParcelVersioning } from "../parcelVersioning";
+import type { ParcelQueueMiddlewareContext } from "./middleware";
 
 export type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
 
@@ -20,6 +21,7 @@ export const parcelSchema = z
 
 export type ParcelBatch = {
   readonly parcels: readonly Parcel[];
+  readonly middlewareContexts: readonly ParcelQueueMiddlewareContext[];
   readonly versioning: MergedParcelVersioning;
 };
 
@@ -46,6 +48,3 @@ export type SendBatchResult =
     }
   | { readonly kind: "server-rejected-unrepairable-update"; readonly error: SendApiRequestError }
   | { readonly kind: "failed-to-connect"; readonly error: unknown };
-
-
-

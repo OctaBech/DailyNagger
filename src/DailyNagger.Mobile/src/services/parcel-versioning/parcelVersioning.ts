@@ -1,7 +1,8 @@
 import type { Memory } from "@/services/memory";
 import { treeOperations } from "@/services/tree-operations";
 import type { Guid } from "@/shared";
-import type { Formula, OwnerType, Parcel } from "@/services/sending/contracts";
+import type { Formula, OwnerType } from "@/services/sending/contracts";
+import type { Parcel } from "@/services/sending/parcel-flow";
 
 type VersionedFormula = Formula & {
   readonly ownerType: OwnerType;
@@ -109,4 +110,5 @@ function replaceExpectedVersion(
     }
   }
 }
+
 

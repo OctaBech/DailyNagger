@@ -2,7 +2,7 @@ import { useCallback, useRef, type ReactNode } from "react";
 import { useCultureSettings } from "./culture";
 import { type MemoryEventType, useMemory, useSelectionMemory } from "./memory";
 import { useLoading } from "./loading";
-import { useSending } from "./sending";
+import { useParcelFlowEvents, useSending } from "./sending";
 import { useSelectUserMood, useUserMoodState } from "./user-mood";
 import { useInteractionStamp } from "./interaction-stamp";
 import { useAssistantBubble } from "./assistant-bubble";
@@ -27,7 +27,7 @@ import type { UserMoodLabel } from "@/models";
 import { useDailyNaggerObservability } from "@/observability";
 import { useEventEmitter } from "@/shared";
 import { useRollover } from "./rollover";
-import { useStartup } from "./startup";
+import { useStartup, useStartupEvents } from "./startup";
 import {
   PlanScreenDataProvider,
   EditorScreenDataProvider,
@@ -93,14 +93,22 @@ function useCreateServices(): {
     currentMoodRef.current = mood;
   }, []);
 
-  const sending = useSending(planMemory, getCurrentMood);
-  const observability = useDailyNaggerObservability({
+  const parcelFlowEvents = useParcelFlowEvents();
+  const startupEvents = useStartupEvents();
+  const observabilityWithStartup = useDailyNaggerObservability({
     actionEvents,
     editorMemoryEvents,
-    parcelFlowEvents: sending.parcelFlowEvents,
+    parcelFlowEvents,
     planMemoryEvents,
+    startupEvents,
   });
-  const assistantBubble = useAssistantBubble(sending.parcelFlowEvents);
+  const sending = useSending(
+    planMemory,
+    getCurrentMood,
+    observabilityWithStartup.parcelQueueMiddleware,
+    parcelFlowEvents,
+  );
+  const assistantBubble = useAssistantBubble(parcelFlowEvents);
 
   const selectMood = useSelectUserMood({
     cultureSettings,
@@ -110,9 +118,15 @@ function useCreateServices(): {
   });
 
   const rollover = useRollover(cultureSettings, planMemory, editorMemory, sending);
-
   const loading = useLoading(planMemory);
-  const startup = useStartup(sending, loading, rollover);
+
+  const startup = useStartup(
+    sending,
+    loading,
+    rollover,
+    observabilityWithStartup.startupMiddleware,
+    startupEvents,
+  );
 
   const planScreenData = useCreatePlanScreenData({
     cultureSettings,
@@ -127,7 +141,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observability.actionExecutionWrapper,
+    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
     sending,
     screen: "plan",
   });
@@ -137,7 +151,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observability.actionExecutionWrapper,
+    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
     sending,
     screen: "plan",
   }).dial;
@@ -147,7 +161,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observability.actionExecutionWrapper,
+    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
     sending,
     screen: "editor",
   });
@@ -157,7 +171,7 @@ function useCreateServices(): {
     planInteractionStamp: interactionStamp,
     planMemory,
     actionEvents,
-    actionExecutionWrapper: observability.actionExecutionWrapper,
+    actionExecutionWrapper: observabilityWithStartup.actionExecutionWrapper,
     sending,
     screen: "editor",
   }).dial;
@@ -176,7 +190,7 @@ function useCreateServices(): {
     planMemory,
     planScreenCommands,
     sending,
-    sendingEvents: sending.parcelFlowEvents,
+    sendingEvents: parcelFlowEvents,
     startup,
     selectMood,
     userMood,

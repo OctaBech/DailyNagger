@@ -1,6 +1,4 @@
+import type { ExecutionMiddleware } from "@/middleware";
 import type { ActionExecutionContext } from "../events";
 
-export type ActionExecutionWrapper = <TResult>(
-  context: ActionExecutionContext,
-  run: () => TResult,
-) => TResult;
+export type ActionExecutionWrapper = ExecutionMiddleware<ActionExecutionContext>;
