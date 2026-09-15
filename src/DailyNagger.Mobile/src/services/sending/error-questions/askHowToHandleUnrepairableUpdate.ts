@@ -1,4 +1,4 @@
-import type { SendApiRequestError } from "@/api/client/sendApiRequest";
+import type { SendApiRequestError } from "@/api/client";
 import type { SendingPromptController } from "../sending-prompt/useSendingPromptController";
 
 export async function askHowToHandleUnrepairableUpdate(
@@ -13,7 +13,3 @@ export async function askHowToHandleUnrepairableUpdate(
     technicalMessage: error.message,
   });
 }
-
-
-
-

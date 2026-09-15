@@ -6,10 +6,9 @@ export {
   fetchTags,
   fetchTodaysNagPlan,
   saveTag,
-  sendApiRequest,
   SendApiRequestError,
 } from "./client";
-export type { SendApiRequest, TaskStepNameSuggestionDto } from "./client";
+export type { TaskStepNameSuggestionDto } from "./client";
 export type {
   NagPlanDto,
   NaggerDto,

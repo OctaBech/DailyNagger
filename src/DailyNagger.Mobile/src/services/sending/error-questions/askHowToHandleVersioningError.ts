@@ -1,4 +1,4 @@
-import type { SendApiRequestError } from "@/api/client/sendApiRequest";
+import type { SendApiRequestError } from "@/api/client";
 import type { SendingPromptController } from "../sending-prompt/useSendingPromptController";
 
 export type VersioningErrorDecision = "force-batch" | "discard-batch";
@@ -18,7 +18,3 @@ export async function askHowToHandleVersioningError(
 
   return shouldForceBatch ? "force-batch" : "discard-batch";
 }
-
-
-
-

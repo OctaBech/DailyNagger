@@ -1,5 +1,5 @@
 import type { Nagger, TaskEntry, TaskLog, UserMood } from "@/models";
-import type { SendApiRequestError } from "@/api/client/sendApiRequest";
+import type { SendApiRequestError } from "@/api/client";
 import { z } from "zod";
 import { formulaSchema, stampSchema, type Formula, type Stamp } from "../contracts";
 import type { MergedParcelVersioning } from "../parcelVersioning";
@@ -48,4 +48,3 @@ export type SendBatchResult =
     }
   | { readonly kind: "server-rejected-unrepairable-update"; readonly error: SendApiRequestError }
   | { readonly kind: "failed-to-connect"; readonly error: unknown };
-

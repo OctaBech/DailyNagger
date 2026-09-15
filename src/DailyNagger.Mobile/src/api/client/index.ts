@@ -3,8 +3,6 @@ export { TodaysNagPlanPreparingError, fetchTodaysNagPlan } from "./fetchTodaysNa
 export { fetchTags } from "./fetchTags";
 export { fetchTaskStepNameSuggestions } from "./fetchTaskStepNameSuggestions";
 export { saveTag } from "./saveTag";
-export { SendApiRequestError, sendApiRequest } from "./sendApiRequest";
-export type { SendApiRequest } from "./sendApiRequest";
 export { apiRequestHeaders } from "./apiRequestHeaders";
 export type { TaskStepNameSuggestionDto } from "@api-contracts";
 export {
@@ -12,3 +10,4 @@ export {
   type ApiRequestEvent,
   type ApiRequestEventType,
 } from "./apiRequestEvents";
+export { SendApiRequestError } from "./SendApiRequestError";
