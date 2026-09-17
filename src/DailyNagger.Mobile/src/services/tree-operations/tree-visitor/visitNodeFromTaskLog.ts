@@ -15,7 +15,7 @@ export function visitNodeFromTaskLog(
   if (requestTargetsKind(request, "task-log", taskLog.id)) {
     return visitCurrentNode({
       node: taskLog,
-      childPath: [],
+      collectedChildNodes: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskLog,
       allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
@@ -26,7 +26,7 @@ export function visitNodeFromTaskLog(
     request,
     shouldVisitArray: true,
     ownerNode: taskLog,
-    ownerPath: [],
+    initialCollectedNodes: [],
     nodes: taskLog.taskItems,
     shouldVisitNode: () => true,
     visitNode: (taskItem) => visitNodeFromTaskItem(taskItem, request, visitor),
@@ -41,7 +41,7 @@ export function visitNodeFromTaskLog(
 
     return visitCurrentNode({
       node: nodeWithVisitedTaskItems,
-      childPath: taskItemsResult.recordedPath,
+      collectedChildNodes: taskItemsResult.collectedNodes,
       childBubble: taskItemsResult.bubble,
       visitNode: visitor.visitTaskLog,
       allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,

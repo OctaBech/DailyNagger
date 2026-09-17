@@ -5,7 +5,7 @@ import type { VisitBubble, VisitResult } from "./visitResult";
 export type VisitArrayResult<TNode extends TraversedNode> = {
   readonly wasVisited: boolean;
   readonly nodes: readonly TNode[];
-  readonly recordedPath: readonly TraversedNode[];
+  readonly collectedNodes: readonly TraversedNode[];
   readonly indexHint: number;
   readonly bubble: VisitBubble;
 };
@@ -19,7 +19,7 @@ type VisitTargetArrayNodesProps<TNode extends TraversedNode> = {
 
 type VisitWholeArrayNodesProps<TNode extends TraversedNode> = {
   readonly ownerNode: { readonly clientProps?: { readonly indexHint?: number } };
-  readonly ownerPath: readonly TraversedNode[];
+  readonly initialCollectedNodes: readonly TraversedNode[];
   readonly nodes: readonly TNode[];
   readonly visitNode: (node: TNode) => VisitResult<TNode>;
 };
@@ -28,7 +28,7 @@ type VisitArrayNodesInput<TNode extends TraversedNode> = {
   readonly request: VisitRequest;
   readonly shouldVisitArray: boolean;
   readonly ownerNode: { readonly clientProps?: { readonly indexHint?: number } };
-  readonly ownerPath: readonly TraversedNode[];
+  readonly initialCollectedNodes: readonly TraversedNode[];
   readonly nodes: readonly TNode[];
   readonly shouldVisitNode: (node: TNode) => boolean;
   readonly visitNode: (node: TNode) => VisitResult<TNode>;
@@ -38,7 +38,7 @@ export function visitArrayNodes<TNode extends TraversedNode>({
   request,
   shouldVisitArray,
   ownerNode,
-  ownerPath,
+  initialCollectedNodes,
   nodes,
   shouldVisitNode,
   visitNode,
@@ -48,7 +48,7 @@ export function visitArrayNodes<TNode extends TraversedNode>({
   if (request.kind === "whole-tree") {
     return visitWholeArrayNodes({
       ownerNode,
-      ownerPath,
+      initialCollectedNodes,
       nodes,
       visitNode,
     });
@@ -85,7 +85,7 @@ function visitTargetArrayNode<TNode extends TraversedNode>({
     return {
       wasVisited: true,
       nodes: copiedNodes,
-      recordedPath: result.recordedPath,
+      collectedNodes: result.collectedNodes,
       indexHint: index,
       bubble: result.bubble,
     };
@@ -96,25 +96,25 @@ function visitTargetArrayNode<TNode extends TraversedNode>({
 
 function visitWholeArrayNodes<TNode extends TraversedNode>({
   ownerNode,
-  ownerPath,
+  initialCollectedNodes,
   nodes,
   visitNode,
 }: VisitWholeArrayNodesProps<TNode>): VisitArrayResult<TNode> {
-  let recordedPath: readonly TraversedNode[] = ownerPath;
+  let collectedNodes: readonly TraversedNode[] = initialCollectedNodes;
 
   const newNodes = nodes.map((node) => {
     const result = visitNode(node);
 
     if (result.kind === "not-found") return node;
 
-    recordedPath = [...recordedPath, ...result.recordedPath];
+    collectedNodes = [...collectedNodes, ...result.collectedNodes];
     return result.node;
   });
 
   return {
     wasVisited: true,
     nodes: newNodes,
-    recordedPath,
+    collectedNodes,
     indexHint: getIndexHint(ownerNode, nodes.length),
     bubble: { kind: "none" },
   };
@@ -127,7 +127,7 @@ function notVisited<TNode extends TraversedNode>(
   return {
     wasVisited: false,
     nodes,
-    recordedPath: [],
+    collectedNodes: [],
     indexHint: getIndexHint(ownerNode, nodes.length),
     bubble: { kind: "none" },
   };

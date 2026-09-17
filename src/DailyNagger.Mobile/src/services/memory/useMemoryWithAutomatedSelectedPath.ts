@@ -7,7 +7,15 @@ import { treeOperations } from "@/services/tree-operations";
 import type { EventEmitter } from "@/shared";
 import type { MemoryEventType } from "./events";
 
-export function useSelectionMemory(
+/**
+ * When a user action moves focus from one node to another, this wrapper removes
+ * selection and focus properties from the path to the previously selected node,
+ * then applies them to the path leading to the newly selected node.
+ *
+ * The updated tree and selected path are stored together, so actions cannot
+ * accidentally update one without updating the other.
+ */
+export function useMemoryWithAutomatedSelectedPath(
   memory: Memory,
   debugName = "memory",
   memoryEvents?: EventEmitter<MemoryEventType, void>,
@@ -129,7 +137,7 @@ function moveSelection(
   oldPath: TreePath,
   newPath: TreePath,
 ): { tree: Tree; treePath: TreePath } {
-  const unselectedTree = clearFocusPath(tree, oldPath);
+  const unselectedTree = clearSelectionFromFirstExistingPathNode(tree, oldPath);
   const selectedNode = treeSelection.tryGetSelectedNode(newPath);
 
   if (selectedNode === null) return { tree: unselectedTree, treePath: [] };
@@ -144,7 +152,9 @@ function moveSelection(
   return { tree: selected.newTree, treePath: selected.newPath };
 }
 
-function clearFocusPath(tree: Tree, path: TreePath): Tree {
+function clearSelectionFromFirstExistingPathNode(tree: Tree, path: TreePath): Tree {
+  // Paths run from the selected node toward the root. The first node that still
+  // exists provides an entry point for clearing selection along that whole branch.
   for (const node of path) {
     const result = trySetFocusPath(tree, node, false);
     if (result !== null) return result.newTree;

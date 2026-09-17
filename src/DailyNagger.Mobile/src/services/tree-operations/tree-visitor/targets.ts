@@ -35,6 +35,17 @@ type WholeTreeVisitResult<TNode extends NagPlanTraversedNode | TaskLogTraversedN
       readonly visitedNodes: readonly TraversedNode[];
     };
 
+type TargetVisitResult<TNode extends NagPlanTraversedNode> =
+  | {
+      readonly kind: "not-found";
+      readonly node: TNode;
+    }
+  | {
+      readonly kind: "visited";
+      readonly node: TNode;
+      readonly path: readonly TraversedNode[];
+    };
+
 type TargetVisitor = {
   readonly visitNagger?: (nagger: Nagger, context: TargetVisitContext) => Nagger;
   readonly visitTaskLog?: (taskLog: TaskLog, context: TargetVisitContext) => TaskLog;
@@ -79,12 +90,14 @@ function visitNode(
   fromTree: Tree,
   toNode: Exclude<TreeNode, Tree>,
   visitor: TargetVisitor,
-): VisitResult<NagPlanTraversedNode> {
-  return visitNodeFromNagPlan(
+): TargetVisitResult<NagPlanTraversedNode> {
+  const result = visitNodeFromNagPlan(
     fromTree as NagPlanTraversedNode,
     createVisitRequest(fromTree, toNode),
     toTreeVisitor(visitor),
   );
+
+  return toTargetVisitResult(result);
 }
 
 function fromTaskItem(freshTree: Tree, taskItem: TaskItem): TaskItemTarget {
@@ -208,7 +221,19 @@ function toWholeTreeResult<TNode extends NagPlanTraversedNode | TaskLogTraversed
   return {
     kind: "visited",
     node: result.node,
-    visitedNodes: result.recordedPath,
+    visitedNodes: result.collectedNodes,
+  };
+}
+
+function toTargetVisitResult(
+  result: VisitResult<NagPlanTraversedNode>,
+): TargetVisitResult<NagPlanTraversedNode> {
+  if (result.kind === "not-found") return result;
+
+  return {
+    kind: "visited",
+    node: result.node,
+    path: result.collectedNodes,
   };
 }
 

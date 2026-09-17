@@ -67,7 +67,7 @@ function addTaskEntryToTaskItem(
 
   return {
     newTree: result.node as Tree,
-    newPath: [newTaskEntry, ...(result.recordedPath as TreePath)],
+    newPath: [newTaskEntry, ...(result.path as TreePath)],
   };
 }
 
@@ -106,7 +106,7 @@ function addTaskItemToTaskLog(
 
   return {
     newTree: result.node as Tree,
-    newPath: [newTaskItem, ...(result.recordedPath as TreePath)],
+    newPath: [newTaskItem, ...(result.path as TreePath)],
   };
 }
 
@@ -160,7 +160,7 @@ function addTaskItemToTaskItem(
 
   return {
     newTree: result.node as Tree,
-    newPath: [newTaskItem, ...(result.recordedPath as TreePath)],
+    newPath: [newTaskItem, ...(result.path as TreePath)],
   };
 }
 
@@ -215,7 +215,7 @@ function deleteTaskItemSubtree(freshTree: Tree, taskItemToDelete: TaskItem): Bra
 
   return {
     newTree: result.node as Tree,
-    newPath: result.recordedPath.slice(1) as TreePath,
+    newPath: result.path.slice(1) as TreePath,
   };
 }
 
@@ -239,7 +239,7 @@ function deleteTaskEntry(freshTree: Tree, taskEntryToDelete: TaskEntry): BranchU
 
   return {
     newTree: result.node as Tree,
-    newPath: result.recordedPath.slice(1) as TreePath,
+    newPath: result.path.slice(1) as TreePath,
   };
 }
 
@@ -278,7 +278,7 @@ function replaceTaskItemAndUpdateDoneCounts(
 
   return {
     newTree: result.node as Tree,
-    newPath: result.recordedPath as TreePath,
+    newPath: result.path as TreePath,
   };
 }
 
@@ -308,7 +308,7 @@ function setFocusPath(freshTree: Tree, node: TreeNode, hasFocus: boolean): Branc
 
   return {
     newTree: result.node as Tree,
-    newPath: result.recordedPath as TreePath,
+    newPath: result.path as TreePath,
   };
 }
 

@@ -278,7 +278,7 @@ function replaceNode(tree: Tree, node: ReadableNode): ReplaceNodeResult {
 
   return {
     newTree: result.node as Tree,
-    newPath: result.recordedPath as TreePath,
+    newPath: result.path as TreePath,
   };
 }
 
@@ -302,7 +302,7 @@ function tryRefreshPathToNode(tree: Tree, node: TreeNode): TreePath | null {
 
     if (result.kind === "not-found") return null;
 
-    return result.recordedPath as TreePath;
+    return result.path as TreePath;
   } catch {
     return null;
   }

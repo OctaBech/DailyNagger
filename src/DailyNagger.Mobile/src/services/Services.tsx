@@ -1,6 +1,10 @@
 import { useCallback, useRef, type ReactNode } from "react";
 import { useCultureSettings } from "./culture";
-import { type MemoryEventType, useMemory, useSelectionMemory } from "./memory";
+import {
+  type MemoryEventType,
+  useMemory,
+  useMemoryWithAutomatedSelectedPath,
+} from "./memory";
 import { useLoading } from "./loading";
 import { useParcelFlowEvents, useSending } from "./sending";
 import { useSelectUserMood, useUserMoodState } from "./user-mood";
@@ -81,9 +85,17 @@ function useCreateServices(): {
   const editorMemoryEvents = useEventEmitter<MemoryEventType, void>();
   const actionEvents = useEventEmitter<ActionExecutionEventType, ActionExecutionEvent>();
   const rawPlanMemory = useMemory();
-  const planMemory = useSelectionMemory(rawPlanMemory, "planMemory", planMemoryEvents);
+  const planMemory = useMemoryWithAutomatedSelectedPath(
+    rawPlanMemory,
+    "planMemory",
+    planMemoryEvents,
+  );
   const rawEditorMemory = useMemory();
-  const editorMemory = useSelectionMemory(rawEditorMemory, "editorMemory", editorMemoryEvents);
+  const editorMemory = useMemoryWithAutomatedSelectedPath(
+    rawEditorMemory,
+    "editorMemory",
+    editorMemoryEvents,
+  );
 
   const userMood = useUserMoodState();
   const interactionStamp = useInteractionStamp(cultureSettings, userMood);

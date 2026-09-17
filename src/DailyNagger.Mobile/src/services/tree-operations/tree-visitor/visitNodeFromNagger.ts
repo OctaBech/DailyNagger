@@ -12,7 +12,7 @@ export function visitNodeFromNagger(
   if (requestTargetsKind(request, "nagger", nagger.id)) {
     return visitCurrentNode({
       node: nagger,
-      childPath: [],
+      collectedChildNodes: [],
       isTargetNode: true,
       visitNode: visitor.visitNagger,
       allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
@@ -30,7 +30,7 @@ export function visitNodeFromNagger(
 
       return visitCurrentNode({
         node: nodeWithVisitedTaskLog,
-        childPath: taskLogResult.recordedPath,
+        collectedChildNodes: taskLogResult.collectedNodes,
         childBubble: taskLogResult.bubble,
         visitNode: visitor.visitNagger,
         allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,

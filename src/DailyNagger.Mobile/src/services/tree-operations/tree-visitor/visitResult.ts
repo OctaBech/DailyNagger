@@ -1,7 +1,7 @@
 import type { TraversedNode } from "./traversed-node";
 import type { VisitContext } from "./contracts";
 import { assertSameNodeIdentity } from "./nodeIdentity";
-import { appendPathNode } from "./pathBubbling";
+import { appendCollectedNode } from "./nodeCollection";
 
 export type VisitResult<TNode extends TraversedNode> =
   | {
@@ -11,7 +11,7 @@ export type VisitResult<TNode extends TraversedNode> =
   | {
       readonly kind: "visited";
       readonly node: TNode;
-      readonly recordedPath: readonly TraversedNode[];
+      readonly collectedNodes: readonly TraversedNode[];
       readonly bubble: VisitBubble;
     };
 
@@ -28,7 +28,7 @@ export type VisitBubble =
 
 type VisitCurrentNodeProps<TNode extends TraversedNode> = {
   readonly node: TNode;
-  readonly childPath: readonly TraversedNode[];
+  readonly collectedChildNodes: readonly TraversedNode[];
   readonly visitNode: ((node: TNode, context: VisitContext) => TNode) | undefined;
   readonly allowIdentityChange?: boolean;
   readonly isTargetNode?: boolean;
@@ -37,16 +37,16 @@ type VisitCurrentNodeProps<TNode extends TraversedNode> = {
 
 export function visitCurrentNode<TNode extends TraversedNode>({
   node,
-  childPath,
+  collectedChildNodes,
   visitNode,
   allowIdentityChange = false,
   isTargetNode = false,
   childBubble = { kind: "none" },
 }: VisitCurrentNodeProps<TNode>): VisitResult<TNode> {
-  const ownRecordedPath = appendPathNode(childPath, node);
+  const nodesThroughCurrent = appendCollectedNode(collectedChildNodes, node);
   const isTargetParent = childBubble.kind === "found-target";
   const visitedNode =
-    visitNode?.(node, { isTargetNode, isTargetParent, path: ownRecordedPath }) ?? node;
+    visitNode?.(node, { isTargetNode, isTargetParent, path: nodesThroughCurrent }) ?? node;
 
   if (__DEV__ && !allowIdentityChange) {
     assertSameNodeIdentity(node, visitedNode);
@@ -55,7 +55,7 @@ export function visitCurrentNode<TNode extends TraversedNode>({
   return {
     kind: "visited",
     node: visitedNode,
-    recordedPath: appendPathNode(childPath, visitedNode),
+    collectedNodes: appendCollectedNode(collectedChildNodes, visitedNode),
     bubble: getBubble({ isTargetNode, childBubble }),
   };
 }

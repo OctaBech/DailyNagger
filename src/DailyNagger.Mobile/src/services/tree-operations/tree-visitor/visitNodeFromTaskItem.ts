@@ -17,7 +17,7 @@ export function visitNodeFromTaskItem(
   if (requestTargetsTaskItem(request, taskItem)) {
     return visitCurrentNode({
       node: taskItem,
-      childPath: [],
+      collectedChildNodes: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskItem,
       allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
@@ -28,7 +28,7 @@ export function visitNodeFromTaskItem(
     request,
     shouldVisitArray: shouldVisitTaskEntries(request, taskItem),
     ownerNode: taskItem,
-    ownerPath: [],
+    initialCollectedNodes: [],
     nodes: taskItem.taskEntries,
     shouldVisitNode: (taskEntry) => shouldVisitTaskEntry(request, taskEntry),
     visitNode: (taskEntry) => visitNodeFromTaskEntry(taskEntry, request, visitor),
@@ -38,7 +38,7 @@ export function visitNodeFromTaskItem(
     request,
     shouldVisitArray: shouldVisitChildTaskItems(request, taskItem),
     ownerNode: taskItem,
-    ownerPath: [],
+    initialCollectedNodes: [],
     nodes: taskItem.taskItems,
     shouldVisitNode: () => true,
     visitNode: (childTaskItem) => visitNodeFromTaskItem(childTaskItem, request, visitor),
@@ -62,7 +62,10 @@ export function visitNodeFromTaskItem(
 
   return visitCurrentNode({
     node: newTaskItem,
-    childPath: [...taskItemsResult.recordedPath, ...taskEntriesResult.recordedPath],
+    collectedChildNodes: [
+      ...taskItemsResult.collectedNodes,
+      ...taskEntriesResult.collectedNodes,
+    ],
     childBubble,
     visitNode: visitor.visitTaskItem,
     allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,

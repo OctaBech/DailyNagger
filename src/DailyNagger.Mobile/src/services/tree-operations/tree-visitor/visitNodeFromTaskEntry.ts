@@ -15,7 +15,7 @@ export function visitNodeFromTaskEntry(
   if (requestTargetsTaskEntry(request, taskEntry)) {
     return visitCurrentNode({
       node: taskEntry,
-      childPath: [],
+      collectedChildNodes: [],
       isTargetNode: true,
       visitNode: visitor.visitTaskEntry,
       allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,

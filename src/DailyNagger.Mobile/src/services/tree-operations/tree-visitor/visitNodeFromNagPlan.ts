@@ -13,7 +13,7 @@ export function visitNodeFromNagPlan(
     request,
     shouldVisitArray: true,
     ownerNode: nagPlan,
-    ownerPath: [],
+      initialCollectedNodes: [],
     nodes: nagPlan.nags,
     shouldVisitNode: (nagger) => shouldVisitNagger(request, nagger),
     visitNode: (nagger) => visitNodeFromNagger(nagger, request, visitor),
@@ -24,7 +24,7 @@ export function visitNodeFromNagPlan(
 
     return visitCurrentNode({
       node: nodeWithVisitedNaggers,
-      childPath: naggerResult.recordedPath,
+      collectedChildNodes: naggerResult.collectedNodes,
       childBubble: naggerResult.bubble,
       visitNode: visitor.visitNagPlan,
       allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
