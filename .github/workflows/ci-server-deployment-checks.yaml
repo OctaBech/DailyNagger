@@ -1,0 +1,40 @@
+name: CI - server deployment checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  server-deployment-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+      - name: Validate production Compose configuration
+        run: |
+          printf '%s\n' \
+            'MSSQL_SA_PASSWORD=DailyNagger_Ci_12345' \
+            'DAILY_NAGGER_SQL_APP_PASSWORD=DailyNagger_Ci_12345' \
+            'DAILY_NAGGER_IMAGE_TAG=ci' \
+            'DAILY_NAGGER_API_TOKEN=DailyNagger_CI_API_TOKEN' \
+            'DAILY_NAGGER_PUBLIC_HOST=localhost' \
+            > .env.ci
+          docker compose --env-file .env.ci -f compose.prod.yaml config --quiet
+      - name: Create server deployment archive (.tar.gz)
+        shell: pwsh
+        run: |
+          $archivePath = Join-Path $env:RUNNER_TEMP "dailynagger-source.tar.gz"
+          .\scripts\pack-server-deploy-source.ps1 -OutputPath $archivePath
+      - name: Extract server deployment archive
+        run: |
+          mkdir -p "$RUNNER_TEMP/dailynagger-unpacked"
+          tar -xzf "$RUNNER_TEMP/dailynagger-source.tar.gz" \
+            -C "$RUNNER_TEMP/dailynagger-unpacked"
+      - name: Build Docker image from extracted deployment source
+        run: |
+          docker build \
+            -f "$RUNNER_TEMP/dailynagger-unpacked/src/DailyNagger.Server/Dockerfile" \
+            -t dailynagger-server:ci \
+            "$RUNNER_TEMP/dailynagger-unpacked"
