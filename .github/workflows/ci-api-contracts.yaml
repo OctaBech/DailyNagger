@@ -1,0 +1,31 @@
+name: CI - API contracts
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  api-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install API contract dependencies
+        working-directory: src/api-contracts
+        run: npm ci
+      - name: Typecheck API contracts
+        working-directory: src/api-contracts
+        run: npm run typecheck
+      - name: Check API contract formatting
+        working-directory: src/api-contracts
+        run: npm run format:check
+      - name: Verify generated TypeScript schema
+        run: |
+          npm run generate --prefix src/api-contracts
+          git diff --exit-code -- src/api-contracts/src/schema.ts
