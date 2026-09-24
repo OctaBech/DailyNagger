@@ -24,4 +24,3 @@ export function createTaskEntryFormula(taskEntry: TaskEntry): Formula {
     }),
   };
 }
-

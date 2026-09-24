@@ -94,4 +94,3 @@ export function useUndoHistory<TChange>() {
 }
 
 export type UndoHistory<TChange> = Prettify<ReturnType<typeof useUndoHistory<TChange>>>;
-

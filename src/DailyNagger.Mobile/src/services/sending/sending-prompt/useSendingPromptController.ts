@@ -58,4 +58,3 @@ export function useSendingPromptController() {
 }
 
 export type SendingPromptController = ReturnType<typeof useSendingPromptController>;
-

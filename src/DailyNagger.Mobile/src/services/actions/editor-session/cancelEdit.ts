@@ -8,4 +8,3 @@ export function editorCancelEdit(
 ): void {
   editorMemory.write.clear();
 }
-

@@ -1,7 +1,7 @@
 name: dailynagger-staging
 
 services:
-  sqlserver:
+  staging-sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: dailynagger-staging-sqlserver
     environment:

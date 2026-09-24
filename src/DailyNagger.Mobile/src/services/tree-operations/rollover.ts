@@ -88,5 +88,3 @@ function keepRolloverTaskItems<TTaskItem extends TaskItem>(
 function countTaskItems(taskItems: readonly TaskItem[]): number {
   return taskItems.reduce((total, taskItem) => total + 1 + taskItem.descendantTaskItemCount, 0);
 }
-
-

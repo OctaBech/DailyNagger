@@ -43,4 +43,3 @@ export function useInteractionStamp(cultureSettings: CultureSettings, userMood: 
 }
 
 export type InteractionStamp = Prettify<ReturnType<typeof useInteractionStamp>>;
-

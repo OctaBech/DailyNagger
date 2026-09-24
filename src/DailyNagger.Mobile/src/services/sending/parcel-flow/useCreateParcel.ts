@@ -1,10 +1,4 @@
-import {
-  isNagger,
-  isTaskEntry,
-  isTaskLog,
-  isUserMood,
-  type UserMoodLabel,
-} from "@/models";
+import { isNagger, isTaskEntry, isTaskLog, isUserMood, type UserMoodLabel } from "@/models";
 import { naggerToDto, taskLogToDto } from "@/services/model-conversion";
 import { createParcelVersionStamp } from "@/services/parcel-versioning";
 import { newGuid } from "@/shared";
@@ -19,7 +13,6 @@ import type { Parcel, SendableContent } from "./contracts";
 import type { ParcelFlowEvents } from "./events";
 
 export type CreateParcel = (content: SendableContent) => Parcel;
-
 
 export function useCreateParcel(
   versionMemory: Memory,
@@ -69,5 +62,3 @@ export function useCreateParcel(
 
   return createParcel;
 }
-
-

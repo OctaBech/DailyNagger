@@ -16,4 +16,3 @@ export function editorTaskEntrySetLabel(
 
   memory.write.setTree(result.newTree);
 }
-

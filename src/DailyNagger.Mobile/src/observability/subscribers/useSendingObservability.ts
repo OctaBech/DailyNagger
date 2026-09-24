@@ -129,5 +129,3 @@ function getParcelIds(parcels: readonly Parcel[] | undefined): string | undefine
 
   return parcels.map((parcel) => parcel.stamp.parcelId).join(",");
 }
-
-

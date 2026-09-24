@@ -5,7 +5,10 @@ export function useBuildJsxActionPack<TRegistry extends RegisteredActionTree>(
   registry: TRegistry,
   executeJsxAction: ExecuteJsxAction,
 ): JsxActionPack<TRegistry> {
-  return useMemo(() => buildJsxActionPack(registry, executeJsxAction), [executeJsxAction, registry]);
+  return useMemo(
+    () => buildJsxActionPack(registry, executeJsxAction),
+    [executeJsxAction, registry],
+  );
 }
 
 function buildJsxActionPack<TRegistry extends RegisteredActionTree>(

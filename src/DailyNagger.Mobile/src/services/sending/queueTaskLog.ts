@@ -16,4 +16,3 @@ export function createTaskLogFormula(taskLog: TaskLogDto): Formula {
     payload: toJsonValue(taskLog),
   };
 }
-

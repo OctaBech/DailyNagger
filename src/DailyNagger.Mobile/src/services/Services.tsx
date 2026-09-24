@@ -1,10 +1,6 @@
 import { useCallback, useRef, type ReactNode } from "react";
 import { useCultureSettings } from "./culture";
-import {
-  type MemoryEventType,
-  useMemory,
-  useMemoryWithAutomatedSelectedPath,
-} from "./memory";
+import { type MemoryEventType, useMemory, useMemoryWithAutomatedSelectedPath } from "./memory";
 import { useLoading } from "./loading";
 import { useParcelFlowEvents, useSending } from "./sending";
 import { useSelectUserMood, useUserMoodState } from "./user-mood";
@@ -162,7 +158,6 @@ function useCreateServices(): {
     actionEvents,
     middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
-    screen: "plan",
   });
   const planDialJsxActions = useActionBoundary(planDialActionRegistry, {
     cultureSettings,
@@ -172,7 +167,6 @@ function useCreateServices(): {
     actionEvents,
     middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
-    screen: "plan",
   }).dial;
   const editorRegisteredActions = useActionBoundary(editorScreenActionRegistry, {
     cultureSettings,
@@ -182,7 +176,6 @@ function useCreateServices(): {
     actionEvents,
     middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
-    screen: "editor",
   });
   const editorDialJsxActions = useActionBoundary(editorDialActionRegistry, {
     cultureSettings,
@@ -192,7 +185,6 @@ function useCreateServices(): {
     actionEvents,
     middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
-    screen: "editor",
   }).dial;
   const planScreenCommands = useCreatePlanScreenActions({
     registeredActions: planRegisteredActions,

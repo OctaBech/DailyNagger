@@ -23,4 +23,3 @@ export function assertSameNodeIdentity(oldNode: TraversedNode, newNode: Traverse
     }
   }
 }
-

@@ -54,4 +54,3 @@ function shouldVisitTaskLog(request: VisitRequest, taskLog: TaskLogTraversedNode
       return false;
   }
 }
-

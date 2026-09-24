@@ -90,4 +90,3 @@ function addTaskItemNames(names: Set<string>, taskItems: readonly TaskItem[]): v
     addTaskItemNames(names, taskItem.taskItems);
   }
 }
-

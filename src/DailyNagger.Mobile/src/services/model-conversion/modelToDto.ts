@@ -82,4 +82,3 @@ function stripClientModelExtension<TDtoNode extends object>(
 
   return dtoNode as TDtoNode;
 }
-

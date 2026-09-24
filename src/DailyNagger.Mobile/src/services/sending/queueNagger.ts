@@ -30,4 +30,3 @@ export function createNaggerFormula(nagger: NaggerDto): Formula {
     }),
   };
 }
-

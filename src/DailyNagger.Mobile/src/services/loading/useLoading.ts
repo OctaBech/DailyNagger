@@ -31,4 +31,3 @@ export function useLoading(memory: Memory) {
     loadPlan,
   };
 }
-

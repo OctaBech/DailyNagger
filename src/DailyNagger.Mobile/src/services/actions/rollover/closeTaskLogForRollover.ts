@@ -19,4 +19,3 @@ export function closeTaskLogForRollover(
   planMemory.write.setTree(treeV1);
   sending.queue(closedTaskLog);
 }
-

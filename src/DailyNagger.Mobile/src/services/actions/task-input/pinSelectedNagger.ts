@@ -18,4 +18,3 @@ export function naggerPinSelected(
   memory.write.setTree(result.newTree);
   sending.queue(naggerV1);
 }
-

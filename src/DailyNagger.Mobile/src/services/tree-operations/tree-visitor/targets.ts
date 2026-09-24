@@ -1,4 +1,4 @@
-import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree, TreeNode } from "@/models";
+import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
 import { isNagger, isTaskEntry, isTaskItem, isTaskLog } from "@/models";
 import type {
   NaggerTraversedNode,
@@ -35,15 +35,15 @@ type WholeTreeVisitResult<TNode extends NagPlanTraversedNode | TaskLogTraversedN
       readonly visitedNodes: readonly TraversedNode[];
     };
 
-type TargetVisitResult<TNode extends NagPlanTraversedNode> =
+type TreeTargetVisitResult =
   | {
       readonly kind: "not-found";
-      readonly node: TNode;
+      readonly node: Tree;
     }
   | {
       readonly kind: "visited";
-      readonly node: TNode;
-      readonly path: readonly TraversedNode[];
+      readonly node: Tree;
+      readonly path: TreePath;
     };
 
 type TargetVisitor = {
@@ -90,7 +90,7 @@ function visitNode(
   fromTree: Tree,
   toNode: Exclude<TreeNode, Tree>,
   visitor: TargetVisitor,
-): TargetVisitResult<NagPlanTraversedNode> {
+): TreeTargetVisitResult {
   const result = visitNodeFromNagPlan(
     fromTree as NagPlanTraversedNode,
     createVisitRequest(fromTree, toNode),
@@ -225,15 +225,23 @@ function toWholeTreeResult<TNode extends NagPlanTraversedNode | TaskLogTraversed
   };
 }
 
-function toTargetVisitResult(
-  result: VisitResult<NagPlanTraversedNode>,
-): TargetVisitResult<NagPlanTraversedNode> {
-  if (result.kind === "not-found") return result;
+function toTargetVisitResult(result: VisitResult<NagPlanTraversedNode>): TreeTargetVisitResult {
+  // Target visits always start with a complete Tree and use visitors that accept
+  // and return complete client-model nodes. The shared traversal engine uses the
+  // broader TraversedNode types because whole-tree visits also support conversion
+  // from partial transport models.
+  //
+  // A target visit therefore cannot introduce partial nodes: its returned root is
+  // still a Tree, and its collected nodes form a TreePath. These casts encode that
+  // boundary invariant in one place because TypeScript cannot infer it through the
+  // shared traversal engine.
+  if (result.kind === "not-found") {
+    return { kind: "not-found", node: result.node as Tree };
+  }
 
   return {
     kind: "visited",
-    node: result.node,
-    path: result.collectedNodes,
+    node: result.node as Tree,
+    path: result.collectedNodes as TreePath,
   };
 }
-

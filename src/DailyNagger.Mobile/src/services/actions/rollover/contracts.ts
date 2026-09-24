@@ -7,5 +7,3 @@ export type RolloverActionScope = {
   readonly planMemory: Memory;
   readonly sending: Sending;
 };
-
-

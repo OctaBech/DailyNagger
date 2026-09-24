@@ -1,4 +1,1 @@
-export {
-  mergeParcelVersioning,
-  type MergedParcelVersioning,
-} from "./mergeParcelVersioning";
+export { mergeParcelVersioning, type MergedParcelVersioning } from "./mergeParcelVersioning";

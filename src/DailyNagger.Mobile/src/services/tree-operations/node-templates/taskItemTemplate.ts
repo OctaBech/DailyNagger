@@ -37,4 +37,3 @@ export function createTaskItem(input: CreateTaskItemInput): TaskItem {
     name: input.name,
   };
 }
-

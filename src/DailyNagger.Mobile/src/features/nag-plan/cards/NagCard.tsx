@@ -93,4 +93,3 @@ const styles = StyleSheet.create({
     gap: nagPlanTheme.cardDensity.fieldGap,
   },
 });
-

@@ -81,4 +81,3 @@ export type TreeVisitor = {
     context: VisitContext,
   ) => TaskEntryTraversedNode;
 };
-

@@ -60,4 +60,3 @@ const TaskLogCardComponent = ({
 };
 
 export const TaskLogCard = memo(TaskLogCardComponent);
-

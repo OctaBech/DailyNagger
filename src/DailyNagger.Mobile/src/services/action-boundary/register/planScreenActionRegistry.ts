@@ -5,65 +5,64 @@ import { registerAction } from "./actionRegistrationModel";
 export const planScreenActionRegistry = {
   nagger: {
     setExpanded: registerAction(
-      "navigation",
       navigationActions.naggerSetExpanded,
       (nagger: Nagger, isExpanded: boolean) => ({ nagger, isExpanded }),
+      "plan/navigation",
     ),
     setFocused: registerAction(
-      "navigation",
       navigationActions.naggerSetFocused,
       (nagger: Nagger) => ({ nagger }),
+      "plan/navigation",
     ),
   },
   taskEntry: {
     setFocused: registerAction(
-      "navigation",
       navigationActions.taskEntrySetFocused,
       (taskEntry: TaskEntry) => ({ taskEntry }),
+      "plan/navigation",
     ),
     setValue: registerAction(
-      "task-input",
       taskInputActions.taskEntrySetValue,
       (taskEntry: TaskEntry, newValue: string | null) => ({ taskEntry, newValue }),
+      "plan/task-input",
     ),
   },
   taskItem: {
     deleteOnce: registerAction(
-      "task-input",
       taskInputActions.deleteOnceTaskItem,
       (taskItem: TaskItem) => ({ taskItem }),
+      "plan/task-input",
     ),
     setDoneAndSetFocus: registerAction(
-      "task-input",
       taskInputActions.taskItemSetDoneAndSetFocus,
       (taskItem: TaskItem, isDone: boolean) => ({ taskItem, isDone }),
+      "plan/task-input",
     ),
     setExpanded: registerAction(
-      "navigation",
       navigationActions.taskItemSetExpanded,
       (taskItem: TaskItem, isExpanded: boolean) => ({ taskItem, isExpanded }),
+      "plan/navigation",
     ),
     setFocused: registerAction(
-      "navigation",
       navigationActions.taskItemSetFocused,
       (taskItem: TaskItem) => ({ taskItem }),
+      "plan/navigation",
     ),
   },
   taskLog: {
     addTaskStep: registerAction(
-      "task-input",
       taskInputActions.taskLogAddTaskStep,
       (taskLog: TaskLog, name: string, rolloverBehavior: TaskItem["rolloverBehavior"]) => ({
         taskLog,
         name,
         rolloverBehavior,
       }),
+      "plan/task-input",
     ),
     setFocused: registerAction(
-      "navigation",
       navigationActions.taskLogSetFocused,
       (taskLog: TaskLog) => ({ taskLog }),
+      "plan/navigation",
     ),
   },
 } as const;
-

@@ -9,4 +9,3 @@ export function importLoadedPlanToMemory(memory: Memory, nagPlanDto: NagPlanDto)
 
   memory.write.setTree(treeWithOrderedNaggers);
 }
-

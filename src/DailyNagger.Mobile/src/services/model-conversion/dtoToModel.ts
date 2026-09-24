@@ -56,4 +56,3 @@ function scheduleRuleToModel(
 
   return scheduleRuleDtoToModel(scheduleRule);
 }
-

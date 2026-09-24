@@ -62,10 +62,7 @@ export function visitNodeFromTaskItem(
 
   return visitCurrentNode({
     node: newTaskItem,
-    collectedChildNodes: [
-      ...taskItemsResult.collectedNodes,
-      ...taskEntriesResult.collectedNodes,
-    ],
+    collectedChildNodes: [...taskItemsResult.collectedNodes, ...taskEntriesResult.collectedNodes],
     childBubble,
     visitNode: visitor.visitTaskItem,
     allowIdentityChange: request.kind === "whole-tree" && request.allowIdentityChange === true,
@@ -111,4 +108,3 @@ function requestTargetsTaskItem(request: VisitRequest, taskItem: TaskItemTravers
     request.target.requiredAncestry.parentTaskItemId === taskItem.parentTaskItemId
   );
 }
-

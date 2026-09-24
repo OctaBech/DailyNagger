@@ -36,4 +36,3 @@ export function editorSaveEdit(
   sending.queue(naggerV2);
   sending.queue(taskLogV1);
 }
-

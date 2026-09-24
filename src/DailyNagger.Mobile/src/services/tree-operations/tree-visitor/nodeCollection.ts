@@ -6,4 +6,3 @@ export function appendCollectedNode(
 ): readonly TraversedNode[] {
   return [...collectedNodes, node];
 }
-

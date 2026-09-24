@@ -239,7 +239,7 @@ function replaceNagger(tree: Tree, nagger: Nagger): Tree {
     throw new Error(`Nagger '${nagger.id}' was not found in the current tree.`);
   }
 
-  return result.node as Tree;
+  return result.node;
 }
 
 function replaceTaskEntry(tree: Tree, taskEntry: TaskEntry): Tree {
@@ -253,7 +253,7 @@ function replaceTaskEntry(tree: Tree, taskEntry: TaskEntry): Tree {
     throw new Error(`TaskEntry '${taskEntry.id}' was not found in the current tree.`);
   }
 
-  return result.node as Tree;
+  return result.node;
 }
 
 function replaceNode(tree: Tree, node: ReadableNode): ReplaceNodeResult {
@@ -277,8 +277,8 @@ function replaceNode(tree: Tree, node: ReadableNode): ReplaceNodeResult {
   }
 
   return {
-    newTree: result.node as Tree,
-    newPath: result.path as TreePath,
+    newTree: result.node,
+    newPath: result.path,
   };
 }
 
@@ -302,9 +302,8 @@ function tryRefreshPathToNode(tree: Tree, node: TreeNode): TreePath | null {
 
     if (result.kind === "not-found") return null;
 
-    return result.path as TreePath;
+    return result.path;
   } catch {
     return null;
   }
 }
-

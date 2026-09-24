@@ -14,5 +14,3 @@ export function naggerSetFocused(
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
-
-

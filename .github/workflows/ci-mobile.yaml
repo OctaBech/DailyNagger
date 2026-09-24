@@ -1,0 +1,33 @@
+name: CI - mobile
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Install mobile dependencies
+        working-directory: src/DailyNagger.Mobile
+        run: npm ci
+      - name: Typecheck mobile
+        working-directory: src/DailyNagger.Mobile
+        run: npm run typecheck
+      - name: Run Jest tests
+        working-directory: src/DailyNagger.Mobile
+        run: npm run test:ci
+      - name: Run ESLint
+        working-directory: src/DailyNagger.Mobile
+        run: npm run lint
+      - name: Check formatting
+        working-directory: src/DailyNagger.Mobile
+        run: npm run format:check

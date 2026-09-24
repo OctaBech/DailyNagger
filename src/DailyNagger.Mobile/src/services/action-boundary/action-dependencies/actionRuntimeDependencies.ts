@@ -6,56 +6,42 @@ import type {
   taskInputActions,
 } from "@/services/actions";
 
-export type ActionScope = "navigation" | "task-input" | "editor" | "editor-session";
-export type ActionRuntimeDependencyScreen = "plan" | "editor";
+type RuntimeDependenciesByScope = {
+  readonly "plan/navigation": navigationActions.NavigationRuntimeDependencies;
+  readonly "plan/task-input": taskInputActions.TaskInputRuntimeDependencies;
+  readonly "editor/navigation": navigationActions.NavigationRuntimeDependencies;
+  readonly "editor/action": editorActions.EditorRuntimeDependencies;
+  readonly "editor/session": editorSessionActions.EditorSessionRuntimeDependencies;
+};
+
+export type ActionScope = keyof RuntimeDependenciesByScope;
 
 export type RuntimeDependenciesForActionScope<TScope extends ActionScope> =
-  TScope extends "navigation"
-    ? navigationActions.NavigationRuntimeDependencies
-    : TScope extends "task-input"
-      ? taskInputActions.TaskInputRuntimeDependencies
-      : TScope extends "editor"
-        ? editorActions.EditorRuntimeDependencies
-        : TScope extends "editor-session"
-          ? editorSessionActions.EditorSessionRuntimeDependencies
-          : never;
+  RuntimeDependenciesByScope[TScope];
 
-export function getActionRuntimeDependencies(
-  screen: ActionRuntimeDependencyScreen,
-  scope: ActionScope,
+export function createActionRuntimeDependencies(
   inputs: RuntimeDependencyInputs,
-): RuntimeDependenciesForActionScope<ActionScope> {
-  switch (`${screen}:${scope}`) {
-    case "plan:navigation":
-      return { memory: inputs.planMemory } satisfies navigationActions.NavigationRuntimeDependencies;
-
-    case "plan:task-input":
-      return {
-        memory: inputs.planMemory,
-        sending: inputs.sending,
-        interactionStamp: inputs.planInteractionStamp,
-      } satisfies taskInputActions.TaskInputRuntimeDependencies;
-
-    case "editor:editor":
-      return {
-        cultureSettings: inputs.cultureSettings,
-        memory: inputs.editorMemory,
-      } satisfies editorActions.EditorRuntimeDependencies;
-
-    case "editor:navigation":
-      return { memory: inputs.editorMemory } satisfies navigationActions.NavigationRuntimeDependencies;
-
-    case "editor:editor-session":
-      return {
-        editorMemory: inputs.editorMemory,
-        planMemory: inputs.planMemory,
-        sending: inputs.sending,
-      } satisfies editorSessionActions.EditorSessionRuntimeDependencies;
-
-    default:
-      throw new Error(`Screen '${screen}' cannot execute '${scope}' actions.`);
-  }
+): RuntimeDependenciesByScope {
+  return {
+    "plan/navigation": {
+      memory: inputs.planMemory,
+    },
+    "plan/task-input": {
+      memory: inputs.planMemory,
+      sending: inputs.sending,
+      interactionStamp: inputs.planInteractionStamp,
+    },
+    "editor/navigation": {
+      memory: inputs.editorMemory,
+    },
+    "editor/action": {
+      cultureSettings: inputs.cultureSettings,
+      memory: inputs.editorMemory,
+    },
+    "editor/session": {
+      editorMemory: inputs.editorMemory,
+      planMemory: inputs.planMemory,
+      sending: inputs.sending,
+    },
+  } satisfies RuntimeDependenciesByScope;
 }
-
-
-

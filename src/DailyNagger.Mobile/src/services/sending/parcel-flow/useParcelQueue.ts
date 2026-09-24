@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hibernateMiddlewareContext, runWithAwakenedMiddlewareContext } from "@/middleware";
 import type { Guid } from "@/shared";
-import { useTimer } from "@/shared";
+import { useTimer } from "@/shared/useTimer";
 import type { OwnerType } from "../contracts";
 import { sendTimerConfig } from "../sendTimerConfig";
 import { mergeParcelVersioning } from "../parcelVersioning/mergeParcelVersioning";
@@ -13,7 +13,8 @@ import type {
   ProcessNextParcelBatchOptions,
   SendParcelBatch,
 } from "./contracts";
-import { emitParcelBatchEvent, type ParcelFlowEvents } from "./events";
+import { emitParcelBatchEvent } from "./events/emitParcelBatchEvent";
+import type { ParcelFlowEvents } from "./events/contracts";
 import type { ParcelQueueMiddleware } from "./parcelQueueMiddleware";
 import { persistentStorage, type QueuedParcel } from "./persistentStorage";
 
@@ -220,7 +221,6 @@ export function useParcelQueue(
     };
   }
 
-
   function getFirstQueuedParcel(): Parcel {
     const firstQueueEntry = queueEntriesRef.current[0];
 
@@ -294,6 +294,3 @@ export function useParcelQueue(
 }
 
 export type ParcelQueue = ReturnType<typeof useParcelQueue>;
-
-
-

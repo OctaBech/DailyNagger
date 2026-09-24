@@ -20,4 +20,3 @@ Rules:
 - Register an action once in the relevant registry.
 - The registry owns the action key, action scope, action function, and UI-to-action argument mapping.
 - Observability may listen to events or wrap execution, but Sentry details stay outside normal action code.
-

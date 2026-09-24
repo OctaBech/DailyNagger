@@ -21,4 +21,3 @@ export function addTaskEntryToTaskItem(
 
   memory.write.setTreeAndFocusPath(newTree, newPath);
 }
-

@@ -82,8 +82,8 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
         ),
       middlewareWrapperFunction,
       {
-          naggerId: nagger.id,
-          taskLogId: nagger.taskLog.id,
+        naggerId: nagger.id,
+        taskLogId: nagger.taskLog.id,
       },
     );
 
@@ -121,6 +121,3 @@ function getNaggerExpiresAt(activeLogDueOn: string, cultureSettings: CultureSett
 function yieldToUi() {
   return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
-
-
-

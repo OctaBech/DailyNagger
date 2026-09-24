@@ -5,5 +5,3 @@ export type TaskInputRuntimeDependencies = {
   readonly sending: Sending;
   readonly interactionStamp: InteractionStamp;
 };
-
-

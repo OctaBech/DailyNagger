@@ -1,4 +1,4 @@
-import { appTiming } from "@/config";
+import { appTiming } from "@/config/appTiming";
 
 export const sendTimerConfig = {
   debounced: {
@@ -12,4 +12,3 @@ export const sendTimerConfig = {
     maxMs: appTiming.sendQueue.maxRetryDelayMs,
   },
 } as const;
-

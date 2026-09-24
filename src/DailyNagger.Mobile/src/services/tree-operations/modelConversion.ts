@@ -61,4 +61,3 @@ function replaceAllNodesFromTaskLog<
 
   return result.node as TOut;
 }
-

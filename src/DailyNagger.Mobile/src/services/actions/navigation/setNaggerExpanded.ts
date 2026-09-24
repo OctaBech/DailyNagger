@@ -16,5 +16,3 @@ export function naggerSetExpanded(
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
-
-

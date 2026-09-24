@@ -138,5 +138,3 @@ const styles = StyleSheet.create({
     backgroundColor: nagPlanTheme.taskItem.selectedBackground,
   },
 });
-
-

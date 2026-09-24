@@ -1,4 +1,7 @@
-import type { ActionScope, RuntimeDependenciesForActionScope } from "@/services/action-boundary/action-dependencies";
+import type {
+  ActionScope,
+  RuntimeDependenciesForActionScope,
+} from "@/services/action-boundary/action-dependencies";
 
 export type RegisteredJsxAction<
   TScope extends ActionScope,
@@ -18,14 +21,9 @@ export function registerAction<
   TActionArgs,
   TPublicArgs extends unknown[],
 >(
-  scope: TScope,
   run: (args: TActionArgs, runtimeDependencies: RuntimeDependenciesForActionScope<TScope>) => void,
   toActionArgs: (...publicArgs: TPublicArgs) => TActionArgs,
+  scope: TScope,
 ): RegisteredJsxAction<TScope, TActionArgs, TPublicArgs> {
   return { scope, run, toActionArgs };
 }
-
-
-
-
-

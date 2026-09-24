@@ -1,7 +1,9 @@
 import { createEventEmitter } from "@/shared";
 
 export type ApiRequestEventType =
-  "api.request.started" | "api.request.finished" | "api.request.failed";
+  | "api.request.started"
+  | "api.request.finished"
+  | "api.request.failed";
 
 export type ApiRequestEvent = {
   readonly durationMs?: number;

@@ -89,4 +89,3 @@ function discardPersistedQueue(startupWarning: string): PersistentStorageLoadRes
   storage.remove(queueStorageKey);
   return { queueEntries: [], startupWarning };
 }
-

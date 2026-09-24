@@ -16,4 +16,3 @@ export function editorTaskItemSetTag(
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
-

@@ -20,4 +20,3 @@ export function requestTargetsKind(
 
   return request.target.id === id;
 }
-

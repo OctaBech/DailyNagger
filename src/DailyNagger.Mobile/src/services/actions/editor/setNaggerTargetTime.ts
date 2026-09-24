@@ -16,4 +16,3 @@ export function editorNaggerSetTargetTime(
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
-

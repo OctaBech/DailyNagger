@@ -13,7 +13,7 @@ export function visitNodeFromNagPlan(
     request,
     shouldVisitArray: true,
     ownerNode: nagPlan,
-      initialCollectedNodes: [],
+    initialCollectedNodes: [],
     nodes: nagPlan.nags,
     shouldVisitNode: (nagger) => shouldVisitNagger(request, nagger),
     visitNode: (nagger) => visitNodeFromNagger(nagger, request, visitor),
@@ -58,4 +58,3 @@ function withNaggers(
     clientProps: { ...nagPlan.clientProps, indexHint },
   };
 }
-

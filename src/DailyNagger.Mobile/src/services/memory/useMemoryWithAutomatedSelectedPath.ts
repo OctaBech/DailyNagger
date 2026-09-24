@@ -36,7 +36,7 @@ export function useMemoryWithAutomatedSelectedPath(
   );
 
   const clear = useCallback(() => {
-      recordMemoryEvent("cleared");
+    recordMemoryEvent("cleared");
     baseClear();
   }, [baseClear, recordMemoryEvent]);
 
@@ -54,7 +54,13 @@ export function useMemoryWithAutomatedSelectedPath(
       recordMemoryEvent("saved.selected.path");
       baseSetTreeAndSelectedPath(result.tree, result.treePath);
     },
-    [baseSetSelectedPath, baseSetTreeAndSelectedPath, getSelectedPath, memory.read, recordMemoryEvent],
+    [
+      baseSetSelectedPath,
+      baseSetTreeAndSelectedPath,
+      getSelectedPath,
+      memory.read,
+      recordMemoryEvent,
+    ],
   );
 
   const setTree = useCallback(
@@ -172,6 +178,3 @@ function trySetFocusPath(tree: Tree, node: TreeNode, hasFocus: boolean) {
     return null;
   }
 }
-
-
-

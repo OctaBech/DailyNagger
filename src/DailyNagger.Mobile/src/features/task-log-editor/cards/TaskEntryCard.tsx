@@ -56,4 +56,3 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
 };
 
 export const TaskEntryCard = memo(TaskEntryCardComponent);
-

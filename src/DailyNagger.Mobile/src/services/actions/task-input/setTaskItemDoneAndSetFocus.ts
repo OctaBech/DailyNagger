@@ -27,4 +27,3 @@ export function taskItemSetDoneAndSetFocus(
   const { freshTaskLog } = tree.readTaskLog(memory, args.taskItem);
   sending.queue(freshTaskLog);
 }
-

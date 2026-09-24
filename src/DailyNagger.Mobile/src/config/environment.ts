@@ -8,11 +8,30 @@ const environmentSchema = z.object({
   userId: z.string().guid(),
 });
 
+function requireEnv(name: string, value: string | undefined): string {
+  if (value === undefined || value.trim() === "") {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+
+  return value;
+}
+
 export const environment = environmentSchema.parse({
-  apiBaseUrl: process.env.EXPO_PUBLIC_DAILY_NAGGER_API_BASE_URL ?? "http://localhost:5010",
-  apiToken: process.env.EXPO_PUBLIC_DAILY_NAGGER_API_TOKEN ?? "",
-  communityId:
-    process.env.EXPO_PUBLIC_DAILY_NAGGER_COMMUNITY_ID ?? "22222222-2222-2222-2222-222222222222",
+  apiBaseUrl: requireEnv(
+    "EXPO_PUBLIC_DAILY_NAGGER_API_BASE_URL",
+    process.env.EXPO_PUBLIC_DAILY_NAGGER_API_BASE_URL,
+  ),
+  apiToken: requireEnv(
+    "EXPO_PUBLIC_DAILY_NAGGER_API_TOKEN",
+    process.env.EXPO_PUBLIC_DAILY_NAGGER_API_TOKEN,
+  ),
+  communityId: requireEnv(
+    "EXPO_PUBLIC_DAILY_NAGGER_COMMUNITY_ID",
+    process.env.EXPO_PUBLIC_DAILY_NAGGER_COMMUNITY_ID,
+  ),
   sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN || undefined,
-  userId: process.env.EXPO_PUBLIC_DAILY_NAGGER_USER_ID ?? "11111111-1111-1111-1111-111111111111",
+  userId: requireEnv(
+    "EXPO_PUBLIC_DAILY_NAGGER_USER_ID",
+    process.env.EXPO_PUBLIC_DAILY_NAGGER_USER_ID,
+  ),
 });

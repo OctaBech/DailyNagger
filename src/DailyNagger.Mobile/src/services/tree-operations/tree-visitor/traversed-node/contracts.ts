@@ -50,4 +50,3 @@ export interface TaskItemTraversedNode
 export type TaskEntryTraversedNode = Immutable<
   TaskEntryDto & PartialClientModelExtension<TaskEntryClientModelExtension>
 >;
-

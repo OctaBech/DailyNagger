@@ -5,40 +5,39 @@ import { registerAction } from "./actionRegistrationModel";
 export const editorDialActionRegistry = {
   dial: {
     cancelEdit: registerAction(
-      "editor-session",
       editorSessionActions.editorCancelEdit,
       (nagger: Nagger) => ({ nagger }),
+      "editor/session",
     ),
     deleteSelectedNode: registerAction(
-      "editor",
       editorActions.editorDeleteSelectedNode,
       (deleteContext: SelectedDeleteContext) => ({ deleteContext }),
+      "editor/action",
     ),
     moveSelectedNodeDown: registerAction(
-      "editor",
       editorActions.editorMoveSelectedNodeDown,
       (moveContext: SelectedMoveContext) => ({ moveContext }),
+      "editor/action",
     ),
     moveSelectedNodeUp: registerAction(
-      "editor",
       editorActions.editorMoveSelectedNodeUp,
       (moveContext: SelectedMoveContext) => ({ moveContext }),
+      "editor/action",
     ),
     pinSelectedNagger: registerAction(
-      "editor",
       editorActions.naggerPinSelected,
       (nagger: Nagger) => ({ nagger }),
+      "editor/action",
     ),
     saveEdit: registerAction(
-      "editor-session",
       editorSessionActions.editorSaveEdit,
       (nagger: Nagger) => ({ nagger }),
+      "editor/session",
     ),
     unpinSelectedNagger: registerAction(
-      "editor",
       editorActions.naggerUnpinSelected,
       (nagger: Nagger) => ({ nagger }),
+      "editor/action",
     ),
   },
 } as const;
-

@@ -5,15 +5,14 @@ import { registerAction } from "./actionRegistrationModel";
 export const planDialActionRegistry = {
   dial: {
     pinSelectedNagger: registerAction(
-      "task-input",
       taskInputActions.naggerPinSelected,
       (nagger: Nagger) => ({ nagger }),
+      "plan/task-input",
     ),
     unpinSelectedNagger: registerAction(
-      "task-input",
       taskInputActions.naggerUnpinSelected,
       (nagger: Nagger) => ({ nagger }),
+      "plan/task-input",
     ),
   },
 } as const;
-

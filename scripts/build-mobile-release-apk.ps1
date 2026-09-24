@@ -391,6 +391,9 @@ Import-DotEnv $envPath
 
 $apiBaseUrl = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_API_BASE_URL"
 $apiToken = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_API_TOKEN"
+$communityId = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_COMMUNITY_ID"
+$userId = Get-RequiredEnv "EXPO_PUBLIC_DAILY_NAGGER_USER_ID"
+$appEnvironment = [Environment]::GetEnvironmentVariable("EXPO_PUBLIC_DAILY_NAGGER_APP_ENV")
 $androidPackage = [Environment]::GetEnvironmentVariable("DAILY_NAGGER_MOBILE_ANDROID_PACKAGE")
 $appName = [Environment]::GetEnvironmentVariable("DAILY_NAGGER_MOBILE_APP_NAME")
 if ([string]::IsNullOrWhiteSpace($androidPackage)) {
@@ -424,13 +427,17 @@ if (!$apiBaseUrl.StartsWith("https://")) {
     throw "Release build refused: API base URL must use HTTPS: $apiBaseUrl"
 }
 
-Write-Host "Building DailyNagger mobile release APK..."
+Write-Host "Building $appName mobile release APK..."
 Write-Host "Repo root: $repoRoot"
 Write-Host "Mobile project: $mobileProject"
+Write-Host "Mobile env path: $envPath"
+Write-Host "App environment: $appEnvironment"
 Write-Host "Android package: $androidPackage"
 Write-Host "App name: $appName"
 Write-Host "API base URL: $apiBaseUrl"
 Write-Host "API token: configured"
+Write-Host "Community id: $communityId"
+Write-Host "User id: $userId"
 Write-Host "Build log: $buildLogPath"
 Write-Host "Gradle user home: $gradleUserHome"
 Write-Host "Android SDK: $androidSdk"

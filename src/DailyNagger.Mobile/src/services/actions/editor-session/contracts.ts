@@ -6,5 +6,3 @@ export type EditorSessionRuntimeDependencies = {
   readonly planMemory: Memory;
   readonly sending: Sending;
 };
-
-

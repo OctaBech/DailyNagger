@@ -57,7 +57,9 @@ type TaskItemInTaskLogContext = {
 };
 
 export type SelectedMoveContext =
-  TaskEntryInTaskItemContext | TaskItemInTaskItemContext | TaskItemInTaskLogContext;
+  | TaskEntryInTaskItemContext
+  | TaskItemInTaskItemContext
+  | TaskItemInTaskLogContext;
 
 export type SelectedDeleteContext = SelectedMoveContext;
 

@@ -7,122 +7,121 @@ import { registerAction } from "./actionRegistrationModel";
 export const editorScreenActionRegistry = {
   effects: {
     startEdit: registerAction(
-      "editor-session",
       editorSessionActions.editorStartEdit,
       (naggerId: Guid | null) => ({ naggerId }),
+      "editor/session",
     ),
   },
   nagger: {
     setExpanded: registerAction(
-      "navigation",
       navigationActions.naggerSetExpanded,
       (nagger: Nagger, isExpanded: boolean) => ({ nagger, isExpanded }),
+      "editor/navigation",
     ),
     setFocused: registerAction(
-      "navigation",
       navigationActions.naggerSetFocused,
       (nagger: Nagger) => ({ nagger }),
+      "editor/navigation",
     ),
     setScheduleRules: registerAction(
-      "editor",
       editorActions.editorNaggerSetScheduleRules,
       (nagger: Nagger, scheduleRules: readonly ScheduleRule[]) => ({ nagger, scheduleRules }),
+      "editor/action",
     ),
     setTargetTime: registerAction(
-      "editor",
       editorActions.editorNaggerSetTargetTime,
       (nagger: Nagger, targetTime: string | null) => ({ nagger, targetTime }),
+      "editor/action",
     ),
     setTitle: registerAction(
-      "editor",
       editorActions.editorNaggerSetTitle,
       (nagger: Nagger, title: string) => ({ nagger, title }),
+      "editor/action",
     ),
   },
   taskEntry: {
     setFocused: registerAction(
-      "navigation",
       navigationActions.taskEntrySetFocused,
       (taskEntry: TaskEntry) => ({ taskEntry }),
+      "editor/navigation",
     ),
     setLabel: registerAction(
-      "editor",
       editorActions.editorTaskEntrySetLabel,
       (taskEntry: TaskEntry, label: string) => ({ taskEntry, label }),
+      "editor/action",
     ),
     setTag: registerAction(
-      "editor",
       editorActions.editorTaskEntrySetTag,
       (taskEntry: TaskEntry, tag: string | null) => ({ taskEntry, tag }),
+      "editor/action",
     ),
     setValue: registerAction(
-      "editor",
       editorActions.editorTaskEntrySetValue,
       (taskEntry: TaskEntry, newValue: string | null) => ({ taskEntry, newValue }),
+      "editor/action",
     ),
     setValueType: registerAction(
-      "editor",
       editorActions.editorTaskEntrySetValueType,
       (
         taskEntry: TaskEntry,
         valueType: TaskEntryValueType,
         rolloverBehavior?: TaskEntry["rolloverBehavior"],
       ) => ({ taskEntry, valueType, rolloverBehavior }),
+      "editor/action",
     ),
   },
   taskItem: {
     addTaskEntry: registerAction(
-      "editor",
       editorActions.addTaskEntryToTaskItem,
       (taskItem: TaskItem) => ({ taskItem }),
+      "editor/action",
     ),
     addTaskItem: registerAction(
-      "editor",
       editorActions.addTaskItemToTaskItem,
       (taskItem: TaskItem) => ({ taskItem }),
+      "editor/action",
     ),
     deleteOnce: registerAction(
-      "editor",
       editorActions.editorDeleteOnceTaskItem,
       (taskItem: TaskItem) => ({ taskItem }),
+      "editor/action",
     ),
     setExpanded: registerAction(
-      "navigation",
       navigationActions.taskItemSetExpanded,
       (taskItem: TaskItem, isExpanded: boolean) => ({ taskItem, isExpanded }),
+      "editor/navigation",
     ),
     setFocused: registerAction(
-      "navigation",
       navigationActions.taskItemSetFocused,
       (taskItem: TaskItem) => ({ taskItem }),
+      "editor/navigation",
     ),
     setName: registerAction(
-      "editor",
       editorActions.editorTaskItemSetName,
       (taskItem: TaskItem, name: string) => ({ taskItem, name }),
+      "editor/action",
     ),
     setTag: registerAction(
-      "editor",
       editorActions.editorTaskItemSetTag,
       (taskItem: TaskItem, tag: string | null) => ({ taskItem, tag }),
+      "editor/action",
     ),
   },
   taskLog: {
     addTaskItem: registerAction(
-      "editor",
       editorActions.addTaskItemToTaskLog,
       (taskLog: TaskLog) => ({ taskLog }),
+      "editor/action",
     ),
     setFocused: registerAction(
-      "navigation",
       navigationActions.taskLogSetFocused,
       (taskLog: TaskLog) => ({ taskLog }),
+      "editor/navigation",
     ),
     setTag: registerAction(
-      "editor",
       editorActions.editorTaskLogSetTag,
       (taskLog: TaskLog, tag: string | null) => ({ taskLog, tag }),
+      "editor/action",
     ),
   },
 } as const;
-

@@ -1,6 +1,6 @@
 import { appTiming } from "@/config";
 import { editableFrame, inactiveEditableFrame } from "@/components/primitives/editableFrame";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { StyleProp, TextInputProps, TextStyle } from "react-native";
 import { TextInput } from "react-native";
 
@@ -91,7 +91,7 @@ export function CommitTextInput<TCommitValue extends string | null = string>({
   const onFocusRef = useRef(onFocus);
   const onTouchStartRef = useRef(onTouchStart);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     onCommitRef.current = onCommit;
     onFocusRef.current = onFocus;
     onTouchStartRef.current = onTouchStart;

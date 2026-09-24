@@ -14,5 +14,3 @@ export function taskItemSetFocused(
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
 }
-
-

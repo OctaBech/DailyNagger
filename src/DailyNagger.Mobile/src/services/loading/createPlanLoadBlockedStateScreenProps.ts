@@ -50,4 +50,3 @@ function formatMinutes(milliseconds: number): string {
   const minutes = Math.max(1, Math.round(milliseconds / 60000));
   return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
 }
-

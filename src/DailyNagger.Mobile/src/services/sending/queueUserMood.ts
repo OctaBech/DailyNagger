@@ -22,4 +22,3 @@ export function createUserMoodFormula(selection: UserMood): Formula {
     }),
   };
 }
-

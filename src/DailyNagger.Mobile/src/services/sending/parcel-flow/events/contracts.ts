@@ -23,4 +23,3 @@ export type ParcelFlowEvent = {
 };
 
 export type ParcelFlowEvents = EventEmitter<ParcelFlowEventType, ParcelFlowEvent>;
-

@@ -7,7 +7,9 @@ export type HibernatingMiddleware<TContext, TResult> = {
 };
 
 export function hibernateMiddlewareContext<TContext>(
-  middleware: Pick<HibernatingMiddleware<TContext, unknown>, "hibernateMiddlewareContext"> | undefined,
+  middleware:
+    | Pick<HibernatingMiddleware<TContext, unknown>, "hibernateMiddlewareContext">
+    | undefined,
 ): TContext | null {
   return middleware?.hibernateMiddlewareContext?.() ?? null;
 }

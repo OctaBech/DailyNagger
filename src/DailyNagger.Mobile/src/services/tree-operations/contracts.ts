@@ -5,4 +5,3 @@ export type TreeReader = {
     readonly getTree: () => Tree;
   };
 };
-

@@ -44,4 +44,3 @@ export type ExecuteJsxAction = <
 >(
   jsxAction: JsxAction<TActionScope, TActionArgs, TJsxArgs>,
 ) => void;
-

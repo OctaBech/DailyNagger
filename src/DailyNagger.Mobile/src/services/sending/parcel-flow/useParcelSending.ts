@@ -66,4 +66,3 @@ export function useParcelSending(
 type FlushQueueResult = { readonly kind: "flushed" } | { readonly kind: "server-unreachable" };
 
 export type ParcelSending = ReturnType<typeof useParcelSending>;
-

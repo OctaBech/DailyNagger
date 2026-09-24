@@ -25,12 +25,7 @@ export {
   type HolidayDefinition,
 } from "./scheduleHolidays";
 export type { ClientIdentity } from "./clientIdentity";
-export {
-  isUserMood,
-  type UserMood,
-  type UserMoodLabel,
-  type UserMoodOption,
-} from "./user-mood";
+export { isUserMood, type UserMood, type UserMoodLabel, type UserMoodOption } from "./user-mood";
 export { emptyInteractionStamp, type InteractionStampFields } from "./interactionStamp";
 export {
   nagPlanClientModelExtensionDefaults,

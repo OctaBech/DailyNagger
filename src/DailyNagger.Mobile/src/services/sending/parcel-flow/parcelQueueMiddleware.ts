@@ -7,4 +7,3 @@ export type ParcelQueueMiddleware = HibernatingMiddleware<
   ParcelQueueMiddlewareContext,
   ParcelQueueInstruction
 >;
-

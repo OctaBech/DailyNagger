@@ -54,4 +54,3 @@ function getNextOccurrence(
       return operations.getNextHolidayOccurrence(rule.rule, fromDate, cultureSettings);
   }
 }
-
