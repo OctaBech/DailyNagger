@@ -1,0 +1,45 @@
+name: CI - server
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: "Y"
+          MSSQL_SA_PASSWORD: DailyNagger_CI_PASSWORD_12345
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P DailyNagger_CI_PASSWORD_12345 -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      ConnectionStrings__DailyNaggerData: Server=localhost,1433;Database=DailyNaggerData;User Id=sa;Password=DailyNagger_CI_PASSWORD_12345;Encrypt=True;TrustServerCertificate=True
+      ConnectionStrings__DailyNaggerControl: Server=localhost,1433;Database=DailyNaggerControl;User Id=sa;Password=DailyNagger_CI_PASSWORD_12345;Encrypt=True;TrustServerCertificate=True
+      DailyNaggerData__Password: DailyNagger_CI_PASSWORD_12345
+      DailyNagger__ApiToken: DailyNagger_CI_API_TOKEN
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Restore NuGet packages
+        run: dotnet restore DailyNagger.sln
+      - name: Check C# formatting and code style
+        run: dotnet format DailyNagger.sln --verify-no-changes --no-restore
+      - name: Build server project and test project
+        run: dotnet build DailyNagger.sln --configuration Release --no-restore
+      - name: Run server tests
+        run: dotnet test DailyNagger.sln --configuration Release --no-build
