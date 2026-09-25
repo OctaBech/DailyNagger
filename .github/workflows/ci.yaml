@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      mobile: ${{ steps.filter.outputs.mobile }}
+      server: ${{ steps.filter.outputs.server }}
+      contracts: ${{ steps.filter.outputs.contracts }}
+      deployment: ${{ steps.filter.outputs.deployment }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            mobile:
+              - "src/DailyNagger.Mobile/**"
+              - "src/api-contracts/**"
+              - ".node-version"
+              - ".github/workflows/ci-mobile.yaml"
+              - ".github/workflows/ci.yaml"
+            server:
+              - "src/DailyNagger.Server/**"
+              - "tests/DailyNagger.Server.Tests/**"
+              - "src/api-contracts/**"
+              - "DailyNagger.sln"
+              - "Directory.Build.props"
+              - "global.json"
+              - ".github/workflows/ci-server.yaml"
+              - ".github/workflows/ci.yaml"
+            contracts:
+              - "src/api-contracts/**"
+              - ".node-version"
+              - ".github/workflows/ci-api-contracts.yaml"
+              - ".github/workflows/ci.yaml"
+            deployment:
+              - "src/DailyNagger.Server/**"
+              - "compose.prod.yaml"
+              - "compose.staging.yaml"
+              - "deploy/**"
+              - "scripts/run-vps-ef-migration.sh"
+              - "scripts/run-vps-production-minimum-seed.sh"
+              - "scripts/seed-production-minimum.sql"
+              - "global.json"
+              - "Directory.Build.props"
+              - ".dockerignore"
+              - ".github/workflows/ci-server-deployment-checks.yaml"
+              - ".github/workflows/ci.yaml"
+  mobile:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.mobile == 'true' }}
+    uses: ./.github/workflows/ci-mobile.yaml
+  server:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.server == 'true' }}
+    uses: ./.github/workflows/ci-server.yaml
+  contracts:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.contracts == 'true' }}
+    uses: ./.github/workflows/ci-api-contracts.yaml
+  deployment:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.deployment == 'true' }}
+    uses: ./.github/workflows/ci-server-deployment-checks.yaml

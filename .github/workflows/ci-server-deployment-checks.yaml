@@ -2,10 +2,7 @@ name: CI - server deployment checks
 run-name: "${{ github.workflow }} · ${{ github.event.head_commit.message || github.event.pull_request.title || github.sha }}"
 
 on:
-  pull_request:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_call:
 
 jobs:
   server-deployment-checks:
@@ -24,10 +21,26 @@ jobs:
             > .env.ci
           docker compose --env-file .env.ci -f compose.prod.yaml config --quiet
       - name: Create server deployment archive (.tar.gz)
-        shell: pwsh
         run: |
-          $archivePath = Join-Path $env:RUNNER_TEMP "dailynagger-source.tar.gz"
-          .\scripts\pack-server-deploy-source.ps1 -OutputPath $archivePath
+          tar \
+            --exclude=.git \
+            --exclude=artifacts \
+            --exclude='**/bin' \
+            --exclude='**/obj' \
+            --exclude='**/*.csproj.user' \
+            --exclude='**/appsettings.Local.json' \
+            --exclude=src/DailyNagger.Mobile/node_modules \
+            --exclude=src/DailyNagger.Client/node_modules \
+            -czf "$RUNNER_TEMP/dailynagger-source.tar.gz" \
+            compose.prod.yaml \
+            compose.staging.yaml \
+            deploy \
+            global.json \
+            Directory.Build.props \
+            src/DailyNagger.Server \
+            scripts/run-vps-ef-migration.sh \
+            scripts/run-vps-production-minimum-seed.sh \
+            scripts/seed-production-minimum.sql
       - name: Extract server deployment archive
         run: |
           mkdir -p "$RUNNER_TEMP/dailynagger-unpacked"
