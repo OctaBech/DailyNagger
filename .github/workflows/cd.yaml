@@ -1,0 +1,17 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  build-server-image:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    uses: ./.github/workflows/cd-server-image.yaml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      commit_sha: ${{ github.event.workflow_run.head_sha }}
