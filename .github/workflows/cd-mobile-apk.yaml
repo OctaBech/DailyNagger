@@ -8,7 +8,7 @@ on:
         type: string
       release_number:
         required: true
-        type: number
+        type: string
       app_name:
         required: true
         type: string

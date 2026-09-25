@@ -28,6 +28,8 @@ jobs:
               - "src/api-contracts/**"
               - ".node-version"
               - ".github/workflows/ci-mobile.yaml"
+              - ".github/workflows/cd-mobile-apk.yaml"
+              - ".github/workflows/cd.yaml"
               - ".github/workflows/ci.yaml"
             server:
               - "src/DailyNagger.Server/**"
@@ -37,6 +39,8 @@ jobs:
               - "Directory.Build.props"
               - "global.json"
               - ".github/workflows/ci-server.yaml"
+              - ".github/workflows/cd-server-image.yaml"
+              - ".github/workflows/cd.yaml"
               - ".github/workflows/ci.yaml"
             contracts:
               - "src/api-contracts/**"
