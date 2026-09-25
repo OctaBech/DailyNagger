@@ -22,10 +22,11 @@ if (!(Test-Path $appConfigPath)) {
 $versionCodes = @()
 
 $appConfig = Get-Content $appConfigPath -Raw
-$appConfigVersionCodeMatch = [regex]::Match($appConfig, "versionCode:\s*(\d+)")
-if ($appConfigVersionCodeMatch.Success) {
-    $versionCodes += [int]$appConfigVersionCodeMatch.Groups[1].Value
+$appConfigVersionCodeMatch = [regex]::Match($appConfig, "localAndroidVersionCode\s*=\s*(\d+)")
+if (!$appConfigVersionCodeMatch.Success) {
+    throw "Could not find local Android versionCode in $appConfigPath"
 }
+$versionCodes += [int]$appConfigVersionCodeMatch.Groups[1].Value
 
 $androidBuildGradle = $null
 if (Test-Path $androidBuildGradlePath) {
@@ -61,15 +62,12 @@ if ($null -ne $androidBuildGradle) {
     [System.IO.File]::WriteAllText($androidBuildGradlePath, $androidBuildGradle)
 }
 
-if ($appConfig -match "versionCode:\s*\d+") {
-    $appConfig = [regex]::Replace($appConfig, "versionCode:\s*\d+", "versionCode: $nextVersionCode", 1)
-}
-else {
-    $appConfig = $appConfig.Replace(
-        'package: "com.dailynagger.mobile",',
-        "package: `"com.dailynagger.mobile`",`r`n    versionCode: $nextVersionCode,"
-    )
-}
+$appConfig = [regex]::Replace(
+    $appConfig,
+    "localAndroidVersionCode\s*=\s*\d+",
+    "localAndroidVersionCode = $nextVersionCode",
+    1
+)
 [System.IO.File]::WriteAllText($appConfigPath, $appConfig)
 
 Write-Host "DailyNagger Android versionCode: $currentVersionCode -> $nextVersionCode"

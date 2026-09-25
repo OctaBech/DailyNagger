@@ -56,6 +56,26 @@ jobs:
               - ".dockerignore"
               - ".github/workflows/ci-server-deployment-checks.yaml"
               - ".github/workflows/ci.yaml"
+      - name: Write release plan
+        if: github.event_name == 'push'
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+          MOBILE_CHANGED: ${{ steps.filter.outputs.mobile }}
+          SERVER_CHANGED: ${{ steps.filter.outputs.server }}
+          CONTRACTS_CHANGED: ${{ steps.filter.outputs.contracts }}
+        run: |
+          printf 'commit_sha=%s\nmobile=%s\nserver=%s\ncontracts=%s\n' \
+            "$COMMIT_SHA" "$MOBILE_CHANGED" "$SERVER_CHANGED" "$CONTRACTS_CHANGED" \
+            > release-plan.txt
+
+      - name: Save release plan for CD
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-plan
+          path: release-plan.txt
+          if-no-files-found: error
+
   mobile:
     needs: changes
     if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.mobile == 'true' }}

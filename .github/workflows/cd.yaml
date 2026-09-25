@@ -7,11 +7,78 @@ on:
     branches: [main]
 
 jobs:
-  build-server-image:
+  read-release-plan:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      mobile: ${{ steps.plan.outputs.mobile }}
+      server: ${{ steps.plan.outputs.server }}
+    steps:
+      - name: Download release plan from successful CI run
+        uses: actions/download-artifact@v8
+        with:
+          name: release-plan
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/release-plan
+      - name: Verify release plan
+        id: plan
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          PLAN="$RUNNER_TEMP/release-plan/release-plan.txt"
+          test -f "$PLAN"
+          SHA=$(sed -n 's/^commit_sha=//p' "$PLAN")
+          MOBILE=$(sed -n 's/^mobile=//p' "$PLAN")
+          SERVER=$(sed -n 's/^server=//p' "$PLAN")
+
+          if [[ "$SHA" != "$EXPECTED_SHA" || ! "$MOBILE" =~ ^(true|false)$ || ! "$SERVER" =~ ^(true|false)$ ]]; then
+            echo "Release plan does not match the successful CI run."
+            exit 1
+          fi
+
+          printf 'mobile=%s\nserver=%s\n' "$MOBILE" "$SERVER" >> "$GITHUB_OUTPUT"
+
+  build-server-image:
+    needs: read-release-plan
+    if: ${{ needs.read-release-plan.outputs.server == 'true' }}
     uses: ./.github/workflows/cd-server-image.yaml
     permissions:
       contents: read
       packages: write
     with:
       commit_sha: ${{ github.event.workflow_run.head_sha }}
+
+  build-daily-apk:
+    needs: read-release-plan
+    if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
+    uses: ./.github/workflows/cd-mobile-apk.yaml
+    with:
+      commit_sha: ${{ github.event.workflow_run.head_sha }}
+      release_number: ${{ github.run_number }}
+      app_name: DailyNagger
+      app_variant: daily
+      android_package: com.dailynagger.mobile
+      community_id: ${{ vars.DAILY_NAGGER_DAILY_COMMUNITY_ID }}
+    secrets:
+      ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+      ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
+      DAILY_NAGGER_API_TOKEN: ${{ secrets.DAILY_NAGGER_API_TOKEN }}
+
+  build-demo-apk:
+    needs: read-release-plan
+    if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
+    uses: ./.github/workflows/cd-mobile-apk.yaml
+    with:
+      commit_sha: ${{ github.event.workflow_run.head_sha }}
+      release_number: ${{ github.run_number }}
+      app_name: DailyNaggerDemo
+      app_variant: demo
+      android_package: com.dailynagger.mobile.demo
+      community_id: ${{ vars.DAILY_NAGGER_DEMO_COMMUNITY_ID }}
+    secrets:
+      ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+      ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
+      DAILY_NAGGER_API_TOKEN: ${{ secrets.DAILY_NAGGER_API_TOKEN }}
