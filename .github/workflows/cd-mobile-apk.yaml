@@ -89,6 +89,7 @@ jobs:
       - name: Build signed release APK
         working-directory: src/DailyNagger.Mobile/android
         env:
+          SENTRY_DISABLE_AUTO_UPLOAD: "true"
           DAILY_NAGGER_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/dailynagger-release.p12
           DAILY_NAGGER_ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
           DAILY_NAGGER_ANDROID_KEY_ALIAS: dailynagger
@@ -96,6 +97,7 @@ jobs:
       - name: Verify built APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
+          EXPECTED_PACKAGE: ${{ inputs.android_package }}
         run: |
           set -euo pipefail
           APK="src/DailyNagger.Mobile/android/app/build/outputs/apk/release/app-release.apk"
@@ -103,6 +105,13 @@ jobs:
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)
           test -x "$APKSIGNER"
           "$APKSIGNER" verify "$APK"
+          AAPT=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name aapt | sort -V | tail -n 1)
+          test -x "$AAPT"
+          ACTUAL_PACKAGE=$("$AAPT" dump badging "$APK" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p")
+          if [ "$ACTUAL_PACKAGE" != "$EXPECTED_PACKAGE" ]; then
+            echo "APK package does not match the requested app identity."
+            exit 1
+          fi
           EXPECTED_CERT=$(keytool -exportcert \
             -keystore "$RUNNER_TEMP/dailynagger-release.p12" \
             -storetype PKCS12 \
