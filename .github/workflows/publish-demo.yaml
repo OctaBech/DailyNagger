@@ -1,0 +1,96 @@
+name: Publish demo
+
+on:
+  workflow_dispatch:
+    inputs:
+      cd_run_id:
+        description: Successful CD run containing the DemoNagger APK
+        required: true
+        type: string
+
+concurrency:
+  group: publish-demo
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish verified DemoNagger APK
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      CD_RUN_ID: ${{ inputs.cd_run_id }}
+    steps:
+      - name: Verify successful CD candidate and demo artifact
+        id: candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$CD_RUN_ID" =~ ^[0-9]+$ ]] || { echo "CD run ID must be numeric."; exit 1; }
+
+          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CD_RUN_ID")
+          jq -e '.name == "CD" and .status == "completed" and .conclusion == "success" and .event == "workflow_run" and .head_branch == "main"' <<< "$RUN" > /dev/null || {
+            echo "The selected run is not a successful main-branch CD run."
+            exit 1
+          }
+
+          SHA=$(jq -r '.head_sha' <<< "$RUN")
+          RUN_NUMBER=$(jq -r '.run_number' <<< "$RUN")
+          [[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "CD run has no valid commit SHA."; exit 1; }
+          ARTIFACT="dailynagger-demo-$RUN_NUMBER"
+
+          ARTIFACTS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CD_RUN_ID/artifacts?per_page=100")
+          jq -e --arg name "$ARTIFACT" 'any(.artifacts[]; .name == $name and .expired == false)' <<< "$ARTIFACTS" > /dev/null || {
+            echo "The selected CD run has no unexpired DemoNagger APK artifact."
+            exit 1
+          }
+
+          printf 'commit_sha=%s\nartifact_name=%s\n' "$SHA" "$ARTIFACT" >> "$GITHUB_OUTPUT"
+
+      - name: Download APK from selected CD run
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ steps.candidate.outputs.artifact_name }}
+          run-id: ${{ inputs.cd_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/demo-candidate
+
+      - name: Verify and name release asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$RUNNER_TEMP/demo-candidate/app-release.apk"
+          test -s "$APK"
+          unzip -tq "$APK" > /dev/null
+          mkdir -p "$RUNNER_TEMP/demo-release"
+          cp "$APK" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk"
+          sha256sum "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk"
+
+      - name: Publish existing APK as GitHub Release
+        env:
+          COMMIT_SHA: ${{ steps.candidate.outputs.commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="demo-$COMMIT_SHA"
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "This CD candidate has already been published as $TAG."
+            exit 1
+          fi
+
+          {
+            printf 'DemoNagger APK built from commit `%s`.\n\n' "$COMMIT_SHA"
+            printf 'Verified CD run: https://github.com/%s/actions/runs/%s\n\n' "$GITHUB_REPOSITORY" "$CD_RUN_ID"
+            printf 'APK SHA-256: `%s`\n' "$(sha256sum "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" | cut -d ' ' -f 1)"
+          } > "$RUNNER_TEMP/demo-release/release-notes.md"
+
+          gh release create "$TAG" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" \
+            --target "$COMMIT_SHA" \
+            --title "DailyNaggerDemo $COMMIT_SHA" \
+            --notes-file "$RUNNER_TEMP/demo-release/release-notes.md" \
+            --latest
+
+          printf 'Demo download: https://github.com/%s/releases/latest/download/DailyNaggerDemo.apk\n' "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
