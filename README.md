@@ -85,7 +85,7 @@ Android paths stay consistent with the project setup.
 Use this when building a release APK for a connected Android device.
 
 ```powershell
-.\scripts\build-mobile-release-apk.ps1 -Notify
+.\local-build\build-mobile-release-apk.ps1 -Notify
 ```
 
 GitHub Actions also has a manual mobile APK workflow that builds an unsigned,

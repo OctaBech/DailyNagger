@@ -81,6 +81,7 @@ export interface paths {
             parameters: {
                 query: {
                     communityId: string;
+                    userId: string;
                 };
                 header?: never;
                 path?: never;

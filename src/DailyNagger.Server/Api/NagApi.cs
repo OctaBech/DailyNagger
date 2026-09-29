@@ -18,6 +18,7 @@ public static class NagApi
     {
         app.MapGet("/api/nags", async (
             Guid communityId,
+            Guid userId,
             DataDbRead dataDbRead,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
@@ -26,6 +27,7 @@ public static class NagApi
             {
                 var nag = await dataDbRead.GetNagAsync(
                     communityId,
+                    userId,
                     cancellationToken);
 
                 return Results.Ok(nag
@@ -72,6 +74,7 @@ public static class NagApi
 
                 var nag = await dataDbWrite.SaveNagAsync(
                     request.CommunityId,
+                    request.UserId,
                     request.Id,
                     request.Title.Trim(),
                     request.ActiveLogDueOn,
@@ -157,6 +160,7 @@ public static class NagApi
 
         return new SaveNagRequest(
             versionedRequest.CommunityId,
+            versionedRequest.UserId,
             versionedRequest.Payload.Id,
             versionedRequest.Payload.Title,
             versionedRequest.Payload.ActiveLogDueOn,

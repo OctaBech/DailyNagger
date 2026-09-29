@@ -25,6 +25,9 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
             entity.Property(nag => nag.Id)
                 .HasColumnName("id");
 
+            entity.Property(nag => nag.UserId)
+                .HasColumnName("user_id");
+
             entity.Property(nag => nag.Title)
                 .HasColumnName("title")
                 .HasMaxLength(200)
@@ -87,6 +90,14 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
             })
                 .HasDatabaseName("IX_nag_is_deactivated_active_log_due_on");
 
+            entity.HasIndex(nag => new
+            {
+                nag.UserId,
+                nag.IsDeactivated,
+                nag.ActiveLogDueOn
+            })
+                .HasDatabaseName("IX_nag_user_id_is_deactivated_active_log_due_on");
+
         });
 
         modelBuilder.Entity<ScheduleRule>(entity =>
@@ -97,6 +108,9 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.Property(rule => rule.Id)
                 .HasColumnName("id");
+
+            entity.Property(rule => rule.UserId)
+                .HasColumnName("user_id");
 
             entity.Property(rule => rule.NagId)
                 .HasColumnName("nag_id");
@@ -112,6 +126,12 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
                 .IsRequired();
 
             entity.HasIndex(rule => rule.NagId);
+            entity.HasIndex(rule => new
+            {
+                rule.UserId,
+                rule.NagId
+            })
+                .HasDatabaseName("IX_schedule_rule_user_id_nag_id");
         });
 
         modelBuilder.Entity<TaskLog>(entity =>
@@ -127,6 +147,9 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.Property(taskLog => taskLog.Id)
                 .HasColumnName("id");
+
+            entity.Property(taskLog => taskLog.UserId)
+                .HasColumnName("user_id");
 
             entity.Property(taskLog => taskLog.NagId)
                 .HasColumnName("nag_id");
@@ -186,11 +209,25 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
             entity.HasIndex(taskLog => taskLog.CopiedFromTaskLogId);
             entity.HasIndex(taskLog => new
             {
+                taskLog.UserId,
+                taskLog.NagId
+            })
+                .HasDatabaseName("IX_task_log_user_id_nag_id");
+            entity.HasIndex(taskLog => new
+            {
                 taskLog.NagId,
                 taskLog.ClosedOn,
                 taskLog.UpdatedAt
             })
                 .HasDatabaseName("IX_task_log_nag_id_closed_on_updated_at");
+            entity.HasIndex(taskLog => new
+            {
+                taskLog.UserId,
+                taskLog.NagId,
+                taskLog.ClosedOn,
+                taskLog.UpdatedAt
+            })
+                .HasDatabaseName("IX_task_log_user_id_nag_id_closed_on_updated_at");
         });
 
         modelBuilder.Entity<TaskItem>(entity =>
@@ -201,6 +238,9 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.Property(taskItem => taskItem.Id)
                 .HasColumnName("id");
+
+            entity.Property(taskItem => taskItem.UserId)
+                .HasColumnName("user_id");
 
             entity.Property(taskItem => taskItem.TaskLogId)
                 .HasColumnName("task_log_id");
@@ -273,6 +313,12 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.HasIndex(taskItem => taskItem.TaskLogId);
             entity.HasIndex(taskItem => taskItem.ParentTaskItemId);
+            entity.HasIndex(taskItem => new
+            {
+                taskItem.UserId,
+                taskItem.TaskLogId
+            })
+                .HasDatabaseName("IX_task_item_user_id_task_log_id");
         });
 
         modelBuilder.Entity<TaskEntry>(entity =>
@@ -283,6 +329,9 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.Property(taskEntry => taskEntry.Id)
                 .HasColumnName("id");
+
+            entity.Property(taskEntry => taskEntry.UserId)
+                .HasColumnName("user_id");
 
             entity.Property(taskEntry => taskEntry.TaskLogId)
                 .HasColumnName("task_log_id");
@@ -353,6 +402,12 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.HasIndex(taskEntry => taskEntry.TaskLogId);
             entity.HasIndex(taskEntry => taskEntry.ParentTaskItemId);
+            entity.HasIndex(taskEntry => new
+            {
+                taskEntry.UserId,
+                taskEntry.TaskLogId
+            })
+                .HasDatabaseName("IX_task_entry_user_id_task_log_id");
         });
 
         modelBuilder.Entity<UserTag>(entity =>

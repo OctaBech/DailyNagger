@@ -68,10 +68,7 @@ jobs:
             deploy \
             global.json \
             Directory.Build.props \
-            src/DailyNagger.Server \
-            scripts/run-vps-ef-migration.sh \
-            scripts/run-vps-production-minimum-seed.sh \
-            scripts/seed-production-minimum.sql
+            src/DailyNagger.Server
       - name: Extract server deployment archive
         run: |
           mkdir -p "$RUNNER_TEMP/dailynagger-unpacked"

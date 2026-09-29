@@ -13,6 +13,8 @@ namespace DailyNagger.Server.Tests.Operations;
 [Collection(SqlServerTestCollection.Name)]
 public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
+    private static readonly Guid TestUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
     [Fact]
     public async Task Data_schema_contains_indexes_for_nag_plan_and_lapsed_nag_queries()
     {
@@ -27,11 +29,53 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                 "IX_nag_is_deactivated_active_log_due_on"));
 
         Assert.Equal(
+            ["user_id", "is_deactivated", "active_log_due_on"],
+            await GetIndexColumnsAsync(
+                connection,
+                "nag",
+                "IX_nag_user_id_is_deactivated_active_log_due_on"));
+
+        Assert.Equal(
             ["nag_id", "closed_on", "updated_at"],
             await GetIndexColumnsAsync(
                 connection,
                 "task_log",
                 "IX_task_log_nag_id_closed_on_updated_at"));
+
+        Assert.Equal(
+            ["user_id", "nag_id", "closed_on", "updated_at"],
+            await GetIndexColumnsAsync(
+                connection,
+                "task_log",
+                "IX_task_log_user_id_nag_id_closed_on_updated_at"));
+
+        Assert.Equal(
+            ["user_id", "nag_id"],
+            await GetIndexColumnsAsync(
+                connection,
+                "task_log",
+                "IX_task_log_user_id_nag_id"));
+
+        Assert.Equal(
+            ["user_id", "nag_id"],
+            await GetIndexColumnsAsync(
+                connection,
+                "schedule_rule",
+                "IX_schedule_rule_user_id_nag_id"));
+
+        Assert.Equal(
+            ["user_id", "task_log_id"],
+            await GetIndexColumnsAsync(
+                connection,
+                "task_item",
+                "IX_task_item_user_id_task_log_id"));
+
+        Assert.Equal(
+            ["user_id", "task_log_id"],
+            await GetIndexColumnsAsync(
+                connection,
+                "task_entry",
+                "IX_task_entry_user_id_task_log_id"));
     }
 
     [Fact]
@@ -57,6 +101,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
             dataDb.Nags.Add(new Nagger
             {
                 Id = nagId,
+                UserId = TestUserId,
                 Title = "Data read test nag",
                 ActiveLogDueOn = new DateOnly(2026, 6, 1),
                 IsDeactivated = false,
@@ -65,6 +110,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                 [
                     new ScheduleRule
                     {
+                        UserId = TestUserId,
                         RuleType = ScheduleRuleType.Date,
                         RuleJson = MonthlyDayRuleJson(1)
                     }
@@ -84,7 +130,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
 
             var dataDbRead = CreateDataDbRead(controlDb);
 
-            var nag = await dataDbRead.GetNagAsync(communityId);
+            var nag = await dataDbRead.GetNagAsync(communityId, TestUserId);
 
             Assert.Contains(
                 nag,
@@ -103,6 +149,211 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
         }
 
         await controlTransaction.RollbackAsync();
+    }
+
+    [Fact]
+    public async Task EnforceUserIdInData_migration_backfills_existing_rows_without_permanent_default()
+    {
+        var databaseName = $"DailyNaggerData_Migration_{Guid.NewGuid():N}";
+        var connectionString = WithDatabase(GetDataConnectionString(), databaseName);
+        var martinUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var nagId = Guid.NewGuid();
+        var scheduleRuleId = Guid.NewGuid();
+        var taskLogId = Guid.NewGuid();
+        var taskItemId = Guid.NewGuid();
+        var taskEntryId = Guid.NewGuid();
+
+        await RecreateDatabaseAsync(connectionString);
+
+        try
+        {
+            await using (var db = CreateDataDbContext(connectionString))
+            {
+                await db.Database.MigrateAsync("20260817162350_ReplaceScheduleRuleColumnsWithRuleJson");
+            }
+
+            await using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = """
+                    insert into nag (
+                        id,
+                        title,
+                        active_log_due_on,
+                        expires_on,
+                        target_time,
+                        is_deactivated,
+                        pinned_by,
+                        updated_at,
+                        version)
+                    values (
+                        @nagId,
+                        N'Legacy nag',
+                        '2026-09-01',
+                        null,
+                        null,
+                        0,
+                        N'None',
+                        sysdatetimeoffset(),
+                        1);
+
+                    insert into schedule_rule (
+                        id,
+                        nag_id,
+                        rule_type,
+                        rule_json)
+                    values (
+                        @scheduleRuleId,
+                        @nagId,
+                        N'Weekday',
+                        N'{"month":0,"position":0,"weekday":1}');
+
+                    insert into task_log (
+                        id,
+                        nag_id,
+                        copied_from_task_log_id,
+                        closed_on,
+                        tag,
+                        updated_at,
+                        version,
+                        descendant_task_item_count,
+                        done_descendant_task_item_count)
+                    values (
+                        @taskLogId,
+                        @nagId,
+                        null,
+                        null,
+                        null,
+                        sysdatetimeoffset(),
+                        1,
+                        1,
+                        0);
+
+                    insert into task_item (
+                        id,
+                        task_log_id,
+                        parent_task_item_id,
+                        name,
+                        tag,
+                        is_done,
+                        rollover_behavior,
+                        interaction_at,
+                        interaction_time_zone,
+                        interaction_locale,
+                        interaction_mood,
+                        interaction_mood_at,
+                        descendant_task_item_count,
+                        done_descendant_task_item_count,
+                        sort_order)
+                    values (
+                        @taskItemId,
+                        @taskLogId,
+                        null,
+                        N'Legacy item',
+                        null,
+                        0,
+                        N'Keep',
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        0,
+                        0,
+                        0);
+
+                    insert into task_entry (
+                        id,
+                        task_log_id,
+                        parent_task_item_id,
+                        label,
+                        description,
+                        value_type,
+                        tag,
+                        value,
+                        last_task_run_reference_value,
+                        rollover_behavior,
+                        interaction_at,
+                        interaction_time_zone,
+                        interaction_locale,
+                        interaction_mood,
+                        interaction_mood_at,
+                        sort_order)
+                    values (
+                        @taskEntryId,
+                        @taskLogId,
+                        @taskItemId,
+                        N'Legacy entry',
+                        null,
+                        N'Text',
+                        null,
+                        N'hello',
+                        null,
+                        N'MoveValueToHistory',
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        0);
+                    """;
+                command.Parameters.AddWithValue("@nagId", nagId);
+                command.Parameters.AddWithValue("@scheduleRuleId", scheduleRuleId);
+                command.Parameters.AddWithValue("@taskLogId", taskLogId);
+                command.Parameters.AddWithValue("@taskItemId", taskItemId);
+                command.Parameters.AddWithValue("@taskEntryId", taskEntryId);
+                await command.ExecuteNonQueryAsync();
+            }
+
+            await using (var db = CreateDataDbContext(connectionString))
+            {
+                await db.Database.MigrateAsync();
+            }
+
+            await using (var db = CreateDataDbContext(connectionString))
+            {
+                Assert.Equal(martinUserId, await db.Nags.Where(nag => nag.Id == nagId).Select(nag => nag.UserId).SingleAsync());
+                Assert.Equal(martinUserId, await db.ScheduleRules.Where(rule => rule.Id == scheduleRuleId).Select(rule => rule.UserId).SingleAsync());
+                Assert.Equal(martinUserId, await db.TaskLogs.Where(log => log.Id == taskLogId).Select(log => log.UserId).SingleAsync());
+                Assert.Equal(martinUserId, await db.TaskItems.Where(item => item.Id == taskItemId).Select(item => item.UserId).SingleAsync());
+                Assert.Equal(martinUserId, await db.TaskEntries.Where(entry => entry.Id == taskEntryId).Select(entry => entry.UserId).SingleAsync());
+            }
+
+            await using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                await using var command = connection.CreateCommand();
+                command.CommandText = """
+                    insert into nag (
+                        id,
+                        title,
+                        active_log_due_on,
+                        expires_on,
+                        target_time,
+                        is_deactivated,
+                        pinned_by,
+                        updated_at,
+                        version)
+                    values (
+                        newid(),
+                        N'Missing user',
+                        null,
+                        null,
+                        null,
+                        0,
+                        N'None',
+                        sysdatetimeoffset(),
+                        1);
+                    """;
+
+                await Assert.ThrowsAsync<SqlException>(() => command.ExecuteNonQueryAsync());
+            }
+        }
+        finally
+        {
+            await DropDatabaseAsync(connectionString);
+        }
     }
 
 
@@ -127,6 +378,15 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
     {
         var options = new DbContextOptionsBuilder<DailyNaggerDbContext>()
             .UseSqlServer(GetDataConnectionString())
+            .Options;
+
+        return new DailyNaggerDbContext(options);
+    }
+
+    private static DailyNaggerDbContext CreateDataDbContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<DailyNaggerDbContext>()
+            .UseSqlServer(connectionString)
             .Options;
 
         return new DailyNaggerDbContext(options);
@@ -160,6 +420,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
         new()
         {
             Id = id,
+            UserId = TestUserId,
             Title = title,
             ActiveLogDueOn = activeLogDueOn,
             IsDeactivated = isDeactivated
@@ -171,6 +432,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
         new()
         {
             Id = Guid.NewGuid(),
+            UserId = TestUserId,
             NagId = nagId,
             UpdatedAt = updatedAt
         };
@@ -232,6 +494,68 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
         var builder = new SqlConnectionStringBuilder(GetDataConnectionString());
 
         return builder.Password;
+    }
+
+    private static string WithDatabase(
+        string connectionString,
+        string databaseName)
+    {
+        var builder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = databaseName
+        };
+
+        return builder.ConnectionString;
+    }
+
+    private static async Task RecreateDatabaseAsync(string connectionString)
+    {
+        var builder = new SqlConnectionStringBuilder(connectionString);
+        var databaseName = builder.InitialCatalog;
+        builder.InitialCatalog = "master";
+
+        await using var connection = new SqlConnection(builder.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            if db_id(@databaseName) is not null
+            begin
+                declare @dropSql nvarchar(max) = N'drop database ' + quotename(@databaseName);
+                exec sp_executesql @dropSql;
+            end
+
+            declare @createSql nvarchar(max) = N'create database ' + quotename(@databaseName);
+            exec sp_executesql @createSql;
+            """;
+        command.Parameters.AddWithValue("@databaseName", databaseName);
+
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task DropDatabaseAsync(string connectionString)
+    {
+        var builder = new SqlConnectionStringBuilder(connectionString);
+        var databaseName = builder.InitialCatalog;
+        builder.InitialCatalog = "master";
+
+        await using var connection = new SqlConnection(builder.ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            if db_id(@databaseName) is not null
+            begin
+                declare @singleUserSql nvarchar(max) = N'alter database ' + quotename(@databaseName) + N' set single_user with rollback immediate';
+                exec sp_executesql @singleUserSql;
+
+                declare @dropSql nvarchar(max) = N'drop database ' + quotename(@databaseName);
+                exec sp_executesql @dropSql;
+            end
+            """;
+        command.Parameters.AddWithValue("@databaseName", databaseName);
+
+        await command.ExecuteNonQueryAsync();
     }
 
     private static string GetConnectionString(string name)

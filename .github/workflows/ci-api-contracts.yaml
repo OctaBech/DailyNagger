@@ -11,6 +11,46 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v7
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: Restore server packages
+        run: dotnet restore src/DailyNagger.Server/DailyNagger.Server.csproj
+      - name: Build server for contract verification
+        run: dotnet build src/DailyNagger.Server/DailyNagger.Server.csproj --configuration Release --no-restore
+      - name: Verify committed OpenAPI matches the server
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          ConnectionStrings__DailyNaggerData: Server=localhost;Database=unused
+          ConnectionStrings__DailyNaggerControl: Server=localhost;Database=unused
+          DailyNaggerData__Password: not-used
+          DailyNagger__ApiToken: ci-openapi-token
+        run: |
+          set -euo pipefail
+          dotnet src/DailyNagger.Server/bin/Release/net10.0/DailyNagger.Server.dll \
+            --urls http://localhost:5010 > "$RUNNER_TEMP/openapi-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent --max-time 2 \
+              http://localhost:5010/openapi/v1.json \
+              > "$RUNNER_TEMP/openapi.json"; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat "$RUNNER_TEMP/openapi-server.log"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          if ! test -s "$RUNNER_TEMP/openapi.json"; then
+            cat "$RUNNER_TEMP/openapi-server.log"
+            exit 1
+          fi
+          diff -u src/api-contracts/openapi.json "$RUNNER_TEMP/openapi.json"
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:

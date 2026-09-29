@@ -61,7 +61,7 @@ case "$phase" in
       echo "Invalid candidate identity." >&2; exit 2;
     }
     test -f "$release_dir/src/DailyNagger.Server/DailyNagger.Server.csproj"
-    test -s "$release_dir/scripts/run-vps-ef-migration.sh"
+    test -s "$release_dir/deploy/run-vps-ef-migration.sh"
     # Compose and proxy changes need a separately reviewed bootstrap; a server
     # image publish must not silently change the infrastructure beneath it.
     for file in compose.prod.yaml deploy/Caddyfile deploy/Caddyfile.maintenance; do
@@ -117,8 +117,8 @@ case "$phase" in
     require_api_stopped
     test -f "$state_dir/backup-verified"
     touch "$state_dir/migration-started"
-    bash "$release_dir/scripts/run-vps-ef-migration.sh" DailyNaggerDbContext "$release_dir"
-    bash "$release_dir/scripts/run-vps-ef-migration.sh" DailyNaggerControlDbContext "$release_dir"
+    bash "$release_dir/deploy/run-vps-ef-migration.sh" DailyNaggerDbContext "$release_dir"
+    bash "$release_dir/deploy/run-vps-ef-migration.sh" DailyNaggerControlDbContext "$release_dir"
     ;;
 
   start)

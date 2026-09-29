@@ -112,6 +112,7 @@ public static class TaskLogApi
 
                 var result = await dataDbWrite.UpdateTaskEntryValuesAsync(
                     request.CommunityId,
+                    request.UserId,
                     id,
                     request.UpdatedAt,
                     request.ClientIdentity,

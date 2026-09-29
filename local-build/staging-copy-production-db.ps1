@@ -39,11 +39,11 @@ function New-TemporaryShellScript {
 }
 
 if ([string]::IsNullOrWhiteSpace($VpsHost)) {
-    throw "Missing VPS host. Run .\scripts\staging-use-secrets.ps1 first."
+    throw "Missing VPS host. Run .\local-build\staging-use-secrets.ps1 first."
 }
 
 if ([string]::IsNullOrWhiteSpace($SshKeyPath)) {
-    throw "Missing SSH key path. Run .\scripts\staging-use-secrets.ps1 first."
+    throw "Missing SSH key path. Run .\local-build\staging-use-secrets.ps1 first."
 }
 
 if ($StagingContainerName -notmatch "^[A-Za-z0-9_.-]+$") {

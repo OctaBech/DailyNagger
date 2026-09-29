@@ -12,6 +12,11 @@ public sealed class NagRequestValidator
             throw new NagValidationException("Id is required.");
         }
 
+        if (request.UserId == Guid.Empty)
+        {
+            throw new NagValidationException("UserId is required.");
+        }
+
         foreach (var rule in request.ScheduleRules)
         {
             ValidateRule(rule);
