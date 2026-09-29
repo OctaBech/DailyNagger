@@ -12,7 +12,8 @@ cp "$repo_root/deploy/Caddyfile.maintenance" "$test_root/deploy/"
 cat > "$test_root/bin/docker" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
-printf '%s\n' "$*" >> "$MOCK_LOG"
+printf '%s\n' "$*" | tr '\n' ' ' >> "$MOCK_LOG"
+printf '\n' >> "$MOCK_LOG"
 
 if [[ "$*" == *" ps -q server" ]]; then
   echo server-container
