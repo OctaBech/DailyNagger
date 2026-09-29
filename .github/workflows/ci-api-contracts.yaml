@@ -33,7 +33,7 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
 
-          for attempt in {1..30}; do
+          for ((attempt = 1; attempt <= 30; attempt++)); do
             if curl --fail --silent --max-time 2 \
               http://localhost:5010/openapi/v1.json \
               > "$RUNNER_TEMP/openapi.json"; then
