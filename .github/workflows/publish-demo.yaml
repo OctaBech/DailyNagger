@@ -1,4 +1,4 @@
-name: Publish demo
+name: "~ Legacy · Publish demo"
 
 on:
   workflow_dispatch:
@@ -32,7 +32,7 @@ jobs:
           [[ "$CD_RUN_ID" =~ ^[0-9]+$ ]] || { echo "CD run ID must be numeric."; exit 1; }
 
           RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CD_RUN_ID")
-          jq -e '.name == "CD" and .status == "completed" and .conclusion == "success" and .event == "workflow_run" and .head_branch == "main"' <<< "$RUN" > /dev/null || {
+          jq -e '(.name == "CD" or .name == "# CD & Publish") and .status == "completed" and .conclusion == "success" and .event == "workflow_run" and .head_branch == "main"' <<< "$RUN" > /dev/null || {
             echo "The selected run is not a successful main-branch CD run."
             exit 1
           }
@@ -82,9 +82,9 @@ jobs:
           fi
 
           {
-            printf 'DemoNagger APK built from commit `%s`.\n\n' "$COMMIT_SHA"
+            printf 'DemoNagger APK built from commit %s.\n\n' "$COMMIT_SHA"
             printf 'Verified CD run: https://github.com/%s/actions/runs/%s\n\n' "$GITHUB_REPOSITORY" "$CD_RUN_ID"
-            printf 'APK SHA-256: `%s`\n' "$(sha256sum "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" | cut -d ' ' -f 1)"
+            printf 'APK SHA-256: %s\n' "$(sha256sum "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" | cut -d ' ' -f 1)"
           } > "$RUNNER_TEMP/demo-release/release-notes.md"
 
           gh release create "$TAG" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" \
