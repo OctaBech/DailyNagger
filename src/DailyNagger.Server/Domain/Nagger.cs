@@ -11,6 +11,7 @@ public enum NaggerPinnedBy
 public sealed class Nagger
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid UserId { get; init; }
     public required string Title { get; init; }
     public DateOnly? ActiveLogDueOn { get; init; }
     public DateOnly? ExpiresOn { get; init; }
@@ -40,6 +41,7 @@ public sealed class NagPlanNagger
 public sealed class ScheduleRule
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid UserId { get; init; }
     public Guid NagId { get; init; }
     public ScheduleRuleType RuleType { get; init; }
     public required string RuleJson { get; init; }
@@ -55,6 +57,7 @@ public enum ScheduleRuleType
 public sealed class TaskLog
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid UserId { get; init; }
     public Guid NagId { get; init; }
     public Guid? CopiedFromTaskLogId { get; init; }
     public DateTimeOffset? ClosedOn { get; init; }
@@ -72,6 +75,7 @@ public sealed class TaskLog
 public sealed class TaskItem
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid UserId { get; init; }
     public Guid TaskLogId { get; init; }
     public Guid? ParentTaskItemId { get; init; }
     public required string Name { get; init; }
@@ -101,6 +105,7 @@ public enum RolloverBehavior
 public sealed class TaskEntry
 {
     public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid UserId { get; init; }
     public Guid TaskLogId { get; init; }
     public Guid ParentTaskItemId { get; init; }
     public required string Label { get; init; }

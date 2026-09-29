@@ -69,8 +69,8 @@ Production deploy, backup, smoke checks, and rollback are documented in `docs/ru
   - `-VpsHost`, `-VpsUser`, `-SshKeyPath`, `-KnownHostsPath`, `-LocalPort`: tunnel overrides.
 - `pack-server-deploy-source.ps1` creates the server source archive used by deploy.
   - `-RepoRoot`, `-OutputPath`: archive path overrides.
-- `run-vps-ef-migration.sh` runs EF migrations from a .NET SDK container on the VPS.
-  - Argument 1: EF `DbContext` name.
+- `deploy/run-vps-ef-migration.sh` runs EF migrations from a .NET SDK container on the VPS.
+  - Argument 1: EF `DbContext` name. The script lives with the server publish flow in `deploy/`.
 - `run-vps-production-minimum-seed.sh` applies the minimum production seed on the VPS.
 
 ## Seeds

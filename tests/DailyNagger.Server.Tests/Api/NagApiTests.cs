@@ -19,6 +19,7 @@ namespace DailyNagger.Server.Tests.Api;
 public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
     private const string TestApiToken = "test-api-token";
+    private static readonly Guid TestUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -35,7 +36,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             using var client = CreateServerClient();
 
             var response = await client.GetAsync(
-                $"/api/nags?communityId={testData.CommunityId}");
+                $"/api/nags?communityId={testData.CommunityId}&userId={TestUserId}");
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.True(
@@ -65,7 +66,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     {
         using var client = CreateServerClient();
 
-        var response = await client.GetAsync($"/api/nags?communityId={Guid.NewGuid()}");
+        var response = await client.GetAsync($"/api/nags?communityId={Guid.NewGuid()}&userId={TestUserId}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -87,7 +88,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Get_nag_plan_returns_active_nags_with_open_logs_as_nested_plan()
     {
         var testData = await CreateRoutedCommunityAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var firstNagId = Guid.NewGuid();
         var secondNagId = Guid.NewGuid();
         var inactiveNagId = Guid.NewGuid();
@@ -209,6 +210,163 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     }
 
     [Fact]
+    public async Task Users_in_same_community_have_isolated_plans_and_cannot_write_each_others_data()
+    {
+        var testData = await CreateRoutedCommunityAsync();
+        var firstUserId = TestUserId;
+        var secondUserId = Guid.NewGuid();
+        var firstNagId = Guid.NewGuid();
+        var secondNagId = Guid.NewGuid();
+        var firstTaskLogId = Guid.NewGuid();
+        var secondTaskLogId = Guid.NewGuid();
+        var entryId = Guid.NewGuid();
+
+        try
+        {
+            using var client = CreateServerClient();
+
+            await SaveNagForPlanAsync(client, testData.CommunityId, firstNagId, "First user nag", false, DayOfWeek.Monday, firstUserId);
+            await SaveNagForPlanAsync(client, testData.CommunityId, secondNagId, "Second user nag", false, DayOfWeek.Tuesday, secondUserId);
+            await SaveEmptyTaskLogForPlanAsync(client, testData.CommunityId, firstUserId, firstTaskLogId, firstNagId, null);
+            await SaveEmptyTaskLogForPlanAsync(client, testData.CommunityId, secondUserId, secondTaskLogId, secondNagId, null);
+
+            var firstPlanResponse = await client.GetAsync(
+                $"/api/todays-nag-plan?communityId={testData.CommunityId}&userId={firstUserId}&date=2026-06-05");
+            var firstPlan = await firstPlanResponse.Content.ReadFromJsonAsync<NagPlanDto>(JsonOptions);
+
+            var secondPlanResponse = await client.GetAsync(
+                $"/api/todays-nag-plan?communityId={testData.CommunityId}&userId={secondUserId}&date=2026-06-05");
+            var secondPlan = await secondPlanResponse.Content.ReadFromJsonAsync<NagPlanDto>(JsonOptions);
+
+            Assert.NotNull(firstPlan);
+            Assert.NotNull(secondPlan);
+            Assert.Contains(firstPlan.Nags, nag => nag.Id == firstNagId && nag.TaskLog.Id == firstTaskLogId);
+            Assert.DoesNotContain(firstPlan.Nags, nag => nag.Id == secondNagId);
+            Assert.Contains(secondPlan.Nags, nag => nag.Id == secondNagId && nag.TaskLog.Id == secondTaskLogId);
+            Assert.DoesNotContain(secondPlan.Nags, nag => nag.Id == firstNagId);
+
+            var crossUserTaskLog = new SaveTaskLogRequest(
+                testData.CommunityId,
+                secondUserId,
+                Guid.NewGuid(),
+                firstNagId,
+                null,
+                null,
+                [],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 0,
+                NextVersion: 1);
+
+            var crossUserTaskLogResponse = await client.PutAsJsonAsync(
+                $"/api/task-logs/{crossUserTaskLog.Id}",
+                crossUserTaskLog,
+                JsonOptions);
+
+            Assert.Equal(HttpStatusCode.BadRequest, crossUserTaskLogResponse.StatusCode);
+
+            var crossUserNagUpdate = new SaveNagRequest(
+                testData.CommunityId,
+                secondUserId,
+                firstNagId,
+                "Attempted takeover",
+                new DateOnly(2026, 6, 8),
+                null,
+                null,
+                false,
+                NaggerPinnedByDto.None,
+                [],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 1,
+                NextVersion: 2);
+
+            var crossUserNagResponse = await client.PutAsJsonAsync(
+                $"/api/nags/{firstNagId}",
+                crossUserNagUpdate,
+                JsonOptions);
+
+            Assert.Equal(HttpStatusCode.Conflict, crossUserNagResponse.StatusCode);
+
+            var replaceWithEntryRequest = new SaveTaskLogRequest(
+                testData.CommunityId,
+                firstUserId,
+                firstTaskLogId,
+                firstNagId,
+                null,
+                null,
+                [
+                    new TaskItemDto(
+                        Guid.NewGuid(),
+                        firstTaskLogId,
+                        null,
+                        "Set 1",
+                        [
+                            new TaskEntryDto(
+                                entryId,
+                                firstTaskLogId,
+                                Guid.Empty,
+                                "Reps",
+                                null,
+                                TaskEntryValueTypeDto.Integer,
+                                null,
+                                null)
+                        ],
+                        [])
+                ],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 1,
+                NextVersion: 2);
+
+            var parentId = replaceWithEntryRequest.TaskItems[0].Id;
+            replaceWithEntryRequest = replaceWithEntryRequest with
+            {
+                TaskItems =
+                [
+                    replaceWithEntryRequest.TaskItems[0] with
+                    {
+                        TaskEntries =
+                        [
+                            replaceWithEntryRequest.TaskItems[0].TaskEntries[0] with
+                            {
+                                ParentTaskItemId = parentId
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            var replaceResponse = await client.PutAsJsonAsync(
+                $"/api/task-logs/{firstTaskLogId}",
+                replaceWithEntryRequest,
+                JsonOptions);
+            var replaceBody = await replaceResponse.Content.ReadAsStringAsync();
+
+            Assert.True(replaceResponse.StatusCode == HttpStatusCode.OK, replaceBody);
+
+            var crossUserPatch = new UpdateTaskEntryValuesRequest(
+                testData.CommunityId,
+                secondUserId,
+                [new TaskEntryValueUpdateDto(entryId, "99")],
+                UpdatedAt: DateTimeOffset.UtcNow,
+                BaseVersion: 2,
+                NextVersion: 3);
+
+            var crossUserPatchResponse = await client.PatchAsJsonAsync(
+                $"/api/task-logs/{firstTaskLogId}/task-entries",
+                crossUserPatch,
+                JsonOptions);
+
+            Assert.Equal(HttpStatusCode.Conflict, crossUserPatchResponse.StatusCode);
+        }
+        finally
+        {
+            await DeleteRoutedNagsAsync(
+                testData.CommunityId,
+                firstNagId,
+                secondNagId);
+        }
+    }
+
+    [Fact]
     public async Task Put_nags_creates_record_with_client_created_ids_in_community_data_database()
     {
         var testData = await CreateRoutedCommunityAsync();
@@ -220,6 +378,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             using var client = CreateServerClient();
             var request = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Created from API test",
                 new DateOnly(2026, 6, 1),
@@ -290,7 +449,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task User_moods_are_saved_idempotently_and_returned_as_history()
     {
         var testData = await CreateRoutedCommunityAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var moodId = Guid.NewGuid();
         var recordedAt = new DateTimeOffset(2026, 7, 21, 20, 15, 0, TimeSpan.Zero);
 
@@ -375,6 +534,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             using var client = CreateServerClient();
             var request = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Persistent shopping list",
                 null,
@@ -437,6 +597,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             using var client = CreateServerClient();
             var createRequest = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Gym - Push day",
                 new DateOnly(2026, 6, 1),
@@ -467,6 +628,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var updateRequest = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Gym - Push day updated",
                 new DateOnly(2026, 6, 10),
@@ -540,6 +702,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             using var client = CreateServerClient();
             var createRequest = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Original title",
                 new DateOnly(2026, 6, 1),
@@ -568,6 +731,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var invalidUpdateRequest = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Should roll back",
                 new DateOnly(2026, 6, 3),
@@ -623,6 +787,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             using var client = CreateServerClient();
             var createRequest = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Versioned nag",
                 new DateOnly(2026, 6, 1),
@@ -647,6 +812,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var firstUpdateRequest = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Versioned nag first update",
                 new DateOnly(2026, 6, 2),
@@ -672,6 +838,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var staleUpdateRequest = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Versioned nag stale update",
                 new DateOnly(2026, 6, 3),
@@ -770,6 +937,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             using var client = CreateServerClient();
             var request = new SaveNagRequest(
                 testData.CommunityId,
+                TestUserId,
                 nagId,
                 "Invalid date rule",
                 new DateOnly(2026, 6, 1),
@@ -809,7 +977,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_creates_record_with_client_created_ids_and_task_items()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var otherUserId = Guid.NewGuid();
         var taskLogId = Guid.NewGuid();
         var otherTaskLogId = Guid.NewGuid();
@@ -894,7 +1062,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_accepts_nested_task_items_and_persists_parent_assertions()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var exerciseNodeId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
@@ -992,7 +1160,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_returns_bad_request_when_nested_parent_assertion_does_not_match()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var exerciseNodeId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
@@ -1052,7 +1220,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_updates_record_atomically_and_replaces_task_items()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var oldBenchNodeId = Guid.NewGuid();
         var newBenchNodeId = Guid.NewGuid();
@@ -1161,7 +1329,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_returns_bad_request_when_wrapped_payload_version_is_outside_version_span()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
 
         try
@@ -1205,7 +1373,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_returns_conflict_when_expected_version_is_stale()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var nodeId = Guid.NewGuid();
 
@@ -1277,7 +1445,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_creates_and_replaces_task_entries_with_valid_value_types()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var otherUserId = Guid.NewGuid();
         var taskLogId = Guid.NewGuid();
         var otherTaskLogId = Guid.NewGuid();
@@ -1425,7 +1593,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Patch_task_log_inputs_updates_values_without_replacing_tree()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var weightInputId = Guid.NewGuid();
@@ -1535,7 +1703,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Patch_task_log_inputs_returns_conflict_when_expected_version_is_stale()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
@@ -1608,7 +1776,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Patch_task_log_inputs_returns_conflict_when_task_log_is_closed()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
@@ -1707,7 +1875,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Patch_task_log_inputs_returns_bad_request_when_input_is_not_in_task_log()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
 
@@ -1771,7 +1939,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_returns_bad_request_when_task_entry_value_does_not_match_value_type()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
 
@@ -1840,7 +2008,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         string value)
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
 
@@ -1895,7 +2063,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Patch_task_log_inputs_returns_bad_request_when_value_does_not_match_existing_value_type()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
         var repsInputId = Guid.NewGuid();
@@ -1975,7 +2143,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Put_task_logs_returns_bad_request_when_task_entry_value_type_is_invalid()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var taskLogId = Guid.NewGuid();
         var nodeId = Guid.NewGuid();
         var inputId = Guid.NewGuid();
@@ -2038,8 +2206,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     public async Task Save_task_log_does_not_create_tags()
     {
         var testData = await CreateRoutedNagAsync();
-        var userId = Guid.NewGuid();
+        var userId = TestUserId;
         var otherUserId = Guid.NewGuid();
+        var otherNagId = Guid.NewGuid();
         var taskLogId = Guid.NewGuid();
         var otherTaskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
@@ -2114,11 +2283,20 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             Assert.True(saveResponse.StatusCode == HttpStatusCode.OK, saveBody);
 
+            await SaveNagForPlanAsync(
+                client,
+                testData.CommunityId,
+                otherNagId,
+                "Other user's nag",
+                false,
+                DayOfWeek.Monday,
+                otherUserId);
+
             var otherUserRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 otherUserId,
                 otherTaskLogId,
-                testData.NagId,
+                otherNagId,
                 null,
                 null,
                 [
@@ -2174,7 +2352,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         }
         finally
         {
-            await DeleteRoutedNagAsync(testData);
+            await DeleteRoutedNagsAsync(testData.CommunityId, testData.NagId, otherNagId);
         }
     }
 
@@ -2186,7 +2364,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         try
         {
             using var client = CreateServerClient();
-            var userId = Guid.NewGuid();
+            var userId = TestUserId;
 
             var request = new SaveTagRequest(
                 testData.CommunityId,
@@ -2216,6 +2394,120 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         }
     }
 
+    [Fact]
+    public async Task Tags_and_moods_are_isolated_by_user_in_same_community()
+    {
+        var testData = await CreateRoutedCommunityAsync();
+        var firstUserId = TestUserId;
+        var secondUserId = Guid.NewGuid();
+        var firstMoodId = Guid.NewGuid();
+        var secondMoodId = Guid.NewGuid();
+
+        try
+        {
+            using var client = CreateServerClient();
+
+            var firstTagResponse = await client.PutAsJsonAsync(
+                "/api/tags",
+                new SaveTagRequest(
+                    testData.CommunityId,
+                    firstUserId,
+                    "task-entry-unit",
+                    "kg",
+                    "First user's kg"),
+                JsonOptions);
+            var secondTagResponse = await client.PutAsJsonAsync(
+                "/api/tags",
+                new SaveTagRequest(
+                    testData.CommunityId,
+                    secondUserId,
+                    "task-entry-unit",
+                    "kg",
+                    "Second user's kg"),
+                JsonOptions);
+
+            Assert.Equal(HttpStatusCode.OK, firstTagResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, secondTagResponse.StatusCode);
+
+            var firstTagsResponse = await client.GetAsync(
+                $"/api/tags?communityId={testData.CommunityId}&userId={firstUserId}&tagType=task-entry-unit");
+            var secondTagsResponse = await client.GetAsync(
+                $"/api/tags?communityId={testData.CommunityId}&userId={secondUserId}&tagType=task-entry-unit");
+
+            var firstTags = await firstTagsResponse.Content.ReadFromJsonAsync<TagDto[]>(JsonOptions);
+            var secondTags = await secondTagsResponse.Content.ReadFromJsonAsync<TagDto[]>(JsonOptions);
+
+            Assert.NotNull(firstTags);
+            Assert.NotNull(secondTags);
+            Assert.Contains(firstTags, tag => tag.Name == "kg" && tag.Description == "First user's kg");
+            Assert.DoesNotContain(firstTags, tag => tag.Description == "Second user's kg");
+            Assert.Contains(secondTags, tag => tag.Name == "kg" && tag.Description == "Second user's kg");
+            Assert.DoesNotContain(secondTags, tag => tag.Description == "First user's kg");
+
+            var firstMoodResponse = await client.PostAsJsonAsync(
+                "/api/user-moods",
+                new SaveUserMoodRequest(
+                    testData.CommunityId,
+                    firstUserId,
+                    firstMoodId,
+                    "focused",
+                    new DateTimeOffset(2026, 9, 1, 8, 0, 0, TimeSpan.Zero),
+                    "Europe/Copenhagen",
+                    "da-DK"),
+                JsonOptions);
+            var secondMoodResponse = await client.PostAsJsonAsync(
+                "/api/user-moods",
+                new SaveUserMoodRequest(
+                    testData.CommunityId,
+                    secondUserId,
+                    secondMoodId,
+                    "tired",
+                    new DateTimeOffset(2026, 9, 1, 9, 0, 0, TimeSpan.Zero),
+                    "Europe/Copenhagen",
+                    "da-DK"),
+                JsonOptions);
+
+            Assert.Equal(HttpStatusCode.OK, firstMoodResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, secondMoodResponse.StatusCode);
+
+            var crossUserMoodResponse = await client.PostAsJsonAsync(
+                "/api/user-moods",
+                new SaveUserMoodRequest(
+                    testData.CommunityId,
+                    secondUserId,
+                    firstMoodId,
+                    "overwritten",
+                    new DateTimeOffset(2026, 9, 1, 10, 0, 0, TimeSpan.Zero),
+                    "Europe/Copenhagen",
+                    "da-DK"),
+                JsonOptions);
+
+            Assert.Equal(HttpStatusCode.BadRequest, crossUserMoodResponse.StatusCode);
+
+            var firstMoodsResponse = await client.GetAsync(
+                $"/api/user-moods?communityId={testData.CommunityId}&userId={firstUserId}&take=10");
+            var secondMoodsResponse = await client.GetAsync(
+                $"/api/user-moods?communityId={testData.CommunityId}&userId={secondUserId}&take=10");
+
+            var firstMoods = await firstMoodsResponse.Content.ReadFromJsonAsync<UserMoodDto[]>(JsonOptions);
+            var secondMoods = await secondMoodsResponse.Content.ReadFromJsonAsync<UserMoodDto[]>(JsonOptions);
+
+            Assert.NotNull(firstMoods);
+            Assert.NotNull(secondMoods);
+            var firstMood = Assert.Single(firstMoods);
+            var secondMood = Assert.Single(secondMoods);
+
+            Assert.Equal(firstMoodId, firstMood.Id);
+            Assert.Equal("focused", firstMood.Mood);
+            Assert.Equal(secondMoodId, secondMood.Id);
+            Assert.Equal("tired", secondMood.Mood);
+        }
+        finally
+        {
+            await DeleteRoutedNagAsync(testData);
+        }
+    }
+
     private static async Task<RoutedNagTestData> CreateRoutedNagAsync()
     {
         await using var controlDb = CreateControlDbContext();
@@ -2237,6 +2529,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         dataDb.Nags.Add(new Nagger
         {
             Id = testData.NagId,
+            UserId = TestUserId,
             Title = testData.Title,
             ActiveLogDueOn = new DateOnly(2026, 6, 1),
             IsDeactivated = false,
@@ -2245,6 +2538,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             [
                 new ScheduleRule
                 {
+                        UserId = TestUserId,
                     RuleType = ScheduleRuleType.Weekday,
                     RuleJson = WeekdayRuleJson(DayOfWeek.Wednesday)
                 }
@@ -2263,10 +2557,12 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         Guid nagId,
         string title,
         bool isDeactivated,
-        DayOfWeek dayOfWeek)
+        DayOfWeek dayOfWeek,
+        Guid? userId = null)
     {
         var request = new SaveNagRequest(
             communityId,
+            userId ?? TestUserId,
             nagId,
             title,
             NextDayOfWeek(new DateOnly(2026, 6, 1), dayOfWeek),

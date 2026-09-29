@@ -184,7 +184,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
 
         if (!await reader.ReadAsync(cancellationToken))
         {
-            throw new InvalidOperationException("Saved user mood could not be read back.");
+            throw new NagValidationException("UserMood does not exist for this user.");
         }
 
         return new UserMoodDto(
@@ -202,6 +202,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
 
     public async Task<Nagger> SaveNagAsync(
         Guid communityId,
+        Guid userId,
         Guid nagId,
         string title,
         DateOnly? activeLogDueOn,
@@ -220,6 +221,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             .Select(rule => new ScheduleRule
             {
                 Id = rule.Id,
+                UserId = userId,
                 NagId = nagId,
                 RuleType = rule.RuleType,
                 RuleJson = rule.RuleJson
@@ -236,11 +238,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             connection,
             transaction,
             nagId,
+            userId,
             cancellationToken);
 
         var nag = new Nagger
         {
             Id = nagId,
+            UserId = userId,
             Title = title,
             ActiveLogDueOn = activeLogDueOn,
             ExpiresOn = expiresOn,
@@ -282,11 +286,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                       updated_by_device_model = @updatedByDeviceModel,
                       version = @version
                   where id = @id
+                      and user_id = @userId
                       and version = @baseVersion
                   """
                 : """
                   insert into nag (
                       id,
+                      user_id,
                       title,
                       active_log_due_on,
                       expires_on,
@@ -300,6 +306,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                       version)
                   values (
                       @id,
+                      @userId,
                       @title,
                       @activeLogDueOn,
                       @expiresOn,
@@ -316,6 +323,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             transaction);
 
         command.Parameters.AddWithValue("@id", nag.Id);
+        command.Parameters.AddWithValue("@userId", nag.UserId);
         command.Parameters.AddWithValue("@title", nag.Title);
         command.Parameters.AddWithValue("@activeLogDueOn", (object?)nag.ActiveLogDueOn ?? DBNull.Value);
         command.Parameters.AddWithValue("@expiresOn", (object?)nag.ExpiresOn ?? DBNull.Value);
@@ -341,11 +349,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             """
             delete from schedule_rule
             where nag_id = @nagId
+                and user_id = @userId
             """,
             connection,
             transaction);
 
         deleteScheduleRulesCommand.Parameters.AddWithValue("@nagId", nag.Id);
+        deleteScheduleRulesCommand.Parameters.AddWithValue("@userId", nag.UserId);
 
         await deleteScheduleRulesCommand.ExecuteNonQueryAsync(cancellationToken);
 
@@ -354,14 +364,15 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             await using var ruleCommand = new SqlCommand(
                 """
                 insert into schedule_rule
-                    (id, nag_id, rule_type, rule_json)
+                    (id, user_id, nag_id, rule_type, rule_json)
                 values
-                    (@id, @nagId, @ruleType, @ruleJson)
+                    (@id, @userId, @nagId, @ruleType, @ruleJson)
                 """,
                 connection,
                 transaction);
 
             ruleCommand.Parameters.AddWithValue("@id", rule.Id);
+            ruleCommand.Parameters.AddWithValue("@userId", rule.UserId);
             ruleCommand.Parameters.AddWithValue("@nagId", nag.Id);
             ruleCommand.Parameters.AddWithValue("@ruleType", rule.RuleType.ToString());
             ruleCommand.Parameters.AddWithValue("@ruleJson", rule.RuleJson);
@@ -394,6 +405,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             .Select(node => new TaskItem
             {
                 Id = node.Id,
+                UserId = userId,
                 TaskLogId = taskLogId,
                 ParentTaskItemId = node.ParentTaskItemId,
                 Name = node.Name,
@@ -412,6 +424,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                     .Select(input => new TaskEntry
                     {
                         Id = input.Id,
+                        UserId = userId,
                         TaskLogId = taskLogId,
                         ParentTaskItemId = node.Id,
                         Label = input.Label,
@@ -435,6 +448,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         var taskLog = new TaskLog
         {
             Id = taskLogId,
+            UserId = userId,
             NagId = nagId,
             CopiedFromTaskLogId = copiedFromTaskLogId,
             ClosedOn = closedOn,
@@ -454,15 +468,22 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
 
         await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
-        if (!await NagExistsAsync(connection, transaction, taskLog.NagId, cancellationToken))
+        if (!await NagExistsAsync(connection, transaction, userId, taskLog.NagId, cancellationToken))
         {
             throw new NagValidationException("Nagger does not exist.");
+        }
+
+        if (taskLog.CopiedFromTaskLogId is { } copiedFromId
+            && !await TaskLogExistsAsync(connection, transaction, userId, copiedFromId, cancellationToken))
+        {
+            throw new NagValidationException("CopiedFromTaskLog does not exist.");
         }
 
         var currentTaskLogHeader = await GetTaskLogHeaderAsync(
             connection,
             transaction,
             taskLog.Id,
+            userId,
             cancellationToken);
 
         var exists = currentTaskLogHeader is not null;
@@ -481,6 +502,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         taskLog = new TaskLog
         {
             Id = taskLog.Id,
+            UserId = taskLog.UserId,
             NagId = taskLog.NagId,
             CopiedFromTaskLogId = taskLog.CopiedFromTaskLogId,
             ClosedOn = currentTaskLogHeader?.ClosedOn ?? taskLog.ClosedOn,
@@ -509,12 +531,14 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             connection,
             transaction,
             taskLog.Id,
+            userId,
             cancellationToken);
 
         await DeleteTaskItemsAsync(
             connection,
             transaction,
             taskLog.Id,
+            userId,
             cancellationToken);
 
         await InsertTaskLogTreeAsync(
@@ -530,6 +554,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
 
     public async Task<TaskLogWriteResult> UpdateTaskEntryValuesAsync(
         Guid communityId,
+        Guid userId,
         Guid taskLogId,
         DateTimeOffset updatedAt,
         ClientIdentityDto? clientIdentity,
@@ -552,6 +577,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         var taskLogIsOpen = await TaskLogIsOpenAsync(
             connection,
             transaction,
+            userId,
             taskLogId,
             cancellationToken);
 
@@ -560,6 +586,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             var currentVersion = await GetTaskLogVersionAsync(
                 connection,
                 transaction,
+                userId,
                 taskLogId,
                 cancellationToken);
 
@@ -571,6 +598,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         var matchingInputCount = await CountTaskEntriesInTaskLogAsync(
             connection,
             transaction,
+            userId,
             taskLogId,
             taskEntries.Select(input => input.Id).ToArray(),
             cancellationToken);
@@ -583,6 +611,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         var valueTypes = await GetTaskEntryValueTypesAsync(
             connection,
             transaction,
+            userId,
             taskLogId,
             taskEntries.Select(input => input.Id).ToArray(),
             cancellationToken);
@@ -602,11 +631,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                     interaction_mood = @interactionMood,
                     interaction_mood_at = @interactionMoodAt
                 where id = @id
+                    and user_id = @userId
                 """,
                 connection,
                 transaction);
 
             command.Parameters.AddWithValue("@id", input.Id);
+            command.Parameters.AddWithValue("@userId", userId);
             command.Parameters.AddWithValue("@value", (object?)input.Value ?? DBNull.Value);
             command.Parameters.AddWithValue("@interactionAt", (object?)input.InteractionAt ?? DBNull.Value);
             command.Parameters.AddWithValue("@interactionTimeZone", (object?)input.InteractionTimeZone ?? DBNull.Value);
@@ -620,6 +651,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         var storedVersion = await UpdateTaskLogVersionAsync(
             connection,
             transaction,
+            userId,
             taskLogId,
             baseVersion,
             nextVersion,
@@ -637,6 +669,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
     private static async Task<bool> TaskLogIsOpenAsync(
         SqlConnection connection,
         SqlTransaction transaction,
+        Guid userId,
         Guid taskLogId,
         CancellationToken cancellationToken)
     {
@@ -645,11 +678,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             select count(*)
             from task_log
             where id = @taskLogId
+                and user_id = @userId
                 and closed_on is null
             """,
             connection,
             transaction);
 
+        command.Parameters.AddWithValue("@userId", userId);
         command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
         return (int)await command.ExecuteScalarAsync(cancellationToken) == 1;
@@ -683,6 +718,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                           descendant_task_item_count = @descendantTaskItemCount,
                           done_descendant_task_item_count = @doneDescendantTaskItemCount
                       where id = @id
+                          and user_id = @userId
                           and version = @baseVersion
                       """
                     : """
@@ -700,12 +736,14 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                           descendant_task_item_count = @descendantTaskItemCount,
                           done_descendant_task_item_count = @doneDescendantTaskItemCount
                       where id = @id
+                          and user_id = @userId
                           and version = @baseVersion
                           and closed_on is null
                       """
                 : """
                   insert into task_log (
                       id,
+                      user_id,
                       nag_id,
                       copied_from_task_log_id,
                       closed_on,
@@ -719,6 +757,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                       done_descendant_task_item_count)
                   values (
                       @id,
+                      @userId,
                       @nagId,
                       @copiedFromTaskLogId,
                       @closedOn,
@@ -735,6 +774,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             transaction);
 
         command.Parameters.AddWithValue("@id", taskLog.Id);
+        command.Parameters.AddWithValue("@userId", taskLog.UserId);
         command.Parameters.AddWithValue("@nagId", taskLog.NagId);
         command.Parameters.AddWithValue("@copiedFromTaskLogId", (object?)taskLog.CopiedFromTaskLogId ?? DBNull.Value);
         command.Parameters.AddWithValue("@closedOn", (object?)taskLog.ClosedOn ?? DBNull.Value);
@@ -796,6 +836,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             insert into task_item
                 (
                     id,
+                    user_id,
                     task_log_id,
                     parent_task_item_id,
                     name,
@@ -829,6 +870,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             sql.Append($"""
                 (
                     @nodeId{i},
+                    @nodeUserId{i},
                     @nodeTaskLogId{i},
                     @nodeParentTaskItemId{i},
                     @nodeName{i},
@@ -846,6 +888,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 """);
 
             command.Parameters.AddWithValue($"@nodeId{i}", taskItems[i].Id);
+            command.Parameters.AddWithValue($"@nodeUserId{i}", taskItems[i].UserId);
             command.Parameters.AddWithValue($"@nodeTaskLogId{i}", taskItems[i].TaskLogId);
             command.Parameters.AddWithValue($"@nodeParentTaskItemId{i}", (object?)taskItems[i].ParentTaskItemId ?? DBNull.Value);
             command.Parameters.AddWithValue($"@nodeName{i}", taskItems[i].Name);
@@ -882,6 +925,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             insert into task_entry
                 (
                     id,
+                    user_id,
                     task_log_id,
                     parent_task_item_id,
                     label,
@@ -916,6 +960,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             sql.Append($"""
                 (
                     @inputId{i},
+                    @inputUserId{i},
                     @inputTaskLogId{i},
                     @inputParentTaskItemId{i},
                     @inputLabel{i},
@@ -934,6 +979,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 """);
 
             command.Parameters.AddWithValue($"@inputId{i}", taskEntries[i].Id);
+            command.Parameters.AddWithValue($"@inputUserId{i}", taskEntries[i].UserId);
             command.Parameters.AddWithValue($"@inputTaskLogId{i}", taskEntries[i].TaskLogId);
             command.Parameters.AddWithValue($"@inputParentTaskItemId{i}", taskEntries[i].ParentTaskItemId);
             command.Parameters.AddWithValue($"@inputLabel{i}", taskEntries[i].Label);
@@ -959,6 +1005,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
     private static async Task<int> CountTaskEntriesInTaskLogAsync(
         SqlConnection connection,
         SqlTransaction transaction,
+        Guid userId,
         Guid taskLogId,
         IReadOnlyList<Guid> taskEntryIds,
         CancellationToken cancellationToken)
@@ -972,11 +1019,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             select count(*)
             from task_entry
             where task_entry.task_log_id = @taskLogId
+                and task_entry.user_id = @userId
                 and task_entry.id in ({string.Join(", ", parameterNames)})
             """,
             connection,
             transaction);
 
+        command.Parameters.AddWithValue("@userId", userId);
         command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
         for (var i = 0; i < taskEntryIds.Count; i++)
@@ -990,6 +1039,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
     private static async Task<Dictionary<Guid, string>> GetTaskEntryValueTypesAsync(
         SqlConnection connection,
         SqlTransaction transaction,
+        Guid userId,
         Guid taskLogId,
         IReadOnlyList<Guid> taskEntryIds,
         CancellationToken cancellationToken)
@@ -1008,11 +1058,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             select id, value_type
             from task_entry
             where task_entry.task_log_id = @taskLogId
+                and task_entry.user_id = @userId
                 and task_entry.id in ({string.Join(", ", parameterNames)})
             """,
             connection,
             transaction);
 
+        command.Parameters.AddWithValue("@userId", userId);
         command.Parameters.AddWithValue("@taskLogId", taskLogId);
 
         for (var i = 0; i < taskEntryIds.Count; i++)
@@ -1035,6 +1087,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         SqlConnection connection,
         SqlTransaction transaction,
         Guid taskLogId,
+        Guid userId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
@@ -1042,11 +1095,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             delete task_entry
             from task_entry
             where task_entry.task_log_id = @taskLogId
+                and task_entry.user_id = @userId
             """,
             connection,
             transaction);
 
         command.Parameters.AddWithValue("@taskLogId", taskLogId);
+        command.Parameters.AddWithValue("@userId", userId);
 
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
@@ -1055,6 +1110,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         SqlConnection connection,
         SqlTransaction transaction,
         Guid taskLogId,
+        Guid userId,
         CancellationToken cancellationToken)
     {
         while (true)
@@ -1063,6 +1119,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 """
                 delete from task_item
                 where task_log_id = @taskLogId
+                    and user_id = @userId
                     and not exists (
                         select 1
                         from task_item child
@@ -1073,6 +1130,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 transaction);
 
             command.Parameters.AddWithValue("@taskLogId", taskLogId);
+            command.Parameters.AddWithValue("@userId", userId);
 
             var affectedRows = await command.ExecuteNonQueryAsync(cancellationToken);
 
@@ -1086,6 +1144,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
     private static async Task<bool> NagExistsAsync(
         SqlConnection connection,
         SqlTransaction transaction,
+        Guid userId,
         Guid nagId,
         CancellationToken cancellationToken)
     {
@@ -1094,11 +1153,36 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             select 1
             from nag
             where id = @id
+                and user_id = @userId
             """,
             connection,
             transaction);
 
         command.Parameters.AddWithValue("@id", nagId);
+        command.Parameters.AddWithValue("@userId", userId);
+
+        return await command.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
+    private static async Task<bool> TaskLogExistsAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        Guid userId,
+        Guid taskLogId,
+        CancellationToken cancellationToken)
+    {
+        await using var command = new SqlCommand(
+            """
+            select 1
+            from task_log
+            where id = @id
+                and user_id = @userId
+            """,
+            connection,
+            transaction);
+
+        command.Parameters.AddWithValue("@id", taskLogId);
+        command.Parameters.AddWithValue("@userId", userId);
 
         return await command.ExecuteScalarAsync(cancellationToken) is not null;
     }
@@ -1107,6 +1191,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         SqlConnection connection,
         SqlTransaction transaction,
         Guid nagId,
+        Guid userId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
@@ -1114,11 +1199,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             select version
             from nag
             where id = @id
+                and user_id = @userId
             """,
             connection,
             transaction);
 
         command.Parameters.AddWithValue("@id", nagId);
+        command.Parameters.AddWithValue("@userId", userId);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
 
@@ -1128,6 +1215,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
     private static async Task<int?> GetTaskLogVersionAsync(
         SqlConnection connection,
         SqlTransaction transaction,
+        Guid userId,
         Guid taskLogId,
         CancellationToken cancellationToken)
     {
@@ -1136,11 +1224,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             select version
             from task_log
             where id = @id
+                and user_id = @userId
             """,
             connection,
             transaction);
 
         command.Parameters.AddWithValue("@id", taskLogId);
+        command.Parameters.AddWithValue("@userId", userId);
 
         var result = await command.ExecuteScalarAsync(cancellationToken);
 
@@ -1151,6 +1241,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         SqlConnection connection,
         SqlTransaction transaction,
         Guid taskLogId,
+        Guid userId,
         CancellationToken cancellationToken)
     {
         await using var command = new SqlCommand(
@@ -1161,11 +1252,13 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 version
             from task_log
             where id = @id
+                and user_id = @userId
             """,
             connection,
             transaction);
 
         command.Parameters.AddWithValue("@id", taskLogId);
+        command.Parameters.AddWithValue("@userId", userId);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
@@ -1183,6 +1276,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
     private static async Task<int> UpdateTaskLogVersionAsync(
         SqlConnection connection,
         SqlTransaction transaction,
+        Guid userId,
         Guid taskLogId,
         int baseVersion,
         int nextVersion,
@@ -1201,12 +1295,14 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 updated_by_device_model = @updatedByDeviceModel
             output inserted.version
             where id = @id
+                and user_id = @userId
                 and version = @baseVersion
             """,
             connection,
             transaction);
 
         command.Parameters.AddWithValue("@id", taskLogId);
+        command.Parameters.AddWithValue("@userId", userId);
         command.Parameters.AddWithValue("@baseVersion", baseVersion);
         command.Parameters.AddWithValue("@nextVersion", nextVersion);
         command.Parameters.AddWithValue("@updatedAt", updatedAt);
@@ -1221,6 +1317,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             var currentVersion = await GetTaskLogVersionAsync(
                 connection,
                 transaction,
+                userId,
                 taskLogId,
                 cancellationToken);
 

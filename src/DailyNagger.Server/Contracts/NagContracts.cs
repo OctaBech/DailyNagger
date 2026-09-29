@@ -35,6 +35,7 @@ public sealed record NaggerDto(
 
 public sealed record SaveNagRequest(
     Guid CommunityId,
+    Guid UserId,
     Guid Id,
     string Title,
     DateOnly? ActiveLogDueOn,

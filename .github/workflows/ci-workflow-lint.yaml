@@ -1,0 +1,14 @@
+name: "CI 2 · Workflow lint"
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    name: "CI 2 · Validate GitHub Actions workflows"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workflows
+        uses: actions/checkout@v7
+      - name: Check workflow syntax and references
+        uses: docker://rhysd/actionlint:1.7.12

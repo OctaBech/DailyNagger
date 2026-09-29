@@ -231,6 +231,7 @@ set -euo pipefail
 remote_path="$1"
 
 cd "$remote_path"
+bash ./deploy/prepare-caddy-state.sh "$remote_path"
 docker compose -f compose.prod.yaml up -d seq server reverse-proxy
 docker compose -f compose.prod.yaml ps
 '@

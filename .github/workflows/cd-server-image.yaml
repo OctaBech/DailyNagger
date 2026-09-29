@@ -1,4 +1,4 @@
-name: Build server image
+name: "CD 2 · Server image"
 
 on:
   workflow_call:
@@ -13,6 +13,7 @@ on:
 
 jobs:
   build:
+    name: "CD 2 · Build server image"
     runs-on: ubuntu-latest
     outputs:
       image_digest: ${{ steps.image.outputs.digest }}

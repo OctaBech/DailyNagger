@@ -1,4 +1,4 @@
-name: Production Smoke
+name: "~ Legacy · Production smoke"
 
 on:
   workflow_dispatch:

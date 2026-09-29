@@ -1,4 +1,4 @@
-name: CI - server deployment checks
+name: "CI 2 · Server deployment"
 run-name: "${{ github.workflow }} · ${{ github.event.head_commit.message || github.event.pull_request.title || github.sha }}"
 
 on:
@@ -6,6 +6,7 @@ on:
 
 jobs:
   server-deployment-checks:
+    name: "CI 2 · Check server deployment"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
@@ -20,6 +21,36 @@ jobs:
             'DAILY_NAGGER_PUBLIC_HOST=localhost' \
             > .env.ci
           docker compose --env-file .env.ci -f compose.prod.yaml config --quiet
+      - name: Validate normal and maintenance Caddy configurations
+        run: |
+          for script in deploy/*.sh tests/deploy/*.sh; do
+            bash -n "$script"
+          done
+          bash tests/deploy/caddy-mode.sh
+          bash tests/deploy/production-db-backup-restore.sh
+          bash tests/deploy/publish-server-release.sh
+          bash deploy/prepare-caddy-state.sh "$PWD"
+          cmp deploy/Caddyfile caddy-state/Caddyfile
+
+          for mode in normal maintenance; do
+            if [[ "$mode" == normal ]]; then
+              template=deploy/Caddyfile
+            else
+              template=deploy/Caddyfile.maintenance
+            fi
+            cp "$template" caddy-state/Caddyfile
+            docker run --rm --entrypoint caddy \
+              -e DAILY_NAGGER_PUBLIC_HOST=localhost \
+              -v "$PWD/caddy-state:/etc/caddy:ro" \
+              caddy:2.10-alpine validate \
+              --config /etc/caddy/Caddyfile --adapter caddyfile
+          done
+
+          # Initialisation must not accidentally reopen Caddy after a restart.
+          bash deploy/prepare-caddy-state.sh "$PWD"
+          cmp deploy/Caddyfile.maintenance caddy-state/Caddyfile
+      - name: Exercise backup and restore on disposable SQL Server
+        run: bash tests/deploy/production-db-backup-restore.integration.sh
       - name: Create server deployment archive (.tar.gz)
         run: |
           tar \
@@ -37,10 +68,7 @@ jobs:
             deploy \
             global.json \
             Directory.Build.props \
-            src/DailyNagger.Server \
-            scripts/run-vps-ef-migration.sh \
-            scripts/run-vps-production-minimum-seed.sh \
-            scripts/seed-production-minimum.sql
+            src/DailyNagger.Server
       - name: Extract server deployment archive
         run: |
           mkdir -p "$RUNNER_TEMP/dailynagger-unpacked"

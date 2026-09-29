@@ -1,13 +1,15 @@
-name: CD
+name: "# CD & Publish"
+run-name: "CD · ${{ github.event.workflow_run.display_title }}"
 
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: ["# CI"]
     types: [completed]
     branches: [main]
 
 jobs:
   read-release-plan:
+    name: "CD 1 · Verify CI release plan"
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
     permissions:
@@ -42,6 +44,7 @@ jobs:
           printf 'mobile=%s\nserver=%s\n' "$MOBILE" "$SERVER" >> "$GITHUB_OUTPUT"
 
   build-server-image:
+    name: "CD 2 · Build server image"
     needs: read-release-plan
     if: ${{ needs.read-release-plan.outputs.server == 'true' }}
     uses: ./.github/workflows/cd-server-image.yaml
@@ -52,6 +55,7 @@ jobs:
       commit_sha: ${{ github.event.workflow_run.head_sha }}
 
   build-daily-apk:
+    name: "CD 2 · Build personal APK"
     needs: read-release-plan
     if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
     uses: ./.github/workflows/cd-mobile-apk.yaml
@@ -66,8 +70,10 @@ jobs:
       ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
       ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
       DAILY_NAGGER_API_TOKEN: ${{ secrets.DAILY_NAGGER_API_TOKEN }}
+      PERSONAL_APK_ZIP_PASSWORD: ${{ secrets.PERSONAL_APK_ZIP_PASSWORD }}
 
   build-demo-apk:
+    name: "CD 2 · Build demo APK"
     needs: read-release-plan
     if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
     uses: ./.github/workflows/cd-mobile-apk.yaml
@@ -82,3 +88,327 @@ jobs:
       ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
       ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
       DAILY_NAGGER_API_TOKEN: ${{ secrets.DAILY_NAGGER_API_TOKEN }}
+
+  prepare-release-candidate:
+    name: "CD 3 · Verify release candidate"
+    needs: [read-release-plan, build-server-image, build-daily-apk, build-demo-apk]
+    if: >-
+      ${{ !cancelled() &&
+          needs.read-release-plan.result == 'success' &&
+          (needs.read-release-plan.outputs.server == 'true' || needs.read-release-plan.outputs.mobile == 'true') &&
+          (needs.read-release-plan.outputs.server != 'true' || needs.build-server-image.result == 'success') &&
+          (needs.read-release-plan.outputs.mobile != 'true' ||
+            (needs.build-daily-apk.result == 'success' && needs.build-demo-apk.result == 'success')) }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+      SERVER_BUILT: ${{ needs.read-release-plan.outputs.server }}
+      MOBILE_BUILT: ${{ needs.read-release-plan.outputs.mobile }}
+      SERVER_IMAGE_DIGEST: ${{ needs.build-server-image.outputs.image_digest }}
+    steps:
+      - name: Verify image digest and APK artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$SERVER_BUILT" =~ ^(true|false)$ ]]
+          [[ "$MOBILE_BUILT" =~ ^(true|false)$ ]]
+
+          if [[ "$SERVER_BUILT" == true ]]; then
+            [[ "$SERVER_IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || {
+              echo "Built server image has no valid digest."
+              exit 1
+            }
+          fi
+
+          DAILY_ARTIFACT=""
+          DEMO_ARTIFACT=""
+          if [[ "$MOBILE_BUILT" == true ]]; then
+            DAILY_ARTIFACT="dailynagger-daily-$GITHUB_RUN_NUMBER"
+            DEMO_ARTIFACT="dailynagger-demo-$GITHUB_RUN_NUMBER"
+            ARTIFACTS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100")
+            for name in "$DAILY_ARTIFACT" "$DEMO_ARTIFACT"; do
+              jq -e --arg name "$name" 'any(.artifacts[]; .name == $name and .expired == false)' <<< "$ARTIFACTS" > /dev/null || {
+                echo "Missing release artifact: $name"
+                exit 1
+              }
+            done
+          fi
+
+          jq -n \
+            --arg commit_sha "$COMMIT_SHA" \
+            --argjson cd_run_id "$GITHUB_RUN_ID" \
+            --arg server_built "$SERVER_BUILT" \
+            --arg mobile_built "$MOBILE_BUILT" \
+            --arg server_image_digest "$SERVER_IMAGE_DIGEST" \
+            --arg daily_artifact "$DAILY_ARTIFACT" \
+            --arg demo_artifact "$DEMO_ARTIFACT" \
+            '{commit_sha: $commit_sha, cd_run_id: $cd_run_id,
+              server_built: ($server_built == "true"), mobile_built: ($mobile_built == "true"),
+              server_image_digest: $server_image_digest,
+              daily_artifact: $daily_artifact, demo_artifact: $demo_artifact}' \
+            > "$RUNNER_TEMP/release-candidate.json"
+
+          cat "$RUNNER_TEMP/release-candidate.json" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save verified release candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: dailynagger-release-candidate-${{ github.run_number }}
+          path: ${{ runner.temp }}/release-candidate.json
+          if-no-files-found: error
+
+  publish-release:
+    name: "Publish · Deploy approved candidate"
+    needs: [read-release-plan, prepare-release-candidate]
+    if: ${{ needs.prepare-release-candidate.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: dailynagger-production-publish
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      contents: write
+      packages: read
+    steps:
+      - name: Checkout the CI-verified commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Download the verified release candidate
+        uses: actions/download-artifact@v8
+        with:
+          name: dailynagger-release-candidate-${{ github.run_number }}
+          path: ${{ runner.temp }}/release-candidate
+
+      - name: Confirm candidate identity and built components
+        id: candidate
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          EXPECTED_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          candidate="$RUNNER_TEMP/release-candidate/release-candidate.json"
+          test -s "$candidate"
+          jq -e --arg sha "$EXPECTED_SHA" --argjson run_id "$EXPECTED_RUN_ID" '
+            .commit_sha == $sha and
+            .cd_run_id == $run_id and
+            (.server_built | type == "boolean") and
+            (.mobile_built | type == "boolean") and
+            (.server_built or .mobile_built) and
+            (if .server_built then (.server_image_digest | test("^sha256:[0-9a-f]{64}$")) else true end) and
+            (if .mobile_built then (.daily_artifact | length > 0) and (.demo_artifact | length > 0) else true end)
+          ' "$candidate" > /dev/null
+          printf 'server_digest=%s\ndemo_artifact=%s\n' \
+            "$(jq -r '.server_image_digest' "$candidate")" \
+            "$(jq -r '.demo_artifact' "$candidate")" >> "$GITHUB_OUTPUT"
+          echo 'Approved candidate matches the successful CI commit and this CD run.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare production SSH
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        uses: ./.github/actions/prepare-production-ssh
+        with:
+          vps-host: ${{ secrets.DAILY_NAGGER_DEPLOY_HOST }}
+          ssh-private-key: ${{ secrets.DAILY_NAGGER_DEPLOY_SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.DAILY_NAGGER_DEPLOY_KNOWN_HOSTS }}
+
+      - name: Check server publish prerequisites without changing the VPS
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          set -euo pipefail
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" \
+            -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            'bash -s -- /opt/dailynagger' \
+            < deploy/check-production-publish-prerequisites.sh
+
+      - name: Stage the CI-verified server source on the VPS
+        id: stage
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          set -euo pipefail
+          tar -czf "$RUNNER_TEMP/server-source.tar.gz" \
+            compose.prod.yaml deploy global.json Directory.Build.props \
+            src/DailyNagger.Server
+          release_dir="/opt/dailynagger/releases/$GITHUB_RUN_ID"
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" \
+            -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "umask 077; mkdir -p '$release_dir'"
+          scp -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" \
+            -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "$RUNNER_TEMP/server-source.tar.gz" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST:$release_dir/source.tar.gz"
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" \
+            -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "tar -xzf '$release_dir/source.tar.gz' -C '$release_dir'"
+
+      - name: Pull the already-built server image by digest
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE_DIGEST: ${{ steps.candidate.outputs.server_digest }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GH_TOKEN" | ssh \
+            -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" \
+            -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/pull-candidate-image.sh' '$IMAGE_DIGEST' '$COMMIT_SHA' '$GITHUB_ACTOR'"
+
+      - name: Record the previous server image and verify the candidate
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        env:
+          IMAGE_DIGEST: ${{ steps.candidate.outputs.server_digest }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" \
+            -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' prepare '$GITHUB_RUN_ID' /opt/dailynagger '$COMMIT_SHA' '$IMAGE_DIGEST'"
+
+      - name: Publish 2 · Close public API traffic with Caddy HTTP 503
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' maintenance '$GITHUB_RUN_ID' /opt/dailynagger"
+
+      - name: Publish 3 · Stop the API while SQL Server stays running
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' stop '$GITHUB_RUN_ID' /opt/dailynagger"
+
+      - name: Publish 4 · Back up and verify both production databases
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' backup '$GITHUB_RUN_ID' /opt/dailynagger"
+
+      - name: Publish 5 · Apply migrations from the verified commit
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' migrate '$GITHUB_RUN_ID' /opt/dailynagger"
+
+      - name: Publish 6 · Start the already-built server image
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' start '$GITHUB_RUN_ID' /opt/dailynagger"
+
+      - name: Publish 7 · Smoke-test both communities behind maintenance
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        env:
+          PRODUCTION_COMMUNITY: ${{ vars.DAILY_NAGGER_DAILY_COMMUNITY_ID }}
+          DEMO_COMMUNITY: ${{ vars.DAILY_NAGGER_DEMO_COMMUNITY_ID }}
+          USER_ID: ${{ vars.DAILY_NAGGER_USER_ID }}
+        run: |
+          set -euo pipefail
+          for id in "$PRODUCTION_COMMUNITY" "$DEMO_COMMUNITY" "$USER_ID"; do
+            [[ "$id" =~ ^[0-9a-fA-F-]{36}$ ]]
+          done
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' smoke '$GITHUB_RUN_ID' /opt/dailynagger '$PRODUCTION_COMMUNITY' '$DEMO_COMMUNITY' '$USER_ID'"
+
+      - name: Publish 8 · Reopen normal Caddy routing
+        id: open-server
+        if: ${{ needs.read-release-plan.outputs.server == 'true' }}
+        run: |
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' open '$GITHUB_RUN_ID' /opt/dailynagger"
+
+      - name: Restore databases and previous image if server publication failed
+        if: ${{ failure() && steps.stage.outcome == 'success' && steps.open-server.outcome != 'success' }}
+        env:
+          PRODUCTION_COMMUNITY: ${{ vars.DAILY_NAGGER_DAILY_COMMUNITY_ID }}
+          DEMO_COMMUNITY: ${{ vars.DAILY_NAGGER_DEMO_COMMUNITY_ID }}
+          USER_ID: ${{ vars.DAILY_NAGGER_USER_ID }}
+        run: |
+          set -euo pipefail
+          ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \
+            "root@$DAILY_NAGGER_DEPLOY_HOST" \
+            "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' rollback '$GITHUB_RUN_ID' /opt/dailynagger '$PRODUCTION_COMMUNITY' '$DEMO_COMMUNITY' '$USER_ID'"
+
+      - name: Publish 9 · Verify demo data through the public API
+        if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
+        env:
+          API_BASE_URL: ${{ vars.DAILY_NAGGER_API_BASE_URL }}
+          API_TOKEN: ${{ secrets.DAILY_NAGGER_API_TOKEN }}
+          DEMO_COMMUNITY: ${{ vars.DAILY_NAGGER_DEMO_COMMUNITY_ID }}
+          USER_ID: ${{ vars.DAILY_NAGGER_USER_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$API_BASE_URL" && test -n "$API_TOKEN"
+          for id in "$DEMO_COMMUNITY" "$USER_ID"; do
+            [[ "$id" =~ ^[0-9a-fA-F-]{36}$ ]]
+          done
+          request_id="$(cat /proc/sys/kernel/random/uuid)"
+          curl --max-time 15 -fsS \
+            -H "X-DailyNagger-Request-Id: $request_id" \
+            --oauth2-bearer "$API_TOKEN" \
+            -G "${API_BASE_URL%/}/api/todays-nag-plan" \
+            --data-urlencode "communityId=$DEMO_COMMUNITY" \
+            --data-urlencode "userId=$USER_ID" \
+            --data-urlencode "date=$(date +%F)" > /dev/null
+
+      - name: Download the already-built demo APK
+        if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ steps.candidate.outputs.demo_artifact }}
+          path: ${{ runner.temp }}/demo-release
+
+      - name: Download the encrypted personal APK
+        if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
+        uses: actions/download-artifact@v8
+        with:
+          name: dailynagger-daily-${{ github.run_number }}
+          path: ${{ runner.temp }}/personal-release
+
+      - name: Publish the demo APK and encrypted personal ZIP
+        if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          apk="$RUNNER_TEMP/demo-release/app-release.apk"
+          test -s "$apk"
+          unzip -tq "$apk" > /dev/null
+          personal_zip="$RUNNER_TEMP/personal-release/DailyNaggerPersonal.zip"
+          test -s "$personal_zip"
+          unzip -Z -1 "$personal_zip" | grep -qx 'DailyNagger.apk'
+          cp "$apk" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk"
+          tag="demo-$COMMIT_SHA"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Demo release $tag already exists; refusing to replace it." >&2
+            exit 1
+          fi
+          {
+            printf 'DailyNaggerDemo built from commit %s.\n\n' "$COMMIT_SHA"
+            printf 'Verified CD run: https://github.com/%s/actions/runs/%s\n\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf 'APK SHA-256: %s\n' "$(sha256sum "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" | cut -d ' ' -f 1)"
+          } > "$RUNNER_TEMP/demo-release/release-notes.md"
+          gh release create "$tag" \
+            "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" "$personal_zip" \
+            --target "$COMMIT_SHA" --title "DailyNaggerDemo $COMMIT_SHA" \
+            --notes-file "$RUNNER_TEMP/demo-release/release-notes.md" --latest
+          printf 'Demo APK: https://github.com/%s/releases/latest/download/DailyNaggerDemo.apk\n' \
+            "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Encrypted personal APK: https://github.com/%s/releases/latest/download/DailyNaggerPersonal.zip\n' \
+            "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"

@@ -8,10 +8,8 @@ The server owns the C# DTOs and exposes `openapi.json`. This package uses
 Edit `src/index.ts` when DailyNagger needs friendlier type aliases. Do not edit
 `src/schema.ts` by hand.
 
-When server contracts change, run the API locally and then run
-`npm run contracts:update` from the repo root. This fetches `/openapi/v1.json`
-and regenerates `src/schema.ts`.
-
-Use `npm run contracts:check` to verify that `src/schema.ts` is current. The
-check compares the generated file before and after generation by content hash, so
-it still works when other contract files are already modified.
+When server contracts change, refresh `openapi.json` from the server's
+Development `/openapi/v1.json` endpoint, then run `npm run contracts:generate`
+from the repo root. The CI API-contracts job compares the committed OpenAPI with
+the current server response and verifies that regenerating `src/schema.ts`
+produces no changes.

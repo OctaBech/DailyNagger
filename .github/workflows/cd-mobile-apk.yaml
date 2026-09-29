@@ -1,4 +1,4 @@
-name: Build mobile APK
+name: "CD 2 · Android APK"
 
 on:
   workflow_call:
@@ -28,9 +28,12 @@ on:
         required: true
       DAILY_NAGGER_API_TOKEN:
         required: true
+      PERSONAL_APK_ZIP_PASSWORD:
+        required: false
 
 jobs:
   build:
+    name: "CD 2 · Build ${{ inputs.app_name }} APK"
     runs-on: ubuntu-latest
     env:
       DAILY_NAGGER_MOBILE_RELEASE_NUMBER: ${{ inputs.release_number }}
@@ -123,7 +126,42 @@ jobs:
             echo "APK was not signed with the configured release key."
             exit 1
           fi
-      - name: Save verified APK for release
+      - name: Encrypt the personal APK as an AES-256 ZIP
+        if: ${{ inputs.app_variant == 'daily' }}
+        env:
+          ZIP_PASSWORD: ${{ secrets.PERSONAL_APK_ZIP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ZIP_PASSWORD" || { echo 'Missing PERSONAL_APK_ZIP_PASSWORD secret.' >&2; exit 1; }
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq 7zip
+          mkdir -p "$RUNNER_TEMP/personal-apk"
+          cp src/DailyNagger.Mobile/android/app/build/outputs/apk/release/app-release.apk \
+            "$RUNNER_TEMP/personal-apk/DailyNagger.apk"
+          (
+            cd "$RUNNER_TEMP/personal-apk"
+            7z a -tzip -mx=0 -mem=AES256 -p"$ZIP_PASSWORD" \
+              DailyNaggerPersonal.zip DailyNagger.apk > /dev/null
+          )
+          7z t -p"$ZIP_PASSWORD" "$RUNNER_TEMP/personal-apk/DailyNaggerPersonal.zip" > /dev/null
+          if 7z t -pdefinitely-wrong-password \
+            "$RUNNER_TEMP/personal-apk/DailyNaggerPersonal.zip" > /dev/null 2>&1; then
+            echo 'Personal APK archive could be opened with the wrong password.' >&2
+            exit 1
+          fi
+          7z l -slt "$RUNNER_TEMP/personal-apk/DailyNaggerPersonal.zip" | grep -q 'Encrypted = +'
+
+      - name: Save encrypted personal APK for release
+        if: ${{ inputs.app_variant == 'daily' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: dailynagger-${{ inputs.app_variant }}-${{ inputs.release_number }}
+          path: ${{ runner.temp }}/personal-apk/DailyNaggerPersonal.zip
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Save verified demo APK for release
+        if: ${{ inputs.app_variant == 'demo' }}
         uses: actions/upload-artifact@v7
         with:
           name: dailynagger-${{ inputs.app_variant }}-${{ inputs.release_number }}
