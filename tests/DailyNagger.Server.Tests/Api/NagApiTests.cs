@@ -2208,6 +2208,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         var testData = await CreateRoutedNagAsync();
         var userId = TestUserId;
         var otherUserId = Guid.NewGuid();
+        var otherNagId = Guid.NewGuid();
         var taskLogId = Guid.NewGuid();
         var otherTaskLogId = Guid.NewGuid();
         var setNodeId = Guid.NewGuid();
@@ -2282,11 +2283,20 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             Assert.True(saveResponse.StatusCode == HttpStatusCode.OK, saveBody);
 
+            await SaveNagForPlanAsync(
+                client,
+                testData.CommunityId,
+                otherNagId,
+                "Other user's nag",
+                false,
+                DayOfWeek.Monday,
+                otherUserId);
+
             var otherUserRequest = new SaveTaskLogRequest(
                 testData.CommunityId,
                 otherUserId,
                 otherTaskLogId,
-                testData.NagId,
+                otherNagId,
                 null,
                 null,
                 [
@@ -2342,7 +2352,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         }
         finally
         {
-            await DeleteRoutedNagAsync(testData);
+            await DeleteRoutedNagsAsync(testData.CommunityId, testData.NagId, otherNagId);
         }
     }
 

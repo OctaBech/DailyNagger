@@ -64,6 +64,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         dataDb.Nags.Add(new Nagger
         {
             Id = nagId,
+            UserId = userId,
             Title = "Late update nag",
             ActiveLogDueOn = new DateOnly(2026, 6, 8),
             IsDeactivated = false,
@@ -74,6 +75,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
             new TaskLog
             {
                 Id = oldTaskLogId,
+                UserId = userId,
                 NagId = nagId,
                 ClosedOn = closedOn,
                 UpdatedAt = closedOn,
@@ -82,6 +84,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
             new TaskLog
             {
                 Id = copiedTaskLogId,
+                UserId = userId,
                 NagId = nagId,
                 CopiedFromTaskLogId = oldTaskLogId,
                 ClosedOn = null,
@@ -92,6 +95,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         dataDb.TaskItems.Add(new TaskItem
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
             TaskLogId = copiedTaskLogId,
             ParentTaskItemId = null,
             Name = "Old copied task",
@@ -182,6 +186,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         dataDb.Nags.Add(new Nagger
         {
             Id = nagId,
+            UserId = userId,
             Title = "Late update used copy nag",
             ActiveLogDueOn = new DateOnly(2026, 6, 8),
             IsDeactivated = false,
@@ -192,6 +197,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
             new TaskLog
             {
                 Id = oldTaskLogId,
+                UserId = userId,
                 NagId = nagId,
                 ClosedOn = closedOn,
                 UpdatedAt = closedOn,
@@ -200,6 +206,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
             new TaskLog
             {
                 Id = copiedTaskLogId,
+                UserId = userId,
                 NagId = nagId,
                 CopiedFromTaskLogId = oldTaskLogId,
                 ClosedOn = null,
@@ -210,6 +217,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         dataDb.TaskItems.Add(new TaskItem
         {
             Id = copiedTaskItemId,
+            UserId = userId,
             TaskLogId = copiedTaskLogId,
             ParentTaskItemId = null,
             Name = "Used copied task",
