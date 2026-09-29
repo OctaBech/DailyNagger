@@ -70,7 +70,7 @@ case "$phase" in
         exit 1
       }
     done
-    bash deploy/check-production-publish-prerequisites.sh "$deploy_dir"
+    bash "$release_dir/deploy/check-production-publish-prerequisites.sh" "$deploy_dir"
     old_tag="$(sed -n 's/^DAILY_NAGGER_IMAGE_TAG=//p' .env | head -n 1)"
     [[ "$old_tag" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "Invalid previous image tag." >&2; exit 1; }
     docker image inspect "dailynagger-server:$old_tag" > /dev/null
@@ -106,7 +106,7 @@ case "$phase" in
     require_api_stopped
     stamp="$(date -u +%Y%m%d-%H%M%S)"
     printf '%s\n' "$stamp" > "$state_dir/backup-stamp"
-    bash deploy/production-db-backup-restore.sh backup "$stamp" "$deploy_dir"
+    bash "$release_dir/deploy/production-db-backup-restore.sh" backup "$stamp" "$deploy_dir"
     test -f "$deploy_dir/backups/$stamp/VERIFIED"
     touch "$state_dir/backup-verified"
     ;;
@@ -117,7 +117,8 @@ case "$phase" in
     require_api_stopped
     test -f "$state_dir/backup-verified"
     touch "$state_dir/migration-started"
-    bash "$release_dir/deploy/run-vps-ef-migration.sh" DailyNaggerDbContext "$release_dir"
+    bash "$release_dir/deploy/run-vps-ef-migration.sh" DailyNaggerDbContext "$release_dir" production
+    bash "$release_dir/deploy/run-vps-ef-migration.sh" DailyNaggerDbContext "$release_dir" demo
     bash "$release_dir/deploy/run-vps-ef-migration.sh" DailyNaggerControlDbContext "$release_dir"
     ;;
 
@@ -171,7 +172,7 @@ case "$phase" in
       require_api_stopped
       test -f "$state_dir/backup-verified"
       stamp="$(cat "$state_dir/backup-stamp")"
-      bash deploy/production-db-backup-restore.sh restore "$stamp" "$deploy_dir"
+      bash "$release_dir/deploy/production-db-backup-restore.sh" restore "$stamp" "$deploy_dir"
     fi
     old_tag="$(cat "$state_dir/previous-image-tag")"
     [[ "$old_tag" =~ ^[A-Za-z0-9_.-]+$ ]]

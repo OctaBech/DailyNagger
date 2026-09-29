@@ -19,12 +19,18 @@ if [[ "$*" == *" ps -q server" ]]; then
 elif [[ "$*" == *" ps -q sqlserver" ]]; then
   echo sql-container
 elif [[ "$1" == inspect ]]; then
-  echo "${FAKE_API_RUNNING:-false}"
+  if [[ "$*" == *server-container* ]]; then
+    echo "${FAKE_API_RUNNING:-false}"
+  else
+    echo true
+  fi
 elif [[ "$1" == cp && "$2" == *:* ]]; then
   printf 'test backup content\n' > "$3"
-elif [[ "$*" == *" sha256sum "* && "$1" == compose ]]; then
+elif [[ "$*" == *" sha256sum "* && "$1" == exec ]]; then
   printf 'test backup content\n' | sha256sum | awk '{print $1}'
 elif [[ "$*" == *"BACKUP DATABASE [${FAKE_BACKUP_FAILURE:-none}]"* ]]; then
+  exit 1
+elif [[ "${FAKE_BACKUP_FAILURE:-}" == DemoDailyNaggerData && "$*" == *dailynagger-staging-sqlserver*"BACKUP DATABASE [DailyNaggerData]"* ]]; then
   exit 1
 fi
 MOCK
@@ -49,10 +55,13 @@ bash "$script" backup "$stamp" "$test_root"
 test -f "$test_root/backups/$stamp/VERIFIED"
 test -s "$test_root/backups/$stamp/DailyNaggerData-$stamp.bak"
 test -s "$test_root/backups/$stamp/DailyNaggerControl-$stamp.bak"
+test -s "$test_root/backups/$stamp/DemoDailyNaggerData-$stamp.bak"
 bash "$script" restore "$stamp" "$test_root"
 
-test "$(grep -c 'BACKUP DATABASE' "$MOCK_LOG")" -eq 2
-test "$(grep -c 'RESTORE DATABASE' "$MOCK_LOG")" -eq 2
+test "$(grep -c 'BACKUP DATABASE' "$MOCK_LOG")" -eq 3
+test "$(grep -c 'RESTORE DATABASE' "$MOCK_LOG")" -eq 3
+grep -q 'dailynagger-staging-sqlserver.*BACKUP DATABASE \[DailyNaggerData\]' "$MOCK_LOG"
+grep -q 'dailynagger-staging-sqlserver.*RESTORE DATABASE \[DailyNaggerData\]' "$MOCK_LOG"
 
 failed_stamp=20260929-120001
 if FAKE_BACKUP_FAILURE=DailyNaggerControl bash "$script" backup "$failed_stamp" "$test_root"; then
@@ -61,11 +70,18 @@ if FAKE_BACKUP_FAILURE=DailyNaggerControl bash "$script" backup "$failed_stamp" 
 fi
 test ! -e "$test_root/backups/$failed_stamp/VERIFIED"
 
+failed_demo_stamp=20260929-120002
+if FAKE_BACKUP_FAILURE=DemoDailyNaggerData bash "$script" backup "$failed_demo_stamp" "$test_root"; then
+  echo "A failed demo backup unexpectedly succeeded." >&2
+  exit 1
+fi
+test ! -e "$test_root/backups/$failed_demo_stamp/VERIFIED"
+
 printf 'tampered\n' >> "$test_root/backups/$stamp/DailyNaggerControl-$stamp.bak"
 if bash "$script" restore "$stamp" "$test_root"; then
   echo "Restore accepted a changed backup file." >&2
   exit 1
 fi
-test "$(grep -c 'RESTORE DATABASE' "$MOCK_LOG")" -eq 2
+test "$(grep -c 'RESTORE DATABASE' "$MOCK_LOG")" -eq 3
 
 echo "Database backup and restore guard tests passed."

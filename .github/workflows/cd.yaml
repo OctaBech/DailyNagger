@@ -288,7 +288,7 @@ jobs:
             "root@$DAILY_NAGGER_DEPLOY_HOST" \
             "bash '/opt/dailynagger/releases/$GITHUB_RUN_ID/deploy/publish-server-release.sh' stop '$GITHUB_RUN_ID' /opt/dailynagger"
 
-      - name: Publish 4 · Back up and verify both production databases
+      - name: Publish 4 · Back up and verify production and demo databases
         if: ${{ needs.read-release-plan.outputs.server == 'true' }}
         run: |
           ssh -i "$DAILY_NAGGER_DEPLOY_SSH_KEY" -o "UserKnownHostsFile=$DAILY_NAGGER_DEPLOY_KNOWN_HOSTS" \

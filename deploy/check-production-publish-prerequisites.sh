@@ -35,6 +35,12 @@ for service in sqlserver server reverse-proxy; do
   }
 done
 
+demo_container=dailynagger-staging-sqlserver
+test "$(docker inspect -f '{{.State.Running}}' "$demo_container")" = true || {
+  echo "Demo SQL Server is not running: $demo_container" >&2
+  exit 1
+}
+
 proxy="$("${compose[@]}" ps -q reverse-proxy)"
 active_mount="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/etc/caddy"}}{{.Source}}:{{.RW}}{{end}}{{end}}' "$proxy")"
 test "$active_mount" = "$deploy_dir/caddy-state:false" || {

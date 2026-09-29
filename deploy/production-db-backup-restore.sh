@@ -34,13 +34,28 @@ fi
 
 container_dir="/var/opt/mssql/backup/$stamp"
 backup_dir="$deploy_dir/backups/$stamp"
-databases=(DailyNaggerData DailyNaggerControl)
+production_container="$("${compose[@]}" ps -q sqlserver)"
+demo_container="${DAILY_NAGGER_DEMO_SQL_CONTAINER:-dailynagger-staging-sqlserver}"
+test -n "$production_container"
+for container in "$production_container" "$demo_container"; do
+  test "$(docker inspect -f '{{.State.Running}}' "$container")" = true || {
+    echo "SQL Server container is not running: $container" >&2
+    exit 1
+  }
+done
+
+# The demo database has the same SQL name on a separate SQL Server.
+containers=("$production_container" "$production_container" "$demo_container")
+databases=(DailyNaggerData DailyNaggerControl DailyNaggerData)
+backup_names=(DailyNaggerData DailyNaggerControl DemoDailyNaggerData)
 
 sql() {
-  "${compose[@]}" exec -T sqlserver bash -c '
+  local container="$1"
+  local query="$2"
+  docker exec "$container" bash -c '
     exec /opt/mssql-tools18/bin/sqlcmd -S localhost -d master -U sa \
       -P "$MSSQL_SA_PASSWORD" -C -b -Q "$1"
-  ' _ "$1"
+  ' _ "$query"
 }
 
 if [[ "$operation" == backup ]]; then
@@ -49,21 +64,21 @@ if [[ "$operation" == backup ]]; then
     exit 1
   }
   mkdir -m 700 -p "$backup_dir"
-  "${compose[@]}" exec -T sqlserver mkdir -p "$container_dir"
-  container_id="$("${compose[@]}" ps -q sqlserver)"
-  test -n "$container_id"
 
-  for database in "${databases[@]}"; do
-    file="$database-$stamp.bak"
+  for index in "${!databases[@]}"; do
+    database="${databases[$index]}"
+    container_id="${containers[$index]}"
+    file="${backup_names[$index]}-$stamp.bak"
     container_file="$container_dir/$file"
     host_file="$backup_dir/$file"
-    sql "BACKUP DATABASE [$database] TO DISK = N'$container_file' WITH INIT, COMPRESSION, CHECKSUM"
-    sql "RESTORE VERIFYONLY FROM DISK = N'$container_file' WITH CHECKSUM"
+    docker exec "$container_id" mkdir -p "$container_dir"
+    sql "$container_id" "BACKUP DATABASE [$database] TO DISK = N'$container_file' WITH INIT, COMPRESSION, CHECKSUM"
+    sql "$container_id" "RESTORE VERIFYONLY FROM DISK = N'$container_file' WITH CHECKSUM"
     docker cp "$container_id:$container_file" "$host_file"
     test -s "$host_file"
     chmod 600 "$host_file"
 
-    container_hash="$("${compose[@]}" exec -T sqlserver sha256sum "$container_file" | awk '{print $1}')"
+    container_hash="$(docker exec "$container_id" sha256sum "$container_file" | awk '{print $1}')"
     host_hash="$(sha256sum "$host_file" | awk '{print $1}')"
     [[ "$container_hash" == "$host_hash" ]] || {
       echo "Backup copy differs from SQL Server's file: $file" >&2
@@ -78,32 +93,33 @@ if [[ "$operation" == backup ]]; then
 fi
 
 test -f "$backup_dir/VERIFIED"
-for database in "${databases[@]}"; do
-  test -s "$backup_dir/$database-$stamp.bak"
+for name in "${backup_names[@]}"; do
+  test -s "$backup_dir/$name-$stamp.bak"
 done
 (cd "$backup_dir" && sha256sum -c SHA256SUMS)
-"${compose[@]}" exec -T sqlserver mkdir -p "$container_dir"
-container_id="$("${compose[@]}" ps -q sqlserver)"
-test -n "$container_id"
 
-# Copy and verify both files before changing either database.
-for database in "${databases[@]}"; do
-  file="$database-$stamp.bak"
+# Copy and verify all files before changing any database.
+for index in "${!databases[@]}"; do
+  container_id="${containers[$index]}"
+  file="${backup_names[$index]}-$stamp.bak"
   container_file="$container_dir/$file"
+  docker exec "$container_id" mkdir -p "$container_dir"
   docker cp "$backup_dir/$file" "$container_id:$container_file"
-  "${compose[@]}" exec -T -u 0 sqlserver chown mssql:mssql "$container_file"
-  sql "RESTORE VERIFYONLY FROM DISK = N'$container_file' WITH CHECKSUM"
+  docker exec -u 0 "$container_id" chown mssql:mssql "$container_file"
+  sql "$container_id" "RESTORE VERIFYONLY FROM DISK = N'$container_file' WITH CHECKSUM"
 done
 
-for database in "${databases[@]}"; do
-  container_file="$container_dir/$database-$stamp.bak"
-  sql "ALTER DATABASE [$database] SET SINGLE_USER WITH ROLLBACK IMMEDIATE"
-  if ! sql "RESTORE DATABASE [$database] FROM DISK = N'$container_file' WITH REPLACE, RECOVERY, CHECKSUM"; then
-    sql "ALTER DATABASE [$database] SET MULTI_USER" || true
-    echo "Restore failed for $database. Keep the API closed." >&2
+for index in "${!databases[@]}"; do
+  database="${databases[$index]}"
+  container_id="${containers[$index]}"
+  container_file="$container_dir/${backup_names[$index]}-$stamp.bak"
+  sql "$container_id" "ALTER DATABASE [$database] SET SINGLE_USER WITH ROLLBACK IMMEDIATE"
+  if ! sql "$container_id" "RESTORE DATABASE [$database] FROM DISK = N'$container_file' WITH REPLACE, RECOVERY, CHECKSUM"; then
+    sql "$container_id" "ALTER DATABASE [$database] SET MULTI_USER" || true
+    echo "Restore failed for ${backup_names[$index]}. Keep the API closed." >&2
     exit 1
   fi
-  sql "ALTER DATABASE [$database] SET MULTI_USER"
+  sql "$container_id" "ALTER DATABASE [$database] SET MULTI_USER"
 done
 
-echo "Both production databases restored from $stamp."
+echo "Production and demo databases restored from $stamp."

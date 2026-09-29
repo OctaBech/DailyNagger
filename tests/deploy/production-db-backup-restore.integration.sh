@@ -27,49 +27,67 @@ services:
       MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
     volumes:
       - sql-data:/var/opt/mssql
+  staging-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    volumes:
+      - demo-sql-data:/var/opt/mssql
   server:
     image: busybox:1.36
     command: ["true"]
 volumes:
   sql-data:
+  demo-sql-data:
 COMPOSE
 
 cd "$test_root"
-docker compose -f compose.prod.yaml up -d sqlserver
+docker compose -f compose.prod.yaml up -d sqlserver staging-sqlserver
+export DAILY_NAGGER_DEMO_SQL_CONTAINER="$(docker compose -f compose.prod.yaml ps -q staging-sqlserver)"
+test -n "$DAILY_NAGGER_DEMO_SQL_CONTAINER"
 
 sql() {
-  docker compose -f compose.prod.yaml exec -T sqlserver bash -c '
+  local service="$1"
+  local query="$2"
+  docker compose -f compose.prod.yaml exec -T "$service" bash -c '
     exec /opt/mssql-tools18/bin/sqlcmd -S localhost -d master -U sa \
       -P "$MSSQL_SA_PASSWORD" -C -b -Q "$1"
-  ' _ "$1"
+  ' _ "$query"
 }
 
-ready=false
-for _ in {1..60}; do
-  if sql "SELECT 1" > /dev/null 2>&1; then
-    ready=true
-    break
-  fi
-  sleep 2
+for service in sqlserver staging-sqlserver; do
+  ready=false
+  for _ in {1..60}; do
+    if sql "$service" "SELECT 1" > /dev/null 2>&1; then
+      ready=true
+      break
+    fi
+    sleep 2
+  done
+  [[ "$ready" == true ]] || { echo "Test SQL Server did not start: $service" >&2; exit 1; }
 done
-[[ "$ready" == true ]] || { echo "Test SQL Server did not start." >&2; exit 1; }
 
 for database in DailyNaggerData DailyNaggerControl; do
-  sql "CREATE DATABASE [$database]"
-  sql "USE [$database]; CREATE TABLE dbo.ReleaseProbe (Value int NOT NULL); INSERT INTO dbo.ReleaseProbe VALUES (1)"
+  sql sqlserver "CREATE DATABASE [$database]"
+  sql sqlserver "USE [$database]; CREATE TABLE dbo.ReleaseProbe (Value int NOT NULL); INSERT INTO dbo.ReleaseProbe VALUES (1)"
 done
+sql staging-sqlserver "CREATE DATABASE [DailyNaggerData]"
+sql staging-sqlserver "USE [DailyNaggerData]; CREATE TABLE dbo.ReleaseProbe (Value int NOT NULL); INSERT INTO dbo.ReleaseProbe VALUES (1)"
 
 stamp=20260929-120000
 bash "$repo_root/deploy/production-db-backup-restore.sh" backup "$stamp" "$test_root"
 
 for database in DailyNaggerData DailyNaggerControl; do
-  sql "USE [$database]; INSERT INTO dbo.ReleaseProbe VALUES (2)"
+  sql sqlserver "USE [$database]; INSERT INTO dbo.ReleaseProbe VALUES (2)"
 done
+sql staging-sqlserver "USE [DailyNaggerData]; INSERT INTO dbo.ReleaseProbe VALUES (2)"
 
 bash "$repo_root/deploy/production-db-backup-restore.sh" restore "$stamp" "$test_root"
 
 for database in DailyNaggerData DailyNaggerControl; do
-  sql "USE [$database]; IF (SELECT COUNT(*) FROM dbo.ReleaseProbe) <> 1 OR (SELECT MIN(Value) FROM dbo.ReleaseProbe) <> 1 THROW 50000, 'Restore did not recover the backup', 1"
+  sql sqlserver "USE [$database]; IF (SELECT COUNT(*) FROM dbo.ReleaseProbe) <> 1 OR (SELECT MIN(Value) FROM dbo.ReleaseProbe) <> 1 THROW 50000, 'Restore did not recover the backup', 1"
 done
+sql staging-sqlserver "USE [DailyNaggerData]; IF (SELECT COUNT(*) FROM dbo.ReleaseProbe) <> 1 OR (SELECT MIN(Value) FROM dbo.ReleaseProbe) <> 1 THROW 50000, 'Demo restore did not recover the backup', 1"
 
-echo "Both disposable SQL databases were restored to their backup contents."
+echo "All three disposable SQL databases were restored to their backup contents."

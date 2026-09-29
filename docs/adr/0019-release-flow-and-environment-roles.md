@@ -51,14 +51,14 @@ Server publication runs as one protected job, with these visible steps:
 Switch Caddy to a persistent maintenance configuration that returns HTTP 503
   -> stop the old API and wait for it to stop
   -> keep SQL Server and its persistent volume running
-  -> back up and verify DailyNaggerData and DailyNaggerControl
+  -> back up and verify DailyNaggerData, DailyNaggerControl, and the separate demo data database
   -> record the currently deployed server image
-  -> apply migrations from the candidate commit
+  -> apply migrations from the candidate commit to both data databases and the control database
   -> start the already-built server image
   -> run read-only smoke checks directly on the internal Docker network
   -> success: restore Caddy's normal proxy configuration and reopen traffic
   -> backup failure: restart the previous image without restoring the database
-  -> later failure: restore both backups and restart the previous image
+  -> later failure: restore all three backups and restart the previous image
   -> after successful recovery: restore normal proxying and reopen traffic
 ```
 
@@ -106,6 +106,6 @@ Refreshing demo data never overwrites production data or routing.
 - Publication uses the exact server image and APKs produced by CD; it does not
   rebuild them.
 - Production writes pause during server publication. A failed pre-release
-  attempt restores both databases and the previous server automatically.
+  attempt restores all three databases and the previous server automatically.
 - There is no automatic database restore after the API has reopened, because
   new writes may then exist. A later failure needs a separate recovery decision.
