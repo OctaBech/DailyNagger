@@ -30,3 +30,23 @@ jobs:
       - name: Check formatting
         working-directory: src/DailyNagger.Mobile
         run: npm run format:check
+
+      - name: Verify encrypted personal APK packaging
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq 7zip
+          work="$(mktemp -d)"
+          trap 'rm -rf -- "$work"' EXIT
+          printf 'CI-only test APK\n' > "$work/DailyNagger.apk"
+          (
+            cd "$work"
+            7z a -tzip -mx=0 -mem=AES256 -pCI-only-password \
+              DailyNaggerPersonal.zip DailyNagger.apk > /dev/null
+          )
+          7z t -pCI-only-password "$work/DailyNaggerPersonal.zip" > /dev/null
+          if 7z t -pwrong-password "$work/DailyNaggerPersonal.zip" > /dev/null 2>&1; then
+            echo 'Encrypted archive accepted the wrong password.' >&2
+            exit 1
+          fi
+          7z l -slt "$work/DailyNaggerPersonal.zip" | grep -q 'Encrypted = +'

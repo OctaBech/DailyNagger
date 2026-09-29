@@ -70,6 +70,7 @@ jobs:
       ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
       ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
       DAILY_NAGGER_API_TOKEN: ${{ secrets.DAILY_NAGGER_API_TOKEN }}
+      PERSONAL_APK_ZIP_PASSWORD: ${{ secrets.PERSONAL_APK_ZIP_PASSWORD }}
 
   build-demo-apk:
     name: "CD 2 · Build demo APK"
@@ -372,7 +373,14 @@ jobs:
           name: ${{ steps.candidate.outputs.demo_artifact }}
           path: ${{ runner.temp }}/demo-release
 
-      - name: Publish the verified demo APK as a GitHub Release
+      - name: Download the encrypted personal APK
+        if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
+        uses: actions/download-artifact@v8
+        with:
+          name: dailynagger-daily-${{ github.run_number }}
+          path: ${{ runner.temp }}/personal-release
+
+      - name: Publish the demo APK and encrypted personal ZIP
         if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -382,6 +390,9 @@ jobs:
           apk="$RUNNER_TEMP/demo-release/app-release.apk"
           test -s "$apk"
           unzip -tq "$apk" > /dev/null
+          personal_zip="$RUNNER_TEMP/personal-release/DailyNaggerPersonal.zip"
+          test -s "$personal_zip"
+          unzip -Z -1 "$personal_zip" | grep -qx 'DailyNagger.apk'
           cp "$apk" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk"
           tag="demo-$COMMIT_SHA"
           if gh release view "$tag" > /dev/null 2>&1; then
@@ -393,8 +404,11 @@ jobs:
             printf 'Verified CD run: https://github.com/%s/actions/runs/%s\n\n' "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
             printf 'APK SHA-256: %s\n' "$(sha256sum "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" | cut -d ' ' -f 1)"
           } > "$RUNNER_TEMP/demo-release/release-notes.md"
-          gh release create "$tag" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" \
+          gh release create "$tag" \
+            "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" "$personal_zip" \
             --target "$COMMIT_SHA" --title "DailyNaggerDemo $COMMIT_SHA" \
             --notes-file "$RUNNER_TEMP/demo-release/release-notes.md" --latest
           printf 'Demo APK: https://github.com/%s/releases/latest/download/DailyNaggerDemo.apk\n' \
+            "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
+          printf 'Encrypted personal APK: https://github.com/%s/releases/latest/download/DailyNaggerPersonal.zip\n' \
             "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"

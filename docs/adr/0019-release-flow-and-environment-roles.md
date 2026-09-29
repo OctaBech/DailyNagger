@@ -88,7 +88,10 @@ For a server-only candidate, no APK is built or published. For a mobile-only
 candidate, the same single approval is required, server steps are skipped, and
 the existing DailyNaggerDemo APK is published. For a combined candidate,
 DailyNaggerDemo is published only after successful server publication. The
-personal DailyNagger APK remains a build artifact, not a public release.
+personal DailyNagger APK is never uploaded as a plain artifact: CD encrypts
+it as an AES-256 ZIP before artifact upload and publishes that ZIP alongside
+the demo APK. Its password is not included in the release. This protects APK
+distribution; it is not a substitute for server-side authentication.
 
 DailyNaggerDemo uses its own community database through the production API.
 That database must be compatible and smoke-checked before the demo APK is made
