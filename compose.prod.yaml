@@ -76,7 +76,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Prepare with deploy/prepare-caddy-state.sh before starting this service.
+      # Keep active routing outside the source archive across deploys/restarts.
+      - ./caddy-state:/etc/caddy:ro
+      - ./deploy:/etc/caddy-templates:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:

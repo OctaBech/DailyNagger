@@ -5,6 +5,8 @@
 **/dist/
 **/*.tsbuildinfo
 .git/
+/backups/
+/caddy-state/
 .env
 .env.*
 !.env.example

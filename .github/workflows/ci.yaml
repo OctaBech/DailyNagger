@@ -1,4 +1,5 @@
-name: CI
+name: "# CI"
+run-name: "${{ github.event.pull_request.title || github.event.head_commit.message || github.sha }}"
 
 on:
   pull_request:
@@ -8,6 +9,7 @@ on:
 
 jobs:
   changes:
+    name: "CI 1 · Select checks and release plan"
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -17,6 +19,7 @@ jobs:
       server: ${{ steps.filter.outputs.server }}
       contracts: ${{ steps.filter.outputs.contracts }}
       deployment: ${{ steps.filter.outputs.deployment }}
+      workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -52,6 +55,7 @@ jobs:
               - "compose.prod.yaml"
               - "compose.staging.yaml"
               - "deploy/**"
+              - "tests/deploy/**"
               - "scripts/run-vps-ef-migration.sh"
               - "scripts/run-vps-production-minimum-seed.sh"
               - "scripts/seed-production-minimum.sql"
@@ -59,7 +63,13 @@ jobs:
               - "Directory.Build.props"
               - ".dockerignore"
               - ".github/workflows/ci-server-deployment-checks.yaml"
+              - ".github/workflows/cd-server-image.yaml"
+              - ".github/workflows/cd.yaml"
+              - ".github/workflows/cd-publish-server.yaml"
               - ".github/workflows/ci.yaml"
+            workflows:
+              - ".github/workflows/*.yaml"
+              - ".github/workflows/*.yml"
       - name: Write release plan
         if: github.event_name == 'push'
         env:
@@ -96,3 +106,7 @@ jobs:
     needs: changes
     if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.deployment == 'true' }}
     uses: ./.github/workflows/ci-server-deployment-checks.yaml
+  workflow-lint:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflows == 'true' }}
+    uses: ./.github/workflows/ci-workflow-lint.yaml

@@ -13,6 +13,8 @@ dist/
 # Generated artifacts
 artifacts/
 *.tar.gz
+caddy-state/
+/backups/
 
 # Local documentation archive
 docs/archive/
