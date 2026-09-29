@@ -28,6 +28,7 @@ jobs:
           done
           bash tests/deploy/caddy-mode.sh
           bash tests/deploy/production-db-backup-restore.sh
+          bash tests/deploy/run-vps-ef-migration.sh
           bash tests/deploy/publish-server-release.sh
           bash deploy/prepare-caddy-state.sh "$PWD"
           cmp deploy/Caddyfile caddy-state/Caddyfile
@@ -49,7 +50,7 @@ jobs:
           # Initialisation must not accidentally reopen Caddy after a restart.
           bash deploy/prepare-caddy-state.sh "$PWD"
           cmp deploy/Caddyfile.maintenance caddy-state/Caddyfile
-      - name: Exercise backup and restore on disposable SQL Server
+      - name: Exercise backup and restore on disposable SQL Servers
         run: bash tests/deploy/production-db-backup-restore.integration.sh
       - name: Create server deployment archive (.tar.gz)
         run: |
