@@ -1,4 +1,4 @@
-name: Production Backup
+name: "~ Legacy · Production backup"
 
 on:
   workflow_dispatch:

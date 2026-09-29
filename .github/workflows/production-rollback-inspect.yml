@@ -1,4 +1,4 @@
-name: Production Rollback Inspect
+name: "~ Legacy · Production rollback inspect"
 
 on:
   workflow_dispatch:

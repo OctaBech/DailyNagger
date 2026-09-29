@@ -1,4 +1,4 @@
-name: Build mobile APK
+name: "CD 2 · Android APK"
 
 on:
   workflow_call:
@@ -31,6 +31,7 @@ on:
 
 jobs:
   build:
+    name: "CD 2 · Build ${{ inputs.app_name }} APK"
     runs-on: ubuntu-latest
     env:
       DAILY_NAGGER_MOBILE_RELEASE_NUMBER: ${{ inputs.release_number }}

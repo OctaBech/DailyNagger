@@ -1,4 +1,4 @@
-name: Production Deploy
+name: "~ Legacy · Production deploy"
 
 on:
   workflow_dispatch:

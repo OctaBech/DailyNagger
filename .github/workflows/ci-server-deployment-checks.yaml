@@ -28,6 +28,7 @@ jobs:
           done
           bash tests/deploy/caddy-mode.sh
           bash tests/deploy/production-db-backup-restore.sh
+          bash tests/deploy/publish-server-release.sh
           bash deploy/prepare-caddy-state.sh "$PWD"
           cmp deploy/Caddyfile caddy-state/Caddyfile
 
