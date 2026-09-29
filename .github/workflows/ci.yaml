@@ -110,3 +110,49 @@ jobs:
     needs: changes
     if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflows == 'true' }}
     uses: ./.github/workflows/ci-workflow-lint.yaml
+  merge-gate:
+    name: "CI 3 · Merge gate"
+    needs: [changes, mobile, server, contracts, deployment, workflow-lint]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every selected CI check to pass
+        env:
+          FORCE_ALL: ${{ github.event_name == 'workflow_dispatch' }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          MOBILE_SELECTED: ${{ needs.changes.outputs.mobile }}
+          MOBILE_RESULT: ${{ needs.mobile.result }}
+          SERVER_SELECTED: ${{ needs.changes.outputs.server }}
+          SERVER_RESULT: ${{ needs.server.result }}
+          CONTRACTS_SELECTED: ${{ needs.changes.outputs.contracts }}
+          CONTRACTS_RESULT: ${{ needs.contracts.result }}
+          DEPLOYMENT_SELECTED: ${{ needs.changes.outputs.deployment }}
+          DEPLOYMENT_RESULT: ${{ needs.deployment.result }}
+          WORKFLOWS_SELECTED: ${{ needs.changes.outputs.workflows }}
+          WORKFLOWS_RESULT: ${{ needs.workflow-lint.result }}
+        run: |
+          failed=0
+          if [[ "$CHANGES_RESULT" != success ]]; then
+            echo "Change selection did not pass: $CHANGES_RESULT"
+            failed=1
+          fi
+
+          check() {
+            local name="$1" selected="$2" result="$3"
+            if [[ "$FORCE_ALL" == true || "$selected" == true ]]; then
+              if [[ "$result" != success ]]; then
+                echo "$name was required but did not pass: $result"
+                failed=1
+              fi
+            elif [[ "$result" != skipped ]]; then
+              echo "$name was not selected but finished unexpectedly: $result"
+              failed=1
+            fi
+          }
+
+          check mobile "$MOBILE_SELECTED" "$MOBILE_RESULT"
+          check server "$SERVER_SELECTED" "$SERVER_RESULT"
+          check contracts "$CONTRACTS_SELECTED" "$CONTRACTS_RESULT"
+          check deployment "$DEPLOYMENT_SELECTED" "$DEPLOYMENT_RESULT"
+          check workflows "$WORKFLOWS_SELECTED" "$WORKFLOWS_RESULT"
+          exit "$failed"
