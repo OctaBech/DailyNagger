@@ -39,7 +39,9 @@ export function useParcelQueue(
 
   useEffect(() => {
     if (loadedQueue.startupWarning !== null) {
-      parcelFlowEvents?.emit("sending.queue.mmkv_restore_failed", {});
+      parcelFlowEvents?.emit("sending.queue.restore_failed", {
+        reason: loadedQueue.startupWarning,
+      });
     }
 
     announceQueueContent();
