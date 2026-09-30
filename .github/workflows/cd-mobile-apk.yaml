@@ -159,6 +159,7 @@ jobs:
           path: ${{ runner.temp }}/personal-apk/DailyNaggerPersonal.zip
           if-no-files-found: error
           compression-level: 0
+          retention-days: 1
 
       - name: Save verified demo APK for release
         if: ${{ inputs.app_variant == 'demo' }}
@@ -168,3 +169,4 @@ jobs:
           path: src/DailyNagger.Mobile/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           compression-level: 0
+          retention-days: 1

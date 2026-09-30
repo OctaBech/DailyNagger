@@ -160,6 +160,7 @@ jobs:
           name: dailynagger-release-candidate-${{ github.run_number }}
           path: ${{ runner.temp }}/release-candidate.json
           if-no-files-found: error
+          retention-days: 1
 
   publish-release:
     name: "Publish · Deploy approved candidate"
