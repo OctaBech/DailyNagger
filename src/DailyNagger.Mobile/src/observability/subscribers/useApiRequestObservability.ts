@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { apiRequestEvents, type ApiRequestEvent, type ApiRequestEventType } from "@/api/client";
 import { assertNever } from "@/shared";
-import { captureError, recordBreadcrumb, recordSpanValue } from "../sentry";
+import { recordBreadcrumb, recordSpanValue, reportError } from "../sentry";
 
 export function useApiRequestObservability(): void {
   useEffect(() => {
@@ -27,7 +27,7 @@ function recordApiRequestEvent(eventType: ApiRequestEventType, event: ApiRequest
       recordApiRequestBreadcrumb(eventType, event, "error");
       recordApiRequestValues(event);
       recordSpanValue("dn.api.failed", true);
-      captureError(event.error);
+      reportError(event.error);
       return;
 
     default:

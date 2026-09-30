@@ -11,10 +11,10 @@ import type {
 } from "@/services/sending";
 import { assertNever } from "@/shared/assertNever";
 import {
-  captureMessage,
   continuePackedSpan,
   packActiveSpan,
   recordBreadcrumb,
+  reportMessage,
   startNewSpan,
   type PackedSpan,
 } from "../sentry";
@@ -87,7 +87,7 @@ function recordParcelFlowEvent(eventType: ParcelFlowEventType, event: ParcelFlow
 
     case "sending.queue.restore_failed":
       recordParcelFlowError(eventType, event);
-      captureMessage("Persistent sending queue could not be restored");
+      reportMessage("Persistent sending queue could not be restored");
       return;
 
     default:
