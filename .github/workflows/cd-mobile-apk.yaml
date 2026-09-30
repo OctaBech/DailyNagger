@@ -96,7 +96,7 @@ jobs:
           DAILY_NAGGER_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/dailynagger-release.p12
           DAILY_NAGGER_ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
           DAILY_NAGGER_ANDROID_KEY_ALIAS: dailynagger
-        run: ./gradlew :app:assembleRelease --no-daemon
+        run: ./gradlew :app:assembleRelease --no-daemon --build-cache
       - name: Verify built APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
