@@ -9,11 +9,12 @@ import type {
   ParcelQueueMiddlewareContext,
   ParcelQueueMiddleware,
 } from "@/services/sending";
-import { assertNever } from "@/shared";
+import { assertNever } from "@/shared/assertNever";
 import {
   continuePackedSpan,
   packActiveSpan,
   recordBreadcrumb,
+  reportMessage,
   startNewSpan,
   type PackedSpan,
 } from "../sentry";
@@ -84,8 +85,9 @@ function recordParcelFlowEvent(eventType: ParcelFlowEventType, event: ParcelFlow
       recordParcelFlowWarning(eventType, event);
       return;
 
-    case "sending.queue.mmkv_restore_failed":
+    case "sending.queue.restore_failed":
       recordParcelFlowError(eventType, event);
+      reportMessage("Persistent sending queue could not be restored");
       return;
 
     default:
@@ -114,6 +116,7 @@ function recordParcelFlowBreadcrumb(
       "dn.parcel.ids": getParcelIds(event.parcels ?? event.batch?.parcels),
       "dn.replaced_parcel.id": event.replacedParcel?.stamp.parcelId,
       "dn.send.result": event.result?.kind,
+      "dn.queue.restore_failure_reason": event.reason,
     },
     level,
     message: eventType,

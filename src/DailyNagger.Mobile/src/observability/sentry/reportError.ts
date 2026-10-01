@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/react-native";
 
-export function captureError(error: unknown): void {
+export function reportError(error: unknown): void {
   Sentry.captureException(error);
 }

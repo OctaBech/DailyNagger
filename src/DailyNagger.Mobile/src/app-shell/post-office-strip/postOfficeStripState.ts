@@ -83,7 +83,7 @@ export function handleSendingEvent(
       };
 
     case "parcel.created":
-    case "sending.queue.mmkv_restore_failed":
+    case "sending.queue.restore_failed":
       return state;
   }
 }

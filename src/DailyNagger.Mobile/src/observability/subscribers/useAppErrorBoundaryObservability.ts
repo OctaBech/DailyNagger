@@ -5,7 +5,7 @@ import {
   type AppErrorBoundaryEventType,
 } from "@/app-shell/appErrorBoundaryEvents";
 import { assertNever } from "@/shared";
-import { captureError, recordBreadcrumb } from "../sentry";
+import { recordBreadcrumb, reportError } from "../sentry";
 
 export function useAppErrorBoundaryObservability(): void {
   useEffect(() => {
@@ -42,5 +42,5 @@ function recordAppErrorBoundaryCaught(
     message: eventType,
   });
 
-  captureError(event.error);
+  reportError(event.error);
 }
