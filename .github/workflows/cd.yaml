@@ -164,7 +164,11 @@ jobs:
   publish-release:
     name: "Publish · Deploy approved candidate"
     needs: [read-release-plan, prepare-release-candidate]
-    if: ${{ needs.prepare-release-candidate.result == 'success' }}
+    # The server build is intentionally skipped for mobile-only releases.
+    if: >-
+      ${{ !cancelled() &&
+          needs.read-release-plan.result == 'success' &&
+          needs.prepare-release-candidate.result == 'success' }}
     runs-on: ubuntu-latest
     environment: production
     concurrency:
