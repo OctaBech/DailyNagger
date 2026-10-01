@@ -12,7 +12,7 @@ export type ParcelFlowEventType =
   | "parcel.batch.blocked_by_unrepairable_update"
   | "parcel.batch.discarded"
   | "parcel.batch.forced"
-  | "sending.queue.mmkv_restore_failed";
+  | "sending.queue.restore_failed";
 
 export type ParcelFlowEvent = {
   readonly parcel?: Parcel;
@@ -20,6 +20,7 @@ export type ParcelFlowEvent = {
   readonly parcels?: readonly Parcel[];
   readonly batch?: ParcelBatch;
   readonly result?: SendBatchResult;
+  readonly reason?: string;
 };
 
 export type ParcelFlowEvents = EventEmitter<ParcelFlowEventType, ParcelFlowEvent>;

@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { renderHook } from "@testing-library/react-native";
+import { createEventEmitter } from "@/shared/useEventEmitter";
 import type { Parcel, ParcelBatch } from "@/services/sending/parcel-flow/contracts";
+import type {
+  ParcelFlowEvent,
+  ParcelFlowEventType,
+} from "@/services/sending/parcel-flow/events/contracts";
 import {
   persistentStorage,
   type QueuedParcel,
@@ -51,6 +56,26 @@ describe("useParcelQueue", () => {
   afterEach(() => {
     jest.clearAllTimers();
     jest.useRealTimers();
+  });
+
+  it("emits the saved queue restore warning when the queue was discarded", async () => {
+    const startupWarning = "DailyNagger found an invalid saved parcel queue and discarded it.";
+    jest.mocked(persistentStorage.load).mockReturnValue({
+      queueEntries: [],
+      startupWarning,
+    });
+
+    const parcelFlowEvents = createEventEmitter<ParcelFlowEventType, ParcelFlowEvent>();
+    const restoreFailures: ParcelFlowEvent[] = [];
+    parcelFlowEvents.subscribeTo("sending.queue.restore_failed", (_eventType, event) => {
+      restoreFailures.push(event);
+    });
+
+    await renderHook(() =>
+      useParcelQueue(async () => "remove-active-batch-and-stop", parcelFlowEvents),
+    );
+
+    expect(restoreFailures).toEqual([{ reason: startupWarning }]);
   });
 
   it("replaces an unsent parcel and keeps the full version range", async () => {
