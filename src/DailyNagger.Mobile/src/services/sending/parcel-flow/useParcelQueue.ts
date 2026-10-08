@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { hibernateMiddlewareContext, runWithAwakenedMiddlewareContext } from "@/middleware";
+import { runWithMiddleware } from "@/middleware";
 import type { Guid } from "@/shared";
 import { useTimer } from "@/shared/useTimer";
 import type { OwnerType } from "../contracts";
@@ -15,7 +15,7 @@ import type {
 } from "./contracts";
 import { emitParcelBatchEvent } from "./events/emitParcelBatchEvent";
 import type { ParcelFlowEvents } from "./events/contracts";
-import type { ParcelQueueMiddleware } from "./parcelQueueMiddleware";
+import type { ParcelQueueMiddleware, ParcelQueueMiddlewareContext } from "./parcelQueueMiddleware";
 import { persistentStorage, type QueuedParcel } from "./persistentStorage";
 
 export function useParcelQueue(
@@ -71,6 +71,8 @@ export function useParcelQueue(
       parcelFlowEvents?.emit("parcel.coalesced", {
         parcel: queueEntry.parcel,
         replacedParcel: oldParcel,
+        middlewareContext: queueEntry.middlewareContext,
+        replacedMiddlewareContext: oldQueueEntry?.middlewareContext,
         parcels: [oldParcel, queueEntry.parcel],
       });
     }
@@ -111,10 +113,10 @@ export function useParcelQueue(
     const batch = createNextParcelBatch();
 
     // 2. The sender handles server communication and returns a queue instruction.
-    const instruction = await runWithAwakenedMiddlewareContext(
-      parcelQueueMiddleware,
-      batch.middlewareContexts,
-      () => sendParcelBatch(batch),
+    const instruction = await runWithMiddleware(
+      sendParcelBatch,
+      parcelQueueMiddleware.wakeMiddlewareContext,
+      batch,
     );
 
     // 3. The queue applies the instruction and decides whether to schedule more work.
@@ -218,7 +220,12 @@ export function useParcelQueue(
 
   function createQueueEntry(parcel: Parcel): QueuedParcel {
     return {
-      middlewareContext: hibernateMiddlewareContext(parcelQueueMiddleware),
+      middlewareContext:
+        runWithMiddleware(
+          (): ParcelQueueMiddlewareContext => null,
+          parcelQueueMiddleware.packContextMiddleware,
+          parcel,
+        ) ?? null,
       parcel,
     };
   }

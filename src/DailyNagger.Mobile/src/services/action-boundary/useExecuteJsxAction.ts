@@ -11,7 +11,7 @@ import type { JsxAction } from "./jsxActionPackModel";
 
 type UseExecuteJsxActionProps = RuntimeDependencyInputs & {
   readonly actionEvents?: ActionEvents;
-  readonly middlewareWrapperFunction: MiddlewareWrapperFunction;
+  readonly middlewareWrapperFunction?: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
 };
 
 export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
@@ -33,8 +33,7 @@ export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
 
     try {
       return runWithMiddleware(
-        `action/${jsxAction.actionKey}:${new Date().toISOString()}`,
-        (context) => {
+        (context: MiddlewareExecutionContext) => {
           executionContexts.push(context);
           environment.actionEvents?.emit("action-started", context);
 
@@ -44,8 +43,11 @@ export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
         },
         environment.middlewareWrapperFunction,
         {
-          actionKey: jsxAction.actionKey,
-          actionScope: jsxAction.action.scope,
+          causalityKey: `action/${jsxAction.actionKey}:${new Date().toISOString()}`,
+          metadata: {
+            actionKey: jsxAction.actionKey,
+            actionScope: jsxAction.action.scope,
+          },
         },
       );
     } catch (error) {

@@ -4,7 +4,11 @@ import type { CultureSettings } from "@/services/culture";
 import type { Sending } from "@/services/sending";
 import { useEffect } from "react";
 import { appTiming } from "@/config";
-import { runWithMiddleware, type MiddlewareWrapperFunction } from "@/middleware";
+import {
+  runWithMiddleware,
+  type MiddlewareExecutionContext,
+  type MiddlewareWrapperFunction,
+} from "@/middleware";
 import { useRefLatestValue } from "@/shared";
 import { rolloverOneNagger } from "./rolloverOneNagger";
 
@@ -15,7 +19,7 @@ export const useRollover = (
   planMemory: Memory,
   editorMemory: Memory,
   sending: Sending,
-  middlewareWrapperFunction: MiddlewareWrapperFunction,
+  middlewareWrapperFunction?: MiddlewareWrapperFunction<MiddlewareExecutionContext>,
 ) => {
   const contextRef = useRefLatestValue({
     cultureSettings,
@@ -46,7 +50,7 @@ type RolloverDueNaggersProps = {
   editorMemory: Memory;
   cultureSettings: CultureSettings;
   sending: Sending;
-  middlewareWrapperFunction: MiddlewareWrapperFunction;
+  middlewareWrapperFunction?: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
 };
 
 async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void> {
@@ -70,7 +74,6 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
     const startedAt = new Date().toISOString();
 
     await runWithMiddleware(
-      `rollover/nagger:${nagger.id}:${startedAt}`,
       async () =>
         rolloverOneNagger(
           {
@@ -82,8 +85,11 @@ async function rolloverDueNaggers(props: RolloverDueNaggersProps): Promise<void>
         ),
       middlewareWrapperFunction,
       {
-        naggerId: nagger.id,
-        taskLogId: nagger.taskLog.id,
+        causalityKey: `rollover/nagger:${nagger.id}:${startedAt}`,
+        metadata: {
+          naggerId: nagger.id,
+          taskLogId: nagger.taskLog.id,
+        },
       },
     );
 

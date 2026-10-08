@@ -1,6 +1,10 @@
 import { environment } from "@/config";
 import { newGuid } from "@/shared";
-import { getActiveSentryTraceHeader } from "@/observability/sentry";
+import {
+  getActiveCausalityKey,
+  getActiveSentryTraceHeader,
+  spanAttributeKeys,
+} from "@/observability/sentry";
 import { createBaseApiHeaders } from "./createBaseApiHeaders";
 import { apiRequestHeaders } from "./apiRequestHeaders";
 import { apiRequestEvents } from "./apiRequestEvents";
@@ -149,7 +153,7 @@ function createApiUrl(path: string): string {
 function createApiHeaders(body: unknown, requestId: string): Record<string, string> {
   const headers = {
     ...createBaseApiHeaders(requestId),
-    ...createSentryTraceHeaders(),
+    ...createObservabilityHeaders(),
   };
 
   if (body !== undefined) {
@@ -159,12 +163,17 @@ function createApiHeaders(body: unknown, requestId: string): Record<string, stri
   return headers;
 }
 
-function createSentryTraceHeaders(): Record<string, string> {
+function createObservabilityHeaders(): Record<string, string> {
   const sentryTrace = getActiveSentryTraceHeader();
+  const causalityKey = getActiveCausalityKey();
   const headers: Record<string, string> = {};
 
   if (sentryTrace !== null) {
     headers[apiRequestHeaders.sentryTrace] = sentryTrace;
+  }
+
+  if (causalityKey !== undefined) {
+    headers[spanAttributeKeys.causalityKey] = causalityKey;
   }
 
   return headers;

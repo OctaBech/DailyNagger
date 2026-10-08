@@ -1,5 +1,6 @@
 import type { EventEmitter } from "@/shared";
 import type { Parcel, ParcelBatch, SendBatchResult } from "../contracts";
+import type { ParcelQueueMiddlewareContext } from "../parcelQueueMiddleware";
 
 export type ParcelFlowEventType =
   | "parcel.created"
@@ -17,6 +18,8 @@ export type ParcelFlowEventType =
 export type ParcelFlowEvent = {
   readonly parcel?: Parcel;
   readonly replacedParcel?: Parcel;
+  readonly middlewareContext?: ParcelQueueMiddlewareContext;
+  readonly replacedMiddlewareContext?: ParcelQueueMiddlewareContext;
   readonly parcels?: readonly Parcel[];
   readonly batch?: ParcelBatch;
   readonly result?: SendBatchResult;

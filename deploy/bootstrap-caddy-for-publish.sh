@@ -76,13 +76,14 @@ bash deploy/check-production-publish-prerequisites.sh "$deploy_dir"
 public_host="$(sed -n 's/^DAILY_NAGGER_PUBLIC_HOST=//p' .env | head -n 1)"
 test -n "$public_host"
 health_url="https://$public_host/api/health"
+# Send both header names so checks also work after rollback to the previous server.
 request_id="$(cat /proc/sys/kernel/random/uuid)"
 
 wait_for_http_status() {
   expected="$1"
   for attempt in {1..20}; do
     actual="$(curl --max-time 5 -sS -o /dev/null -w '%{http_code}' \
-      -H "X-DailyNagger-Request-Id: $request_id" "$health_url")" || actual="unavailable"
+      -H "dn.api.request_id: $request_id" -H "X-DailyNagger-Request-Id: $request_id" "$health_url")" || actual="unavailable"
     if [[ "$actual" == "$expected" ]]; then
       return 0
     fi

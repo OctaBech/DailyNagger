@@ -1,4 +1,6 @@
 import * as Sentry from "@sentry/react-native";
+import { getActiveCausalityKey } from "./getActiveCausalityKey";
+import { spanAttributeKeys } from "./spanAttributeKeys";
 
 type BreadcrumbLevel = "debug" | "info" | "warning" | "error";
 
@@ -15,9 +17,14 @@ export function recordBreadcrumb({
   level = "info",
   message,
 }: RecordBreadcrumbInput): void {
+  const causalityKey = getActiveCausalityKey();
+
   Sentry.addBreadcrumb({
     category,
-    data,
+    data:
+      causalityKey === undefined
+        ? data
+        : { [spanAttributeKeys.causalityKey]: causalityKey, ...data },
     level,
     message,
   });

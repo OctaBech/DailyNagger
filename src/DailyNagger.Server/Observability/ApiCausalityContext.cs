@@ -1,6 +1,6 @@
 namespace DailyNagger.Server.Observability;
 
-public sealed record ApiCausalityInfo(string Id, string Keys);
+public sealed record ApiCausalityInfo(string Key);
 
 public static class ApiCausalityContext
 {
@@ -20,7 +20,7 @@ public static class ApiCausalityContext
             return true;
         }
 
-        causality = new ApiCausalityInfo(string.Empty, string.Empty);
+        causality = new ApiCausalityInfo(string.Empty);
         return false;
     }
 }

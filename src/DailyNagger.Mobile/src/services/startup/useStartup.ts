@@ -24,7 +24,7 @@ export function useStartup(
   sending: Sending,
   loading: Loading,
   rollover: Rollover,
-  middlewareWrapperFunction: MiddlewareWrapperFunction,
+  middlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext> | undefined,
   startupEvents: StartupEvents,
 ) {
   const isRunningRef = useRef(false);
@@ -93,7 +93,7 @@ export function useStartup(
     const causalityKey = `startup/run:${new Date().toISOString()}`;
 
     try {
-      await runWithMiddleware(causalityKey, runStartupRunbook, middlewareWrapperFunction);
+      await runWithMiddleware(runStartupRunbook, middlewareWrapperFunction, { causalityKey });
     } catch (error) {
       startupEvents.emit("startup.failed", { causalityKey, error });
       throw error;

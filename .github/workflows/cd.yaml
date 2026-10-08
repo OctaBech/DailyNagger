@@ -363,7 +363,7 @@ jobs:
           done
           request_id="$(cat /proc/sys/kernel/random/uuid)"
           curl --max-time 15 -fsS \
-            -H "X-DailyNagger-Request-Id: $request_id" \
+            -H "dn.api.request_id: $request_id" \
             --oauth2-bearer "$API_TOKEN" \
             -G "${API_BASE_URL%/}/api/todays-nag-plan" \
             --data-urlencode "communityId=$DEMO_COMMUNITY" \

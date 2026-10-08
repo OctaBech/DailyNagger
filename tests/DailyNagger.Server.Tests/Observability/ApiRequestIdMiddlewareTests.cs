@@ -16,11 +16,11 @@ public sealed class ApiRequestIdMiddlewareTests
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
             "/api/health");
-        request.Headers.Add(ApiRequestHeaders.RequestId, requestId);
+        request.Headers.Add("dn.api.request_id", requestId);
 
         var response = await client.SendAsync(request);
 
-        Assert.True(response.Headers.TryGetValues(ApiRequestHeaders.RequestId, out var values));
+        Assert.True(response.Headers.TryGetValues("dn.api.request_id", out var values));
         Assert.Equal(requestId, Assert.Single(values));
     }
 

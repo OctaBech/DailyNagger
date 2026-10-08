@@ -4,17 +4,15 @@ public static class ApiCausality
 {
     public static bool TryGet(HttpContext context, out ApiCausalityInfo causality)
     {
-        var causalityId = context.Request.Headers[ApiRequestHeaders.CausalityId].ToString();
-        var causalityKeys = context.Request.Headers[ApiRequestHeaders.CausalityKeys].ToString();
+        var values = context.Request.Headers[ApiRequestHeaders.CausalityKey];
 
-        if (!string.IsNullOrWhiteSpace(causalityId)
-            && !string.IsNullOrWhiteSpace(causalityKeys))
+        if (values.Count == 1 && !string.IsNullOrWhiteSpace(values[0]))
         {
-            causality = new ApiCausalityInfo(causalityId, causalityKeys);
+            causality = new ApiCausalityInfo(values[0]!);
             return true;
         }
 
-        causality = new ApiCausalityInfo(string.Empty, string.Empty);
+        causality = new ApiCausalityInfo(string.Empty);
         return false;
     }
 }

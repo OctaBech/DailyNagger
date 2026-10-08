@@ -37,24 +37,19 @@ public sealed class RequireApiRequestIdMiddleware(RequestDelegate next)
 
         SentrySdk.ConfigureScope(scope =>
         {
-            scope.SetTag("requestId", requestId);
-            scope.SetExtra("requestId", requestId);
+            scope.SetTag(ApiRequestHeaders.RequestId, requestId);
+            scope.SetExtra(ApiRequestHeaders.RequestId, requestId);
 
             if (hasCausality)
             {
-                scope.SetTag("dn.causality.id", causality.Id);
-                scope.SetTag("dn.causality.keys", causality.Keys);
-                scope.SetExtra("dn.causality.id", causality.Id);
-                scope.SetExtra("dn.causality.keys", causality.Keys);
+                scope.SetTag(ApiRequestHeaders.CausalityKey, causality.Key);
+                scope.SetExtra(ApiRequestHeaders.CausalityKey, causality.Key);
             }
         });
 
-        using var requestIdProperty = LogContext.PushProperty("requestId", requestId);
-        using var causalityIdProperty = hasCausality
-            ? LogContext.PushProperty("dn.causality.id", causality.Id)
-            : null;
-        using var causalityKeysProperty = hasCausality
-            ? LogContext.PushProperty("dn.causality.keys", causality.Keys)
+        using var requestIdProperty = LogContext.PushProperty(ApiRequestHeaders.RequestId, requestId);
+        using var causalityProperty = hasCausality
+            ? LogContext.PushProperty(ApiRequestHeaders.CausalityKey, causality.Key)
             : null;
 
         await next(context);
