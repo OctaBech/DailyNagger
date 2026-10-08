@@ -416,9 +416,11 @@ jobs:
             "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" "$demo_zip" "$personal_zip" \
             --target "$COMMIT_SHA" --title "DailyNaggerDemo $COMMIT_SHA" \
             --notes-file "$RUNNER_TEMP/demo-release/release-notes.md" --latest
-          printf 'Demo ZIP (no password): https://github.com/%s/releases/latest/download/DailyNaggerDemo.zip\n' \
-            "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
-          printf 'Demo APK: https://github.com/%s/releases/latest/download/DailyNaggerDemo.apk\n' \
-            "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
-          printf 'Encrypted personal APK: https://github.com/%s/releases/latest/download/DailyNaggerPersonal.zip\n' \
-            "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
+          {
+            printf 'Demo ZIP (no password): https://github.com/%s/releases/latest/download/DailyNaggerDemo.zip\n' \
+              "$GITHUB_REPOSITORY"
+            printf 'Demo APK: https://github.com/%s/releases/latest/download/DailyNaggerDemo.apk\n' \
+              "$GITHUB_REPOSITORY"
+            printf 'Encrypted personal APK: https://github.com/%s/releases/latest/download/DailyNaggerPersonal.zip\n' \
+              "$GITHUB_REPOSITORY"
+          } >> "$GITHUB_STEP_SUMMARY"
