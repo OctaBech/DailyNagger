@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { apiRequestEvents, type ApiRequestEvent, type ApiRequestEventType } from "@/api/client";
 import { assertNever } from "@/shared";
-import { recordBreadcrumb, recordSpanValue, reportError } from "../sentry";
+import { recordBreadcrumb, recordSpanValue, reportError, spanAttributeKeys } from "../sentry";
 
 export function useApiRequestObservability(): void {
   useEffect(() => {
@@ -36,7 +36,7 @@ function recordApiRequestEvent(eventType: ApiRequestEventType, event: ApiRequest
 }
 
 function recordApiRequestValues(event: ApiRequestEvent): void {
-  recordSpanValue("dn.api.request_id", event.requestId);
+  recordSpanValue(spanAttributeKeys.requestId, event.requestId);
   recordSpanValue("dn.api.method", event.method);
   recordSpanValue("dn.api.path", event.path);
   recordSpanValue("dn.api.status", event.status);
@@ -54,7 +54,7 @@ function recordApiRequestBreadcrumb(
       durationMs: event.durationMs,
       method: event.method,
       path: event.path,
-      requestId: event.requestId,
+      [spanAttributeKeys.requestId]: event.requestId,
       status: event.status,
     },
     level,

@@ -5,20 +5,23 @@ export type MiddlewareExecutionContext = {
   readonly metadata?: MiddlewareMetadata;
 };
 
-export type MiddlewareWrapperFunction = <TResult>(
-  context: MiddlewareExecutionContext,
+export type MiddlewareWrapperFunction<TArgs> = <TResult>(
+  args: TArgs,
   run: () => TResult,
 ) => TResult;
 
-export function runWithMiddleware<TResult>(
-  causalityKey: string,
-  run: (context: MiddlewareExecutionContext) => TResult,
-  middlewareWrapperFunction: MiddlewareWrapperFunction,
-  metadata?: MiddlewareMetadata,
+export function runWithMiddleware<TArgs, TResult>(
+  runFunc: (args: TArgs) => TResult,
+  middlewareFunc: ((args: TArgs, run: () => NoInfer<TResult>) => NoInfer<TResult>) | undefined,
+  args: TArgs,
 ): TResult {
-  const context = metadata === undefined ? { causalityKey } : { causalityKey, metadata };
+  if (middlewareFunc) {
+    return middlewareFunc(args, () => runFunc(args));
+  }
 
-  return middlewareWrapperFunction(context, () => run(context));
+  return runFunc(args);
 }
 
-export const runWithoutMiddleware: MiddlewareWrapperFunction = (_context, run) => run();
+export function runWithoutMiddleware<TArgs, TResult>(_args: TArgs, run: () => TResult): TResult {
+  return run();
+}

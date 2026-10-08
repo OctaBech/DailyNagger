@@ -1,10 +1,12 @@
 import { useCallback, useEffect } from "react";
-import type { MiddlewareWrapperFunction } from "@/middleware";
+import type { MiddlewareExecutionContext, MiddlewareWrapperFunction } from "@/middleware";
 import type { StartupEvent, StartupEvents, StartupEventType } from "@/services/startup";
 import { assertNever } from "@/shared";
-import { recordBreadcrumb, recordSpanValue, startNewSpan } from "../sentry";
+import { recordBreadcrumb, recordSpanValue, spanAttributeKeys, startNewSpan } from "../sentry";
 
-export function useStartupObservability(startupEvents: StartupEvents): MiddlewareWrapperFunction {
+export function useStartupObservability(
+  startupEvents: StartupEvents,
+): MiddlewareWrapperFunction<MiddlewareExecutionContext> {
   useEffect(() => {
     return startupEvents.subscribe((eventType, event) => {
       recordStartupEvent(eventType, event);
@@ -16,7 +18,7 @@ export function useStartupObservability(startupEvents: StartupEvents): Middlewar
       name: "startup/run",
       operation: "dn.startup",
       run: () => {
-        recordSpanValue("dn.causality.key", context.causalityKey);
+        recordSpanValue(spanAttributeKeys.causalityKey, context.causalityKey);
 
         return run();
       },
@@ -75,7 +77,7 @@ function recordStartupBreadcrumb(
   recordBreadcrumb({
     category: "startup",
     data: {
-      "dn.causality.key": event.causalityKey,
+      [spanAttributeKeys.causalityKey]: event.causalityKey,
       "dn.startup.step": event.step,
     },
     level,

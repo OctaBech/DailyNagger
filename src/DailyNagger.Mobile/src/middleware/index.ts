@@ -5,8 +5,3 @@ export {
   runWithMiddleware,
   runWithoutMiddleware,
 } from "./executionMiddleware";
-export {
-  type HibernatingMiddleware,
-  hibernateMiddlewareContext,
-  runWithAwakenedMiddlewareContext,
-} from "./hibernatingMiddlewareContext";

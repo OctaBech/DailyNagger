@@ -60,15 +60,15 @@ Ownership rules:
 
 ## Current Implementation
 
-The server requires `X-DailyNagger-Request-Id` on `/api` requests.
+The server requires `dn.api.request_id` on `/api` requests.
 
 `RequireApiRequestIdMiddleware` validates the header, returns it in the response header, stores it in `ApiRequestContext`, and pushes it into Serilog `LogContext`.
 
-`UseSerilogRequestLogging` reads the validated request id from `ApiRequestContext` and writes it as the structured `requestId` property on the HTTP request log.
+`UseSerilogRequestLogging` reads the validated request id from `ApiRequestContext` and writes it as the structured `dn.api.request_id` property on the HTTP request log.
 
 ## Consequences
 
-A single HTTP request can be found by `requestId`.
+A single HTTP request can be found by `dn.api.request_id`.
 
 A full user workflow will be searchable by `correlationId` when command boundaries and send queue carry the full observability contract.
 

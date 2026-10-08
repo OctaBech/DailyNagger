@@ -5,8 +5,11 @@ import { useSendingObservability } from "@/observability/subscribers/useSendingO
 import type { ParcelFlowEvent, ParcelFlowEventType } from "@/services/sending";
 import { createEventEmitter } from "@/shared/useEventEmitter";
 
+jest.mock("uuid", () => ({ v7: () => "00000000-0000-0000-0000-000000000001" }));
+
 jest.mock("@sentry/react-native", () => ({
   addBreadcrumb: jest.fn(),
+  getActiveSpan: jest.fn(),
   captureMessage: jest.fn(),
 }));
 

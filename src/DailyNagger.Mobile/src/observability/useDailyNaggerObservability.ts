@@ -1,4 +1,4 @@
-import type { MiddlewareWrapperFunction } from "@/middleware";
+import type { MiddlewareExecutionContext, MiddlewareWrapperFunction } from "@/middleware";
 import type { ActionExecutionEvent, ActionExecutionEventType } from "@/services/action-boundary";
 import type { MemoryEventType } from "@/services/memory";
 import type { ParcelFlowEvents, ParcelQueueMiddleware } from "@/services/sending";
@@ -24,11 +24,11 @@ type DailyNaggerObservabilityInput = {
 };
 
 type DailyNaggerObservability = {
-  readonly actionMiddlewareWrapperFunction: MiddlewareWrapperFunction;
+  readonly actionMiddlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
   readonly parcelQueueMiddleware: ParcelQueueMiddleware;
-  readonly rolloverNaggerMiddlewareWrapperFunction: MiddlewareWrapperFunction;
-  readonly startupMiddlewareWrapperFunction: MiddlewareWrapperFunction;
-  readonly userMoodMiddlewareWrapperFunction: MiddlewareWrapperFunction;
+  readonly rolloverNaggerMiddlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
+  readonly startupMiddlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
+  readonly userMoodMiddlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
 };
 
 export function useDailyNaggerObservability(

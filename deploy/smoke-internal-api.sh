@@ -23,12 +23,13 @@ test -n "$server"
 server_ip="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$server")"
 test -n "$server_ip"
 base_url="http://$server_ip:8080"
+# Send both header names so checks also work after rollback to the previous server.
 request_id="$(cat /proc/sys/kernel/random/uuid)"
 api_token="$(sed -n 's/^DAILY_NAGGER_API_TOKEN=//p' .env | head -n 1)"
 test -n "$api_token"
 
 for attempt in {1..30}; do
-  if curl --max-time 5 -fsS -H "X-DailyNagger-Request-Id: $request_id" \
+  if curl --max-time 5 -fsS -H "dn.api.request_id: $request_id" -H "X-DailyNagger-Request-Id: $request_id" \
     "$base_url/api/health" > /dev/null; then
     break
   fi
@@ -39,12 +40,12 @@ for attempt in {1..30}; do
   sleep 1
 done
 
-curl --max-time 10 -fsS -H "X-DailyNagger-Request-Id: $request_id" \
+curl --max-time 10 -fsS -H "dn.api.request_id: $request_id" -H "X-DailyNagger-Request-Id: $request_id" \
   "$base_url/api/health/database" > /dev/null
 
 for community_id in "$production_community" "$demo_community"; do
   curl --max-time 15 -fsS \
-    -H "X-DailyNagger-Request-Id: $request_id" \
+    -H "dn.api.request_id: $request_id" -H "X-DailyNagger-Request-Id: $request_id" \
     --oauth2-bearer "$api_token" \
     -G "$base_url/api/todays-nag-plan" \
     --data-urlencode "communityId=$community_id" \

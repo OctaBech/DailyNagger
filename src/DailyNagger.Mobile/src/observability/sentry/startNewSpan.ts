@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/react-native";
 
-type StartNewSpanInput<TResult> = {
+export type StartNewSpanInput<TResult> = {
   readonly name: string;
   readonly operation: string;
   readonly run: () => TResult;

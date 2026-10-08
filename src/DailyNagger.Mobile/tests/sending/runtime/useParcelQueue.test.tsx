@@ -78,6 +78,90 @@ describe("useParcelQueue", () => {
     expect(restoreFailures).toEqual([{ reason: startupWarning }]);
   });
 
+  it("passes the batch and saved middleware context to the wrapper before sending", async () => {
+    const savedContext = { trace: "saved-trace" };
+    const packContextMiddleware = jest.fn(() => savedContext);
+    let wrappedBatch: ParcelBatch | undefined;
+    const sendParcelBatch = jest.fn<(batch: ParcelBatch) => Promise<"keep-active-batch-and-stop">>(
+      async () => "keep-active-batch-and-stop",
+    );
+    const renderedQueue = await renderHook(() =>
+      useParcelQueue(sendParcelBatch, undefined, {
+        packContextMiddleware,
+        wakeMiddlewareContext: (batch, run) => {
+          expect(sendParcelBatch).not.toHaveBeenCalled();
+          wrappedBatch = batch;
+          return run();
+        },
+      }),
+    );
+
+    const parcelToSend = parcel("first", 1, 2);
+    renderedQueue.result.current.insertParcel(parcelToSend);
+    await renderedQueue.result.current.processNextParcelBatch();
+
+    expect(packContextMiddleware).toHaveBeenCalledTimes(1);
+    expect(packContextMiddleware).toHaveBeenCalledWith(parcelToSend, expect.any(Function));
+    expect(wrappedBatch?.middlewareContexts).toEqual([savedContext]);
+    expect(wrappedBatch?.middlewareContexts[0]).toBe(savedContext);
+    expect(sendParcelBatch).toHaveBeenCalledTimes(1);
+    expect(sendParcelBatch.mock.calls[0]?.[0]).toBe(wrappedBatch);
+  });
+
+  it("persists and sends a parcel with null context when no middleware is supplied", async () => {
+    const sendParcelBatch = jest.fn<(batch: ParcelBatch) => Promise<"keep-active-batch-and-stop">>(
+      async () => "keep-active-batch-and-stop",
+    );
+    const renderedQueue = await renderHook(() => useParcelQueue(sendParcelBatch));
+    const parcelToSend = parcel("first", 1, 2);
+
+    renderedQueue.result.current.insertParcel(parcelToSend);
+
+    expect(persistentStorage.save).toHaveBeenLastCalledWith([
+      { parcel: parcelToSend, middlewareContext: null },
+    ]);
+
+    await renderedQueue.result.current.processNextParcelBatch();
+
+    expect(sendParcelBatch).toHaveBeenCalledTimes(1);
+    expect(sendParcelBatch.mock.calls[0]?.[0].middlewareContexts).toEqual([null]);
+    expect(sendParcelBatch.mock.calls[0]?.[0].parcels).toEqual([parcelToSend]);
+  });
+
+  it("emits both opaque contexts at coalescing and persists only the replacement context", async () => {
+    jest.useFakeTimers();
+    const oldContext = { opaque: "old-context" };
+    const newContext = { opaque: "new-context" };
+    const events = createEventEmitter<ParcelFlowEventType, ParcelFlowEvent>();
+    const coalesced: ParcelFlowEvent[] = [];
+    events.subscribeTo("parcel.coalesced", (_type, event) => coalesced.push(event));
+    const packContextMiddleware = jest
+      .fn()
+      .mockReturnValueOnce(oldContext)
+      .mockReturnValueOnce(newContext);
+    const { result } = await renderHook(() =>
+      useParcelQueue(async () => "keep-active-batch-and-stop", events, { packContextMiddleware }),
+    );
+    const oldParcel = parcel("old", 1, 2);
+    const newParcel = parcel("new", 2, 3);
+
+    result.current.insertParcel(oldParcel);
+    result.current.insertParcel(newParcel);
+
+    expect(coalesced).toHaveLength(1);
+    expect(coalesced[0]).toEqual(
+      expect.objectContaining({
+        replacedParcel: oldParcel,
+        replacedMiddlewareContext: oldContext,
+        middlewareContext: newContext,
+        parcel: expect.objectContaining({ stamp: expect.objectContaining({ parcelId: "new" }) }),
+      }),
+    );
+    expect(persistentStorage.save).toHaveBeenLastCalledWith([
+      { parcel: expect.any(Object), middlewareContext: newContext },
+    ]);
+  });
+
   it("replaces an unsent parcel and keeps the full version range", async () => {
     const savedQueues: QueuedParcel[][] = [];
     jest.mocked(persistentStorage.save).mockImplementation((entries) => {

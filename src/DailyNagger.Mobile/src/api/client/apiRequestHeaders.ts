@@ -1,5 +1,7 @@
+import { spanAttributeKeys } from "@/observability/sentry/spanAttributeKeys";
+
 export const apiRequestHeaders = {
   authorization: "Authorization",
-  requestId: "X-DailyNagger-Request-Id",
+  requestId: spanAttributeKeys.requestId,
   sentryTrace: "sentry-trace",
 } as const;

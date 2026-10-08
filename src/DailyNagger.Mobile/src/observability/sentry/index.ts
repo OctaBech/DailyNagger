@@ -6,3 +6,7 @@ export { startNewSpan } from "./startNewSpan";
 export { reportError } from "./reportError";
 export { reportMessage } from "./reportMessage";
 export { getActiveSentryTraceHeader } from "./getActiveSentryTraceHeader";
+export { getActiveCausalityKey } from "./getActiveCausalityKey";
+export { spanAttributeKeys } from "./spanAttributeKeys";
+export { runWithPackedSpan } from "./runWithPackedSpan";
+export { spanNames, spanOperations } from "./spanDefinitions";

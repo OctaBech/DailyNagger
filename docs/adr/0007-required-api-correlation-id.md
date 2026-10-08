@@ -24,7 +24,7 @@ DailyNagger API requests must include a valid correlation/request id header.
 The current header is:
 
 ```text
-X-DailyNagger-Request-Id
+dn.api.request_id
 ```
 
 The server validates the header at the API boundary.

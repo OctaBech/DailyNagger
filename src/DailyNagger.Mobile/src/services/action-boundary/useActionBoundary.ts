@@ -3,11 +3,11 @@ import { useBuildJsxActionPack } from "./useBuildJsxActionPack";
 import type { JsxActionPack, RegisteredActionTree } from "./jsxActionPackModel";
 import { useExecuteJsxAction } from "./useExecuteJsxAction";
 import type { ActionEvents } from "./events";
-import type { MiddlewareWrapperFunction } from "@/middleware";
+import type { MiddlewareExecutionContext, MiddlewareWrapperFunction } from "@/middleware";
 
 type UseActionBoundaryProps = RuntimeDependencyInputs & {
   readonly actionEvents?: ActionEvents;
-  readonly middlewareWrapperFunction: MiddlewareWrapperFunction;
+  readonly middlewareWrapperFunction?: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
 };
 
 export function useActionBoundary<TRegistry extends RegisteredActionTree>(
