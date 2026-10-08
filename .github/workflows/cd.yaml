@@ -384,7 +384,7 @@ jobs:
           name: dailynagger-daily-${{ github.run_number }}
           path: ${{ runner.temp }}/personal-release
 
-      - name: Publish the demo APK and encrypted personal ZIP
+      - name: Publish demo downloads and encrypted personal ZIP
         if: ${{ needs.read-release-plan.outputs.mobile == 'true' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -398,6 +398,10 @@ jobs:
           test -s "$personal_zip"
           unzip -Z -1 "$personal_zip" | grep -qx 'DailyNagger.apk'
           cp "$apk" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk"
+          demo_zip="$RUNNER_TEMP/demo-release/DailyNaggerDemo.zip"
+          zip -j -0 "$demo_zip" "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" > /dev/null
+          unzip -tq "$demo_zip" > /dev/null
+          test "$(unzip -Z -1 "$demo_zip")" = 'DailyNaggerDemo.apk'
           tag="demo-$COMMIT_SHA"
           if gh release view "$tag" > /dev/null 2>&1; then
             echo "Demo release $tag already exists; refusing to replace it." >&2
@@ -409,9 +413,11 @@ jobs:
             printf 'APK SHA-256: %s\n' "$(sha256sum "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" | cut -d ' ' -f 1)"
           } > "$RUNNER_TEMP/demo-release/release-notes.md"
           gh release create "$tag" \
-            "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" "$personal_zip" \
+            "$RUNNER_TEMP/demo-release/DailyNaggerDemo.apk" "$demo_zip" "$personal_zip" \
             --target "$COMMIT_SHA" --title "DailyNaggerDemo $COMMIT_SHA" \
             --notes-file "$RUNNER_TEMP/demo-release/release-notes.md" --latest
+          printf 'Demo ZIP (no password): https://github.com/%s/releases/latest/download/DailyNaggerDemo.zip\n' \
+            "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
           printf 'Demo APK: https://github.com/%s/releases/latest/download/DailyNaggerDemo.apk\n' \
             "$GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
           printf 'Encrypted personal APK: https://github.com/%s/releases/latest/download/DailyNaggerPersonal.zip\n' \
