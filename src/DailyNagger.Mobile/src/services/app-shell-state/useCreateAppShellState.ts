@@ -7,7 +7,7 @@ import type { EditorScreenActions, PlanScreenActions } from "../screen-actions";
 import type {
   editorDialActionRegistry,
   planDialActionRegistry,
-  JsxActionPack,
+  ProxyActions,
 } from "@/services/action-boundary";
 import {
   useCreateEditorScreenDialMenu,
@@ -23,10 +23,10 @@ import type { StateScreenProps } from "@/components/primitives";
 
 type UseCreateAppShellStateProps = {
   readonly assistantBubble: AssistantBubble;
-  readonly editorDialJsxActions: JsxActionPack<typeof editorDialActionRegistry>["dial"];
+  readonly editorDialProxyActions: ProxyActions<typeof editorDialActionRegistry>["dial"];
   readonly editorMemory: Memory;
   readonly editorScreenCommands: EditorScreenActions;
-  readonly planDialJsxActions: JsxActionPack<typeof planDialActionRegistry>["dial"];
+  readonly planDialProxyActions: ProxyActions<typeof planDialActionRegistry>["dial"];
   readonly planMemory: Memory;
   readonly planScreenCommands: PlanScreenActions;
   readonly sending: Sending;
@@ -38,10 +38,10 @@ type UseCreateAppShellStateProps = {
 
 export function useCreateAppShellState({
   assistantBubble,
-  editorDialJsxActions,
+  editorDialProxyActions,
   editorMemory,
   editorScreenCommands,
-  planDialJsxActions,
+  planDialProxyActions,
   planMemory,
   planScreenCommands,
   sending,
@@ -79,7 +79,7 @@ export function useCreateAppShellState({
   );
   const selectedMoodEmoji = getUserMoodEmoji(userMood.state.selectedMood);
   const planSpeedDialMenu = useCreatePlanScreenDialMenu({
-    planDialJsxActions,
+    planDialProxyActions,
     actionsAreAvailable: startup.isReady && userMood.state.selectedMood !== null,
     selectedNodes: planSelectedNodes,
     selectedPath: planSelectedPath,
@@ -87,7 +87,7 @@ export function useCreateAppShellState({
     onEditNagger: editNagger,
   });
   const editorSpeedDialMenu = useCreateEditorScreenDialMenu({
-    editorDialJsxActions,
+    editorDialProxyActions,
     selectedNodes: editorSelectedNodes,
     selectedPath: editorSelectedPath,
     onCloseEditor: closeEditor,

@@ -39,8 +39,8 @@ const TaskLogCardComponent = ({
           allowEditTag
           isTagPickerOpen={isTagModalVisible}
           showComponentOutlines
-          onAddTaskItem={() => taskLogActions.addTaskItem(taskLog)}
-          onFocus={() => taskLogActions.setFocused(taskLog)}
+          onAddTaskItem={() => taskLogActions.addTaskItem({ taskLog })}
+          onFocus={() => taskLogActions.setFocused({ taskLog })}
           onPressTag={() => setIsTagModalVisible(true)}
         />
       </Card.TaskLogFrame>
@@ -51,7 +51,7 @@ const TaskLogCardComponent = ({
         tagName={taskLog.tag}
         onDismiss={() => setIsTagModalVisible(false)}
         onSave={(savedTagName) => {
-          taskLogActions.setTag(taskLog, savedTagName);
+          taskLogActions.setTag({ taskLog, tag: savedTagName });
           setIsTagModalVisible(false);
         }}
       />

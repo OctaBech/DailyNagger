@@ -21,7 +21,7 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
         hasFocus={taskEntry.clientProps.hasFocus}
         isSelected={isSelected}
         isRemovedOnRollover={taskEntry.rolloverBehavior === "Remove"}
-        onMarkerPress={() => taskEntryActions.setFocused(taskEntry)}
+        onMarkerPress={() => taskEntryActions.setFocused({ taskEntry })}
         railTone={railTone}
       >
         <Card.TaskEntryField
@@ -32,9 +32,9 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
           isValueTypePickerOpen={isValueTypeModalVisible}
           showTag={false}
           showComponentOutlines
-          onFocus={() => taskEntryActions.setFocused(taskEntry)}
-          onLabelCommit={(newLabel) => taskEntryActions.setLabel(taskEntry, newLabel)}
-          onValueCommit={(newValue) => taskEntryActions.setValue(taskEntry, newValue)}
+          onFocus={() => taskEntryActions.setFocused({ taskEntry })}
+          onLabelCommit={(newLabel) => taskEntryActions.setLabel({ taskEntry, label: newLabel })}
+          onValueCommit={(newValue) => taskEntryActions.setValue({ taskEntry, newValue })}
           onPressValueType={() => setIsValueTypeModalVisible(true)}
         />
       </Card.TaskEntryFrame>
@@ -46,7 +46,7 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
           selectedRolloverBehavior={taskEntry.rolloverBehavior}
           onDismiss={() => setIsValueTypeModalVisible(false)}
           onSelect={(valueType, rolloverBehavior) => {
-            taskEntryActions.setValueType(taskEntry, valueType, rolloverBehavior);
+            taskEntryActions.setValueType({ taskEntry, valueType, rolloverBehavior });
             setIsValueTypeModalVisible(false);
           }}
         />

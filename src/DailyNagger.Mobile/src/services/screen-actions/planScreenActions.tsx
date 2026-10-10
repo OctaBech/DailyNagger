@@ -1,7 +1,7 @@
 import { createRequiredContext, type Prettify } from "@/shared";
-import type { JsxActionPack, planScreenActionRegistry } from "@/services/action-boundary";
+import type { ProxyActions, planScreenActionRegistry } from "@/services/action-boundary";
 
-export type PlanScreenActions = Prettify<JsxActionPack<typeof planScreenActionRegistry>>;
+export type PlanScreenActions = Prettify<ProxyActions<typeof planScreenActionRegistry>>;
 
 export const { Provider: PlanScreenActionsProvider, useRequiredContext: usePlanScreenActions } =
   createRequiredContext<PlanScreenActions>("PlanScreenActionsContext");

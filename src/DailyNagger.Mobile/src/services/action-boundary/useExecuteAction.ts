@@ -7,27 +7,22 @@ import { useStableCallback } from "@/shared/useStableCallback";
 import type { ActionScope, RuntimeDependencyInputs } from "./action-dependencies";
 import { createActionRuntimeDependencies } from "./action-dependencies/actionRuntimeDependencies";
 import type { ActionEvents } from "./events";
-import type { JsxAction } from "./jsxActionPackModel";
+import type { ActionInvocation } from "./proxyActionsModel";
 
-type UseExecuteJsxActionProps = RuntimeDependencyInputs & {
+type UseExecuteActionProps = RuntimeDependencyInputs & {
   readonly actionEvents?: ActionEvents;
   readonly middlewareWrapperFunction?: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
 };
 
-export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
+export function useExecuteAction(props: UseExecuteActionProps) {
   const environment = props;
-  const runtimeDependenciesByScope = createActionRuntimeDependencies(props);
+  const servicePackages = createActionRuntimeDependencies(props);
 
-  function executeJsxAction<
-    TActionScope extends ActionScope,
-    TActionArgs,
-    TJsxArgs extends unknown[],
-  >(jsxAction: JsxAction<TActionScope, TActionArgs, TJsxArgs>): void {
-    // Build action arguments from JSX arguments.
-    const actionArgs = jsxAction.action.toActionArgs(...jsxAction.publicArgs);
-
-    // Hydrate dependencies for the action scope.
-    const runtimeDependencies = runtimeDependenciesByScope[jsxAction.action.scope];
+  function executeAction<TActionScope extends ActionScope, TActionArgs>(
+    actionInvocation: ActionInvocation<TActionScope, TActionArgs>,
+  ): void {
+    // Look up the current service package for the registered action.
+    const serviceDependencies = servicePackages[actionInvocation.action.servicePackageName];
 
     const executionContexts: MiddlewareExecutionContext[] = [];
 
@@ -37,16 +32,19 @@ export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
           executionContexts.push(context);
           environment.actionEvents?.emit("action-started", context);
 
-          jsxAction.action.run(actionArgs, runtimeDependencies);
+          actionInvocation.action.actionFunction(
+            actionInvocation.actionArguments,
+            serviceDependencies,
+          );
 
           environment.actionEvents?.emit("action-finished", context);
         },
         environment.middlewareWrapperFunction,
         {
-          causalityKey: `action/${jsxAction.actionKey}:${new Date().toISOString()}`,
+          causalityKey: `action/${actionInvocation.actionKey}:${new Date().toISOString()}`,
           metadata: {
-            actionKey: jsxAction.actionKey,
-            actionScope: jsxAction.action.scope,
+            actionKey: actionInvocation.actionKey,
+            actionScope: actionInvocation.action.servicePackageName,
           },
         },
       );
@@ -55,16 +53,17 @@ export function useExecuteJsxAction(props: UseExecuteJsxActionProps) {
 
       environment.actionEvents?.emit("action-failed", {
         causalityKey:
-          activeContext?.causalityKey ?? `action/${jsxAction.actionKey}:failed-before-context`,
+          activeContext?.causalityKey ??
+          `action/${actionInvocation.actionKey}:failed-before-context`,
         error,
         metadata: activeContext?.metadata ?? {
-          actionKey: jsxAction.actionKey,
-          actionScope: jsxAction.action.scope,
+          actionKey: actionInvocation.actionKey,
+          actionScope: actionInvocation.action.servicePackageName,
         },
       });
       throw error;
     }
   }
 
-  return useStableCallback(executeJsxAction);
+  return useStableCallback(executeAction);
 }

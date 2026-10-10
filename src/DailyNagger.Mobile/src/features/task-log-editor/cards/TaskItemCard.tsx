@@ -35,14 +35,14 @@ const TaskItemCardComponent = ({
   const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
   const railSelectionTone = getRailSelectionTone(railTone, hasActiveRail, isInsideFocusedTree);
   const toggleExpanded = () => {
-    taskItemActions.setExpanded(taskItem, !isExpanded);
+    taskItemActions.setExpanded({ taskItem, isExpanded: !isExpanded });
   };
 
   return (
     <View style={[styles.card, isSelected && styles.selectedCard]}>
       <SelectionLane.SelectionLane
         accessibilityLabel="Select task item"
-        onPress={() => taskItemActions.setFocused(taskItem)}
+        onPress={() => taskItemActions.setFocused({ taskItem })}
         tone={railSelectionTone}
       />
       <Card.TaskItemFrame>
@@ -57,13 +57,15 @@ const TaskItemCardComponent = ({
           forceExpandableIndicator={!isOnceTaskItem}
           muteCheckmark
           checkmarkShape={isOnceTaskItem ? "circle" : "square"}
-          onFocus={() => taskItemActions.setFocused(taskItem)}
-          onNameFocus={() => taskItemActions.setFocused(taskItem)}
-          onDonePress={canDeleteOnce ? () => taskItemActions.setFocused(taskItem) : toggleExpanded}
-          onDeletePress={canDeleteOnce ? () => taskItemActions.deleteOnce(taskItem) : undefined}
-          onNameCommit={(newName) => taskItemActions.setName(taskItem, newName)}
+          onFocus={() => taskItemActions.setFocused({ taskItem })}
+          onNameFocus={() => taskItemActions.setFocused({ taskItem })}
+          onDonePress={
+            canDeleteOnce ? () => taskItemActions.setFocused({ taskItem }) : toggleExpanded
+          }
+          onDeletePress={canDeleteOnce ? () => taskItemActions.deleteOnce({ taskItem }) : undefined}
+          onNameCommit={(newName) => taskItemActions.setName({ taskItem, name: newName })}
           onExpandPress={
-            canDeleteOnce ? () => taskItemActions.setFocused(taskItem) : toggleExpanded
+            canDeleteOnce ? () => taskItemActions.setFocused({ taskItem }) : toggleExpanded
           }
           onPressTag={() => setIsTagModalVisible(true)}
         />
@@ -87,9 +89,9 @@ const TaskItemCardComponent = ({
         {!canDeleteOnce && isExpanded && (
           <TaskItemTail
             isTagPickerOpen={isTagModalVisible}
-            onFocus={() => taskItemActions.setFocused(taskItem)}
-            onAddTaskEntry={() => taskItemActions.addTaskEntry(taskItem)}
-            onAddTaskItem={() => taskItemActions.addTaskItem(taskItem)}
+            onFocus={() => taskItemActions.setFocused({ taskItem })}
+            onAddTaskEntry={() => taskItemActions.addTaskEntry({ taskItem })}
+            onAddTaskItem={() => taskItemActions.addTaskItem({ taskItem })}
             onPressTag={() => setIsTagModalVisible(true)}
             showComponentOutlines
             tagName={taskItem.tag}
@@ -103,7 +105,7 @@ const TaskItemCardComponent = ({
         tagName={taskItem.tag}
         onDismiss={() => setIsTagModalVisible(false)}
         onSave={(savedTagName) => {
-          taskItemActions.setTag(taskItem, savedTagName);
+          taskItemActions.setTag({ taskItem, tag: savedTagName });
           setIsTagModalVisible(false);
         }}
       />

@@ -33,14 +33,14 @@ const TaskItemCardComponent = ({
   const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
   const railSelectionTone = getRailSelectionTone(railTone, hasActiveRail, isInsideFocusedTree);
   const toggleExpanded = () => {
-    setExpanded(taskItem, !isExpanded && hasChildren);
+    setExpanded({ taskItem, isExpanded: !isExpanded && hasChildren });
   };
 
   return (
     <View style={[styles.card, isSelected && styles.selectedCard]}>
       <SelectionLane.SelectionLane
         accessibilityLabel="Select task item"
-        onPress={() => setFocused(taskItem)}
+        onPress={() => setFocused({ taskItem })}
         tone={railSelectionTone}
       />
       <Card.TaskItemFrame>
@@ -52,9 +52,9 @@ const TaskItemCardComponent = ({
           showComponentOutlines={false}
           muteCheckmark={false}
           checkmarkShape={isOnceTaskItem ? "circle" : "square"}
-          onFocus={() => setFocused(taskItem)}
-          onDonePress={() => setDoneAndSetFocus(taskItem, !taskItem.isDone)}
-          onDeletePress={canDeleteOnce ? () => deleteOnce(taskItem) : undefined}
+          onFocus={() => setFocused({ taskItem })}
+          onDonePress={() => setDoneAndSetFocus({ taskItem, isDone: !taskItem.isDone })}
+          onDeletePress={canDeleteOnce ? () => deleteOnce({ taskItem }) : undefined}
           onNameCommit={() => undefined}
           onExpandPress={toggleExpanded}
         />

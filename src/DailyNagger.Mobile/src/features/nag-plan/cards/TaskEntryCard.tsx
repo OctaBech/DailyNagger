@@ -21,7 +21,7 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
       hasFocus={taskEntry.clientProps.hasFocus}
       isSelected={isSelected}
       isRemovedOnRollover={taskEntry.rolloverBehavior === "Remove"}
-      onMarkerPress={() => setFocused(taskEntry)}
+      onMarkerPress={() => setFocused({ taskEntry })}
       railTone={railTone}
     >
       <Card.TaskEntryField
@@ -31,9 +31,9 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
         allowEditValue
         decimalSeparator={decimalSeparator}
         showComponentOutlines={false}
-        onFocus={() => setFocused(taskEntry)}
+        onFocus={() => setFocused({ taskEntry })}
         onLabelCommit={() => undefined}
-        onValueCommit={(newValue) => setValue(taskEntry, newValue)}
+        onValueCommit={(newValue) => setValue({ taskEntry, newValue })}
       />
     </Card.TaskEntryFrame>
   );

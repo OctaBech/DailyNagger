@@ -1,5 +1,5 @@
 import type { ActionScope } from "./action-dependencies";
-import type { RegisteredJsxAction } from "@/services/action-boundary/register";
+import type { RegisteredAction } from "@/services/action-boundary/register";
 
 // Model for registering actions in the boundary between services and JSX.
 export type RegisteredActionTree = {
@@ -9,38 +9,35 @@ export type RegisteredActionTree = {
 };
 
 type AnyRegisteredAction = {
-  readonly scope: ActionScope;
-  readonly toActionArgs: (...publicArgs: any[]) => any;
-  readonly run: (args: any, runtimeDependencies: any) => void;
+  readonly servicePackageName: ActionScope;
+  readonly actionFunction: (actionArguments: any, serviceDependencies: any) => void;
 };
 
 // The function pack JSX receives after the registry has been bound to the action boundary.
-export type JsxActionPack<TRegistry extends RegisteredActionTree> = {
+export type ProxyActions<TRegistry extends RegisteredActionTree> = {
   readonly [TGroup in keyof TRegistry]: {
     readonly [TName in keyof TRegistry[TGroup]]: TRegistry[TGroup][TName] extends {
-      readonly toActionArgs: (...publicArgs: infer TJsxArgs) => unknown;
+      readonly actionFunction: (
+        actionArguments: infer TActionArgs,
+        serviceDependencies: any,
+      ) => void;
     }
-      ? (...args: TJsxArgs) => void
+      ? (actionArguments: TActionArgs) => void
       : never;
   };
 };
 
 // One concrete action call from JSX, before runtime dependencies have been hydrated.
-export type JsxAction<
+export type ActionInvocation<
   TActionScope extends ActionScope = ActionScope,
   TActionArgs = unknown,
-  TJsxArgs extends unknown[] = unknown[],
 > = {
-  readonly action: RegisteredJsxAction<TActionScope, TActionArgs, TJsxArgs>;
+  readonly action: RegisteredAction<TActionScope, TActionArgs>;
   readonly actionKey: string;
-  readonly publicArgs: TJsxArgs;
+  readonly actionArguments: TActionArgs;
 };
 
 // The executor receives exactly one JSX action and runs it through the boundary.
-export type ExecuteJsxAction = <
-  TActionScope extends ActionScope,
-  TActionArgs,
-  TJsxArgs extends unknown[],
->(
-  jsxAction: JsxAction<TActionScope, TActionArgs, TJsxArgs>,
+export type ExecuteAction = <TActionScope extends ActionScope, TActionArgs>(
+  actionInvocation: ActionInvocation<TActionScope, TActionArgs>,
 ) => void;

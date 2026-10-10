@@ -15,7 +15,7 @@ export const TaskLogEditorScreen = (props: TaskLogEditorScreenProps) => {
   const { startEdit } = effects;
 
   useEffect(() => {
-    startEdit(props.naggerId);
+    startEdit({ naggerId: props.naggerId });
   }, [props.naggerId, startEdit]);
 
   if (editorScreenData.tree === null) return <View />;
