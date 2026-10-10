@@ -6,12 +6,14 @@ The action boundary turns registered service actions into stable proxy-action pa
 
 Flow:
 
-1. `useActionBoundary.ts` receives an action registry and the current runtime inputs.
+1. `useActionBoundary.ts` receives a named action registry, the shared action counter, and the current runtime inputs.
 2. `useExecuteAction.ts` prepares the function that can execute one registered action.
 3. `useBuildProxyActions.ts` turns the registry into proxy functions for frontstage.
 4. Frontstage calls one of those functions with the action's argument object.
-5. `useExecuteAction.ts` passes that object unchanged, looks up the current service package, and runs the action.
+5. `useExecuteAction.ts` increments the shared action sequence, creates the causality key, passes the argument object unchanged, looks up the current service package, and runs the action.
 6. `events/` describes the action lifecycle facts emitted for observability.
+
+The services layer owns one `useRef` action-start counter shared by all screen and menu boundaries. It survives renders. Keys use `action:...|name:screen-or-menu/group/action|time:ISO-timestamp`. The counter describes start order, while the timestamp distinguishes app runs. This is a debugging identifier, not a guarantee of global uniqueness across devices.
 
 Rules:
 

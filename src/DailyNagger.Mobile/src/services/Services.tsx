@@ -77,6 +77,7 @@ function useCreateServices(): {
 } {
   // Wiring internal service communication
   const cultureSettings = useCultureSettings();
+  const actionSequenceRef = useRef(0);
   const planMemoryEvents = useEventEmitter<MemoryEventType, void>();
   const editorMemoryEvents = useEventEmitter<MemoryEventType, void>();
   const actionEvents = useEventEmitter<ActionExecutionEventType, ActionExecutionEvent>();
@@ -151,6 +152,8 @@ function useCreateServices(): {
   });
   const editorScreenData = useCreateEditorScreenData({ editorMemory, cultureSettings });
   const planRegisteredActions = useActionBoundary(planScreenActionRegistry, {
+    registryName: "plan-screen",
+    actionSequenceRef,
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -160,6 +163,8 @@ function useCreateServices(): {
     sending,
   });
   const planDialProxyActions = useActionBoundary(planDialActionRegistry, {
+    registryName: "plan-menu",
+    actionSequenceRef,
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -169,6 +174,8 @@ function useCreateServices(): {
     sending,
   }).dial;
   const editorRegisteredActions = useActionBoundary(editorScreenActionRegistry, {
+    registryName: "editor-screen",
+    actionSequenceRef,
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -178,6 +185,8 @@ function useCreateServices(): {
     sending,
   });
   const editorDialProxyActions = useActionBoundary(editorDialActionRegistry, {
+    registryName: "editor-menu",
+    actionSequenceRef,
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
