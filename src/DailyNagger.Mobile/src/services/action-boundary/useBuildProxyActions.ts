@@ -4,13 +4,18 @@ import type { ExecuteAction, ProxyActions, RegisteredActionTree } from "./proxyA
 export function useBuildProxyActions<TRegistry extends RegisteredActionTree>(
   registry: TRegistry,
   executeAction: ExecuteAction,
+  registryName: string,
 ): ProxyActions<TRegistry> {
-  return useMemo(() => buildProxyActions(registry, executeAction), [executeAction, registry]);
+  return useMemo(
+    () => buildProxyActions(registry, executeAction, registryName),
+    [executeAction, registry, registryName],
+  );
 }
 
 function buildProxyActions<TRegistry extends RegisteredActionTree>(
   registry: TRegistry,
   executeAction: ExecuteAction,
+  registryName: string,
 ): ProxyActions<TRegistry> {
   const proxyActions: Record<string, Record<string, (actionArguments: unknown) => void>> = {};
 
@@ -21,7 +26,7 @@ function buildProxyActions<TRegistry extends RegisteredActionTree>(
     // Create one proxy function for each action registration.
     Object.entries(group).forEach(([actionName, action]) => {
       // Build a descriptive key for action events and observability.
-      const actionKey = `${groupName}/${actionName}`;
+      const actionKey = `${registryName}/${groupName}/${actionName}`;
 
       // The closure retains this registration; it runs only when frontstage calls it.
       proxyActions[groupName][actionName] = (actionArguments: unknown) => {
