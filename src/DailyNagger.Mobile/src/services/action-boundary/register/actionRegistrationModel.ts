@@ -3,27 +3,20 @@ import type {
   RuntimeDependenciesForActionScope,
 } from "@/services/action-boundary/action-dependencies";
 
-export type RegisteredJsxAction<
-  TScope extends ActionScope,
-  TActionArgs,
-  TPublicArgs extends unknown[],
-> = {
-  readonly scope: TScope;
-  readonly toActionArgs: (...publicArgs: TPublicArgs) => TActionArgs;
-  readonly run: (
-    args: TActionArgs,
-    runtimeDependencies: RuntimeDependenciesForActionScope<TScope>,
+export type RegisteredAction<TScope extends ActionScope, TActionArgs> = {
+  readonly servicePackageName: TScope;
+  readonly actionFunction: (
+    actionArguments: TActionArgs,
+    serviceDependencies: RuntimeDependenciesForActionScope<TScope>,
   ) => void;
 };
 
-export function registerAction<
-  TScope extends ActionScope,
-  TActionArgs,
-  TPublicArgs extends unknown[],
->(
-  run: (args: TActionArgs, runtimeDependencies: RuntimeDependenciesForActionScope<TScope>) => void,
-  toActionArgs: (...publicArgs: TPublicArgs) => TActionArgs,
-  scope: TScope,
-): RegisteredJsxAction<TScope, TActionArgs, TPublicArgs> {
-  return { scope, run, toActionArgs };
+export function registerAction<TScope extends ActionScope, TActionArgs>(
+  actionFunction: (
+    actionArguments: TActionArgs,
+    serviceDependencies: RuntimeDependenciesForActionScope<TScope>,
+  ) => void,
+  servicePackageName: TScope,
+): RegisteredAction<TScope, TActionArgs> {
+  return { actionFunction, servicePackageName };
 }

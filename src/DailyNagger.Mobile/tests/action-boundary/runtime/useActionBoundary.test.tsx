@@ -15,6 +15,7 @@ describe("useActionBoundary", () => {
     const latestMemory = { name: "latest" } as unknown as Memory;
     let memoryUsedByAction: Memory | undefined;
     let valueReceivedByAction: string | undefined;
+    let argumentsReceivedByAction: { value: string } | undefined;
 
     const registry = {
       example: {
@@ -24,9 +25,9 @@ describe("useActionBoundary", () => {
             dependencies: RuntimeDependenciesForActionScope<"plan/navigation">,
           ) => {
             valueReceivedByAction = args.value;
+            argumentsReceivedByAction = args;
             memoryUsedByAction = dependencies.memory;
           },
-          (value: string) => ({ value }),
           "plan/navigation",
         ),
       },
@@ -58,8 +59,10 @@ describe("useActionBoundary", () => {
     expect(renderedActions.result.current).toBe(firstActionPack);
     expect(renderedActions.result.current.example.run).toBe(firstActionReference);
 
-    firstActionReference("coffee");
+    const actionArguments = { value: "coffee" };
+    firstActionReference(actionArguments);
 
+    expect(argumentsReceivedByAction).toBe(actionArguments);
     expect(valueReceivedByAction).toBe("coffee");
     expect(memoryUsedByAction).toBe(latestMemory);
   });

@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { Guid } from "@/shared";
-import type { JsxActionPack, planDialActionRegistry } from "@/services/action-boundary";
+import type { ProxyActions, planDialActionRegistry } from "@/services/action-boundary";
 import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
 
-type PlanDialJsxActions = JsxActionPack<typeof planDialActionRegistry>["dial"];
+type PlanDialProxyActions = ProxyActions<typeof planDialActionRegistry>["dial"];
 
 type UseCreatePlanScreenDialMenuProps = {
-  readonly planDialJsxActions: PlanDialJsxActions;
+  readonly planDialProxyActions: PlanDialProxyActions;
   readonly actionsAreAvailable: boolean;
   readonly selectedNodes: SelectedNodes;
   readonly selectedPath: TreePath;
@@ -16,7 +16,7 @@ type UseCreatePlanScreenDialMenuProps = {
 };
 
 export function useCreatePlanScreenDialMenu({
-  planDialJsxActions,
+  planDialProxyActions,
   actionsAreAvailable,
   selectedNodes,
   selectedPath,
@@ -24,7 +24,7 @@ export function useCreatePlanScreenDialMenu({
   onEditNagger,
 }: UseCreatePlanScreenDialMenuProps): SpeedDialMenu {
   const { nagger } = selectedNodes;
-  const { pinSelectedNagger, unpinSelectedNagger } = planDialJsxActions;
+  const { pinSelectedNagger, unpinSelectedNagger } = planDialProxyActions;
 
   return useMemo(() => {
     if (!actionsAreAvailable) return { items: [] };
@@ -49,7 +49,7 @@ export function useCreatePlanScreenDialMenu({
         iconValue: "pin",
         label: "Pin",
         showLabel: true,
-        onSelect: () => pinSelectedNagger(nagger),
+        onSelect: () => pinSelectedNagger({ nagger }),
       });
     }
 
@@ -60,7 +60,7 @@ export function useCreatePlanScreenDialMenu({
         iconValue: "pin-off",
         label: "Unpin",
         showLabel: true,
-        onSelect: () => unpinSelectedNagger(nagger),
+        onSelect: () => unpinSelectedNagger({ nagger }),
       });
     }
 

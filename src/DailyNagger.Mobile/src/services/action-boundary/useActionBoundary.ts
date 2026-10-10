@@ -1,7 +1,7 @@
 import type { RuntimeDependencyInputs } from "./action-dependencies";
-import { useBuildJsxActionPack } from "./useBuildJsxActionPack";
-import type { JsxActionPack, RegisteredActionTree } from "./jsxActionPackModel";
-import { useExecuteJsxAction } from "./useExecuteJsxAction";
+import { useBuildProxyActions } from "./useBuildProxyActions";
+import type { ProxyActions, RegisteredActionTree } from "./proxyActionsModel";
+import { useExecuteAction } from "./useExecuteAction";
 import type { ActionEvents } from "./events";
 import type { MiddlewareExecutionContext, MiddlewareWrapperFunction } from "@/middleware";
 
@@ -13,8 +13,8 @@ type UseActionBoundaryProps = RuntimeDependencyInputs & {
 export function useActionBoundary<TRegistry extends RegisteredActionTree>(
   registry: TRegistry,
   props: UseActionBoundaryProps,
-): JsxActionPack<TRegistry> {
-  const executeJsxAction = useExecuteJsxAction(props);
+): ProxyActions<TRegistry> {
+  const stableExecuteAction = useExecuteAction(props);
 
-  return useBuildJsxActionPack(registry, executeJsxAction);
+  return useBuildProxyActions(registry, stableExecuteAction);
 }

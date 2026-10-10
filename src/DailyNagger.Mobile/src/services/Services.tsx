@@ -159,7 +159,7 @@ function useCreateServices(): {
     middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
   });
-  const planDialJsxActions = useActionBoundary(planDialActionRegistry, {
+  const planDialProxyActions = useActionBoundary(planDialActionRegistry, {
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -177,7 +177,7 @@ function useCreateServices(): {
     middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
   });
-  const editorDialJsxActions = useActionBoundary(editorDialActionRegistry, {
+  const editorDialProxyActions = useActionBoundary(editorDialActionRegistry, {
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
@@ -194,10 +194,10 @@ function useCreateServices(): {
   });
   const appShellState = useCreateAppShellState({
     assistantBubble,
-    editorDialJsxActions,
+    editorDialProxyActions,
     editorMemory,
     editorScreenCommands,
-    planDialJsxActions,
+    planDialProxyActions,
     planMemory,
     planScreenCommands,
     sending,

@@ -1,19 +1,19 @@
 import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
-import type { JsxActionPack, editorDialActionRegistry } from "@/services/action-boundary";
+import type { ProxyActions, editorDialActionRegistry } from "@/services/action-boundary";
 import type { SpeedDialMenu } from "./SpeedDialMenu";
 
-type EditorDialJsxActions = JsxActionPack<typeof editorDialActionRegistry>["dial"];
+type EditorDialProxyActions = ProxyActions<typeof editorDialActionRegistry>["dial"];
 
 type UseCreateEditorScreenDialMenuProps = {
-  readonly editorDialJsxActions: EditorDialJsxActions;
+  readonly editorDialProxyActions: EditorDialProxyActions;
   readonly selectedNodes: SelectedNodes;
   readonly selectedPath: TreePath;
   readonly onCloseEditor: () => void;
 };
 
 export function useCreateEditorScreenDialMenu({
-  editorDialJsxActions,
+  editorDialProxyActions,
   selectedNodes,
   selectedPath,
   onCloseEditor,
@@ -27,7 +27,7 @@ export function useCreateEditorScreenDialMenu({
     pinSelectedNagger,
     saveEdit,
     unpinSelectedNagger,
-  } = editorDialJsxActions;
+  } = editorDialProxyActions;
 
   return useMemo(() => {
     const moveContext = treeSelection.tryReadMoveContext(selectedPath);
@@ -47,7 +47,7 @@ export function useCreateEditorScreenDialMenu({
           onSelect: () => {
             if (moveContext === null) return;
             if (!treeSelection.canMoveSelectedContextUp(moveContext)) return;
-            moveSelectedNodeUp(moveContext);
+            moveSelectedNodeUp({ moveContext });
           },
         },
         {
@@ -61,7 +61,7 @@ export function useCreateEditorScreenDialMenu({
           onSelect: () => {
             if (moveContext === null) return;
             if (!treeSelection.canMoveSelectedContextDown(moveContext)) return;
-            moveSelectedNodeDown(moveContext);
+            moveSelectedNodeDown({ moveContext });
           },
         },
         ...(treeSelection.canSelectedNaggerBePinned(selectedNodes) && nagger !== null
@@ -74,7 +74,7 @@ export function useCreateEditorScreenDialMenu({
                 showLabel: true,
                 row: 3,
                 keepOpenAfterPress: true,
-                onSelect: () => pinSelectedNagger(nagger),
+                onSelect: () => pinSelectedNagger({ nagger }),
               },
             ]
           : []),
@@ -88,7 +88,7 @@ export function useCreateEditorScreenDialMenu({
                 showLabel: true,
                 row: 3,
                 keepOpenAfterPress: true,
-                onSelect: () => unpinSelectedNagger(nagger),
+                onSelect: () => unpinSelectedNagger({ nagger }),
               },
             ]
           : []),
@@ -103,7 +103,7 @@ export function useCreateEditorScreenDialMenu({
           isDisabled: deleteContext === null,
           onSelect: () => {
             if (deleteContext === null) return;
-            deleteSelectedNode(deleteContext);
+            deleteSelectedNode({ deleteContext });
           },
         },
         {
@@ -115,7 +115,7 @@ export function useCreateEditorScreenDialMenu({
           isDisabled: nagger === null,
           onSelect: () => {
             if (nagger === null) return;
-            saveEdit(nagger);
+            saveEdit({ nagger });
             onCloseEditor();
           },
         },
@@ -128,7 +128,7 @@ export function useCreateEditorScreenDialMenu({
           isDisabled: nagger === null,
           onSelect: () => {
             if (nagger === null) return;
-            cancelEdit(nagger);
+            cancelEdit({ nagger });
             onCloseEditor();
           },
         },

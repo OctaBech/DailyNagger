@@ -45,10 +45,10 @@ const TaskLogCardComponent = ({
         <Card.TaskLogTail
           taskLog={taskLog}
           onAddTaskItem={() => {
-            setFocused(taskLog);
+            setFocused({ taskLog });
             setIsTaskStepNameModalVisible(true);
           }}
-          onFocus={() => setFocused(taskLog)}
+          onFocus={() => setFocused({ taskLog })}
         />
       </Card.TaskLogFrame>
 
@@ -59,7 +59,7 @@ const TaskLogCardComponent = ({
         suggestions={taskStepNameSuggestions}
         onDismiss={() => setIsTaskStepNameModalVisible(false)}
         onAddTaskStep={(name, rolloverBehavior) => {
-          addTaskStep(taskLog, name, rolloverBehavior);
+          addTaskStep({ taskLog, name, rolloverBehavior });
           setIsTaskStepNameModalVisible(false);
         }}
       />

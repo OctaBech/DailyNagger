@@ -5,5 +5,5 @@ export {
   planScreenActionRegistry,
 } from "./register";
 export { useActionBoundary } from "./useActionBoundary";
-export type { JsxActionPack } from "./jsxActionPackModel";
+export type { ProxyActions } from "./proxyActionsModel";
 export type { ActionExecutionEvent, ActionExecutionEventType } from "./events";

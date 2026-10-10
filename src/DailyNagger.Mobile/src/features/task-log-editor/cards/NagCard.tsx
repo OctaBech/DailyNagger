@@ -35,7 +35,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
           hasTaskItems={hasTaskItems}
           hasFocus={nagger.clientProps.hasFocus}
           isPinned={nagger.pinnedBy !== "None"}
-          onRailPress={() => naggerActions.setFocused(nagger)}
+          onRailPress={() => naggerActions.setFocused({ nagger })}
           tone={tone}
         >
           <Card.NaggerField
@@ -48,15 +48,15 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
             isSchedulePickerOpen={isScheduleModalVisible}
             isTargetTimePickerOpen={isTargetTimeModalVisible}
             showComponentOutlines
-            onFocus={() => naggerActions.setFocused(nagger)}
-            onTitleCommit={(title) => naggerActions.setTitle(nagger, title)}
+            onFocus={() => naggerActions.setFocused({ nagger })}
+            onTitleCommit={(title) => naggerActions.setTitle({ nagger, title })}
             onSchedulePress={() => setIsScheduleModalVisible(true)}
             onTargetTimePress={() => setIsTargetTimeModalVisible(true)}
             onHeaderPress={() => {
-              naggerActions.setExpanded(nagger, !isExpanded);
+              naggerActions.setExpanded({ nagger, isExpanded: !isExpanded });
             }}
             onExpandPress={() => {
-              naggerActions.setExpanded(nagger, !isExpanded);
+              naggerActions.setExpanded({ nagger, isExpanded: !isExpanded });
             }}
           />
         </Card.NaggerFrame>
@@ -79,7 +79,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
         getPreviewDueOn={(scheduleRules) => schedule.getNextDueOn(nagger, scheduleRules)}
         onDismiss={() => setIsScheduleModalVisible(false)}
         onDone={(scheduleRules) => {
-          naggerActions.setScheduleRules(nagger, scheduleRules);
+          naggerActions.setScheduleRules({ nagger, scheduleRules });
           setIsScheduleModalVisible(false);
         }}
       />
@@ -89,11 +89,11 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
         targetTime={nagger.targetTime}
         onDismiss={() => setIsTargetTimeModalVisible(false)}
         onClear={() => {
-          naggerActions.setTargetTime(nagger, null);
+          naggerActions.setTargetTime({ nagger, targetTime: null });
           setIsTargetTimeModalVisible(false);
         }}
         onDone={(targetTime) => {
-          naggerActions.setTargetTime(nagger, targetTime);
+          naggerActions.setTargetTime({ nagger, targetTime });
           setIsTargetTimeModalVisible(false);
         }}
       />

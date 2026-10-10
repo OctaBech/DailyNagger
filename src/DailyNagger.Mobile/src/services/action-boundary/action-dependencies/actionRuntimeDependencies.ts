@@ -6,42 +6,34 @@ import type {
   taskInputActions,
 } from "@/services/actions";
 
-type RuntimeDependenciesByScope = {
-  readonly "plan/navigation": navigationActions.NavigationRuntimeDependencies;
-  readonly "plan/task-input": taskInputActions.TaskInputRuntimeDependencies;
-  readonly "editor/navigation": navigationActions.NavigationRuntimeDependencies;
-  readonly "editor/action": editorActions.EditorRuntimeDependencies;
-  readonly "editor/session": editorSessionActions.EditorSessionRuntimeDependencies;
-};
+type RuntimeDependenciesByScope = ReturnType<typeof createActionRuntimeDependencies>;
 
 export type ActionScope = keyof RuntimeDependenciesByScope;
 
 export type RuntimeDependenciesForActionScope<TScope extends ActionScope> =
   RuntimeDependenciesByScope[TScope];
 
-export function createActionRuntimeDependencies(
-  inputs: RuntimeDependencyInputs,
-): RuntimeDependenciesByScope {
+export function createActionRuntimeDependencies(inputs: RuntimeDependencyInputs) {
   return {
     "plan/navigation": {
       memory: inputs.planMemory,
-    },
+    } satisfies navigationActions.NavigationRuntimeDependencies,
     "plan/task-input": {
       memory: inputs.planMemory,
       sending: inputs.sending,
       interactionStamp: inputs.planInteractionStamp,
-    },
+    } satisfies taskInputActions.TaskInputRuntimeDependencies,
     "editor/navigation": {
       memory: inputs.editorMemory,
-    },
+    } satisfies navigationActions.NavigationRuntimeDependencies,
     "editor/action": {
       cultureSettings: inputs.cultureSettings,
       memory: inputs.editorMemory,
-    },
+    } satisfies editorActions.EditorRuntimeDependencies,
     "editor/session": {
       editorMemory: inputs.editorMemory,
       planMemory: inputs.planMemory,
       sending: inputs.sending,
-    },
-  } satisfies RuntimeDependenciesByScope;
+    } satisfies editorSessionActions.EditorSessionRuntimeDependencies,
+  };
 }

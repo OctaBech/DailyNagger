@@ -30,7 +30,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
         hasFocus={nagger.clientProps.hasFocus}
         hasTaskItems={hasTaskItems}
         isPinned={nagger.pinnedBy !== "None"}
-        onRailPress={() => setFocused(nagger)}
+        onRailPress={() => setFocused({ nagger })}
         tone={tone}
       >
         <Card.NaggerField
@@ -40,12 +40,12 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
           allowEditSchedule={false}
           allowEditTitle={false}
           showComponentOutlines={false}
-          onFocus={() => setFocused(nagger)}
+          onFocus={() => setFocused({ nagger })}
           onHeaderPress={() => {
-            setExpanded(nagger, !nagger.clientProps.isExpanded);
+            setExpanded({ nagger, isExpanded: !nagger.clientProps.isExpanded });
           }}
           onExpandPress={() => {
-            setExpanded(nagger, !nagger.clientProps.isExpanded);
+            setExpanded({ nagger, isExpanded: !nagger.clientProps.isExpanded });
           }}
         />
       </Card.NaggerFrame>
