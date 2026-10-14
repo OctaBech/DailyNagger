@@ -1,6 +1,7 @@
 export const spanAttributeKeys = {
   requestId: "dn.api.request_id",
   causalityKey: "dn.causality.key",
+  nodeIds: "dn.node.ids",
   replacedByCausalityKey: "dn.causality.replaced_by",
   parcelId: "dn.parcel.id",
   replacedByParcelId: "dn.parcel.replaced_by",
