@@ -2,16 +2,16 @@ import { useCallback, useEffect } from "react";
 import type { MiddlewareExecutionContext, MiddlewareWrapperFunction } from "@/middleware";
 import type { ActionExecutionEvent, ActionExecutionEventType } from "@/services/action-boundary";
 import type { EventEmitter } from "@/shared";
-import { recordSpanValue, spanAttributeKeys, startNewSpan } from "../sentry";
+import { recordSpanValue, reportError, spanAttributeKeys, startNewSpan } from "../sentry";
 
 export function useActionBoundaryObservability(
   actionEvents: EventEmitter<ActionExecutionEventType, ActionExecutionEvent>,
 ): MiddlewareWrapperFunction<MiddlewareExecutionContext> {
   useEffect(() => {
     return actionEvents.subscribe((eventType, event) => {
-      // The action boundary now exposes its lifecycle through events.
-      void eventType;
-      void event;
+      if (eventType === "action-failed") {
+        reportError(event.error, event.causalityKey);
+      }
     });
   }, [actionEvents]);
 

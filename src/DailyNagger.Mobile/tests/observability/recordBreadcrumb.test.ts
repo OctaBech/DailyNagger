@@ -91,6 +91,21 @@ describe("breadcrumb causality", () => {
     },
   );
 
+  it.each([undefined, "action/other"])(
+    "uses the supplied error key regardless of active causality: %s",
+    (activeKey) => {
+      if (activeKey !== undefined) setActiveKey(activeKey);
+      const error = new Error("Action failure after leaving the wrapper");
+
+      reportError(error, "action/original");
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        tags: { [spanAttributeKeys.causalityKey]: "action/original" },
+      });
+      expect(Sentry.getActiveSpan).not.toHaveBeenCalled();
+    },
+  );
+
   it("tags the original exception on the individual event", () => {
     setActiveKey("action/C");
     const error = new Error("Controlled failure");
