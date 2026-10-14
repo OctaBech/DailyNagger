@@ -3,14 +3,14 @@ import { useBuildProxyActions } from "./useBuildProxyActions";
 import type { ProxyActions, RegisteredActionTree } from "./proxyActionsModel";
 import { useExecuteAction } from "./useExecuteAction";
 import type { RefObject } from "react";
-import type { ActionEvents } from "./events";
-import type { MiddlewareExecutionContext, MiddlewareWrapperFunction } from "@/middleware";
+import type { ActionEvents, ActionExecutionContext } from "./events";
+import type { MiddlewareWrapperFunction } from "@/middleware";
 
 type UseActionBoundaryProps = RuntimeDependencyInputs & {
   readonly registryName: string;
   readonly actionSequenceRef: RefObject<number>;
   readonly actionEvents?: ActionEvents;
-  readonly middlewareWrapperFunction?: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
+  readonly middlewareWrapperFunction?: MiddlewareWrapperFunction<ActionExecutionContext>;
 };
 
 export function useActionBoundary<TRegistry extends RegisteredActionTree>(

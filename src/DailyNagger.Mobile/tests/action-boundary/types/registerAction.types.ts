@@ -1,9 +1,9 @@
 import { taskInputActions } from "@/services/actions";
 import { registerAction } from "@/services/action-boundary/register/actionRegistrationModel";
-import type { RuntimeDependenciesForActionScope } from "@/services/action-boundary/action-dependencies";
+import type { ServicePackage } from "@/services/action-boundary/action-dependencies";
 import type { TaskEntry } from "@/models";
 
-declare const dependencies: RuntimeDependenciesForActionScope<"plan/task-input">;
+declare const dependencies: ServicePackage<"plan/task-input">;
 declare const taskEntry: TaskEntry;
 
 // The argument object is inferred directly from the action function.

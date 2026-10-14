@@ -12,7 +12,11 @@ jest.mock("@/observability/sentry", () => ({
 it("reports action failures with their existing key", async () => {
   const events = createEventEmitter<ActionExecutionEventType, ActionExecutionEvent>();
   const { unmount } = await renderHook(() => useActionBoundaryObservability(events));
-  const context = { causalityKey: "action/original" };
+  const context = {
+    causalityKey: "action/original",
+    actionArguments: {},
+    serviceDependencies: {},
+  };
   const error = new Error("Controlled action failure");
 
   events.emit("action-failed", { ...context, error });
