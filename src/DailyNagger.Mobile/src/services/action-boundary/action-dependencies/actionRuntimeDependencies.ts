@@ -6,12 +6,12 @@ import type {
   taskInputActions,
 } from "@/services/actions";
 
-type RuntimeDependenciesByScope = ReturnType<typeof createActionRuntimeDependencies>;
+type ServicePackages = ReturnType<typeof createActionRuntimeDependencies>;
 
-export type ActionScope = keyof RuntimeDependenciesByScope;
+export type ServicePackageName = keyof ServicePackages;
 
-export type RuntimeDependenciesForActionScope<TScope extends ActionScope> =
-  RuntimeDependenciesByScope[TScope];
+export type ServicePackage<TServicePackageName extends ServicePackageName> =
+  ServicePackages[TServicePackageName];
 
 export function createActionRuntimeDependencies(inputs: RuntimeDependencyInputs) {
   return {

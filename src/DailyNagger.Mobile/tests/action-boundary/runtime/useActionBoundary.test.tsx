@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { renderHook } from "@testing-library/react-native";
-import { runWithoutMiddleware } from "@/middleware";
 import { registerAction } from "@/services/action-boundary/register/actionRegistrationModel";
 import { useActionBoundary } from "@/services/action-boundary/useActionBoundary";
 import { useRef } from "react";
@@ -10,7 +9,7 @@ import type { ActionExecutionEventType, ActionExecutionEvent } from "@/services/
 
 import type {
   RuntimeDependencyInputs,
-  RuntimeDependenciesForActionScope,
+  ServicePackage,
 } from "@/services/action-boundary/action-dependencies";
 import type { Memory } from "@/services/contracts";
 
@@ -25,14 +24,13 @@ describe("useActionBoundary", () => {
     let memoryUsedByAction: Memory | undefined;
     let valueReceivedByAction: string | undefined;
     let argumentsReceivedByAction: { value: string } | undefined;
+    let argumentsReceivedByWrapper: unknown;
+    let servicesReceivedByWrapper: unknown;
 
     const registry = {
       example: {
         run: registerAction(
-          (
-            args: { value: string },
-            dependencies: RuntimeDependenciesForActionScope<"plan/navigation">,
-          ) => {
+          (args: { value: string }, dependencies: ServicePackage<"plan/navigation">) => {
             valueReceivedByAction = args.value;
             argumentsReceivedByAction = args;
             memoryUsedByAction = dependencies.memory;
@@ -58,7 +56,11 @@ describe("useActionBoundary", () => {
           registryName: "plan-screen",
           actionSequenceRef,
           planMemory,
-          middlewareWrapperFunction: runWithoutMiddleware,
+          middlewareWrapperFunction: (context, run) => {
+            argumentsReceivedByWrapper = context.actionArguments;
+            servicesReceivedByWrapper = context.serviceDependencies;
+            return run();
+          },
         }),
       { initialProps: firstMemory },
     );
@@ -77,6 +79,8 @@ describe("useActionBoundary", () => {
     expect(argumentsReceivedByAction).toBe(actionArguments);
     expect(valueReceivedByAction).toBe("coffee");
     expect(memoryUsedByAction).toBe(latestMemory);
+    expect(argumentsReceivedByWrapper).toBe(actionArguments);
+    expect(servicesReceivedByWrapper).toEqual({ memory: latestMemory });
   });
 
   it("shares the start sequence across screens and menus, including same-millisecond calls and wrapper failures", async () => {
@@ -86,10 +90,7 @@ describe("useActionBoundary", () => {
     const registry = {
       example: {
         run: registerAction(
-          (
-            _args: Record<string, never>,
-            _services: RuntimeDependenciesForActionScope<"plan/navigation">,
-          ) => {},
+          (_args: Record<string, never>, _services: ServicePackage<"plan/navigation">) => {},
           "plan/navigation",
         ),
       },

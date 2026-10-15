@@ -1,22 +1,22 @@
 import type {
-  ActionScope,
-  RuntimeDependenciesForActionScope,
+  ServicePackageName,
+  ServicePackage,
 } from "@/services/action-boundary/action-dependencies";
 
-export type RegisteredAction<TScope extends ActionScope, TActionArgs> = {
-  readonly servicePackageName: TScope;
+export type RegisteredAction<TServicePackageName extends ServicePackageName, TActionArgs> = {
+  readonly servicePackageName: TServicePackageName;
   readonly actionFunction: (
     actionArguments: TActionArgs,
-    serviceDependencies: RuntimeDependenciesForActionScope<TScope>,
+    serviceDependencies: ServicePackage<TServicePackageName>,
   ) => void;
 };
 
-export function registerAction<TScope extends ActionScope, TActionArgs>(
+export function registerAction<TServicePackageName extends ServicePackageName, TActionArgs>(
   actionFunction: (
     actionArguments: TActionArgs,
-    serviceDependencies: RuntimeDependenciesForActionScope<TScope>,
+    serviceDependencies: ServicePackage<TServicePackageName>,
   ) => void,
-  servicePackageName: TScope,
-): RegisteredAction<TScope, TActionArgs> {
+  servicePackageName: TServicePackageName,
+): RegisteredAction<TServicePackageName, TActionArgs> {
   return { actionFunction, servicePackageName };
 }

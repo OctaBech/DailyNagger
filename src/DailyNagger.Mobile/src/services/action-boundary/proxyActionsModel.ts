@@ -1,4 +1,4 @@
-import type { ActionScope } from "./action-dependencies";
+import type { ServicePackageName } from "./action-dependencies";
 import type { RegisteredAction } from "@/services/action-boundary/register";
 
 // Model for registering actions in the boundary between services and JSX.
@@ -9,7 +9,7 @@ export type RegisteredActionTree = {
 };
 
 type AnyRegisteredAction = {
-  readonly servicePackageName: ActionScope;
+  readonly servicePackageName: ServicePackageName;
   readonly actionFunction: (actionArguments: any, serviceDependencies: any) => void;
 };
 
@@ -29,15 +29,15 @@ export type ProxyActions<TRegistry extends RegisteredActionTree> = {
 
 // One concrete action call from JSX, before runtime dependencies have been hydrated.
 export type ActionInvocation<
-  TActionScope extends ActionScope = ActionScope,
+  TServicePackageName extends ServicePackageName = ServicePackageName,
   TActionArgs = unknown,
 > = {
-  readonly action: RegisteredAction<TActionScope, TActionArgs>;
+  readonly action: RegisteredAction<TServicePackageName, TActionArgs>;
   readonly actionKey: string;
   readonly actionArguments: TActionArgs;
 };
 
 // The executor receives exactly one JSX action and runs it through the boundary.
-export type ExecuteAction = <TActionScope extends ActionScope, TActionArgs>(
-  actionInvocation: ActionInvocation<TActionScope, TActionArgs>,
+export type ExecuteAction = <TServicePackageName extends ServicePackageName, TActionArgs>(
+  actionInvocation: ActionInvocation<TServicePackageName, TActionArgs>,
 ) => void;

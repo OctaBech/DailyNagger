@@ -1,5 +1,6 @@
 import type { MiddlewareExecutionContext, MiddlewareWrapperFunction } from "@/middleware";
 import type { ActionExecutionEvent, ActionExecutionEventType } from "@/services/action-boundary";
+import type { ActionExecutionContext } from "@/services/action-boundary/events";
 import type { MemoryEventType } from "@/services/memory";
 import type { ParcelFlowEvents, ParcelQueueMiddleware } from "@/services/sending";
 import type { StartupEvents } from "@/services/startup";
@@ -24,7 +25,7 @@ type DailyNaggerObservabilityInput = {
 };
 
 type DailyNaggerObservability = {
-  readonly actionMiddlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
+  readonly actionMiddlewareWrapperFunction: MiddlewareWrapperFunction<ActionExecutionContext>;
   readonly parcelQueueMiddleware: ParcelQueueMiddleware;
   readonly rolloverNaggerMiddlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
   readonly startupMiddlewareWrapperFunction: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
