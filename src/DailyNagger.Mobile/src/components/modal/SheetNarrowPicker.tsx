@@ -64,6 +64,19 @@ export function SheetNarrowPicker<TValue>({
 
   return (
     <>
+      <SheetNarrowBelt
+        edgeToEdge={edgeToEdge}
+        emptyText={emptyText}
+        inputText={inputText}
+        isLoading={isLoading}
+        loadingText={loadingText}
+        loadErrorText={loadErrorText}
+        highlightMode={highlightMode}
+        onPick={onPick}
+        options={options}
+        sortMode={activeSortMode}
+      />
+
       <SheetNarrowControls
         search={
           <SheetSearchInput
@@ -80,19 +93,6 @@ export function SheetNarrowPicker<TValue>({
             onChange={setSortMode}
           />
         }
-      />
-
-      <SheetNarrowBelt
-        edgeToEdge={edgeToEdge}
-        emptyText={emptyText}
-        inputText={inputText}
-        isLoading={isLoading}
-        loadingText={loadingText}
-        loadErrorText={loadErrorText}
-        highlightMode={highlightMode}
-        onPick={onPick}
-        options={options}
-        sortMode={activeSortMode}
       />
     </>
   );
