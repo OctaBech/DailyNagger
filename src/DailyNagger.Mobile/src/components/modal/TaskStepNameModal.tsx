@@ -6,7 +6,8 @@ import { SheetButton } from "./SheetButton";
 import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
-import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
+import { SheetModal } from "./SheetModal";
+import { SheetSection } from "./SheetSection";
 
 type RolloverChoice = "single-use" | "persistent";
 
@@ -108,7 +109,7 @@ function TaskStepNameModalContent({
         </SheetFooterActions>
       }
     >
-      <KeyboardLiftRegion>
+      <SheetSection>
         <SheetNarrowPicker
           inputRef={nameInputRef}
           edgeToEdge
@@ -126,7 +127,7 @@ function TaskStepNameModalContent({
           options={suggestionOptions}
           sortOptions={taskStepNameSortOptions}
         />
-      </KeyboardLiftRegion>
+      </SheetSection>
     </SheetModal>
   );
 }

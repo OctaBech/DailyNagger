@@ -1,8 +1,7 @@
 import { appLayout, appMotion } from "@/config";
-import { useEffect, createContext, useContext, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Animated, Keyboard, Modal, Pressable, StyleSheet, View } from "react-native";
-import type { KeyboardEvent } from "react-native";
+import { Animated, Modal, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useModalKeyboardBoundary,
@@ -10,6 +9,7 @@ import {
 } from "@/app-shell/modal-keyboard-boundary";
 import { modalTheme } from "./theme";
 import { SheetHeader } from "./SheetHeader";
+import { SheetInputFocusContext, useSheetKeyboardLift } from "./useSheetKeyboardLift";
 
 type SheetModalProps = {
   readonly visible: boolean;
@@ -21,8 +21,6 @@ type SheetModalProps = {
   readonly headerAction?: ReactNode;
   readonly headerActionPlacement?: "title-row" | "below-title";
 };
-
-const SheetModalContext = createContext(false);
 
 export function SheetModal({
   visible,
@@ -37,7 +35,11 @@ export function SheetModal({
   const { bottom } = useSafeAreaInsets();
   const { beginModalKeyboardBoundary, endModalKeyboardBoundary } = useModalKeyboardBoundary();
   const [openAnimation] = useState(() => new Animated.Value(0));
-  const [keyboardSheetLiftAnimation] = useState(() => new Animated.Value(0));
+  const {
+    animation: keyboardSheetLiftAnimation,
+    inputFocus,
+    onOpened,
+  } = useSheetKeyboardLift(visible);
 
   useEffect(() => {
     if (!visible) return;
@@ -50,45 +52,16 @@ export function SheetModal({
     if (!visible) return;
 
     openAnimation.setValue(0);
-    Animated.timing(openAnimation, {
+    const opening = Animated.timing(openAnimation, {
       duration: appMotion.sheetModal.openDurationMs,
       toValue: 1,
       useNativeDriver: true,
-    }).start();
-  }, [openAnimation, visible]);
-
-  useEffect(() => {
-    if (!visible) return;
-
-    function animateSheetKeyboardLift(toValue: number) {
-      Animated.timing(keyboardSheetLiftAnimation, {
-        duration: appMotion.sheetModal.keyboardSheetLiftDurationMs,
-        toValue,
-        useNativeDriver: true,
-      }).start();
-    }
-
-    function showKeyboard(event: KeyboardEvent) {
-      const liftDistance = Math.min(
-        event.endCoordinates.height * appMotion.sheetModal.keyboardSheetLiftHeightRatio,
-        appMotion.sheetModal.keyboardSheetLiftMaxTranslateY,
-      );
-
-      animateSheetKeyboardLift(-liftDistance);
-    }
-
-    const showSubscription = Keyboard.addListener("keyboardDidShow", showKeyboard);
-    const frameSubscription = Keyboard.addListener("keyboardDidChangeFrame", showKeyboard);
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () =>
-      animateSheetKeyboardLift(0),
-    );
-
-    return () => {
-      showSubscription.remove();
-      frameSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, [keyboardSheetLiftAnimation, visible]);
+    });
+    opening.start(({ finished }) => {
+      if (finished) onOpened();
+    });
+    return () => opening.stop();
+  }, [onOpened, openAnimation, visible]);
 
   const backdropOpacity = openAnimation.interpolate({
     inputRange: [0, 1],
@@ -106,7 +79,7 @@ export function SheetModal({
         <Pressable style={styles.backdrop} onPress={onDismiss}>
           <Animated.View style={[styles.backdropScrim, { opacity: backdropOpacity }]} />
         </Pressable>
-        <SheetModalContext.Provider value>
+        <SheetInputFocusContext.Provider value={inputFocus}>
           <Animated.View
             style={[
               styles.sheet,
@@ -127,24 +100,10 @@ export function SheetModal({
             {children}
             {footer === undefined ? null : <View style={styles.footer}>{footer}</View>}
           </Animated.View>
-        </SheetModalContext.Provider>
+        </SheetInputFocusContext.Provider>
       </View>
     </Modal>
   );
-}
-
-type KeyboardLiftRegionProps = {
-  readonly children: ReactNode;
-};
-
-export function KeyboardLiftRegion({ children }: KeyboardLiftRegionProps) {
-  const isInsideSheetModal = useContext(SheetModalContext);
-
-  if (!isInsideSheetModal) {
-    throw new Error("KeyboardLiftRegion must be used inside SheetModal.");
-  }
-
-  return <View style={styles.keyboardLiftRegion}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -180,9 +139,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     justifyContent: "flex-end",
-  },
-  keyboardLiftRegion: {
-    gap: 12,
   },
   footer: {
     borderTopColor: modalTheme.sheet.footerBorder,
