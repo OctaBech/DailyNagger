@@ -2,6 +2,39 @@ import { describe, expect, it } from "@jest/globals";
 import { createScreenPositionHandoff } from "@/app-shell/screen-position-handoff/createScreenPositionHandoff";
 
 describe("screen position handoff", () => {
+  it("clears the source after handoff while preserving the copied negative position", () => {
+    const handoff = createScreenPositionHandoff();
+    handoff.editor.setNaggerTopY("nagger", 200);
+    handoff.editor.setScrollY(280);
+    const placement = handoff.readPlanPlacement("nagger", 500)!;
+
+    handoff.markPlanPlacementApplied(placement);
+
+    expect(placement.sourceTopY).toBe(-80);
+    expect(placement.nextScrollY).toBe(580);
+    expect(handoff.readPlanPlacement("nagger", 500)).toBeNull();
+    expect(handoff.debug.getSnapshot().editor).toEqual({
+      scrollY: 0,
+      naggerId: null,
+      naggerTopY: null,
+    });
+
+    handoff.editor.setNaggerTopY("nagger", 100);
+    handoff.editor.setScrollY(20);
+    expect(handoff.readPlanPlacement("nagger", 500)?.sourceTopY).toBe(80);
+  });
+
+  it("also clears plan measurements after the editor takes over", () => {
+    const handoff = createScreenPositionHandoff();
+    handoff.plan.setNaggerTopY("nagger", 100);
+    const placement = handoff.readEditorPlacement("nagger")!;
+
+    handoff.markEditorPlacementApplied(placement);
+
+    expect(placement.sourceTopY).toBe(100);
+    expect(handoff.readEditorPlacement("nagger")).toBeNull();
+    expect(handoff.debug.getSnapshot().plan.naggerTopY).toBeNull();
+  });
   it("uses the current relative position for editor placement and debug after scrolling", () => {
     const handoff = createScreenPositionHandoff();
     handoff.plan.setScrollY(50);

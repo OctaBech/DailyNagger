@@ -30,9 +30,11 @@ export function createScreenPositionHandoff(): ScreenPositionHandoff {
       return createPlanPlacement(naggerId, editorSnapshot.naggerTopY, contentTopY);
     },
     markEditorPlacementApplied: (placement) => {
+      plan.read({ reset: true });
       debug.setEditorPlacement(placement);
     },
     markPlanPlacementApplied: (placement) => {
+      editor.read({ reset: true });
       debug.setPlanPlacement(placement);
     },
     debug,
@@ -79,6 +81,10 @@ function createScreenPositionDebugStore(): InternalScreenPositionDebugStore {
       return () => listeners.delete(listener);
     },
     getSnapshot: () => snapshot,
+    resetScreen: (screen) => {
+      snapshot = { ...snapshot, [screen]: createDebugScreen() };
+      emit();
+    },
     setScrollY: (screen, scrollY) => {
       snapshot = {
         ...snapshot,
