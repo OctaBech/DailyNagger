@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1506" viewBox="0 0 1280 1506" role="img" aria-labelledby="diagram-title diagram-description">
+  <title id="diagram-title">DailyNagger: kausal observability fra brugerhandling til server med low coupling</title>
+  <desc id="diagram-description">Programforløbet står til venstre, observability-laget i midten og Sentry-funktionerne til højre. Middleware opretter registreringen ved en brugerhandling. Komponenter udsender events, som observability bearbejder og registrerer. Før indsættelse i den persistente kø pakkes trace-context og kausalitetsnøgle ned som ekstra data. Køen kan vente og overleve en genstart uden at holde et span aktivt. Ved afsendelsen genoptages registreringen via den gemte kontekst. Den fælles API-boundary medsender trace-context, kausalitetsnøgle og request-id. På C#-serveren knytter Sentrys integration serverens span til klienten, mens middleware føjer kausalitetsnøgle og request-id til Serilogs logkontekst. Forløbet kan undersøges i Sentrys waterfall og i Seq med den samme kausalitetsnøgle.</desc>
+  <defs>
+    <marker id="arrow-flow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L8 4.5 L1 8" fill="none" stroke="#82909f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arrow-event" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#087d78"/></marker>
+    <marker id="arrow-middleware" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#7450a6"/></marker>
+    <marker id="arrow-context" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#335f88"/></marker>
+    <style>
+      text { font-family: 'Segoe UI', Arial, sans-serif; fill: #203347; }
+      .heading { font-size: 36px; font-weight: 650; letter-spacing: -0.7px; }
+      .subtitle { font-size: 21px; fill: #526477; }
+      .column { font-size: 21px; font-weight: 650; letter-spacing: 1.1px; }
+      .column-note { font-size: 19px; fill: #526477; }
+      .node-title { font-size: 23px; font-weight: 600; }
+      .node-note { font-size: 19px; fill: #526477; }
+      .code { font-family: Consolas, 'Courier New', monospace; font-size: 21px; }
+      .code-note { font-family: Consolas, 'Courier New', monospace; font-size: 18px; fill: #526477; }
+      .arrow-label { font-size: 18px; font-weight: 500; text-anchor: middle; }
+      .legend { font-size: 18px; fill: #526477; }
+      .event-label { fill: #087d78; }
+      .middleware-label { fill: #7450a6; }
+      .context-label { fill: #335f88; }
+      .flow { fill: none; stroke: #82909f; stroke-width: 1.8; marker-end: url(#arrow-flow); }
+      .event { fill: none; stroke: #087d78; stroke-width: 2; stroke-dasharray: 6 5; marker-end: url(#arrow-event); }
+      .event-call { fill: none; stroke: #087d78; stroke-width: 2; marker-end: url(#arrow-event); }
+      .middleware { fill: none; stroke: #7450a6; stroke-width: 2; marker-end: url(#arrow-middleware); }
+      .context { fill: none; stroke: #335f88; stroke-width: 2; marker-end: url(#arrow-context); }
+      .program-node { fill: #ffffff; stroke: #c9d2dc; stroke-width: 1.5; }
+      .event-node { fill: #f1f9f7; stroke: #c9e2dc; stroke-width: 1.5; }
+      .middleware-node { fill: #f7f3fc; stroke: #ded2ed; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="1506" fill="#ffffff"/>
+
+  <!-- The same visual language is used at every reusable extension point. -->
+  <text x="52" y="62" class="heading">Fra brugerhandling til server</text>
+  <text x="52" y="96" class="subtitle">Events deler data. Middleware kobler registreringen til udførelsen.</text>
+  <path d="M54 128 H90" class="flow"/>
+  <text x="102" y="134" class="legend">Programflow</text>
+  <path d="M264 128 H300" class="event"/>
+  <text x="312" y="134" class="legend">Events</text>
+  <path d="M418 128 H454" class="middleware"/>
+  <text x="466" y="134" class="legend">Middleware · <tspan class="code-note">runWithMiddleware</tspan></text>
+  <path d="M830 128 H866" class="context"/>
+  <text x="878" y="134" class="legend">Gemt kontekst / HTTP</text>
+
+  <!-- Three responsibilities, not a single stack of Sentry-aware components. -->
+  <text x="52" y="175" class="column">PROGRAM</text>
+  <text x="52" y="200" class="column-note">Udfører arbejdet</text>
+  <path d="M52 213 H382" stroke="#c9d2dc" stroke-width="1.5"/>
+  <text x="500" y="175" class="column">OBSERVABILITY-LAG</text>
+  <text x="500" y="200" class="column-note">Lytter og orkestrerer</text>
+  <path d="M500 213 H812" stroke="#c9d2dc" stroke-width="1.5"/>
+  <text x="924" y="175" class="column">SENTRY-FUNKTIONER</text>
+  <text x="924" y="200" class="column-note">Registrerer og forbinder</text>
+  <path d="M924 213 H1236" stroke="#c9d2dc" stroke-width="1.5"/>
+
+  <!-- Program execution progresses independently of the horizontal observers. -->
+  <path d="M217 309 V337" class="flow"/>
+  <path d="M217 407 V437" class="flow"/>
+  <path d="M217 507 V537" class="flow"/>
+  <path d="M217 615 V668" class="flow"/>
+  <path d="M217 764 V813" class="flow"/>
+  <path d="M217 957 V999" class="flow"/>
+
+  <!-- Action boundary: one place to start a span and attach causality. -->
+  <rect x="52" y="231" width="330" height="78" rx="10" class="program-node"/>
+  <text x="72" y="263" class="node-title">Brugerhandling</text>
+  <text x="72" y="289" class="node-note">Action-boundary · kausalitetsnøgle</text>
+  <rect x="500" y="231" width="312" height="78" rx="10" class="middleware-node"/>
+  <text x="520" y="263" class="node-title">Start registrering</text>
+  <text x="520" y="289" class="node-note">Kausalitet knyttes til spanet</text>
+  <rect x="924" y="231" width="312" height="78" rx="10" class="middleware-node"/>
+  <text x="944" y="263" class="code">startSpan</text>
+  <text x="944" y="289" class="node-note">Span omkring action-funktionen</text>
+  <path d="M382 270 H500" class="middleware"/>
+  <text x="441" y="258" class="arrow-label middleware-label">middleware</text>
+  <path d="M812 270 H924" class="middleware"/>
+
+  <!-- Events from multiple components share the same processing mechanism. -->
+  <rect x="52" y="337" width="330" height="70" rx="10" class="program-node"/>
+  <text x="72" y="368" class="node-title">React-komponenter</text>
+  <text x="72" y="393" class="node-note">Lokale ændringer</text>
+  <rect x="52" y="437" width="330" height="70" rx="10" class="program-node"/>
+  <text x="72" y="468" class="node-title">Forsendelse forberedes</text>
+  <text x="72" y="493" class="node-note">Data bliver klar til køen</text>
+  <rect x="500" y="337" width="312" height="170" rx="10" class="event-node"/>
+  <text x="520" y="380" class="node-title">Bearbejd event-data</text>
+  <text x="520" y="415" class="node-note">Lyt til events</text>
+  <text x="520" y="445" class="node-note">Omsæt til key-value pairs</text>
+  <text x="520" y="478" class="node-note">Samme record-funktioner</text>
+  <rect x="924" y="377" width="312" height="90" rx="10" class="event-node"/>
+  <text x="944" y="413" class="node-title">record-funktioner</text>
+  <text x="944" y="442" class="node-note">Span-værdier · breadcrumbs</text>
+  <path d="M382 372 H500" class="event"/>
+  <text x="441" y="360" class="arrow-label event-label">events</text>
+  <path d="M382 472 H500" class="event"/>
+  <text x="441" y="460" class="arrow-label event-label">events</text>
+  <path d="M812 422 H924" class="event-call"/>
+
+  <!-- Trace-context is data returned to the queue, not a live span in storage. -->
+  <rect x="52" y="537" width="330" height="78" rx="10" class="program-node"/>
+  <text x="72" y="569" class="node-title">Indsættelse i kø</text>
+  <text x="72" y="595" class="node-note">Fælles middleware-spot</text>
+  <rect x="500" y="537" width="312" height="78" rx="10" class="middleware-node"/>
+  <text x="520" y="569" class="node-title">Pak kontekst ned</text>
+  <text x="520" y="595" class="node-note">Til køens ekstra data</text>
+  <rect x="924" y="537" width="312" height="78" rx="10" class="middleware-node"/>
+  <text x="944" y="569" class="code">packActiveSpan</text>
+  <text x="944" y="595" class="node-note" style="font-size:18px">Trace-context + kausalitetsnøgle</text>
+  <path d="M382 576 H500" class="middleware"/>
+  <text x="441" y="564" class="arrow-label middleware-label">middleware</text>
+  <path d="M812 576 H924" class="middleware"/>
+  <path d="M656 615 V640 H424 V716 H382" class="context"/>
+  <text x="540" y="633" class="arrow-label context-label">JSON-kontekst</text>
+
+  <!-- The pause deliberately interrupts the span's lifetime, not causality. -->
+  <rect x="52" y="668" width="330" height="96" rx="10" fill="#f4f6f9" stroke="#9caabb" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="72" y="701" class="node-title">Persistent kø</text>
+  <text x="72" y="728" class="node-note">Forsendelsesdata + kontekst</text>
+  <text x="72" y="752" class="node-note" style="font-size:18px">Venter · kan overleve genstart</text>
+  <rect x="500" y="668" width="736" height="96" rx="10" fill="#f4f6f9"/>
+  <text x="520" y="706" class="node-title">Ventetiden kræver ikke et aktivt span</text>
+  <text x="520" y="738" class="node-note">Køen gemmer data; registreringen genoptages ved afsendelsen.</text>
+
+  <!-- The same middleware and event mechanisms resume work after the pause. -->
+  <rect x="52" y="813" width="330" height="144" rx="10" class="program-node"/>
+  <text x="72" y="848" class="node-title">Afsendelse fra kø</text>
+  <text x="72" y="882" class="node-note">Batch udføres</text>
+  <text x="72" y="918" class="node-note">Status udsendes som events</text>
+  <rect x="500" y="813" width="312" height="66" rx="10" class="middleware-node"/>
+  <text x="520" y="840" class="node-title">Genoptag registrering</text>
+  <text x="520" y="865" class="node-note">Brug gemt kontekst</text>
+  <rect x="924" y="813" width="312" height="66" rx="10" class="middleware-node"/>
+  <text x="944" y="840" class="node-title" style="font-size:21px">Fortsæt trace, start span</text>
+  <text x="944" y="865" class="code-note">continueTrace · startSpan</text>
+  <path d="M382 846 H500" class="middleware"/>
+  <text x="441" y="834" class="arrow-label middleware-label">middleware</text>
+  <path d="M812 846 H924" class="middleware"/>
+  <rect x="500" y="891" width="312" height="66" rx="10" class="event-node"/>
+  <text x="520" y="918" class="node-title">Bearbejd event-data</text>
+  <text x="520" y="943" class="node-note">Status fra afsendelsen</text>
+  <rect x="924" y="891" width="312" height="66" rx="10" class="event-node"/>
+  <text x="944" y="918" class="node-title">record-funktioner</text>
+  <text x="944" y="943" class="node-note">Berig span og historik</text>
+  <path d="M382 924 H500" class="event"/>
+  <text x="441" y="912" class="arrow-label event-label">events</text>
+  <path d="M812 924 H924" class="event-call"/>
+
+  <!-- HTTP crosses the machine boundary directly, not through a subscriber. -->
+  <rect x="52" y="999" width="1184" height="108" rx="10" fill="#f0f5fb" stroke="#c8d8e8" stroke-width="1.5"/>
+  <text x="76" y="1035" class="node-title" style="font-size:25px">API-boundary</text>
+  <text x="76" y="1065" class="node-note">Headers + scrubbing</text>
+  <path d="M397 1021 V1085" stroke="#c8d8e8" stroke-width="1.5"/>
+  <text x="425" y="1035" class="node-title">HTTP-request til C#-serveren</text>
+  <text x="425" y="1065" class="node-note" style="font-size:21px">trace-context · kausalitetsnøgle · request-id</text>
+
+  <!-- Two complementary server outputs share causality, not one tool's storage. -->
+  <rect x="40" y="1148" width="1200" height="308" rx="14" fill="#f7f9fc"/>
+  <text x="64" y="1179" class="column" style="font-size:19px">C#-SERVER</text>
+  <path d="M644 1107 V1187" fill="none" stroke="#335f88" stroke-width="2"/>
+  <circle cx="644" cy="1187" r="4" fill="#335f88"/>
+  <path d="M644 1187 H339 V1212" class="context"/>
+  <path d="M644 1187 H941 V1212" class="context"/>
+  <rect x="64" y="1212" width="550" height="82" rx="10" class="program-node"/>
+  <rect x="64" y="1230" width="4" height="46" rx="2" fill="#7450a6"/>
+  <text x="88" y="1244" class="node-title">Sentry · ASP.NET Core</text>
+  <text x="88" y="1273" class="node-note">Trace-context knytter server-spanet til klienten</text>
+  <rect x="666" y="1212" width="550" height="82" rx="10" class="program-node"/>
+  <rect x="666" y="1230" width="4" height="46" rx="2" fill="#087d78"/>
+  <text x="690" y="1244" class="node-title">Serilog · requestens logkontekst</text>
+  <text x="690" y="1273" class="node-note">Kausalitetsnøgle + request-id føjes til logs</text>
+  <path d="M339 1294 V1328" class="middleware"/>
+  <path d="M941 1294 V1328" class="event-call"/>
+  <rect x="64" y="1328" width="550" height="100" rx="10" class="middleware-node"/>
+  <text x="88" y="1366" class="node-title" style="font-size:25px">Sentry waterfall</text>
+  <text x="88" y="1398" class="node-note">Klientens og serverens spans i samme forløb</text>
+  <rect x="666" y="1328" width="550" height="100" rx="10" class="event-node"/>
+  <text x="690" y="1366" class="node-title" style="font-size:25px">Seq · strukturerede logs</text>
+  <text x="690" y="1398" class="node-note">Find requestens detaljer og fejl</text>
+
+  <text x="640" y="1483" text-anchor="middle" class="node-note" style="font-size:20px">Trace-context forbinder spans. Kausalitetsnøglen forbinder Sentry og Seq.</text>
+</svg>
