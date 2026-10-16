@@ -24,9 +24,10 @@ export const NagList = ({ nags }: NagListProps) => {
   const scrollOffsetRef = useRef(0);
   const [positionRestored, setPositionRestored] = useState(false);
   const nagger = nags[0];
+  const naggerId = nagger?.id;
   const editorPlacement = useMemo(
-    () => (nagger === undefined ? null : screenPositionHandoff.readEditorPlacement(nagger.id)),
-    [nagger, screenPositionHandoff],
+    () => (naggerId === undefined ? null : screenPositionHandoff.readEditorPlacement(naggerId)),
+    [naggerId, screenPositionHandoff],
   );
   const positionSpacer = Components.FlatList.useFlatListPositionSpacer(
     editorPlacement?.sourceTopY ?? null,

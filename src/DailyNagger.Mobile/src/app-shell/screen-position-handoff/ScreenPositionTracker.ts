@@ -8,7 +8,7 @@ export type ScreenPositionWriter = {
 
 export type ScreenPositionTracker = {
   readonly writer: ScreenPositionWriter;
-  readonly read: () => ScreenPositionSnapshot;
+  readonly read: (options?: { readonly reset?: boolean }) => ScreenPositionSnapshot;
 };
 
 export type ScreenPositionSnapshot = {
@@ -35,15 +35,27 @@ export function createScreenPositionTracker(
     naggerTopY: null,
   };
 
-  const read = (): ScreenPositionSnapshot => ({
-    scrollY: state.scrollY,
-    naggerId: state.naggerId,
-    // Scrolling moves the card without triggering a new layout measurement.
-    naggerTopY:
-      state.naggerTopY === null
-        ? null
-        : state.naggerTopY - (state.scrollY - state.scrollYAtMeasurement),
-  });
+  const read: ScreenPositionTracker["read"] = (options) => {
+    const snapshot: ScreenPositionSnapshot = {
+      scrollY: state.scrollY,
+      naggerId: state.naggerId,
+      // Scrolling moves the card without triggering a new layout measurement.
+      naggerTopY:
+        state.naggerTopY === null
+          ? null
+          : state.naggerTopY - (state.scrollY - state.scrollYAtMeasurement),
+    };
+
+    if (options?.reset) {
+      state.scrollY = 0;
+      state.scrollYAtMeasurement = 0;
+      state.naggerId = null;
+      state.naggerTopY = null;
+      debug.resetScreen(screen);
+    }
+
+    return snapshot;
+  };
 
   return {
     writer: {

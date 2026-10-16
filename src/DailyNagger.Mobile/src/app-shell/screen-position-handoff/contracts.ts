@@ -46,6 +46,7 @@ export type ScreenPositionDebugStore = {
 };
 
 export type InternalScreenPositionDebugStore = ScreenPositionDebugStore & {
+  readonly resetScreen: (screen: ScreenName) => void;
   readonly setScrollY: (screen: ScreenName, scrollY: number) => void;
   readonly setNaggerTopY: (screen: ScreenName, naggerId: Guid, topY: number) => void;
   readonly setEditorPlacement: (placement: EditorPlacement) => void;
