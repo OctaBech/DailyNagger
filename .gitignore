@@ -12,6 +12,9 @@ dist/
 
 # Generated artifacts
 artifacts/
+output/
+tmp/
+*.pdf
 *.tar.gz
 caddy-state/
 /backups/
