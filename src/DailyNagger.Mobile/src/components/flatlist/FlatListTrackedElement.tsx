@@ -3,7 +3,7 @@ import { View } from "react-native";
 
 type FlatListTrackedElementProps = {
   readonly children: ReactNode;
-  readonly onMeasured?: (topY: number) => void;
+  readonly onMeasured?: (topY: number, height: number) => void;
 };
 
 export function FlatListTrackedElement({ children, onMeasured }: FlatListTrackedElementProps) {
@@ -12,8 +12,8 @@ export function FlatListTrackedElement({ children, onMeasured }: FlatListTracked
   const measure = useCallback(() => {
     if (onMeasured === undefined) return;
 
-    elementRef.current?.measureInWindow((_x, topY) => {
-      onMeasured(topY);
+    elementRef.current?.measureInWindow((_x, topY, _width, height) => {
+      onMeasured(topY, height);
     });
   }, [onMeasured]);
 
