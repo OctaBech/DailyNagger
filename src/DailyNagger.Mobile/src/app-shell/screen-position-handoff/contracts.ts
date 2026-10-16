@@ -7,7 +7,7 @@ export type ScreenPositionHandoff = {
   readonly plan: ScreenPositionWriter;
   readonly editor: ScreenPositionWriter;
   readonly readEditorPlacement: (naggerId: Guid) => EditorPlacement | null;
-  readonly readPlanPlacement: (naggerId: Guid, currentTopY: number) => PlanPlacement | null;
+  readonly readPlanPlacement: (naggerId: Guid, contentTopY: number) => PlanPlacement | null;
   readonly markEditorPlacementApplied: (placement: EditorPlacement) => void;
   readonly markPlanPlacementApplied: (placement: PlanPlacement) => void;
   readonly debug: ScreenPositionDebugStore;
@@ -24,7 +24,6 @@ export type PlanPlacement = {
   readonly naggerId: Guid;
   readonly sourceTopY: number;
   readonly destinationTopY: number;
-  readonly currentScrollY: number;
   readonly nextScrollY: number;
 };
 

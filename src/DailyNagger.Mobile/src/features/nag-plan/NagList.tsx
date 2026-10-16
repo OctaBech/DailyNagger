@@ -1,6 +1,6 @@
 import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { useScreenPositionHandoff } from "@/app-shell";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPlanPlacement, useScreenPositionHandoff } from "@/app-shell";
 import type { Nagger } from "@/models";
 import * as Components from "@/components";
 import * as Input from "@/components/input";
@@ -20,13 +20,26 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
   const screenPositionHandoff = useScreenPositionHandoff();
   const listRef = useRef<FlatList<NagPlanListItem>>(null);
   const hasRestoredScrollOffsetRef = useRef(false);
-  const appliedPlanPlacementKeyRef = useRef<string | null>(null);
+  const actualScrollOffsetRef = useRef(0);
+  const [cardContentTopY, setCardContentTopY] = useState<number | null>(null);
+  const [contentHeight, setContentHeight] = useState(0);
   const { height: screenHeight } = useWindowDimensions();
   const bottomComfortSpace = screenHeight;
   const listItems = useMemo(() => buildNagPlanListItems(nags), [nags]);
   const selectedNaggerId = useMemo(
     () => nags.find((nagger) => nagger.clientProps.isSelected)?.id ?? null,
     [nags],
+  );
+  // Capture the editor's target once, before the new list starts measuring.
+  const editorPlacement = useMemo(
+    () =>
+      selectedNaggerId === null
+        ? null
+        : screenPositionHandoff.readPlanPlacement(selectedNaggerId, 0),
+    [screenPositionHandoff, selectedNaggerId],
+  );
+  const selectedItemIndex = listItems.findIndex(
+    (item) => item.kind === "nagger" && item.nagger.id === selectedNaggerId,
   );
   const { keyboardInset, rememberScrollOffset: rememberKeyboardScrollOffset } =
     Input.useKeyboardFocusedInputScroller({
@@ -38,6 +51,7 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
   useEffect(() => {
     if (hasRestoredScrollOffsetRef.current) return;
     if (listItems.length === 0) return;
+    if (editorPlacement !== null) return;
 
     hasRestoredScrollOffsetRef.current = true;
     const animationFrame = requestAnimationFrame(() => {
@@ -48,37 +62,40 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
     });
 
     return () => cancelAnimationFrame(animationFrame);
-  }, [getScrollOffset, listItems.length]);
+  }, [editorPlacement, getScrollOffset, listItems.length]);
 
-  const applyPlanPlacement = useCallback(
-    (naggerId: Nagger["id"], topY: number) => {
-      const placement = screenPositionHandoff.readPlanPlacement(naggerId, topY);
-      if (placement === null) return;
+  useEffect(() => {
+    if (hasRestoredScrollOffsetRef.current) return;
+    if (editorPlacement === null || cardContentTopY === null || contentHeight === 0) return;
 
-      const placementKey = `${placement.naggerId}:${placement.sourceTopY.toFixed(1)}`;
-      if (appliedPlanPlacementKeyRef.current === placementKey) return;
-
-      appliedPlanPlacementKeyRef.current = placementKey;
-      setScrollOffset(placement.nextScrollY);
-      screenPositionHandoff.plan.setScrollY(placement.nextScrollY);
-      screenPositionHandoff.markPlanPlacementApplied(placement);
-      listRef.current?.scrollToOffset({ animated: false, offset: placement.nextScrollY });
-    },
-    [screenPositionHandoff, setScrollOffset],
-  );
+    const placement = createPlanPlacement(
+      editorPlacement.naggerId,
+      editorPlacement.sourceTopY,
+      cardContentTopY,
+    );
+    hasRestoredScrollOffsetRef.current = true;
+    setScrollOffset(placement.nextScrollY);
+    screenPositionHandoff.plan.setScrollY(placement.nextScrollY);
+    screenPositionHandoff.markPlanPlacementApplied(placement);
+    listRef.current?.scrollToOffset({ animated: false, offset: placement.nextScrollY });
+  }, [cardContentTopY, contentHeight, editorPlacement, screenPositionHandoff, setScrollOffset]);
   const rememberScrollOffset = useCallback(
     (event: { nativeEvent: { contentOffset: { y: number } } }) => {
       rememberKeyboardScrollOffset(event);
+      actualScrollOffsetRef.current = event.nativeEvent.contentOffset.y;
       screenPositionHandoff.plan.setScrollY(event.nativeEvent.contentOffset.y);
     },
     [rememberKeyboardScrollOffset, screenPositionHandoff.plan],
   );
   const measureSelectedNagger = useCallback(
     (nagger: Nagger, topY: number) => {
+      screenPositionHandoff.plan.setScrollY(actualScrollOffsetRef.current);
       screenPositionHandoff.plan.setNaggerTopY(nagger.id, topY);
-      applyPlanPlacement(nagger.id, topY);
+      if (!hasRestoredScrollOffsetRef.current) {
+        setCardContentTopY(topY + actualScrollOffsetRef.current);
+      }
     },
-    [applyPlanPlacement, screenPositionHandoff.plan],
+    [screenPositionHandoff.plan],
   );
 
   return (
@@ -91,6 +108,8 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
           { paddingBottom: keyboardInset, paddingTop: topPadding },
         ]}
         data={listItems}
+        onContentSizeChange={(_width, height) => setContentHeight(height)}
+        initialNumToRender={editorPlacement === null ? 10 : Math.max(10, selectedItemIndex + 1)}
         ListFooterComponent={<View style={{ height: bottomComfortSpace }} />}
         renderItem={({ item }) => {
           if (item.kind === "time-section") {

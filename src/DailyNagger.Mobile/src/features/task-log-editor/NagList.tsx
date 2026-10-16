@@ -1,5 +1,11 @@
-import { FlatList, StyleSheet, View } from "react-native";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  FlatList,
+  StyleSheet,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScreenPositionHandoff } from "@/app-shell";
 import type { Nagger } from "@/models";
 import * as Components from "@/components";
@@ -16,6 +22,7 @@ export const NagList = ({ nags }: NagListProps) => {
   const listRef = useRef<FlatList<Nagger>>(null);
   const hasRestoredInitialPositionRef = useRef(false);
   const scrollOffsetRef = useRef(0);
+  const [positionRestored, setPositionRestored] = useState(false);
   const nagger = nags[0];
   const editorPlacement = useMemo(
     () => (nagger === undefined ? null : screenPositionHandoff.readEditorPlacement(nagger.id)),
@@ -31,31 +38,44 @@ export const NagList = ({ nags }: NagListProps) => {
       scrollOffsetRef.current = offset;
     },
   });
+  const {
+    viewportRef,
+    onViewportLayout,
+    onMeasured: measureVisibility,
+    onContentSizeChange,
+    onScroll: rememberVisibilityScroll,
+    onScrollBeginDrag,
+    onScrollEndDrag,
+    onMomentumScrollBegin,
+    onMomentumScrollEnd,
+  } = Components.FlatList.useKeepTrackedElementVisible({
+    listRef,
+    enabled: positionRestored && keyboardInset === 0,
+  });
   useEffect(() => {
     hasRestoredInitialPositionRef.current = false;
   }, [nagger?.id]);
 
   const rememberEditorScrollOffset = useCallback(
-    (event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       rememberScrollOffset(event);
       screenPositionHandoff.editor.setScrollY(event.nativeEvent.contentOffset.y);
+      rememberVisibilityScroll(event);
     },
-    [rememberScrollOffset, screenPositionHandoff.editor],
+    [rememberScrollOffset, screenPositionHandoff.editor, rememberVisibilityScroll],
   );
   const measureNagger = useCallback(
-    (nagger: Nagger, topY: number) => {
+    (nagger: Nagger, topY: number, height: number) => {
       screenPositionHandoff.editor.setNaggerTopY(nagger.id, topY);
+      measureVisibility(topY, height);
     },
-    [screenPositionHandoff.editor],
+    [screenPositionHandoff.editor, measureVisibility],
   );
   useEffect(() => {
-    if (editorPlacement === null) return;
     if (hasRestoredInitialPositionRef.current) return;
 
     hasRestoredInitialPositionRef.current = true;
-    screenPositionHandoff.markEditorPlacementApplied(editorPlacement);
-
-    if (positionSpacer.initialScrollY <= 0) return;
+    if (editorPlacement !== null) screenPositionHandoff.markEditorPlacementApplied(editorPlacement);
 
     scrollOffsetRef.current = positionSpacer.initialScrollY;
     screenPositionHandoff.editor.setScrollY(positionSpacer.initialScrollY);
@@ -65,13 +85,14 @@ export const NagList = ({ nags }: NagListProps) => {
         animated: false,
         offset: positionSpacer.initialScrollY,
       });
+      setPositionRestored(true);
     });
 
     return () => cancelAnimationFrame(animationFrame);
   }, [editorPlacement, positionSpacer.initialScrollY, screenPositionHandoff]);
 
   return (
-    <View style={styles.container}>
+    <View ref={viewportRef} onLayout={onViewportLayout} style={styles.container}>
       <FlatList
         ref={listRef}
         style={[styles.list]}
@@ -82,6 +103,7 @@ export const NagList = ({ nags }: NagListProps) => {
           },
         ]}
         data={nags}
+        onContentSizeChange={onContentSizeChange}
         ListHeaderComponent={
           positionSpacer.headerHeight <= 0 ? null : (
             <View style={{ height: positionSpacer.headerHeight }} />
@@ -90,7 +112,7 @@ export const NagList = ({ nags }: NagListProps) => {
         ListFooterComponent={<View style={{ height: positionSpacer.footerHeight }} />}
         renderItem={({ item }) => (
           <Components.FlatList.FlatListTrackedElement
-            onMeasured={(topY) => measureNagger(item, topY)}
+            onMeasured={(topY, height) => measureNagger(item, topY, height)}
           >
             <NagCard nagger={item} />
           </Components.FlatList.FlatListTrackedElement>
@@ -98,6 +120,10 @@ export const NagList = ({ nags }: NagListProps) => {
         keyExtractor={(nagger: Nagger) => nagger.id}
         ItemSeparatorComponent={() => <View style={styles.listGap} />}
         onScroll={rememberEditorScrollOffset}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEndDrag}
+        onMomentumScrollBegin={onMomentumScrollBegin}
+        onMomentumScrollEnd={onMomentumScrollEnd}
         scrollEventThrottle={16}
       />
     </View>

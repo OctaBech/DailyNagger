@@ -23,17 +23,11 @@ export function createScreenPositionHandoff(): ScreenPositionHandoff {
 
       return createEditorPlacement(naggerId, planSnapshot.naggerTopY);
     },
-    readPlanPlacement: (naggerId, currentTopY) => {
+    readPlanPlacement: (naggerId, contentTopY) => {
       const editorSnapshot = editor.read();
-      const planSnapshot = plan.read();
       if (editorSnapshot.naggerId !== naggerId || editorSnapshot.naggerTopY === null) return null;
 
-      return createPlanPlacement(
-        naggerId,
-        editorSnapshot.naggerTopY,
-        currentTopY,
-        planSnapshot.scrollY,
-      );
+      return createPlanPlacement(naggerId, editorSnapshot.naggerTopY, contentTopY);
     },
     markEditorPlacementApplied: (placement) => {
       debug.setEditorPlacement(placement);
@@ -54,18 +48,16 @@ function createEditorPlacement(naggerId: Guid, sourceTopY: number): EditorPlacem
   };
 }
 
-function createPlanPlacement(
+export function createPlanPlacement(
   naggerId: Guid,
   sourceTopY: number,
   destinationTopY: number,
-  currentScrollY: number,
 ): PlanPlacement {
   return {
     naggerId,
     sourceTopY,
     destinationTopY,
-    currentScrollY,
-    nextScrollY: currentScrollY + destinationTopY - sourceTopY,
+    nextScrollY: destinationTopY - sourceTopY,
   };
 }
 

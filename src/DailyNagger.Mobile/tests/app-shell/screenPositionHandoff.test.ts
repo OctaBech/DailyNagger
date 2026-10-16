@@ -37,7 +37,7 @@ describe("screen position handoff", () => {
     handoff.editor.setScrollY(150);
     handoff.plan.setScrollY(500);
 
-    expect(handoff.readPlanPlacement("nagger", 240)).toMatchObject({
+    expect(handoff.readPlanPlacement("nagger", 740)).toMatchObject({
       sourceTopY: 140,
       nextScrollY: 600,
     });
@@ -50,5 +50,26 @@ describe("screen position handoff", () => {
 
     expect(handoff.readEditorPlacement("nagger")).toBeNull();
     expect(handoff.debug.getSnapshot().plan.naggerTopY).toBeNull();
+  });
+
+  it("returns to a negative editor position without using the old plan scroll", () => {
+    const handoff = createScreenPositionHandoff();
+    handoff.editor.setNaggerTopY("nagger", 200);
+    handoff.editor.setScrollY(280);
+    handoff.plan.setScrollY(900);
+
+    expect(handoff.readPlanPlacement("nagger", 500)).toMatchObject({
+      sourceTopY: -80,
+      destinationTopY: 500,
+      nextScrollY: 580,
+    });
+  });
+
+  it("returns to a positive editor position without using the old plan scroll", () => {
+    const handoff = createScreenPositionHandoff();
+    handoff.editor.setNaggerTopY("nagger", 100);
+    handoff.plan.setScrollY(900);
+
+    expect(handoff.readPlanPlacement("nagger", 500)?.nextScrollY).toBe(400);
   });
 });
