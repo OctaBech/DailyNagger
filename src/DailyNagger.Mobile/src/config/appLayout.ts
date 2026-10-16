@@ -10,6 +10,7 @@ export const appLayout = {
     bottom: 0,
   },
   sheetModal: {
+    keyboardInputGap: 12,
     minBottomPadding: 56,
   },
   moodBar: {

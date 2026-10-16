@@ -6,7 +6,8 @@ import { SheetButton } from "./SheetButton";
 import { SheetFooterActions, SheetFooterSpacer } from "./SheetFooterActions";
 import { type SheetNarrowBeltOption } from "./SheetNarrowBelt";
 import { SheetNarrowPicker } from "./SheetNarrowPicker";
-import { KeyboardLiftRegion, SheetModal } from "./SheetModal";
+import { SheetModal } from "./SheetModal";
+import { SheetSection } from "./SheetSection";
 import { SheetTextArea } from "./SheetTextArea";
 
 export type TaggingModalProps = {
@@ -108,7 +109,7 @@ export function TaggingModal({ visible, tagType, tagName, onDismiss, onSave }: T
         </SheetFooterActions>
       }
     >
-      <KeyboardLiftRegion>
+      <SheetSection>
         <SheetNarrowPicker
           inputRef={tagNameInputRef}
           edgeToEdge
@@ -132,7 +133,7 @@ export function TaggingModal({ visible, tagType, tagName, onDismiss, onSave }: T
           placeholder="Description"
           maxLength={appLimits.tags.descriptionMaxLength}
         />
-      </KeyboardLiftRegion>
+      </SheetSection>
     </SheetModal>
   );
 }

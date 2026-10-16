@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { StyleSheet, TextInput, type TextInputProps } from "react-native";
 import { modalTheme } from "./theme";
+import { useSheetInputFocus } from "./useSheetInputFocus";
 
 type SheetTextAreaProps = Omit<TextInputProps, "multiline" | "style">;
 
@@ -8,14 +9,15 @@ export const SheetTextArea = forwardRef<TextInput, SheetTextAreaProps>(function 
   { placeholderTextColor, ...textInputProps },
   ref,
 ) {
+  const inputFocus = useSheetInputFocus(ref, textInputProps);
   return (
     <TextInput
-      ref={ref}
       multiline
       placeholderTextColor={placeholderTextColor ?? modalTheme.control.placeholderText}
       style={styles.input}
       textAlignVertical="top"
       {...textInputProps}
+      {...inputFocus}
     />
   );
 });

@@ -31,6 +31,12 @@ explain how schedule rules are calculated.
 
 ## Keyboard Work
 
-`SheetSection` is the place where we can later give keyboard-aware regions a
-clear name. Keyboard lift is not fully solved yet, so avoid adding one-off
-keyboard hacks inside individual modals.
+`SheetModal` owns the animated keyboard lift. `SheetSearchInput` and
+`SheetTextArea` report focus and layout through the shared input-focus context.
+The sheet moves only as far as necessary to keep the focused field above the
+keyboard with the configured gap. Its existing lift is removed from each
+measurement before calculating the new target, so lift does not accumulate.
+
+Use `SheetSection` for grouping and spacing, not keyboard behavior. Avoid
+modal-local keyboard adjustments. Animation timing and native keyboard geometry
+still require visual checks on a physical device.

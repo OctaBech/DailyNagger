@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import { Pressable, StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
 import { modalTheme } from "./theme";
+import { useSheetInputFocus } from "./useSheetInputFocus";
 
 type SheetSearchInputProps = Omit<TextInputProps, "style"> & {
   readonly hasExactMatch?: boolean;
@@ -12,16 +13,17 @@ export const SheetSearchInput = forwardRef<TextInput, SheetSearchInputProps>(
     ref,
   ) {
     const hasValue = `${value ?? ""}`.length > 0;
+    const inputFocus = useSheetInputFocus(ref, textInputProps);
 
     return (
       <View style={[styles.container, hasExactMatch && styles.exactMatch]}>
         <TextInput
-          ref={ref}
           value={value}
           onChangeText={onChangeText}
           placeholderTextColor={modalTheme.control.placeholderText}
           style={styles.input}
           {...textInputProps}
+          {...inputFocus}
         />
         {hasValue && onChangeText !== undefined && (
           <Pressable

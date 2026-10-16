@@ -20,7 +20,7 @@ export { SheetText } from "./SheetText";
 export { SheetTextArea } from "./SheetTextArea";
 export { SheetToggleGroup } from "./SheetToggleGroup";
 export { SheetWheel } from "./SheetWheel";
-export { KeyboardLiftRegion, SheetModal } from "./SheetModal";
+export { SheetModal } from "./SheetModal";
 export { TaggingModal, type TaggingModalProps } from "./TaggingModal";
 export { TaskStepNameModal, type TaskStepNameModalProps } from "./TaskStepNameModal";
 export {
