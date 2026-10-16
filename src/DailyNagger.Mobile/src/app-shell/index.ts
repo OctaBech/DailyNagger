@@ -8,6 +8,7 @@ export {
 } from "./modal-keyboard-boundary";
 export { PostOfficeStrip } from "./post-office-strip";
 export { ScreenPositionHandoffProvider, useScreenPositionHandoff } from "./screen-position-handoff";
+export { createPlanPlacement } from "./screen-position-handoff";
 export { SpeedDial } from "./speed-dial";
 export {
   appErrorBoundaryEvents,
