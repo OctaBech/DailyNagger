@@ -19,7 +19,7 @@ import {
 } from "./screen-position-handoff";
 import { appRoutes } from "@/navigation";
 import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
-import { appLayout } from "@/config";
+import { appLayout, debugConfig } from "@/config";
 import { SendingPromptOverlay } from "./sending-prompt";
 
 type AppShellProps = {
@@ -94,7 +94,7 @@ export const AppShell = ({ children }: AppShellProps) => {
           ) : null}
           <SendingPromptOverlay prompt={appShellState.pendingSendingPrompt} />
           <SpeedDial menu={speedDialMenu} onItemSelected={handleSpeedDialItemSelected} />
-          <ScreenPositionHandoffDebug />
+          {debugConfig.showScreenPosition && <ScreenPositionHandoffDebug />}
           {appShellState.globalOverlaysAreEnabled ? (
             <AssistantBubble
               bottomOffset={assistantBubbleBottomOffset}
