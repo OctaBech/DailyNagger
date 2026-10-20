@@ -37,10 +37,6 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
                 .HasColumnName("active_log_due_on")
                 .HasColumnType("date");
 
-            entity.Property(nag => nag.ExpiresOn)
-                .HasColumnName("expires_on")
-                .HasColumnType("date");
-
             entity.Property(nag => nag.TargetTime)
                 .HasColumnName("target_time")
                 .HasColumnType("time");

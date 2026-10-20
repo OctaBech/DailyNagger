@@ -31,7 +31,6 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
                     when task_log.closed_on is null then nag.active_log_due_on
                     else cast(task_log.closed_on as date)
                 end,
-                nag.expires_on,
                 nag.target_time,
                 nag.is_deactivated,
                 nag.pinned_by,
@@ -96,35 +95,32 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
                         ActiveLogDueOn = reader.IsDBNull(3)
                             ? null
                             : DateOnly.FromDateTime(reader.GetDateTime(3)),
-                        ExpiresOn = reader.IsDBNull(4)
+                        TargetTime = reader.IsDBNull(4)
                             ? null
-                            : DateOnly.FromDateTime(reader.GetDateTime(4)),
-                        TargetTime = reader.IsDBNull(5)
-                            ? null
-                            : TimeOnly.FromTimeSpan(reader.GetTimeSpan(5)),
-                        IsDeactivated = reader.GetBoolean(6),
-                        PinnedBy = Enum.Parse<NaggerPinnedBy>(reader.GetString(7)),
-                        UpdatedAt = reader.GetDateTimeOffset(8),
-                        UpdatedByClientId = reader.IsDBNull(9) ? null : reader.GetString(9),
-                        UpdatedByDeviceName = reader.IsDBNull(10) ? null : reader.GetString(10),
-                        UpdatedByDeviceModel = reader.IsDBNull(11) ? null : reader.GetString(11),
-                        Version = reader.GetInt32(12)
+                            : TimeOnly.FromTimeSpan(reader.GetTimeSpan(4)),
+                        IsDeactivated = reader.GetBoolean(5),
+                        PinnedBy = Enum.Parse<NaggerPinnedBy>(reader.GetString(6)),
+                        UpdatedAt = reader.GetDateTimeOffset(7),
+                        UpdatedByClientId = reader.IsDBNull(8) ? null : reader.GetString(8),
+                        UpdatedByDeviceName = reader.IsDBNull(9) ? null : reader.GetString(9),
+                        UpdatedByDeviceModel = reader.IsDBNull(10) ? null : reader.GetString(10),
+                        Version = reader.GetInt32(11)
                     },
                     TaskLog = new TaskLog
                     {
-                        Id = reader.GetGuid(13),
-                        UserId = reader.GetGuid(14),
+                        Id = reader.GetGuid(12),
+                        UserId = reader.GetGuid(13),
                         NagId = reader.GetGuid(0),
-                        CopiedFromTaskLogId = reader.IsDBNull(15) ? null : reader.GetGuid(15),
-                        ClosedOn = reader.IsDBNull(16) ? null : reader.GetDateTimeOffset(16),
-                        Tag = reader.IsDBNull(17) ? null : reader.GetString(17),
-                        UpdatedAt = reader.GetDateTimeOffset(18),
-                        UpdatedByClientId = reader.IsDBNull(19) ? null : reader.GetString(19),
-                        UpdatedByDeviceName = reader.IsDBNull(20) ? null : reader.GetString(20),
-                        UpdatedByDeviceModel = reader.IsDBNull(21) ? null : reader.GetString(21),
-                        Version = reader.GetInt32(22),
-                        DescendantTaskItemCount = reader.GetInt32(23),
-                        DoneDescendantTaskItemCount = reader.GetInt32(24)
+                        CopiedFromTaskLogId = reader.IsDBNull(14) ? null : reader.GetGuid(14),
+                        ClosedOn = reader.IsDBNull(15) ? null : reader.GetDateTimeOffset(15),
+                        Tag = reader.IsDBNull(16) ? null : reader.GetString(16),
+                        UpdatedAt = reader.GetDateTimeOffset(17),
+                        UpdatedByClientId = reader.IsDBNull(18) ? null : reader.GetString(18),
+                        UpdatedByDeviceName = reader.IsDBNull(19) ? null : reader.GetString(19),
+                        UpdatedByDeviceModel = reader.IsDBNull(20) ? null : reader.GetString(20),
+                        Version = reader.GetInt32(21),
+                        DescendantTaskItemCount = reader.GetInt32(22),
+                        DoneDescendantTaskItemCount = reader.GetInt32(23)
                     }
                 });
             }
@@ -203,7 +199,6 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
                 nag.user_id,
                 nag.title,
                 nag.active_log_due_on,
-                nag.expires_on,
                 nag.target_time,
                 nag.is_deactivated,
                 nag.pinned_by,
@@ -234,19 +229,16 @@ public sealed class DataDbRead(GetDataDbConnection getDataDbConnection)
                     ActiveLogDueOn = reader.IsDBNull(3)
                         ? null
                         : DateOnly.FromDateTime(reader.GetDateTime(3)),
-                    ExpiresOn = reader.IsDBNull(4)
+                    TargetTime = reader.IsDBNull(4)
                         ? null
-                        : DateOnly.FromDateTime(reader.GetDateTime(4)),
-                    TargetTime = reader.IsDBNull(5)
-                        ? null
-                        : TimeOnly.FromTimeSpan(reader.GetTimeSpan(5)),
-                    IsDeactivated = reader.GetBoolean(6),
-                    PinnedBy = Enum.Parse<NaggerPinnedBy>(reader.GetString(7)),
-                    UpdatedAt = reader.GetDateTimeOffset(8),
-                    UpdatedByClientId = reader.IsDBNull(9) ? null : reader.GetString(9),
-                    UpdatedByDeviceName = reader.IsDBNull(10) ? null : reader.GetString(10),
-                    UpdatedByDeviceModel = reader.IsDBNull(11) ? null : reader.GetString(11),
-                    Version = reader.GetInt32(12)
+                        : TimeOnly.FromTimeSpan(reader.GetTimeSpan(4)),
+                    IsDeactivated = reader.GetBoolean(5),
+                    PinnedBy = Enum.Parse<NaggerPinnedBy>(reader.GetString(6)),
+                    UpdatedAt = reader.GetDateTimeOffset(7),
+                    UpdatedByClientId = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    UpdatedByDeviceName = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    UpdatedByDeviceModel = reader.IsDBNull(10) ? null : reader.GetString(10),
+                    Version = reader.GetInt32(11)
                 });
             }
         }

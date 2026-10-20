@@ -329,7 +329,6 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                         id,
                         title,
                         active_log_due_on,
-                        expires_on,
                         target_time,
                         is_deactivated,
                         pinned_by,
@@ -338,7 +337,6 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
                     values (
                         newid(),
                         N'Missing user',
-                        null,
                         null,
                         null,
                         0,

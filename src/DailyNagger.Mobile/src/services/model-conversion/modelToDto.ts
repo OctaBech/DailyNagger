@@ -43,7 +43,6 @@ export function naggerToDto(nagger: Nagger): NaggerDto {
     id: nagger.id,
     title: nagger.title,
     activeLogDueOn: nagger.activeLogDueOn,
-    expiresOn: nagger.expiresOn,
     targetTime: nagger.targetTime,
     isDeactivated: nagger.isDeactivated,
     pinnedBy: nagger.pinnedBy,

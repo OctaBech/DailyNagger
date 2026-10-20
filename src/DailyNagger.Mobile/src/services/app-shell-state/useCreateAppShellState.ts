@@ -178,7 +178,7 @@ function addMoodBarSpeedDialAction(
         iconValue: selectedMoodEmoji ?? userMoodConfig.unknownMoodEmoji,
         label: "Mood",
         showLabel: true,
-        row: 4,
+        row: 5,
       },
     ],
   };

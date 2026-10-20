@@ -4,7 +4,7 @@ import { createPlanPlacement, useScreenPositionHandoff } from "@/app-shell";
 import type { Nagger } from "@/models";
 import * as Components from "@/components";
 import * as Input from "@/components/input";
-import { TimeSectionHeader } from "@/components/primitives";
+import { DateSectionHeader, TimeSectionHeader } from "@/components/primitives";
 import { NagCard } from "./cards";
 import { nagPlanTheme } from "./theme";
 import { buildNagPlanListItems, type NagPlanListItem } from "./buildNagPlanListItems";
@@ -112,6 +112,9 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
         initialNumToRender={editorPlacement === null ? 10 : Math.max(10, selectedItemIndex + 1)}
         ListFooterComponent={<View style={{ height: bottomComfortSpace }} />}
         renderItem={({ item }) => {
+          if (item.kind === "date-section") {
+            return <DateSectionHeader title={item.title} />;
+          }
           if (item.kind === "time-section") {
             return <TimeSectionHeader title={item.title} rangeLabel={item.rangeLabel} />;
           }

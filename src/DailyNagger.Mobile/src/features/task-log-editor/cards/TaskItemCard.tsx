@@ -59,9 +59,6 @@ const TaskItemCardComponent = ({
           checkmarkShape={isOnceTaskItem ? "circle" : "square"}
           onFocus={() => taskItemActions.setFocused({ taskItem })}
           onNameFocus={() => taskItemActions.setFocused({ taskItem })}
-          onDonePress={
-            canDeleteOnce ? () => taskItemActions.setFocused({ taskItem }) : toggleExpanded
-          }
           onDeletePress={canDeleteOnce ? () => taskItemActions.deleteOnce({ taskItem }) : undefined}
           onNameCommit={(newName) => taskItemActions.setName({ taskItem, name: newName })}
           onExpandPress={

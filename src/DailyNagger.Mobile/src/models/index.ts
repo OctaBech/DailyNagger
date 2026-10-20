@@ -47,9 +47,5 @@ export type {
 export { treeSelection } from "./treeSelection";
 export type { SelectedDeleteContext, SelectedMoveContext } from "./treeSelection";
 export { normalizeTaskEntryValue } from "./taskEntryValue";
-export {
-  getTargetMinuteSortValue,
-  orderNaggersByDate,
-  orderNaggersForPlanList,
-} from "./naggerOrdering";
+export { orderNaggersByDate, orderNaggersForPlanList } from "./naggerOrdering";
 export type { PendingSendingPrompt } from "./sendingPrompt";

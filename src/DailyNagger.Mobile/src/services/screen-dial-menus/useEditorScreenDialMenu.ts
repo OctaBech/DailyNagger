@@ -141,9 +141,10 @@ export function useCreateEditorScreenDialMenu({
         {
           key: "editor.undo",
           iconType: "vector" as const,
-          iconValue: "content-undo",
+          iconValue: "undo",
           label: "Undo",
           row: 4,
+          keepOpenAfterPress: true,
           isDisabled: !canUndo,
           onSelect: () => {
             undoEdit({});
@@ -152,9 +153,10 @@ export function useCreateEditorScreenDialMenu({
         {
           key: "editor.redo",
           iconType: "vector" as const,
-          iconValue: "content-redo",
+          iconValue: "redo",
           label: "Redo",
           row: 4,
+          keepOpenAfterPress: true,
           isDisabled: !canRedo,
           onSelect: () => {
             redoEdit({});

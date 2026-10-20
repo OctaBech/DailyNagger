@@ -14,7 +14,6 @@ function getNextDueOn(nagger: Nagger, cultureSettings: CultureSettings): string 
     nagger.scheduleRules,
     cultureSettings.getTodayLocalIsoDate(),
     cultureSettings,
-    nagger.expiresOn,
   );
 }
 
@@ -22,10 +21,8 @@ function getNextDueOnFromDate(
   scheduleRules: readonly ScheduleRule[],
   fromLocalIsoDate: string,
   cultureSettings: CultureSettings,
-  expiresOn: string | null = null,
 ): string | null {
   if (scheduleRules.length === 0) return null;
-  if (expiresOn !== null && fromLocalIsoDate > expiresOn) return null;
 
   const fromDate = cultureSettings.parseLocalIsoDate(fromLocalIsoDate);
 
@@ -35,7 +32,6 @@ function getNextDueOnFromDate(
     .sort()[0];
 
   if (nextDueOn === undefined) return null;
-  if (expiresOn !== null && nextDueOn > expiresOn) return null;
 
   return nextDueOn;
 }

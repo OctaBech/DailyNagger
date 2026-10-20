@@ -10,3 +10,4 @@ export { StateScreen, type StateScreenProps } from "./StateScreen";
 export { TaskItemCheckmark } from "./TaskItemCheckmark";
 export { TaskStepAddButton } from "./TaskStepAddButton";
 export { TimeSectionHeader } from "./TimeSectionHeader";
+export { DateSectionHeader } from "./DateSectionHeader";
