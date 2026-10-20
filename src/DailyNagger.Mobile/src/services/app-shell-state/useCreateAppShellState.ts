@@ -9,14 +9,10 @@ import type {
   planDialActionRegistry,
   ProxyActions,
 } from "@/services/action-boundary";
-import {
-  useCreateEditorScreenDialMenu,
-  useCreatePlanScreenDialMenu,
-  type SpeedDialMenu,
-} from "../screen-dial-menus";
+import { useCreateEditorScreenDialMenu, useCreatePlanScreenDialMenu } from "../screen-dial-menus";
 import type { UserMoodState } from "../user-mood";
 import { treeSelection, type UserMoodLabel } from "@/models";
-import { getUserMoodEmoji, userMoodConfig } from "@/config";
+import { getUserMoodEmoji } from "@/config";
 import { appRoutes } from "@/navigation";
 import type { Guid } from "@/shared";
 import type { StateScreenProps } from "@/components/primitives";
@@ -82,9 +78,10 @@ export function useCreateAppShellState({
     [editorSelectedPath],
   );
   const selectedMoodEmoji = getUserMoodEmoji(userMood.state.selectedMood);
+  const planActionsAreAvailable = startup.isReady && userMood.state.selectedMood !== null;
   const planSpeedDialMenu = useCreatePlanScreenDialMenu({
     planDialProxyActions,
-    actionsAreAvailable: startup.isReady && userMood.state.selectedMood !== null,
+    actionsAreAvailable: planActionsAreAvailable,
     selectedNodes: planSelectedNodes,
     selectedPath: planSelectedPath,
     onCreateNagger: createNagger,
@@ -98,14 +95,6 @@ export function useCreateAppShellState({
     selectedPath: editorSelectedPath,
     onCloseEditor: closeEditor,
   });
-  const planSpeedDialMenuWithShellActions = useMemo(
-    () => addMoodBarSpeedDialAction(planSpeedDialMenu, selectedMoodEmoji),
-    [planSpeedDialMenu, selectedMoodEmoji],
-  );
-  const editorSpeedDialMenuWithShellActions = useMemo(
-    () => addMoodBarSpeedDialAction(editorSpeedDialMenu, selectedMoodEmoji),
-    [editorSpeedDialMenu, selectedMoodEmoji],
-  );
   const pendingSendingPrompt = createPendingSendingPrompt(sending);
 
   return useMemo(
@@ -121,14 +110,16 @@ export function useCreateAppShellState({
         select: selectMood,
       },
       speedDial: {
-        planMenu: planSpeedDialMenuWithShellActions,
-        editorMenu: editorSpeedDialMenuWithShellActions,
+        planActionsAreAvailable,
+        planMenu: planSpeedDialMenu,
+        editorMenu: editorSpeedDialMenu,
       },
     }),
     [
       assistantBubble,
-      editorSpeedDialMenuWithShellActions,
-      planSpeedDialMenuWithShellActions,
+      editorSpeedDialMenu,
+      planSpeedDialMenu,
+      planActionsAreAvailable,
       pendingSendingPrompt,
       selectMood,
       sendingEvents,
@@ -162,24 +153,5 @@ function createPendingSendingPrompt(sending: Sending): StateScreenProps | null {
             kind: "secondary",
             onPress: sending.pendingSendingPrompt.chooseSecondaryAction,
           },
-  };
-}
-
-function addMoodBarSpeedDialAction(
-  menu: SpeedDialMenu,
-  selectedMoodEmoji: string | null,
-): SpeedDialMenu {
-  return {
-    items: [
-      ...menu.items,
-      {
-        key: "shell.show-mood-bar",
-        iconType: "emoji",
-        iconValue: selectedMoodEmoji ?? userMoodConfig.unknownMoodEmoji,
-        label: "Mood",
-        showLabel: true,
-        row: 5,
-      },
-    ],
   };
 }

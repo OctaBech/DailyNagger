@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { Guid } from "@/shared";
 import type { ProxyActions, planDialActionRegistry } from "@/services/action-boundary";
-import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
+import { createDialMenuBuilder, type SpeedDialMenu } from "@/components/speed-dial";
 
 type PlanDialProxyActions = ProxyActions<typeof planDialActionRegistry>["dial"];
 
@@ -29,21 +29,22 @@ export function useCreatePlanScreenDialMenu({
   return useMemo(() => {
     if (!actionsAreAvailable) return { items: [] };
 
-    const newNagger: SpeedDialMenuItem = {
+    const builder = createDialMenuBuilder();
+    builder.addOption({
+      row: "new",
       key: "plan.new-nagger",
       iconType: "vector",
       iconValue: "bell-plus",
       label: "New nagger",
       showLabel: true,
       onSelect: onCreateNagger,
-    };
+    });
 
-    if (nagger === null) return { items: [newNagger] };
-
-    const pinItems: SpeedDialMenuItem[] = [];
+    if (nagger === null) return { items: builder.getMenuArray() };
 
     if (treeSelection.canBePinned(selectedPath)) {
-      pinItems.push({
+      builder.addOption({
+        row: "new",
         key: "plan.pin-selected-nagger",
         iconType: "vector",
         iconValue: "pin",
@@ -54,7 +55,8 @@ export function useCreatePlanScreenDialMenu({
     }
 
     if (treeSelection.canBeUnpinned(selectedPath)) {
-      pinItems.push({
+      builder.addOption({
+        row: "new",
         key: "plan.unpin-selected-nagger",
         iconType: "vector",
         iconValue: "pin-off",
@@ -64,20 +66,16 @@ export function useCreatePlanScreenDialMenu({
       });
     }
 
-    return {
-      items: [
-        newNagger,
-        ...pinItems,
-        {
-          key: "plan.edit-selected-nagger",
-          iconType: "vector",
-          iconValue: "pencil-box-outline",
-          label: "Edit nagger",
-          showLabel: true,
-          onSelect: () => onEditNagger(nagger.id),
-        },
-      ],
-    };
+    builder.addOption({
+      row: "new",
+      key: "plan.edit-selected-nagger",
+      iconType: "vector",
+      iconValue: "pencil-box-outline",
+      label: "Edit nagger",
+      showLabel: true,
+      onSelect: () => onEditNagger(nagger.id),
+    });
+    return { items: builder.getMenuArray() };
   }, [
     actionsAreAvailable,
     nagger,
