@@ -14,3 +14,4 @@ export type { Loading } from "./loading";
 export type { AssistantBubble } from "./assistant-bubble";
 export type { UserMoodState } from "./user-mood";
 export type { InteractionStamp, InteractionStampValue } from "./interaction-stamp";
+export type { UndoHistory } from "./undo-history";

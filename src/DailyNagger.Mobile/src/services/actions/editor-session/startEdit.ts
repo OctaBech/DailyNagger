@@ -7,8 +7,10 @@ export function editorStartEdit(
   args: {
     readonly naggerId: Guid | null;
   },
-  { editorMemory, planMemory }: EditorSessionRuntimeDependencies,
+  { editorMemory, planMemory, undoHistory }: EditorSessionRuntimeDependencies,
 ): void {
+  undoHistory.clear();
+
   const { node, tree } = treeOperations;
 
   const editorNagger =

@@ -7,8 +7,10 @@ export function editorTaskEntrySetValue(
     readonly taskEntry: TaskEntry;
     readonly newValue: string | null;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, node } = treeOperations;
   const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, args.taskEntry);
   const normalizedValue = normalizeTaskEntryValue(freshTaskEntry.valueType, args.newValue);

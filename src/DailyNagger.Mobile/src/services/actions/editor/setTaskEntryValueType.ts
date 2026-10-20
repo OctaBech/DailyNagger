@@ -9,7 +9,7 @@ export function editorTaskEntrySetValueType(
     readonly valueType: TaskEntryValueType;
     readonly rolloverBehavior?: TaskEntry["rolloverBehavior"];
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
   const { tree, node } = treeOperations;
   const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, args.taskEntry);
@@ -23,6 +23,8 @@ export function editorTaskEntrySetValueType(
   ) {
     return;
   }
+
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
 
   const taskEntryV1 = node.setTaskEntryValueType(freshTaskEntry, args.valueType);
   const taskEntryV2 = node.setTaskEntryRolloverBehavior(taskEntryV1, rolloverBehavior);

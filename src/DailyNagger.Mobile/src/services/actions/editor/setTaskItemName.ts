@@ -7,8 +7,10 @@ export function editorTaskItemSetName(
     readonly taskItem: TaskItem;
     readonly name: string;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, node } = treeOperations;
   const { freshTree, freshTaskItem } = tree.readTaskItem(memory, args.taskItem);
   const taskItemV1 = node.setTaskItemName(freshTaskItem, args.name);

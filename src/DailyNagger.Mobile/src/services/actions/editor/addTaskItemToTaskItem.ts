@@ -6,8 +6,10 @@ export function addTaskItemToTaskItem(
   args: {
     readonly taskItem: TaskItem;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, branch, node } = treeOperations;
 
   const { freshTree, freshTaskItem } = tree.readTaskItem(memory, args.taskItem);

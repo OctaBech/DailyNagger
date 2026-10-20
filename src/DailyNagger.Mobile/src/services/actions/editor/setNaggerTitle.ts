@@ -7,8 +7,10 @@ export function editorNaggerSetTitle(
     readonly nagger: Nagger;
     readonly title: string;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, node } = treeOperations;
   const { freshTree, freshNagger } = tree.readNagger(memory, args.nagger);
   const naggerV1 = node.setNaggerTitle(freshNagger, args.title);

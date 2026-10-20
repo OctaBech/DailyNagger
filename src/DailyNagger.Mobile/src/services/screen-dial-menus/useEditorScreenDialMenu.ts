@@ -7,6 +7,8 @@ type EditorDialProxyActions = ProxyActions<typeof editorDialActionRegistry>["dia
 
 type UseCreateEditorScreenDialMenuProps = {
   readonly editorDialProxyActions: EditorDialProxyActions;
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
   readonly selectedNodes: SelectedNodes;
   readonly selectedPath: TreePath;
   readonly onCloseEditor: () => void;
@@ -14,6 +16,8 @@ type UseCreateEditorScreenDialMenuProps = {
 
 export function useCreateEditorScreenDialMenu({
   editorDialProxyActions,
+  canUndo,
+  canRedo,
   selectedNodes,
   selectedPath,
   onCloseEditor,
@@ -27,6 +31,8 @@ export function useCreateEditorScreenDialMenu({
     pinSelectedNagger,
     saveEdit,
     unpinSelectedNagger,
+    undoEdit,
+    redoEdit,
   } = editorDialProxyActions;
 
   return useMemo(() => {
@@ -35,6 +41,32 @@ export function useCreateEditorScreenDialMenu({
 
     return {
       items: [
+        {
+          key: "editor.save",
+          iconType: "vector" as const,
+          iconValue: "content-save",
+          label: "Save",
+          row: 0,
+          isDisabled: nagger === null,
+          onSelect: () => {
+            if (nagger === null) return;
+            saveEdit({ nagger });
+            onCloseEditor();
+          },
+        },
+        {
+          key: "editor.cancel",
+          iconType: "vector" as const,
+          iconValue: "close",
+          label: "Cancel",
+          row: 0,
+          isDisabled: nagger === null,
+          onSelect: () => {
+            if (nagger === null) return;
+            cancelEdit({ nagger });
+            onCloseEditor();
+          },
+        },
         {
           key: "editor.move-selected-up",
           iconType: "vector" as const,
@@ -62,6 +94,20 @@ export function useCreateEditorScreenDialMenu({
             if (moveContext === null) return;
             if (!treeSelection.canMoveSelectedContextDown(moveContext)) return;
             moveSelectedNodeDown({ moveContext });
+          },
+        },
+        {
+          key: "editor.delete-selected-node",
+          iconType: "vector" as const,
+          iconValue: "delete",
+          label: "Delete",
+          showLabel: true,
+          row: 2,
+          keepOpenAfterPress: true,
+          isDisabled: deleteContext === null,
+          onSelect: () => {
+            if (deleteContext === null) return;
+            deleteSelectedNode({ deleteContext });
           },
         },
         ...(treeSelection.canSelectedNaggerBePinned(selectedNodes) && nagger !== null
@@ -93,48 +139,34 @@ export function useCreateEditorScreenDialMenu({
             ]
           : []),
         {
-          key: "editor.delete-selected-node",
+          key: "editor.undo",
           iconType: "vector" as const,
-          iconValue: "delete",
-          label: "Delete",
-          showLabel: true,
-          row: 2,
-          keepOpenAfterPress: true,
-          isDisabled: deleteContext === null,
+          iconValue: "content-undo",
+          label: "Undo",
+          row: 4,
+          isDisabled: !canUndo,
           onSelect: () => {
-            if (deleteContext === null) return;
-            deleteSelectedNode({ deleteContext });
+            undoEdit({});
           },
         },
         {
-          key: "editor.save",
+          key: "editor.redo",
           iconType: "vector" as const,
-          iconValue: "content-save",
-          label: "Save",
-          row: 0,
-          isDisabled: nagger === null,
+          iconValue: "content-redo",
+          label: "Redo",
+          row: 4,
+          isDisabled: !canRedo,
           onSelect: () => {
-            if (nagger === null) return;
-            saveEdit({ nagger });
-            onCloseEditor();
-          },
-        },
-        {
-          key: "editor.cancel",
-          iconType: "vector" as const,
-          iconValue: "close",
-          label: "Cancel",
-          row: 0,
-          isDisabled: nagger === null,
-          onSelect: () => {
-            if (nagger === null) return;
-            cancelEdit({ nagger });
-            onCloseEditor();
+            redoEdit({});
           },
         },
       ],
     };
   }, [
+    canUndo,
+    canRedo,
+    undoEdit,
+    redoEdit,
     cancelEdit,
     deleteSelectedNode,
     moveSelectedNodeDown,

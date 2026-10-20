@@ -15,6 +15,7 @@ import {
   type PlanScreenActions,
 } from "./screen-actions";
 import {
+  createActionRuntimeDependencies,
   editorDialActionRegistry,
   editorScreenActionRegistry,
   type ActionExecutionEvent,
@@ -23,7 +24,7 @@ import {
   planScreenActionRegistry,
   useActionBoundary,
 } from "./action-boundary";
-import type { UserMoodLabel } from "@/models";
+import type { TreeWithSelection, UserMoodLabel } from "@/models";
 import { useDailyNaggerObservability } from "@/observability";
 import { useEventEmitter } from "@/shared";
 import { useRollover } from "./rollover";
@@ -41,6 +42,7 @@ import {
   type AppShellState,
   useCreateAppShellState,
 } from "./app-shell-state";
+import { useUndoHistory } from "./undo-history";
 
 type ServiceProviderProps = {
   children: ReactNode;
@@ -75,7 +77,7 @@ function useCreateServices(): {
   readonly planScreenData: PlanScreenData;
   readonly editorScreenData: EditorScreenData;
 } {
-  // Wiring internal service communication
+  // ** Wire services
   const cultureSettings = useCultureSettings();
   const actionSequenceRef = useRef(0);
   const planMemoryEvents = useEventEmitter<MemoryEventType, void>();
@@ -93,6 +95,7 @@ function useCreateServices(): {
     "editorMemory",
     editorMemoryEvents,
   );
+  const editorUndoHistory = useUndoHistory<TreeWithSelection>();
 
   const userMood = useUserMoodState();
   const interactionStamp = useInteractionStamp(cultureSettings, userMood);
@@ -151,58 +154,55 @@ function useCreateServices(): {
     userMood,
   });
   const editorScreenData = useCreateEditorScreenData({ editorMemory, cultureSettings });
-  const planRegisteredActions = useActionBoundary(planScreenActionRegistry, {
-    registryName: "plan-screen",
-    actionSequenceRef,
+  // ** Create service packages
+  const servicePackages = createActionRuntimeDependencies({
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
     planMemory,
-    actionEvents,
-    middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
     sending,
+    editorUndoHistory,
   });
-  const planDialProxyActions = useActionBoundary(planDialActionRegistry, {
-    registryName: "plan-menu",
+  const actionBoundaryOptions = {
     actionSequenceRef,
-    cultureSettings,
-    editorMemory,
-    planInteractionStamp: interactionStamp,
-    planMemory,
     actionEvents,
     middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
-    sending,
-  }).dial;
-  const editorRegisteredActions = useActionBoundary(editorScreenActionRegistry, {
-    registryName: "editor-screen",
-    actionSequenceRef,
-    cultureSettings,
-    editorMemory,
-    planInteractionStamp: interactionStamp,
-    planMemory,
-    actionEvents,
-    middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
-    sending,
-  });
-  const editorDialProxyActions = useActionBoundary(editorDialActionRegistry, {
-    registryName: "editor-menu",
-    actionSequenceRef,
-    cultureSettings,
-    editorMemory,
-    planInteractionStamp: interactionStamp,
-    planMemory,
-    actionEvents,
-    middlewareWrapperFunction: observabilityWithStartup.actionMiddlewareWrapperFunction,
-    sending,
-  }).dial;
+  };
+  // ** Create proxy action functions
+  const planProxyActions = useActionBoundary(
+    "plan-screen",
+    planScreenActionRegistry,
+    servicePackages,
+    actionBoundaryOptions,
+  ).proxyActionsForCards;
+  const planDialProxyActions = useActionBoundary(
+    "plan-menu",
+    planDialActionRegistry,
+    servicePackages,
+    actionBoundaryOptions,
+  ).proxyActionsForDialMenu;
+  const editorProxyActions = useActionBoundary(
+    "editor-screen",
+    editorScreenActionRegistry,
+    servicePackages,
+    actionBoundaryOptions,
+  ).proxyActionsForCards;
+  const editorDialProxyActions = useActionBoundary(
+    "editor-menu",
+    editorDialActionRegistry,
+    servicePackages,
+    actionBoundaryOptions,
+  ).proxyActionsForDialMenu;
   const planScreenCommands = useCreatePlanScreenActions({
-    registeredActions: planRegisteredActions,
+    registeredActions: planProxyActions,
   });
   const editorScreenCommands = useCreateEditorScreenActions({
-    registeredActions: editorRegisteredActions,
+    registeredActions: editorProxyActions,
   });
   const appShellState = useCreateAppShellState({
     assistantBubble,
+    editorCanUndo: editorUndoHistory.canUndo(),
+    editorCanRedo: editorUndoHistory.canRedo(),
     editorDialProxyActions,
     editorMemory,
     editorScreenCommands,

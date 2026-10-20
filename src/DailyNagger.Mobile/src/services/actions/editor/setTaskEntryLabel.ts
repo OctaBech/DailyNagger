@@ -7,8 +7,10 @@ export function editorTaskEntrySetLabel(
     readonly taskEntry: TaskEntry;
     readonly label: string;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, node } = treeOperations;
   const { freshTree, freshTaskEntry } = tree.readTaskEntry(memory, args.taskEntry);
   const taskEntryV1 = node.setTaskEntryLabel(freshTaskEntry, args.label);

@@ -7,8 +7,10 @@ export function editorSaveEdit(
   args: {
     readonly nagger: Nagger;
   },
-  { editorMemory, planMemory, sending }: EditorSessionRuntimeDependencies,
+  { editorMemory, planMemory, sending, undoHistory }: EditorSessionRuntimeDependencies,
 ): void {
+  undoHistory.clear();
+
   const planTree = planMemory.read.getTree();
   const editorSelectedPath = editorMemory.read.getSelectedPath();
   const { node, tree } = treeOperations;

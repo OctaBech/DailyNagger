@@ -6,9 +6,11 @@ export function naggerUnpinSelected(
   args: {
     readonly nagger: Nagger;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
   if (args.nagger.pinnedBy === "None") return;
+
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
 
   const { node, tree } = treeOperations;
   const { freshTree, freshNagger } = tree.readNagger(memory, args.nagger);

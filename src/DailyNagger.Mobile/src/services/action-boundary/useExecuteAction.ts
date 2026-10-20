@@ -1,21 +1,19 @@
 import { runWithMiddleware, type MiddlewareWrapperFunction } from "@/middleware";
 import { useStableCallback } from "@/shared/useStableCallback";
-import type { ServicePackageName, RuntimeDependencyInputs } from "./action-dependencies";
-import { createActionRuntimeDependencies } from "./action-dependencies/actionRuntimeDependencies";
+import type { ServicePackageName, ServicePackages } from "./action-dependencies";
 import type { ActionEvents, ActionExecutionContext } from "./events";
 import type { RefObject } from "react";
 import type { ActionInvocation } from "./proxyActionsModel";
 
-type UseExecuteActionProps = RuntimeDependencyInputs & {
+type UseExecuteActionProps = {
   readonly actionSequenceRef: RefObject<number>;
   readonly actionEvents?: ActionEvents;
   readonly middlewareWrapperFunction?: MiddlewareWrapperFunction<ActionExecutionContext>;
 };
 
-export function useExecuteAction(props: UseExecuteActionProps) {
+export function useExecuteAction(servicePackages: ServicePackages, props: UseExecuteActionProps) {
   const environment = props;
   const { actionSequenceRef } = props;
-  const servicePackages = createActionRuntimeDependencies(props);
 
   function executeAction<TServicePackageName extends ServicePackageName, TActionArgs>(
     actionInvocation: ActionInvocation<TServicePackageName, TActionArgs>,

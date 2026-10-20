@@ -4,7 +4,8 @@ export function editorCancelEdit(
   _args: {
     readonly nagger: unknown;
   },
-  { editorMemory }: EditorSessionRuntimeDependencies,
+  { editorMemory, undoHistory }: EditorSessionRuntimeDependencies,
 ): void {
+  undoHistory.clear();
   editorMemory.write.clear();
 }

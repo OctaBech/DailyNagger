@@ -7,8 +7,10 @@ export function editorNaggerSetTargetTime(
     readonly nagger: Nagger;
     readonly targetTime: string | null;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, node } = treeOperations;
   const { freshTree, freshNagger } = tree.readNagger(memory, args.nagger);
   const naggerV1 = node.setNaggerTargetTime(freshNagger, args.targetTime);
