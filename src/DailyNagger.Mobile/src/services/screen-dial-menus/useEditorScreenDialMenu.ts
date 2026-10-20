@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
 import type { ProxyActions, editorDialActionRegistry } from "@/services/action-boundary";
-import type { SpeedDialMenu } from "./SpeedDialMenu";
+import { createDialMenuBuilder, type SpeedDialMenu } from "@/components/speed-dial";
 
 type EditorDialProxyActions = ProxyActions<typeof editorDialActionRegistry>["dial"];
 
@@ -39,131 +39,125 @@ export function useCreateEditorScreenDialMenu({
     const moveContext = treeSelection.tryReadMoveContext(selectedPath);
     const deleteContext = treeSelection.tryReadDeleteContext(selectedPath);
 
-    return {
-      items: [
-        {
-          key: "editor.save",
-          iconType: "vector" as const,
-          iconValue: "content-save",
-          label: "Save",
-          row: 0,
-          isDisabled: nagger === null,
-          onSelect: () => {
-            if (nagger === null) return;
-            saveEdit({ nagger });
-            onCloseEditor();
-          },
-        },
-        {
-          key: "editor.cancel",
-          iconType: "vector" as const,
-          iconValue: "close",
-          label: "Cancel",
-          row: 0,
-          isDisabled: nagger === null,
-          onSelect: () => {
-            if (nagger === null) return;
-            cancelEdit({ nagger });
-            onCloseEditor();
-          },
-        },
-        {
-          key: "editor.move-selected-up",
-          iconType: "vector" as const,
-          iconValue: "arrow-up",
-          label: "Move up/down",
-          showLabel: true,
-          row: 1,
-          keepOpenAfterPress: true,
-          isDisabled: !treeSelection.canMoveSelectedContextUp(moveContext),
-          onSelect: () => {
-            if (moveContext === null) return;
-            if (!treeSelection.canMoveSelectedContextUp(moveContext)) return;
-            moveSelectedNodeUp({ moveContext });
-          },
-        },
-        {
-          key: "editor.move-selected-down",
-          iconType: "vector" as const,
-          iconValue: "arrow-down",
-          label: "Move down",
-          row: 1,
-          keepOpenAfterPress: true,
-          isDisabled: !treeSelection.canMoveSelectedContextDown(moveContext),
-          onSelect: () => {
-            if (moveContext === null) return;
-            if (!treeSelection.canMoveSelectedContextDown(moveContext)) return;
-            moveSelectedNodeDown({ moveContext });
-          },
-        },
-        {
-          key: "editor.delete-selected-node",
-          iconType: "vector" as const,
-          iconValue: "delete",
-          label: "Delete",
-          showLabel: true,
-          row: 2,
-          keepOpenAfterPress: true,
-          isDisabled: deleteContext === null,
-          onSelect: () => {
-            if (deleteContext === null) return;
-            deleteSelectedNode({ deleteContext });
-          },
-        },
-        ...(treeSelection.canSelectedNaggerBePinned(selectedNodes) && nagger !== null
-          ? [
-              {
-                key: "editor.pin-selected-nagger",
-                iconType: "vector" as const,
-                iconValue: "pin",
-                label: "Pin",
-                showLabel: true,
-                row: 3,
-                keepOpenAfterPress: true,
-                onSelect: () => pinSelectedNagger({ nagger }),
-              },
-            ]
-          : []),
-        ...(treeSelection.canSelectedNaggerBeUnpinned(selectedNodes) && nagger !== null
-          ? [
-              {
-                key: "editor.unpin-selected-nagger",
-                iconType: "vector" as const,
-                iconValue: "pin-off",
-                label: "Unpin",
-                showLabel: true,
-                row: 3,
-                keepOpenAfterPress: true,
-                onSelect: () => unpinSelectedNagger({ nagger }),
-              },
-            ]
-          : []),
-        {
-          key: "editor.undo",
-          iconType: "vector" as const,
-          iconValue: "undo",
-          label: "Undo",
-          row: 4,
-          keepOpenAfterPress: true,
-          isDisabled: !canUndo,
-          onSelect: () => {
-            undoEdit({});
-          },
-        },
-        {
-          key: "editor.redo",
-          iconType: "vector" as const,
-          iconValue: "redo",
-          label: "Redo",
-          row: 4,
-          keepOpenAfterPress: true,
-          isDisabled: !canRedo,
-          onSelect: () => {
-            redoEdit({});
-          },
-        },
-      ],
-    };
+    const builder = createDialMenuBuilder();
+    builder.addOption({
+      key: "editor.save",
+      iconType: "vector",
+      iconValue: "content-save",
+      label: "Save",
+      row: "new",
+      isDisabled: nagger === null,
+      onSelect: () => {
+        if (nagger === null) return;
+        saveEdit({ nagger });
+        onCloseEditor();
+      },
+    });
+    builder.addOption({
+      key: "editor.cancel",
+      iconType: "vector",
+      iconValue: "close",
+      label: "Cancel",
+      row: "current",
+      isDisabled: nagger === null,
+      onSelect: () => {
+        if (nagger === null) return;
+        cancelEdit({ nagger });
+        onCloseEditor();
+      },
+    });
+    builder.addOption({
+      key: "editor.move-selected-up",
+      iconType: "vector",
+      iconValue: "arrow-up",
+      label: "Move up/down",
+      showLabel: true,
+      row: "new",
+      keepOpenAfterPress: true,
+      isDisabled: !treeSelection.canMoveSelectedContextUp(moveContext),
+      onSelect: () => {
+        if (moveContext === null) return;
+        if (!treeSelection.canMoveSelectedContextUp(moveContext)) return;
+        moveSelectedNodeUp({ moveContext });
+      },
+    });
+    builder.addOption({
+      key: "editor.move-selected-down",
+      iconType: "vector",
+      iconValue: "arrow-down",
+      label: "Move down",
+      row: "current",
+      keepOpenAfterPress: true,
+      isDisabled: !treeSelection.canMoveSelectedContextDown(moveContext),
+      onSelect: () => {
+        if (moveContext === null) return;
+        if (!treeSelection.canMoveSelectedContextDown(moveContext)) return;
+        moveSelectedNodeDown({ moveContext });
+      },
+    });
+    builder.addOption({
+      key: "editor.delete-selected-node",
+      iconType: "vector",
+      iconValue: "delete",
+      label: "Delete",
+      showLabel: true,
+      row: "new",
+      keepOpenAfterPress: true,
+      isDisabled: deleteContext === null,
+      onSelect: () => {
+        if (deleteContext === null) return;
+        deleteSelectedNode({ deleteContext });
+      },
+    });
+    if (treeSelection.canSelectedNaggerBePinned(selectedNodes) && nagger !== null) {
+      builder.addOption({
+        key: "editor.pin-selected-nagger",
+        iconType: "vector",
+        iconValue: "pin",
+        label: "Pin",
+        showLabel: true,
+        row: "new",
+        keepOpenAfterPress: true,
+        onSelect: () => pinSelectedNagger({ nagger }),
+      });
+    }
+    if (treeSelection.canSelectedNaggerBeUnpinned(selectedNodes) && nagger !== null) {
+      builder.addOption({
+        key: "editor.unpin-selected-nagger",
+        iconType: "vector",
+        iconValue: "pin-off",
+        label: "Unpin",
+        showLabel: true,
+        row: "new",
+        keepOpenAfterPress: true,
+        onSelect: () => unpinSelectedNagger({ nagger }),
+      });
+    }
+    builder.addOption({
+      key: "editor.undo",
+      iconType: "vector",
+      iconValue: "undo",
+      label: "Undo",
+      row: "new",
+      keepOpenAfterPress: true,
+      isDisabled: !canUndo,
+      onSelect: () => {
+        undoEdit({});
+      },
+    });
+    builder.addOption({
+      key: "editor.redo",
+      iconType: "vector",
+      iconValue: "redo",
+      label: "Redo",
+      row: "current",
+      keepOpenAfterPress: true,
+      isDisabled: !canRedo,
+      onSelect: () => {
+        redoEdit({});
+      },
+    });
+    return { items: builder.getMenuArray() };
   }, [
     canUndo,
     canRedo,

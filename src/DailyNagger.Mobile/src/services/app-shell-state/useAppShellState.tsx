@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { AssistantBubble } from "../assistant-bubble";
 import type { ParcelFlowEvents } from "../sending";
-import type { SpeedDialMenu } from "../screen-dial-menus";
+import type { SpeedDialMenu } from "@/components/speed-dial";
 import type { Prettify } from "@/shared";
 import type { UserMoodLabel } from "@/models";
 import type { StateScreenProps } from "@/components/primitives";
@@ -18,6 +18,7 @@ export type AppShellState = Prettify<{
     readonly select: (mood: UserMoodLabel) => void;
   };
   readonly speedDial: {
+    readonly planActionsAreAvailable: boolean;
     readonly planMenu: SpeedDialMenu;
     readonly editorMenu: SpeedDialMenu;
   };

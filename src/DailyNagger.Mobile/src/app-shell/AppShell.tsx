@@ -6,20 +6,15 @@ import { usePathname } from "expo-router";
 import { AssistantBubble } from "./assistant-bubble";
 import { MoodBar } from "./mood-bar";
 import { PostOfficeStrip } from "./post-office-strip";
-import {
-  emptySpeedDialMenu,
-  type SpeedDialMenu,
-  type SpeedDialMenuItem,
-  useAppShellState,
-} from "@/services";
-import { SpeedDial } from "./speed-dial";
+import { useAppShellState } from "@/services";
+import { SpeedDial, createDialMenuBuilder, emptySpeedDialMenu } from "@/components/speed-dial";
 import {
   ScreenPositionHandoffDebug,
   ScreenPositionHandoffProvider,
 } from "./screen-position-handoff";
 import { appRoutes } from "@/navigation";
 import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
-import { appLayout, debugConfig } from "@/config";
+import { appLayout, debugConfig, userMoodConfig } from "@/config";
 import { SendingPromptOverlay } from "./sending-prompt";
 import { useEventEmitter } from "@/shared/useEventEmitter";
 import { PlanFilterRequestsProvider } from "@/features/nag-plan/filter/PlanFilterRequests";
@@ -57,32 +52,48 @@ export const AppShell = ({ children }: AppShellProps) => {
     }
   }
   const speedDialMenu = useMemo(() => {
-    const menu = hideUnavailableShellItems(baseSpeedDialMenu, { moodBarIsVisible });
-    if (path !== appRoutes.plan || !menu.items.some((item) => item.key === "plan.new-nagger"))
-      return menu;
-    return {
-      items: [
-        ...menu.items,
-        {
-          key: "plan.show-filter",
-          iconType: "vector" as const,
-          iconValue: "magnify",
-          label: "Filter tasks",
-          showLabel: true,
-          row: 4,
-          onSelect: () => planFilterRequests.emit("open", undefined),
-        },
-      ],
-    };
-  }, [baseSpeedDialMenu, moodBarIsVisible, path, planFilterRequests]);
-  const handleSpeedDialItemSelected = useCallback(
-    (item: SpeedDialMenuItem) => {
-      if (item.key !== "shell.show-mood-bar") return;
-      if (moodBarIsVisible) return;
-      showMoodBarAgain();
-    },
-    [moodBarIsVisible, showMoodBarAgain],
-  );
+    const builder = createDialMenuBuilder(baseSpeedDialMenu.items);
+    if (
+      path === appRoutes.plan &&
+      appShellState.speedDial.planActionsAreAvailable &&
+      appShellState.globalOverlaysAreEnabled
+    ) {
+      builder.addOption({
+        row: "new",
+        key: "plan.show-filter",
+        iconType: "vector",
+        iconValue: "magnify",
+        label: "Filter tasks",
+        showLabel: true,
+        onSelect: () => planFilterRequests.emit("open", undefined),
+      });
+    }
+    if (
+      !moodBarIsVisible &&
+      appShellState.globalOverlaysAreEnabled &&
+      (path === appRoutes.plan || path.startsWith(appRoutes.taskLogEditorBase))
+    ) {
+      builder.addOption({
+        row: "new",
+        key: "shell.show-mood-bar",
+        iconType: "emoji",
+        iconValue: appShellState.moodBar.selectedEmoji ?? userMoodConfig.unknownMoodEmoji,
+        label: "Mood",
+        showLabel: true,
+        onSelect: showMoodBarAgain,
+      });
+    }
+    return { items: builder.getMenuArray() };
+  }, [
+    baseSpeedDialMenu,
+    moodBarIsVisible,
+    path,
+    planFilterRequests,
+    appShellState.speedDial.planActionsAreAvailable,
+    appShellState.globalOverlaysAreEnabled,
+    appShellState.moodBar.selectedEmoji,
+    showMoodBarAgain,
+  ]);
 
   return (
     <PlanFilterRequestsProvider value={planFilterRequests}>
@@ -112,7 +123,7 @@ export const AppShell = ({ children }: AppShellProps) => {
               </View>
             ) : null}
             <SendingPromptOverlay prompt={appShellState.pendingSendingPrompt} />
-            <SpeedDial menu={speedDialMenu} onItemSelected={handleSpeedDialItemSelected} />
+            <SpeedDial menu={speedDialMenu} />
             {debugConfig.showScreenPosition && <ScreenPositionHandoffDebug />}
             {appShellState.globalOverlaysAreEnabled ? (
               <AssistantBubble
@@ -139,15 +150,3 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 });
-
-function hideUnavailableShellItems(
-  menu: SpeedDialMenu,
-  options: { readonly moodBarIsVisible: boolean },
-): SpeedDialMenu {
-  return {
-    items: menu.items.filter((item) => {
-      if (item.key !== "shell.show-mood-bar") return true;
-      return !options.moodBarIsVisible;
-    }),
-  };
-}

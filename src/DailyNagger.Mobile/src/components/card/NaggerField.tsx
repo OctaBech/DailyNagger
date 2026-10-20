@@ -1,3 +1,4 @@
+import { formatDueDate } from "@/app-day";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 import type { Nagger } from "@/models";
 import * as Input from "@/components/input";
@@ -121,9 +122,13 @@ export const NaggerField = (props: NaggerFieldProps) => {
           />
           <Text
             selectable={false}
-            style={[styles.scheduleText, isCompleted && styles.completedScheduleText]}
+            style={[
+              styles.scheduleText,
+              styles.dueDateText,
+              isCompleted && styles.completedScheduleText,
+            ]}
           >
-            {getNaggerScheduleText(nagger)}
+            {formatDueDate(nagger.activeLogDueOn, "card")}
           </Text>
         </Pressable>
 
@@ -197,14 +202,6 @@ export const NaggerField = (props: NaggerFieldProps) => {
   );
 };
 
-function getNaggerScheduleText(nagger: Nagger): string {
-  if (nagger.activeLogDueOn === null) {
-    return "Due never";
-  }
-
-  return `Due ${nagger.activeLogDueOn}`;
-}
-
 function getNaggerTargetTimeText(nagger: Nagger): string {
   if (nagger.targetTime === null) {
     return "Any time";
@@ -265,6 +262,8 @@ const styles = StyleSheet.create({
     opacity: 0.72,
   },
   schedule: {
+    flexShrink: 1,
+    minWidth: 0,
     alignItems: "center",
     alignSelf: "flex-start",
     borderRadius: nagPlanTheme.radius.control,
@@ -274,6 +273,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   scheduleProgress: {
+    flexShrink: 0,
     alignItems: "center",
     alignSelf: "stretch",
     justifyContent: "center",
@@ -296,6 +296,9 @@ const styles = StyleSheet.create({
     color: nagPlanTheme.nagger.dueText,
     fontSize: 15,
     fontWeight: "700",
+  },
+  dueDateText: {
+    flexShrink: 1,
   },
   completedScheduleText: {
     color: nagPlanTheme.nagger.completedDueText,

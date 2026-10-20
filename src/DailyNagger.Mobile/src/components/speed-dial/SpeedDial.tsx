@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { actionButtonTheme } from "@/components/primitives/actionButtonTheme";
 import { appLayout, appTiming } from "@/config";
-import type { SpeedDialMenu, SpeedDialMenuItem } from "@/services";
+import type { SpeedDialMenu, SpeedDialMenuItem } from "./SpeedDialMenu";
 
 type SpeedDialProps = {
   readonly menu: SpeedDialMenu;
