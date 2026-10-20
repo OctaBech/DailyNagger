@@ -13,6 +13,7 @@ type ScrollOffsetEvent = {
 };
 
 type KeyboardFocusedInputScrollerProps<TItem> = {
+  readonly autoScrollEnabled?: boolean;
   readonly listRef: RefObject<FlatList<TItem> | null>;
   readonly getScrollOffset: () => number;
   readonly setScrollOffset: (offset: number) => void;
@@ -21,6 +22,7 @@ type KeyboardFocusedInputScrollerProps<TItem> = {
 const keyboardGap = 18;
 
 export function useKeyboardFocusedInputScroller<TItem>({
+  autoScrollEnabled = true,
   getScrollOffset,
   listRef,
   setScrollOffset,
@@ -31,7 +33,7 @@ export function useKeyboardFocusedInputScroller<TItem>({
   const [keyboardInset, setKeyboardInset] = useState(0);
 
   const scrollFocusedInputIntoView = useCallback(() => {
-    if (isModalKeyboardBoundaryActive) return;
+    if (!autoScrollEnabled || isModalKeyboardBoundaryActive) return;
 
     const keyboardTop = keyboardTopRef.current;
     if (keyboardTop === null) return;
@@ -48,7 +50,7 @@ export function useKeyboardFocusedInputScroller<TItem>({
       setScrollOffset(nextOffset);
       listRef.current?.scrollToOffset({ animated: true, offset: nextOffset });
     });
-  }, [isModalKeyboardBoundaryActive, listRef, setScrollOffset]);
+  }, [autoScrollEnabled, isModalKeyboardBoundaryActive, listRef, setScrollOffset]);
 
   useEffect(() => {
     function setKeyboardFrame(event: KeyboardEvent) {
