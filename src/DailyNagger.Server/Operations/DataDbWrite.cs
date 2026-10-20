@@ -206,7 +206,6 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         Guid nagId,
         string title,
         DateOnly? activeLogDueOn,
-        DateOnly? expiresOn,
         TimeOnly? targetTime,
         bool isDeactivated,
         NaggerPinnedBy pinnedBy,
@@ -247,7 +246,6 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
             UserId = userId,
             Title = title,
             ActiveLogDueOn = activeLogDueOn,
-            ExpiresOn = expiresOn,
             TargetTime = targetTime,
             IsDeactivated = isDeactivated,
             PinnedBy = pinnedBy,
@@ -276,7 +274,6 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                   set
                       title = @title,
                       active_log_due_on = @activeLogDueOn,
-                      expires_on = @expiresOn,
                       target_time = @targetTime,
                       is_deactivated = @isDeactivated,
                       pinned_by = @pinnedBy,
@@ -295,7 +292,6 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                       user_id,
                       title,
                       active_log_due_on,
-                      expires_on,
                       target_time,
                       is_deactivated,
                       pinned_by,
@@ -309,7 +305,6 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                       @userId,
                       @title,
                       @activeLogDueOn,
-                      @expiresOn,
                       @targetTime,
                       @isDeactivated,
                       @pinnedBy,
@@ -326,7 +321,6 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
         command.Parameters.AddWithValue("@userId", nag.UserId);
         command.Parameters.AddWithValue("@title", nag.Title);
         command.Parameters.AddWithValue("@activeLogDueOn", (object?)nag.ActiveLogDueOn ?? DBNull.Value);
-        command.Parameters.AddWithValue("@expiresOn", (object?)nag.ExpiresOn ?? DBNull.Value);
         command.Parameters.AddWithValue("@targetTime", (object?)nag.TargetTime?.ToTimeSpan() ?? DBNull.Value);
         command.Parameters.AddWithValue("@isDeactivated", nag.IsDeactivated);
         command.Parameters.AddWithValue("@pinnedBy", nag.PinnedBy.ToString());

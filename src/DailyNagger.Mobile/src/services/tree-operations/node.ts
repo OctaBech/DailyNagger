@@ -72,7 +72,6 @@ function createNagger(activeLogDueOn: string | null = null, title = ""): Nagger 
     updatedByDeviceName: null,
     updatedByDeviceModel: null,
     activeLogDueOn,
-    expiresOn: null,
     targetTime: null,
     isDeactivated: false,
     pinnedBy: "None",

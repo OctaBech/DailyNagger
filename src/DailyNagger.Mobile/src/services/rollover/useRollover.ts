@@ -4,6 +4,7 @@ import type { CultureSettings } from "@/services/culture";
 import type { Sending } from "@/services/sending";
 import { useEffect } from "react";
 import { appTiming } from "@/config";
+import { getNextAppDayStart } from "@/app-day";
 import {
   runWithMiddleware,
   type MiddlewareExecutionContext,
@@ -108,19 +109,14 @@ function readTreeOrNull(memory: Memory): Tree | null {
 function isNaggerOverdue(nagger: Nagger, cultureSettings: CultureSettings): boolean {
   if (nagger.activeLogDueOn === null) return false;
 
-  const expiresAt = getNaggerExpiresAt(nagger.activeLogDueOn, cultureSettings);
+  const expiresAt = getNaggerExpiresAt(nagger.activeLogDueOn);
   return expiresAt.getTime() < cultureSettings.getNow().getTime();
 }
 
-function getNaggerExpiresAt(activeLogDueOn: string, cultureSettings: CultureSettings): Date {
-  const expiresAt = cultureSettings.parseLocalIsoDate(activeLogDueOn);
-
-  expiresAt.setDate(expiresAt.getDate() + 1);
-
-  const [hours, minutes] = appTiming.rollover.dayBoundaryTime.split(":");
-  expiresAt.setHours(Number(hours), Number(minutes), 0, 0);
+function getNaggerExpiresAt(activeLogDueOn: string): Date {
+  const expiresAt = getNextAppDayStart(activeLogDueOn);
+  // Preserve the existing rollover threshold: one minute before the next app day.
   expiresAt.setMinutes(expiresAt.getMinutes() - 1);
-
   return expiresAt;
 }
 

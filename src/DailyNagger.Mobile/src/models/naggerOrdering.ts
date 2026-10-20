@@ -1,5 +1,6 @@
 import type { Nagger } from "./clientModel";
 import type { Tree } from "./nodeTypes";
+import { getTargetMinuteSortValue } from "@/app-day";
 
 export function orderNaggersByDate(tree: Tree): Tree {
   return {
@@ -29,20 +30,4 @@ function compareNaggersForPlanList(nagA: Nagger, nagB: Nagger): number {
   if (nagA.title !== nagB.title) return nagA.title < nagB.title ? -1 : 1;
 
   return nagA.id < nagB.id ? -1 : 1;
-}
-
-export function getTargetMinuteSortValue(targetTime: string | null): number {
-  return parseTargetMinute(targetTime) ?? Number.POSITIVE_INFINITY;
-}
-
-function parseTargetMinute(targetTime: string | null): number | null {
-  if (targetTime === null) return null;
-
-  const [hoursText, minutesText] = targetTime.split(":");
-  const hours = Number(hoursText);
-  const minutes = Number(minutesText);
-
-  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
-
-  return hours * 60 + minutes;
 }

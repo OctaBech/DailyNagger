@@ -33,10 +33,6 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("date")
                         .HasColumnName("active_log_due_on");
 
-                    b.Property<DateOnly?>("ExpiresOn")
-                        .HasColumnType("date")
-                        .HasColumnName("expires_on");
-
                     b.Property<bool>("IsDeactivated")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")

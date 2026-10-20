@@ -22,7 +22,6 @@ public sealed class NagContractSerializationTests
             "id": "33333333-3333-3333-3333-333333333333",
             "title": "Contact lenses",
             "activeLogDueOn": "2026-08-17",
-            "expiresOn": null,
             "targetTime": "06:35:00",
             "isDeactivated": false,
             "pinnedBy": "None",
@@ -57,6 +56,8 @@ public sealed class NagContractSerializationTests
         Assert.Equal("Contact lenses", request.Payload.Title);
         Assert.Equal(new TimeOnly(6, 35), request.Payload.TargetTime);
         Assert.Single(request.Payload.ScheduleRules);
+        using var serialized = JsonDocument.Parse(JsonSerializer.Serialize(request, JsonOptions));
+        Assert.False(serialized.RootElement.GetProperty("payload").TryGetProperty("expiresOn", out _));
     }
 
     [Fact]

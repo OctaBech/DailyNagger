@@ -63,7 +63,6 @@ public static class NagPlanApi
             item.Nagger.Id,
             item.Nagger.Title,
             item.Nagger.ActiveLogDueOn,
-            item.Nagger.ExpiresOn,
             item.Nagger.TargetTime,
             item.Nagger.IsDeactivated,
             ToDto(item.Nagger.PinnedBy),

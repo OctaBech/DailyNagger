@@ -14,7 +14,6 @@ public sealed class Nagger
     public Guid UserId { get; init; }
     public required string Title { get; init; }
     public DateOnly? ActiveLogDueOn { get; init; }
-    public DateOnly? ExpiresOn { get; init; }
     public TimeOnly? TargetTime { get; init; }
     public bool IsDeactivated { get; init; }
     public NaggerPinnedBy PinnedBy { get; init; } = NaggerPinnedBy.None;

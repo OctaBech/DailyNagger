@@ -524,7 +524,6 @@
           "id",
           "title",
           "activeLogDueOn",
-          "expiresOn",
           "targetTime",
           "isDeactivated",
           "pinnedBy",
@@ -545,13 +544,6 @@
             "type": "string"
           },
           "activeLogDueOn": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "expiresOn": {
             "type": [
               "null",
               "string"
@@ -637,7 +629,6 @@
           "id",
           "title",
           "activeLogDueOn",
-          "expiresOn",
           "targetTime",
           "isDeactivated",
           "pinnedBy",
@@ -659,13 +650,6 @@
             "type": "string"
           },
           "activeLogDueOn": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date"
-          },
-          "expiresOn": {
             "type": [
               "null",
               "string"

@@ -487,8 +487,6 @@ export interface components {
             title: string;
             /** Format: date */
             activeLogDueOn: null | string;
-            /** Format: date */
-            expiresOn: null | string;
             /** Format: time */
             targetTime: null | string;
             isDeactivated: boolean;
@@ -515,8 +513,6 @@ export interface components {
             title: string;
             /** Format: date */
             activeLogDueOn: null | string;
-            /** Format: date */
-            expiresOn: null | string;
             /** Format: time */
             targetTime: null | string;
             isDeactivated: boolean;
