@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
+import { FlatList, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPlanPlacement, useScreenPositionHandoff } from "@/app-shell";
 import type { Nagger } from "@/models";
@@ -8,6 +8,9 @@ import { DateSectionHeader, TimeSectionHeader } from "@/components/primitives";
 import { NagCard } from "./cards";
 import { nagPlanTheme } from "./theme";
 import { buildNagPlanListItems, type NagPlanListItem } from "./buildNagPlanListItems";
+import { usePlanTitleFilter } from "./filter/usePlanTitleFilter";
+import { filterNaggersByTitle } from "./filter/filterNaggersByTitle";
+import { PlanFilterBar } from "./filter/PlanFilterBar";
 
 type NagListProps = {
   readonly nags: readonly Nagger[];
@@ -25,7 +28,12 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
   const [contentHeight, setContentHeight] = useState(0);
   const { height: screenHeight } = useWindowDimensions();
   const bottomComfortSpace = screenHeight;
-  const listItems = useMemo(() => buildNagPlanListItems(nags), [nags]);
+  const filter = usePlanTitleFilter();
+  const filteredNags = useMemo(
+    () => filterNaggersByTitle(nags, filter.query),
+    [nags, filter.query],
+  );
+  const listItems = useMemo(() => buildNagPlanListItems(filteredNags), [filteredNags]);
   const selectedNaggerId = useMemo(
     () => nags.find((nagger) => nagger.clientProps.isSelected)?.id ?? null,
     [nags],
@@ -43,6 +51,7 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
   );
   const { keyboardInset, rememberScrollOffset: rememberKeyboardScrollOffset } =
     Input.useKeyboardFocusedInputScroller({
+      autoScrollEnabled: !filter.isInputFocused,
       getScrollOffset,
       listRef,
       setScrollOffset,
@@ -111,6 +120,12 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
         onContentSizeChange={(_width, height) => setContentHeight(height)}
         initialNumToRender={editorPlacement === null ? 10 : Math.max(10, selectedItemIndex + 1)}
         ListFooterComponent={<View style={{ height: bottomComfortSpace }} />}
+        ListEmptyComponent={
+          filter.query.trim().length > 0 ? (
+            <Text style={styles.emptyText}>No matching tasks</Text>
+          ) : null
+        }
+        keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => {
           if (item.kind === "date-section") {
             return <DateSectionHeader title={item.title} />;
@@ -135,6 +150,15 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
         onScroll={rememberScrollOffset}
         scrollEventThrottle={16}
       />
+      {filter.isVisible && (
+        <PlanFilterBar
+          query={filter.query}
+          focusRequest={filter.focusRequest}
+          onChangeText={filter.setQuery}
+          onFocusChange={filter.setIsInputFocused}
+          onClose={filter.close}
+        />
+      )}
     </View>
   );
 };
@@ -142,6 +166,7 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
 export const NagList = memo(NagListComponent);
 
 const styles = StyleSheet.create({
+  emptyText: { padding: 24, textAlign: "center", color: nagPlanTheme.nagger.titleText },
   container: {
     backgroundColor: nagPlanTheme.screen.background,
     flex: 1,
