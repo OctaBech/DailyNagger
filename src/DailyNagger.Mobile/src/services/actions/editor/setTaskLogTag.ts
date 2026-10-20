@@ -7,8 +7,10 @@ export function editorTaskLogSetTag(
     readonly taskLog: TaskLog;
     readonly tag: string | null;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, node } = treeOperations;
   const { freshTree, freshTaskLog } = tree.readTaskLog(memory, args.taskLog);
   const taskLogV1 = node.setTaskLogTag(freshTaskLog, args.tag);

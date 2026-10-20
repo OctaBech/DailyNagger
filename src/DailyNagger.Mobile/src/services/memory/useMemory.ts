@@ -1,6 +1,6 @@
-import type { TreePath, Tree } from "@/models";
+import type { TreePath, Tree, TreeWithSelection } from "@/models";
 import type { Prettify } from "@/shared";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createStore, useStore } from "zustand";
 
 type MemoryState = {
@@ -13,19 +13,23 @@ const freshMemoryState: MemoryState = {
   selectedPath: [],
 };
 
-type MemoryWriteActions = {
+type MemoryActions = {
   readonly clear: () => void;
   readonly setTree: (tree: Tree) => void;
   readonly setTreeWithoutSelectionRefresh: (tree: Tree) => void;
   readonly setSelectedPath: (path: TreePath) => void;
   readonly setTreeAndSelectedPath: (tree: Tree, path: TreePath) => void;
   readonly setTreeAndFocusPath: (tree: Tree, path: TreePath) => void;
+  readonly getTree: () => Tree;
+  readonly tryGetTree: () => Tree | null;
+  readonly getSelectedPath: () => TreePath;
+  readonly getTreeAndSelectedPath: () => TreeWithSelection;
 };
 
-type ZustandStore = MemoryState & MemoryWriteActions;
+type ZustandStore = MemoryState & MemoryActions;
 
 function createZustandStore() {
-  return createStore<ZustandStore>((set) => {
+  return createStore<ZustandStore>((set, get) => {
     return {
       ...freshMemoryState,
       clear() {
@@ -54,6 +58,24 @@ function createZustandStore() {
           selectedPath: path,
         }));
       },
+      getTree() {
+        const tree = get().tree;
+        if (tree === null) {
+          throw new Error("Cannot read missing tree.");
+        }
+        return tree;
+      },
+      tryGetTree() {
+        return get().tree;
+      },
+      getSelectedPath() {
+        return get().selectedPath;
+      },
+      getTreeAndSelectedPath() {
+        const tree = get().getTree();
+        const selectedPath = get().selectedPath;
+        return { tree, selectedPath };
+      },
     };
   });
 }
@@ -63,67 +85,25 @@ export type Memory = Prettify<ReturnType<typeof useMemory>>;
 export const useMemory = () => {
   const [zustandStore] = useState(() => createZustandStore());
 
-  const { tree, selectedPath } = useStore(zustandStore);
-
-  const clear = useCallback(() => {
-    zustandStore.getState().clear();
-  }, [zustandStore]);
-
-  const getTree = useCallback(() => {
-    const tree = zustandStore.getState().tree;
-    if (tree === null) {
-      throw new Error("Cannot read missing tree.");
-    }
-    return tree;
-  }, [zustandStore]);
-
-  const tryGetTree = useCallback(() => {
-    return zustandStore.getState().tree;
-  }, [zustandStore]);
-
-  const setTree = useCallback(
-    (tree: Tree) => {
-      zustandStore.getState().setTree(tree);
-    },
-    [zustandStore],
-  );
-
-  const setTreeWithoutSelectionRefresh = useCallback(
-    (tree: Tree) => {
-      zustandStore.getState().setTreeWithoutSelectionRefresh(tree);
-    },
-    [zustandStore],
-  );
-
-  const getSelectedPath = useCallback(() => {
-    return zustandStore.getState().selectedPath;
-  }, [zustandStore]);
-
-  const setSelectedPath = useCallback(
-    (path: TreePath) => {
-      zustandStore.getState().setSelectedPath(path);
-    },
-    [zustandStore],
-  );
-
-  const setTreeAndSelectedPath = useCallback(
-    (tree: Tree, path: TreePath) => {
-      zustandStore.getState().setTreeAndSelectedPath(tree, path);
-    },
-    [zustandStore],
-  );
-
-  const setTreeAndFocusPath = useCallback(
-    (tree: Tree, path: TreePath) => {
-      zustandStore.getState().setTreeAndFocusPath(tree, path);
-    },
-    [zustandStore],
-  );
+  const {
+    tree,
+    selectedPath,
+    clear,
+    setTree,
+    setTreeWithoutSelectionRefresh,
+    setSelectedPath,
+    setTreeAndSelectedPath,
+    setTreeAndFocusPath,
+    getTree,
+    tryGetTree,
+    getSelectedPath,
+    getTreeAndSelectedPath,
+  } = useStore(zustandStore);
 
   return useMemo(() => {
     return {
       state: { tree, selectedPath },
-      read: { getTree, tryGetTree, getSelectedPath },
+      read: { getTree, tryGetTree, getSelectedPath, getTreeAndSelectedPath },
       write: {
         clear,
         setTreeAndSelectedPath,
@@ -140,6 +120,7 @@ export const useMemory = () => {
     getTree,
     tryGetTree,
     getSelectedPath,
+    getTreeAndSelectedPath,
     setTreeAndSelectedPath,
     setTreeAndFocusPath,
     setTree,

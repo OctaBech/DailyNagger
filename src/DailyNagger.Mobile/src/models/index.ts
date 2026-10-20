@@ -42,6 +42,7 @@ export type {
   TreePath,
   TreeNode,
   Tree,
+  TreeWithSelection,
 } from "./nodeTypes";
 export { treeSelection } from "./treeSelection";
 export type { SelectedDeleteContext, SelectedMoveContext } from "./treeSelection";

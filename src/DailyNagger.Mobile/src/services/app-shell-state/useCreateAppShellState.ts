@@ -23,6 +23,8 @@ import type { StateScreenProps } from "@/components/primitives";
 
 type UseCreateAppShellStateProps = {
   readonly assistantBubble: AssistantBubble;
+  readonly editorCanUndo: boolean;
+  readonly editorCanRedo: boolean;
   readonly editorDialProxyActions: ProxyActions<typeof editorDialActionRegistry>["dial"];
   readonly editorMemory: Memory;
   readonly editorScreenCommands: EditorScreenActions;
@@ -38,6 +40,8 @@ type UseCreateAppShellStateProps = {
 
 export function useCreateAppShellState({
   assistantBubble,
+  editorCanUndo,
+  editorCanRedo,
   editorDialProxyActions,
   editorMemory,
   editorScreenCommands,
@@ -88,6 +92,8 @@ export function useCreateAppShellState({
   });
   const editorSpeedDialMenu = useCreateEditorScreenDialMenu({
     editorDialProxyActions,
+    canUndo: editorCanUndo,
+    canRedo: editorCanRedo,
     selectedNodes: editorSelectedNodes,
     selectedPath: editorSelectedPath,
     onCloseEditor: closeEditor,

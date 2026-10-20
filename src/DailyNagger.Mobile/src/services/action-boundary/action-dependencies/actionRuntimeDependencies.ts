@@ -6,7 +6,7 @@ import type {
   taskInputActions,
 } from "@/services/actions";
 
-type ServicePackages = ReturnType<typeof createActionRuntimeDependencies>;
+export type ServicePackages = ReturnType<typeof createActionRuntimeDependencies>;
 
 export type ServicePackageName = keyof ServicePackages;
 
@@ -29,11 +29,13 @@ export function createActionRuntimeDependencies(inputs: RuntimeDependencyInputs)
     "editor/action": {
       cultureSettings: inputs.cultureSettings,
       memory: inputs.editorMemory,
+      undoHistory: inputs.editorUndoHistory,
     } satisfies editorActions.EditorRuntimeDependencies,
     "editor/session": {
       editorMemory: inputs.editorMemory,
       planMemory: inputs.planMemory,
       sending: inputs.sending,
+      undoHistory: inputs.editorUndoHistory,
     } satisfies editorSessionActions.EditorSessionRuntimeDependencies,
   };
 }

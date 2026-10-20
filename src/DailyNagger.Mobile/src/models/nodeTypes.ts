@@ -7,6 +7,11 @@ export type Tree = NagPlan;
 
 export type TreePath = TreeNode[];
 
+export type TreeWithSelection = {
+  readonly tree: Tree;
+  readonly selectedPath: TreePath;
+};
+
 export type RecordedPath = TreePath;
 
 export type SelectedNodeType = TreeNode["nodeType"] | null;

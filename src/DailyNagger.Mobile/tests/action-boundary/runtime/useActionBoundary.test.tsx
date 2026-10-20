@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { renderHook } from "@testing-library/react-native";
 import { registerAction } from "@/services/action-boundary/register/actionRegistrationModel";
+import { createActionRuntimeDependencies } from "@/services/action-boundary/action-dependencies";
 import { useActionBoundary } from "@/services/action-boundary/useActionBoundary";
 import { useRef } from "react";
 import type { MiddlewareExecutionContext } from "@/middleware";
@@ -51,17 +52,19 @@ describe("useActionBoundary", () => {
     const actionSequenceRef = { current: 0 };
     const renderedActions = await renderHook(
       (planMemory: Memory) =>
-        useActionBoundary(registry, {
-          ...otherInputs,
-          registryName: "plan-screen",
-          actionSequenceRef,
-          planMemory,
-          middlewareWrapperFunction: (context, run) => {
-            argumentsReceivedByWrapper = context.actionArguments;
-            servicesReceivedByWrapper = context.serviceDependencies;
-            return run();
+        useActionBoundary(
+          "plan-screen",
+          registry,
+          createActionRuntimeDependencies({ ...otherInputs, planMemory }),
+          {
+            actionSequenceRef,
+            middlewareWrapperFunction: (context, run) => {
+              argumentsReceivedByWrapper = context.actionArguments;
+              servicesReceivedByWrapper = context.serviceDependencies;
+              return run();
+            },
           },
-        }),
+        ).proxyActionsForCards,
       { initialProps: firstMemory },
     );
 
@@ -88,7 +91,7 @@ describe("useActionBoundary", () => {
     const contexts: MiddlewareExecutionContext[] = [];
 
     const registry = {
-      example: {
+      dial: {
         run: registerAction(
           (_args: Record<string, never>, _services: ServicePackage<"plan/navigation">) => {},
           "plan/navigation",
@@ -107,7 +110,6 @@ describe("useActionBoundary", () => {
       const actionSequenceRef = useRef(0);
       const actionEvents = useEventEmitter<ActionExecutionEventType, ActionExecutionEvent>();
       const props = {
-        ...inputs,
         actionSequenceRef,
         middlewareWrapperFunction: <TResult,>(
           context: MiddlewareExecutionContext,
@@ -119,27 +121,32 @@ describe("useActionBoundary", () => {
         },
         actionEvents,
       };
+      const servicePackages = createActionRuntimeDependencies(inputs);
       return {
         sequenceRef: actionSequenceRef,
         events: actionEvents,
-        screen: useActionBoundary(registry, { ...props, registryName: "plan-screen" }),
-        menu: useActionBoundary(registry, { ...props, registryName: "plan-menu" }),
+        screen: useActionBoundary("plan-screen", registry, servicePackages, props)
+          .proxyActionsForCards,
+        menu: useActionBoundary("plan-menu", registry, servicePackages, props)
+          .proxyActionsForDialMenu,
       };
     });
     const firstSequenceRef = result.current.sequenceRef;
-    result.current.screen.example.run({});
-    result.current.menu.example.run({});
+    const firstMenuActions = result.current.menu;
+    result.current.screen.dial.run({});
+    result.current.menu.run({});
     await rerender(undefined);
     expect(result.current.sequenceRef).toBe(firstSequenceRef);
-    result.current.screen.example.run({});
+    expect(result.current.menu).toBe(firstMenuActions);
+    result.current.screen.dial.run({});
     const emit = jest.spyOn(result.current.events, "emit");
     failBeforeAction = true;
-    expect(() => result.current.menu.example.run({})).toThrow("wrapper failed");
+    expect(() => result.current.menu.run({})).toThrow("wrapper failed");
     expect(contexts.map((context) => context.causalityKey)).toEqual([
-      "action:1|name:plan-screen/example/run|time:2026-10-11T00:14:03.127Z",
-      "action:2|name:plan-menu/example/run|time:2026-10-11T00:14:03.127Z",
-      "action:3|name:plan-screen/example/run|time:2026-10-11T00:14:03.127Z",
-      "action:4|name:plan-menu/example/run|time:2026-10-11T00:14:03.127Z",
+      "action:1|name:plan-screen/dial/run|time:2026-10-11T00:14:03.127Z",
+      "action:2|name:plan-menu/dial/run|time:2026-10-11T00:14:03.127Z",
+      "action:3|name:plan-screen/dial/run|time:2026-10-11T00:14:03.127Z",
+      "action:4|name:plan-menu/dial/run|time:2026-10-11T00:14:03.127Z",
     ]);
     expect(emit).toHaveBeenCalledWith(
       "action-failed",

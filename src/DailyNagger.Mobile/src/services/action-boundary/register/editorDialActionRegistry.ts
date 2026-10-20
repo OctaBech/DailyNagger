@@ -3,6 +3,8 @@ import { registerAction } from "./actionRegistrationModel";
 
 export const editorDialActionRegistry = {
   dial: {
+    undoEdit: registerAction(editorActions.editorUndoEdit, "editor/action"),
+    redoEdit: registerAction(editorActions.editorRedoEdit, "editor/action"),
     cancelEdit: registerAction(editorSessionActions.editorCancelEdit, "editor/session"),
     deleteSelectedNode: registerAction(editorActions.editorDeleteSelectedNode, "editor/action"),
     moveSelectedNodeDown: registerAction(editorActions.editorMoveSelectedNodeDown, "editor/action"),

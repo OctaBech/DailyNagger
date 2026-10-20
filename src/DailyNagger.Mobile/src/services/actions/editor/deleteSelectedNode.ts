@@ -6,8 +6,10 @@ export function editorDeleteSelectedNode(
   args: {
     readonly deleteContext: SelectedDeleteContext;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { branch, tree } = treeOperations;
   const { freshTree, freshNode } = tree.readNode(memory, args.deleteContext.selectedNode);
   const result = isTaskEntry(freshNode)

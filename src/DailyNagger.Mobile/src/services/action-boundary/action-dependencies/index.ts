@@ -1,2 +1,7 @@
-export type { ServicePackageName, ServicePackage } from "./actionRuntimeDependencies";
+export { createActionRuntimeDependencies } from "./actionRuntimeDependencies";
+export type {
+  ServicePackages,
+  ServicePackageName,
+  ServicePackage,
+} from "./actionRuntimeDependencies";
 export type { RuntimeDependencyInputs } from "./runtimeDependencyInputs";

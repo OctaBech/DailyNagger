@@ -6,8 +6,10 @@ export function editorDeleteOnceTaskItem(
   args: {
     readonly taskItem: TaskItem;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, branch } = treeOperations;
   const { freshTree, freshTaskItem } = tree.readTaskItem(memory, args.taskItem);
 

@@ -1,6 +1,6 @@
 import type { Prettify } from "@/shared";
-import { useCallback, useState } from "react";
-import { createStore, useStore } from "zustand";
+import { useState } from "react";
+import { createStore } from "zustand";
 
 type UndoHistoryState<TChange> = {
   readonly undoStack: readonly TChange[];
@@ -9,8 +9,10 @@ type UndoHistoryState<TChange> = {
 
 type UndoHistoryStore<TChange> = UndoHistoryState<TChange> & {
   readonly record: (change: TChange) => void;
-  readonly undo: () => TChange | null;
-  readonly redo: () => TChange | null;
+  readonly undo: (currentState: TChange) => TChange;
+  readonly redo: (currentState: TChange) => TChange;
+  readonly canUndo: () => boolean;
+  readonly canRedo: () => boolean;
   readonly clear: () => void;
 };
 
@@ -24,29 +26,35 @@ function createUndoHistoryStore<TChange>() {
         redoStack: [],
       }));
     },
-    undo() {
+    undo(currentState: TChange) {
       const change = get().undoStack.at(-1);
 
-      if (change === undefined) return null;
+      if (change === undefined) throw new Error("Cannot undo: undo history is empty.");
 
       set((state) => ({
         undoStack: state.undoStack.slice(0, -1),
-        redoStack: [...state.redoStack, change],
+        redoStack: [...state.redoStack, currentState],
       }));
 
       return change;
     },
-    redo() {
+    redo(currentState: TChange) {
       const change = get().redoStack.at(-1);
 
-      if (change === undefined) return null;
+      if (change === undefined) throw new Error("Cannot redo: redo history is empty.");
 
       set((state) => ({
-        undoStack: [...state.undoStack, change],
+        undoStack: [...state.undoStack, currentState],
         redoStack: state.redoStack.slice(0, -1),
       }));
 
       return change;
+    },
+    canUndo() {
+      return get().undoStack.length > 0;
+    },
+    canRedo() {
+      return get().redoStack.length > 0;
     },
     clear() {
       set({
@@ -59,36 +67,15 @@ function createUndoHistoryStore<TChange>() {
 
 export function useUndoHistory<TChange>() {
   const [historyStore] = useState(() => createUndoHistoryStore<TChange>());
-  const { undoStack, redoStack } = useStore(historyStore);
 
-  const record = useCallback(
-    (change: TChange) => {
-      historyStore.getState().record(change);
-    },
-    [historyStore],
-  );
-
-  const undo = useCallback(() => {
-    return historyStore.getState().undo();
-  }, [historyStore]);
-
-  const redo = useCallback(() => {
-    return historyStore.getState().redo();
-  }, [historyStore]);
-
-  const clear = useCallback(() => {
-    historyStore.getState().clear();
-  }, [historyStore]);
+  const { record, undo, redo, canUndo, canRedo, clear } = historyStore.getState();
 
   return {
-    state: {
-      canUndo: undoStack.length > 0,
-      canRedo: redoStack.length > 0,
-      hasChanges: undoStack.length > 0,
-    },
     record,
     undo,
     redo,
+    canUndo,
+    canRedo,
     clear,
   };
 }

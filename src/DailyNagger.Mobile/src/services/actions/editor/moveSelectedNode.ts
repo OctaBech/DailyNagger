@@ -8,12 +8,14 @@ export function moveSelectedNode(
   args: {
     readonly moveContext: SelectedMoveContext;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
   direction: MoveDirection,
 ): void {
   if (direction === "up" && args.moveContext.selectedIndex === 0) return;
   if (direction === "down" && args.moveContext.selectedIndex === args.moveContext.siblingCount - 1)
     return;
+
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
 
   const { node, tree } = treeOperations;
   const { freshTree, freshNode: parentNodeV1 } = tree.readNode(memory, args.moveContext.parentNode);

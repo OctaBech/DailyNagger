@@ -6,8 +6,10 @@ export function addTaskItemToTaskLog(
   args: {
     readonly taskLog: TaskLog;
   },
-  { memory }: EditorRuntimeDependencies,
+  { memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, branch, node } = treeOperations;
 
   const { freshTree, freshTaskLog } = tree.readTaskLog(memory, args.taskLog);

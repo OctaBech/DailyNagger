@@ -8,8 +8,10 @@ export function editorNaggerSetScheduleRules(
     readonly nagger: Nagger;
     readonly scheduleRules: readonly ScheduleRule[];
   },
-  { cultureSettings, memory }: EditorRuntimeDependencies,
+  { cultureSettings, memory, undoHistory }: EditorRuntimeDependencies,
 ): void {
+  undoHistory.record(memory.read.getTreeAndSelectedPath());
+
   const { tree, node } = treeOperations;
   const { freshTree, freshNagger } = tree.readNagger(memory, args.nagger);
   const activeLogDueOn = scheduleCalculator.getNextDueOn(
