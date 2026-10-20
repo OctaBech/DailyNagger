@@ -20,6 +20,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
     <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.8" />
+    <!-- Override the vulnerable transitive version until upstream dependencies update it. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
     <PackageReference Include="Sentry.AspNetCore" Version="6.9.0" />
     <PackageReference Include="Sentry.Serilog" Version="6.9.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
