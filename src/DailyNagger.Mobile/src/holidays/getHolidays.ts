@@ -19,7 +19,7 @@ export function getHolidays(
   const lastDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 1, 0)).getUTCDate();
   end.setUTCDate(Math.min(day, lastDay));
   const endDate = end.toISOString().slice(0, 10);
-  const provider = new Holidays(country, { languages: "en" });
+  const provider = new Holidays(country);
   const years = Array.from({ length: end.getUTCFullYear() - year + 1 }, (_, index) => year + index);
 
   return years

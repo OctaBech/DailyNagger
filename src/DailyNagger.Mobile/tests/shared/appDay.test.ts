@@ -67,6 +67,6 @@ describe("app day", () => {
   it("lets date formatting use the app date by default", () => {
     jest.useFakeTimers().setSystemTime(new Date(2026, 9, 20, 2));
     expect(formatDueDate("2026-10-19", "section")).toBe("Today · Monday, 19 Oct");
-    expect(formatDueDate("2026-10-20", "card")).toBe("Due Tue, 20 Oct (tomorrow)");
+    expect(formatDueDate("2026-10-20", "card")).toBe("Due tomorrow");
   });
 });

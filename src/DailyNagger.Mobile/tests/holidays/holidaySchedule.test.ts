@@ -31,21 +31,21 @@ function next(holidayId: string, from: string, countryCode = "DK") {
 
 describe("holiday selections from the modal", () => {
   it("calculates a newly selected package name", () => {
-    expect(next("Easter Sunday", "2026-10-22")).toBe("2027-03-28");
-    expect(next("Christmas Eve", "2026-12-24")).toBe("2026-12-24");
+    expect(next("Påskedag", "2026-10-22")).toBe("2027-03-28");
+    expect(next("Juleaftensdag", "2026-12-24")).toBe("2026-12-24");
   });
 
   it("finds next year's occurrence after the date has passed", () => {
-    expect(next("Christmas Eve", "2026-12-25")).toBe("2027-12-24");
+    expect(next("Juleaftensdag", "2026-12-25")).toBe("2027-12-24");
   });
 
   it("builds from the calculation's date, not the current clock", () => {
-    expect(next("Christmas Eve", "2031-10-22")).toBe("2031-12-24");
+    expect(next("Juleaftensdag", "2031-10-22")).toBe("2031-12-24");
   });
 
   it("uses the selected country and rejects missing matches", () => {
     expect(next("Independence Day", "2026-10-22", "US")).toBe("2027-07-04");
     expect(next("Independence Day", "2026-10-22")).toBeNull();
-    expect(next("Christmas Eve", "2026-10-22", "unknown")).toBeNull();
+    expect(next("Juleaftensdag", "2026-10-22", "unknown")).toBeNull();
   });
 });

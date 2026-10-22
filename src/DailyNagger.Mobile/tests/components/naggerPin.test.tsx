@@ -20,7 +20,7 @@ describe("nagger thumbtack", () => {
     expect(StyleSheet.flatten(marker.props.style).top).toBeLessThan(0);
     const svg = marker.props.children as ReactElement<{ xml: string; width: number }>;
     expect(svg.type).toBe(SvgXml);
-    expect(svg.props.width).toBe(32);
+    expect(svg.props.width).toBe(36);
     expect(svg.props.xml).toContain("feGaussianBlur");
   });
 

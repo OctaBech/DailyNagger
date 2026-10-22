@@ -4,12 +4,14 @@ import { formatDueDate } from "@/app-day";
 describe("formatDueDate", () => {
   it("formats section and card text from the same dates", () => {
     expect(formatDueDate("2026-10-23", "section", "2026-10-20")).toBe("In 3 days · Friday, 23 Oct");
-    expect(formatDueDate("2026-10-23", "card", "2026-10-20")).toBe("Due Fri, 23 Oct (in 3 days)");
+    expect(formatDueDate("2026-10-23", "card", "2026-10-20")).toBe("Due Fri, 23 Oct 3Days");
   });
 
   it("uses today and tomorrow relative to the supplied app date", () => {
+    expect(formatDueDate("2026-10-20", "card", "2026-10-20")).toBe("Due today");
+    expect(formatDueDate("2026-10-24", "card", "2026-10-22")).toBe("Due Sat, 24 Oct 2Days");
     expect(formatDueDate("2026-10-20", "section", "2026-10-20")).toBe("Today · Tuesday, 20 Oct");
-    expect(formatDueDate("2026-10-21", "card", "2026-10-20")).toBe("Due Wed, 21 Oct (tomorrow)");
+    expect(formatDueDate("2026-10-21", "card", "2026-10-20")).toBe("Due tomorrow");
   });
 
   it("labels undated cards and sections without inventing a due date", () => {
@@ -18,8 +20,9 @@ describe("formatDueDate", () => {
   });
 
   it("handles past dates without a negative countdown", () => {
+    expect(formatDueDate("2026-10-19", "card", "2026-10-20")).toBe("Due Mon, 19 Oct 1Day ago");
     expect(formatDueDate("2026-10-19", "section", "2026-10-20")).toBe("Yesterday · Monday, 19 Oct");
-    expect(formatDueDate("2026-10-17", "card", "2026-10-20")).toBe("Due Sat, 17 Oct (3 days ago)");
+    expect(formatDueDate("2026-10-17", "card", "2026-10-20")).toBe("Due Sat, 17 Oct 3Days ago");
   });
 
   it("counts calendar days across month, year, and daylight-saving boundaries", () => {
