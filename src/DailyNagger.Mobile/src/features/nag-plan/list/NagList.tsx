@@ -131,7 +131,7 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
           }
 
           if (item.kind === "holiday") {
-            return <Text style={styles.holidayText}>{item.holiday.name}</Text>;
+            return <Text style={styles.holidayText}>🇩🇰 {item.holiday.name}</Text>;
           }
 
           const onMeasured =

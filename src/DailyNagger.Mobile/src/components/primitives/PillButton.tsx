@@ -19,7 +19,7 @@ export function PillButton({
   onPress,
 }: PillButtonProps) {
   return (
-    <Pressable onPress={onPress}>
+    <Pressable hitSlop={6} onPress={onPress}>
       <Text
         selectable={false}
         numberOfLines={1}
@@ -47,10 +47,11 @@ const styles = StyleSheet.create({
     color: "#243947",
     fontSize: 14,
     fontWeight: "900",
+    lineHeight: 20,
     minWidth: 42,
     overflow: "hidden",
     paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingVertical: 3,
     textAlign: "center",
   },
   emptyPill: {
