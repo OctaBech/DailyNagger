@@ -4,9 +4,9 @@ import { Keyboard } from "react-native";
 import type { ReactNode } from "react";
 import type { Nagger } from "@/models/clientModel";
 import { createEventEmitter } from "@/shared/useEventEmitter";
-import { PlanFilterRequestsProvider } from "@/features/nag-plan/filter/PlanFilterRequests";
-import { usePlanTitleFilter } from "@/features/nag-plan/filter/usePlanTitleFilter";
-import { filterNaggersByTitle } from "@/features/nag-plan/filter/filterNaggersByTitle";
+import { PlanFilterRequestsProvider } from "@/features/nag-plan/list/filter/PlanFilterRequests";
+import { usePlanTitleFilter } from "@/features/nag-plan/list/filter/usePlanTitleFilter";
+import { filterNaggersByTitle } from "@/features/nag-plan/list/filter/filterNaggersByTitle";
 
 describe("plan title filtering", () => {
   const gym = { title: "Gym [A]", pinnedBy: "User", clientProps: { isSelected: true } } as Nagger;

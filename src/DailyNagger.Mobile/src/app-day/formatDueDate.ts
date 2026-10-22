@@ -7,9 +7,14 @@ const weekdayFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
+const shortWeekdayFormatter = new Intl.DateTimeFormat("en-GB", {
+  weekday: "short",
+  timeZone: "UTC",
+});
+
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
-  month: "long",
+  month: "short",
   timeZone: "UTC",
 });
 
@@ -30,7 +35,8 @@ export function formatDueDate(
   // UTC calendar dates avoid 23/25-hour days when daylight saving time changes.
   const daysUntil = (dueTime - todayTime) / 86_400_000;
   const dueDate = new Date(dueTime);
-  const dateLabel = `${weekdayFormatter.format(dueDate)}, ${dateFormatter.format(dueDate)}`;
+  const weekday = mode === "card" ? shortWeekdayFormatter : weekdayFormatter;
+  const dateLabel = `${weekday.format(dueDate)}, ${dateFormatter.format(dueDate)}`;
   const relativeLabel = getRelativeLabel(daysUntil);
 
   if (mode === "card") return `Due ${dateLabel} (${relativeLabel})`;

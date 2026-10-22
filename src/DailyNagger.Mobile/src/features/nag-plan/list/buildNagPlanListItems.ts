@@ -1,8 +1,10 @@
 import type { Nagger } from "@/models";
-import { orderNaggersForPlanList } from "@/models";
+import type { Holiday } from "@/holidays";
+import type { NagPlanEntry } from "./zipNaggersAndHolidays";
 import { formatDueDate, getCurrentAppDate, getTimeSection } from "@/app-day";
 
 export type NagPlanListItem =
+  | { readonly kind: "holiday"; readonly id: string; readonly holiday: Holiday }
   | {
       readonly kind: "date-section";
       readonly id: string;
@@ -21,28 +23,38 @@ export type NagPlanListItem =
     };
 
 export function buildNagPlanListItems(
-  nags: readonly Nagger[],
+  entries: readonly NagPlanEntry[],
   today: string = getCurrentAppDate(),
 ): readonly NagPlanListItem[] {
-  const sortedNaggers = orderNaggersForPlanList(nags);
   const items: NagPlanListItem[] = [];
   let previousDueOn: string | null | undefined = undefined;
   let previousSectionId: string | null = null;
 
-  for (const nagger of sortedNaggers) {
-    const isPinned = nagger.pinnedBy !== "None";
+  for (const entry of entries) {
+    const isPinned = entry.kind === "nagger" && entry.nagger.pinnedBy !== "None";
+    const dueOn = entry.kind === "holiday" ? entry.holiday.date : entry.nagger.activeLogDueOn;
 
+    if (!isPinned && dueOn !== previousDueOn) {
+      items.push({
+        kind: "date-section",
+        id: `date-section:${dueOn ?? "unscheduled"}`,
+        title: formatDueDate(dueOn, "section", today),
+      });
+      previousDueOn = dueOn;
+      previousSectionId = null;
+    }
+
+    if (entry.kind === "holiday") {
+      items.push({
+        kind: "holiday",
+        id: `holiday:${entry.holiday.date}:${entry.holiday.name}`,
+        holiday: entry.holiday,
+      });
+      continue;
+    }
+
+    const { nagger } = entry;
     if (!isPinned) {
-      if (nagger.activeLogDueOn !== previousDueOn) {
-        items.push({
-          kind: "date-section",
-          id: `date-section:${nagger.activeLogDueOn ?? "unscheduled"}`,
-          title: formatDueDate(nagger.activeLogDueOn, "section", today),
-        });
-        previousDueOn = nagger.activeLogDueOn;
-        previousSectionId = null;
-      }
-
       if (nagger.activeLogDueOn !== null) {
         const section = getTimeSection(nagger.targetTime);
 

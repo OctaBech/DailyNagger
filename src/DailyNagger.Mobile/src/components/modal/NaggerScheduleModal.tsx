@@ -1,13 +1,15 @@
+import {
+  getHolidays,
+  getHolidayNames,
+  holidayCountries,
+  type HolidayCountryCode,
+} from "@/holidays";
 import { useMemo, useState } from "react";
 import {
   SCHEDULE_EVERY,
   SCHEDULE_LAST_DAY,
   SCHEDULE_LAST_POSITION,
-  getHolidayDefinition,
-  getHolidayDefinitions,
   getScheduleRuleKey,
-  holidayCountries,
-  type HolidayCountryCode,
   type Nagger,
   type ScheduleRule,
   type ScheduleWeekday,
@@ -116,11 +118,10 @@ const dayOfMonthWheelOptions = dayOfMonthRules.map((rule) => ({
 }));
 
 const defaultHolidayCountryCode: HolidayCountryCode = "DK";
-const defaultHolidayId = getHolidayDefinitions(defaultHolidayCountryCode)[0]?.holidayId ?? "";
 
 const holidayCountryWheelOptions = holidayCountries.map((country) => ({
-  label: country.label,
-  value: country.value,
+  label: country,
+  value: country,
 }));
 
 const holidaySortOptions = [
@@ -156,25 +157,22 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
   const [selectedDateDayOfMonth, setSelectedDateDayOfMonth] = useState(SCHEDULE_EVERY);
   const [selectedHolidayCountryCode, setSelectedHolidayCountryCode] =
     useState<HolidayCountryCode>(defaultHolidayCountryCode);
-  const [selectedHolidayId, setSelectedHolidayId] = useState(defaultHolidayId);
+  const [selectedHolidayId, setSelectedHolidayId] = useState(
+    () => getHolidayNames(defaultHolidayCountryCode)[0] ?? "",
+  );
   const [holidaySearchText, setHolidaySearchText] = useState("");
 
   const [draftRules, setDraftRules] = useState<readonly ScheduleRule[]>(nagger.scheduleRules);
   const [activeRuleKey, setActiveRuleKey] = useState<string | null>(null);
   const previewDueOn = getPreviewDueOn(draftRules);
-  const holidayOptions = useMemo<readonly SheetNarrowBeltOption<string>[]>(
-    () =>
-      getHolidayDefinitions(selectedHolidayCountryCode).map((holiday) => {
-        const holidayDate = holiday.getDate(currentYear);
-
-        return {
-          date: holidayDate.toISOString().slice(0, 10),
-          label: holiday.label,
-          value: holiday.holidayId,
-        };
-      }),
-    [selectedHolidayCountryCode],
-  );
+  const holidayOptions = useMemo<readonly SheetNarrowBeltOption<string>[]>(() => {
+    const holidays = getHolidays(selectedHolidayCountryCode);
+    return getHolidayNames(selectedHolidayCountryCode).map((name) => ({
+      date: holidays.find((holiday) => holiday.name === name)?.date,
+      label: name,
+      value: name,
+    }));
+  }, [selectedHolidayCountryCode]);
 
   function createWeekdayScheduleRule(): ScheduleRule {
     return {
@@ -308,7 +306,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
 
   function changeSelectedHolidayCountryCode(countryCode: HolidayCountryCode): void {
     setSelectedHolidayCountryCode(countryCode);
-    setSelectedHolidayId(getHolidayDefinitions(countryCode)[0]?.holidayId ?? "");
+    setSelectedHolidayId(getHolidayNames(countryCode)[0] ?? "");
     setHolidaySearchText("");
     setActiveRuleKey(null);
   }
@@ -531,7 +529,7 @@ function getScheduleRuleText(rule: ScheduleRule): string {
     case "Date":
       return getDateRuleText(rule);
     case "Holiday":
-      return getHolidayRuleText(rule);
+      return rule.rule.holidayId;
   }
 }
 
@@ -575,10 +573,6 @@ function getDateRuleText(rule: Extract<ScheduleRule, { ruleType: "Date" }>): str
   ].filter((label) => label !== null);
 
   return labels.length === 0 ? "Every" : labels.join(" ");
-}
-
-function getHolidayRuleText(rule: Extract<ScheduleRule, { ruleType: "Holiday" }>): string {
-  return getHolidayDefinition(rule.rule.countryCode, rule.rule.holidayId)?.label ?? "Holiday";
 }
 
 function getDayOfMonthLabel(dayOfMonth: number): string {

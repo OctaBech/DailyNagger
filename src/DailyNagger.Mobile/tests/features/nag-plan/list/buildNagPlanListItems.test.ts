@@ -1,6 +1,12 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import type { Nagger } from "@/models/clientModel";
-import { buildNagPlanListItems } from "@/features/nag-plan/buildNagPlanListItems";
+import { buildNagPlanListItems as buildEntries } from "@/features/nag-plan/list/buildNagPlanListItems";
+
+import { zipNaggersAndHolidays } from "@/features/nag-plan/list/zipNaggersAndHolidays";
+
+function buildNagPlanListItems(naggers: readonly Nagger[], today: string) {
+  return buildEntries(zipNaggersAndHolidays(naggers, []), today);
+}
 
 jest.mock("uuid", () => ({ v7: () => "unused-test-id" }));
 
@@ -28,8 +34,8 @@ describe("plan section headers", () => {
       "2026-10-20",
     );
     expect(items.filter((item) => item.kind === "date-section").map((item) => item.title)).toEqual([
-      "Today · Tuesday, 20 October",
-      "Tomorrow · Wednesday, 21 October",
+      "Today · Tuesday, 20 Oct",
+      "Tomorrow · Wednesday, 21 Oct",
     ]);
     expect(items.filter((item) => item.kind === "time-section").map((item) => item.title)).toEqual([
       "Morning",
@@ -54,7 +60,7 @@ describe("plan section headers", () => {
       "2026-10-20",
     );
     expect(items.filter((item) => item.kind === "date-section").map((item) => item.title)).toEqual([
-      "Today · Tuesday, 20 October",
+      "Today · Tuesday, 20 Oct",
       "No scheduled date",
     ]);
     expect(buildNagPlanListItems([], "2026-10-20")).toEqual([]);

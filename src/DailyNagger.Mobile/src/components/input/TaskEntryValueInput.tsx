@@ -85,7 +85,7 @@ function getPlaceholderForValueType(taskEntry: TaskEntry, decimalSeparator: stri
 
   if (referenceValue !== null) {
     return taskEntry.valueType === "Decimal"
-      ? referenceValue.replace(".", decimalSeparator)
+      ? formatDecimalHint(referenceValue, decimalSeparator)
       : referenceValue;
   }
 
@@ -93,7 +93,7 @@ function getPlaceholderForValueType(taskEntry: TaskEntry, decimalSeparator: stri
     case "Boolean":
       return "false";
     case "Decimal":
-      return `0${decimalSeparator}00`;
+      return `0${decimalSeparator}0`;
     case "Integer":
       return "0";
     case "Text":
@@ -101,6 +101,17 @@ function getPlaceholderForValueType(taskEntry: TaskEntry, decimalSeparator: stri
     default:
       assertNever(taskEntry.valueType);
   }
+}
+
+function formatDecimalHint(value: string, decimalSeparator: string): string {
+  const parsed = parseDecimalDraft(value, ".");
+  if (!parsed.accepted || parsed.commitValue === null) {
+    return value.replace(".", decimalSeparator);
+  }
+
+  // Preserve existing precision and non-decimal notation; only add a missing decimal digit.
+  const hint = value.endsWith(".") ? `${value}0` : /^[+-]?\d+$/.test(value) ? `${value}.0` : value;
+  return hint.replace(".", decimalSeparator);
 }
 
 function booleanInput(props: TaskEntryValueInputProps) {
