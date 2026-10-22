@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: 8,
-    justifyContent: "center",
+    justifyContent: "flex-end",
   },
   label: {
     color: nagPlanTheme.taskEntry.inputText,

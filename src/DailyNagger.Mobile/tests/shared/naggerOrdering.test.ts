@@ -2,7 +2,8 @@ import { describe, expect, it, jest } from "@jest/globals";
 import type { Nagger } from "@/models/clientModel";
 import { orderNaggersForPlanList } from "@/models/naggerOrdering";
 import { getTargetMinuteSortValue } from "@/app-day";
-import { buildNagPlanListItems } from "@/features/nag-plan/buildNagPlanListItems";
+import { buildNagPlanListItems } from "@/features/nag-plan/list/buildNagPlanListItems";
+import { zipNaggersAndHolidays } from "@/features/nag-plan/list/zipNaggersAndHolidays";
 
 jest.mock("uuid", () => ({ v7: () => "unused-test-id" }));
 
@@ -48,11 +49,16 @@ describe("plan ordering from the rollover day boundary", () => {
   });
 
   it("keeps both sides of midnight together in the existing Night section", () => {
-    const items = buildNagPlanListItems([
-      nagger("after-midnight", "02:00"),
-      nagger("morning", "08:00"),
-      nagger("before-midnight", "21:00"),
-    ]);
+    const items = buildNagPlanListItems(
+      zipNaggersAndHolidays(
+        [
+          nagger("after-midnight", "02:00"),
+          nagger("morning", "08:00"),
+          nagger("before-midnight", "21:00"),
+        ],
+        [],
+      ),
+    );
     expect(items.filter((item) => item.kind === "time-section").map((item) => item.title)).toEqual([
       "Morning",
       "Night",

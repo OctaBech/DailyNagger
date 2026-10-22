@@ -17,7 +17,7 @@ import { ModalKeyboardBoundaryProvider } from "./modal-keyboard-boundary";
 import { appLayout, debugConfig, userMoodConfig } from "@/config";
 import { SendingPromptOverlay } from "./sending-prompt";
 import { useEventEmitter } from "@/shared/useEventEmitter";
-import { PlanFilterRequestsProvider } from "@/features/nag-plan/filter/PlanFilterRequests";
+import { PlanFilterRequestsProvider } from "@/features/nag-plan/list/filter/PlanFilterRequests";
 
 type AppShellProps = {
   children: ReactNode;

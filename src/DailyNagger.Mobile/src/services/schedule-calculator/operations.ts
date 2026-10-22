@@ -1,8 +1,8 @@
+import { getHolidays } from "@/holidays";
 import {
   SCHEDULE_EVERY,
   SCHEDULE_LAST_DAY,
   SCHEDULE_LAST_POSITION,
-  getHolidayDefinition,
   type DateScheduleRuleBody,
   type HolidayScheduleRuleBody,
   type WeekdayScheduleRuleBody,
@@ -90,19 +90,13 @@ function getNextHolidayOccurrence(
   fromDate: Date,
   cultureSettings: CultureSettings,
 ): string | null {
-  const holiday = getHolidayDefinition(rule.countryCode, rule.holidayId);
-
-  if (holiday === null) return null;
-
-  for (let yearOffset = 0; yearOffset < 10; yearOffset++) {
-    const candidate = holiday.getDate(fromDate.getFullYear() + yearOffset);
-
-    if (candidate >= fromDate) {
-      return cultureSettings.toLocalIsoDate(candidate);
-    }
-  }
-
-  return null;
+  if (rule.countryCode !== "DK" && rule.countryCode !== "US") return null;
+  const fromDateText = cultureSettings.toLocalIsoDate(fromDate);
+  return (
+    getHolidays(rule.countryCode, fromDateText).find(
+      (candidate) => candidate.name === rule.holidayId,
+    )?.date ?? null
+  );
 }
 
 function getWeekdayCandidate(

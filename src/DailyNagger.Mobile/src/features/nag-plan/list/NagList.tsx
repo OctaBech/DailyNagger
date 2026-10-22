@@ -5,11 +5,11 @@ import type { Nagger } from "@/models";
 import * as Components from "@/components";
 import * as Input from "@/components/input";
 import { DateSectionHeader, TimeSectionHeader } from "@/components/primitives";
-import { NagCard } from "./cards";
-import { nagPlanTheme } from "./theme";
-import { buildNagPlanListItems, type NagPlanListItem } from "./buildNagPlanListItems";
+import { NagCard } from "../cards";
+import { nagPlanTheme } from "../theme";
+import type { NagPlanListItem } from "./buildNagPlanListItems";
+import { useNagPlanListItems } from "./useNagPlanListItems";
 import { usePlanTitleFilter } from "./filter/usePlanTitleFilter";
-import { filterNaggersByTitle } from "./filter/filterNaggersByTitle";
 import { PlanFilterBar } from "./filter/PlanFilterBar";
 
 type NagListProps = {
@@ -29,11 +29,7 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
   const { height: screenHeight } = useWindowDimensions();
   const bottomComfortSpace = screenHeight;
   const filter = usePlanTitleFilter();
-  const filteredNags = useMemo(
-    () => filterNaggersByTitle(nags, filter.query),
-    [nags, filter.query],
-  );
-  const listItems = useMemo(() => buildNagPlanListItems(filteredNags), [filteredNags]);
+  const listItems = useNagPlanListItems(nags, filter.query);
   const selectedNaggerId = useMemo(
     () => nags.find((nagger) => nagger.clientProps.isSelected)?.id ?? null,
     [nags],
@@ -134,6 +130,10 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
             return <TimeSectionHeader title={item.title} rangeLabel={item.rangeLabel} />;
           }
 
+          if (item.kind === "holiday") {
+            return <Text style={styles.holidayText}>{item.holiday.name}</Text>;
+          }
+
           const onMeasured =
             item.nagger.id === selectedNaggerId
               ? (topY: number) => measureSelectedNagger(item.nagger, topY)
@@ -166,6 +166,13 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
 export const NagList = memo(NagListComponent);
 
 const styles = StyleSheet.create({
+  holidayText: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    color: nagPlanTheme.nagger.titleText,
+    fontSize: 15,
+    fontWeight: "700",
+  },
   emptyText: { padding: 24, textAlign: "center", color: nagPlanTheme.nagger.titleText },
   container: {
     backgroundColor: nagPlanTheme.screen.background,

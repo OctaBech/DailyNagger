@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { Primitives } from "@/components";
 import { nagPlanTheme } from "./theme";
-import { NagList } from "./NagList";
+import { NagList } from "./list";
 import { usePlanScreenData } from "@/services";
 
 export const NagPlanScreen = () => {
