@@ -47,7 +47,7 @@ export const NaggerFrame = ({
           importantForAccessibility="no-hide-descendants"
           style={styles.pinMarker}
         >
-          <SvgXml xml={thumbTackSvg} width={32} height={30} />
+          <SvgXml xml={thumbTackSvg} width={36} height={34} />
         </View>
       )}
     </View>
@@ -73,10 +73,10 @@ const styles = StyleSheet.create({
   pinMarker: {
     position: "absolute",
     left: "50%",
-    marginLeft: -16,
-    top: -14,
-    width: 32,
-    height: 30,
+    marginLeft: -18,
+    top: -10,
+    width: 36,
+    height: 34,
     zIndex: 2,
   },
   statusLane: {

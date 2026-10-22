@@ -39,7 +39,13 @@ export function formatDueDate(
   const dateLabel = `${weekday.format(dueDate)}, ${dateFormatter.format(dueDate)}`;
   const relativeLabel = getRelativeLabel(daysUntil);
 
-  if (mode === "card") return `Due ${dateLabel} (${relativeLabel})`;
+  if (mode === "card") {
+    if (daysUntil === 0) return "Due today";
+    if (daysUntil === 1) return "Due tomorrow";
+    const days = Math.abs(daysUntil);
+    const countdown = `${days}Day${days === 1 ? "" : "s"}`;
+    return `Due ${dateLabel} ${countdown}${daysUntil < 0 ? " ago" : ""}`;
+  }
 
   const sectionLabel = relativeLabel.charAt(0).toUpperCase() + relativeLabel.slice(1);
   return `${sectionLabel} · ${dateLabel}`;
