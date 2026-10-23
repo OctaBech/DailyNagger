@@ -157,9 +157,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
   const [selectedDateDayOfMonth, setSelectedDateDayOfMonth] = useState(SCHEDULE_EVERY);
   const [selectedHolidayCountryCode, setSelectedHolidayCountryCode] =
     useState<HolidayCountryCode>(defaultHolidayCountryCode);
-  const [selectedHolidayId, setSelectedHolidayId] = useState(
-    () => getHolidayNames(defaultHolidayCountryCode)[0] ?? "",
-  );
+  const [selectedHolidayId, setSelectedHolidayId] = useState<string | null>(null);
   const [holidaySearchText, setHolidaySearchText] = useState("");
 
   const [draftRules, setDraftRules] = useState<readonly ScheduleRule[]>(nagger.scheduleRules);
@@ -255,15 +253,9 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
   }
 
   function addSelectedHolidayRule(): void {
-    const selectedHolidayIdV1 = resolveHolidayIdFromSearchText(
-      holidayOptions,
-      holidaySearchText,
-      selectedHolidayId,
-    );
+    if (selectedHolidayId === null) return;
 
-    if (selectedHolidayIdV1 === "") return;
-
-    const selectedRule = createHolidayScheduleRule(selectedHolidayIdV1);
+    const selectedRule = createHolidayScheduleRule(selectedHolidayId);
     const selectedRuleKey = getScheduleRuleKey(selectedRule);
 
     if (draftRules.some((rule) => getScheduleRuleKey(rule) === selectedRuleKey)) {
@@ -306,7 +298,7 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
 
   function changeSelectedHolidayCountryCode(countryCode: HolidayCountryCode): void {
     setSelectedHolidayCountryCode(countryCode);
-    setSelectedHolidayId(getHolidayNames(countryCode)[0] ?? "");
+    setSelectedHolidayId(null);
     setHolidaySearchText("");
     setActiveRuleKey(null);
   }
@@ -445,12 +437,19 @@ function NaggerScheduleModalContent(props: NaggerScheduleModalProps) {
               highlightMode="closest-match"
               onChangeText={changeHolidaySearchText}
               onPick={pickHoliday}
+              onHighlightedValueChange={setSelectedHolidayId}
               options={holidayOptions}
               placeholder="Holiday"
               sortOptions={holidaySortOptions}
               value={holidaySearchText}
             />
-            <SheetButton area="body" label="Add" tone="primary" onPress={addSelectedHolidayRule} />
+            <SheetButton
+              area="body"
+              label="Add"
+              tone="primary"
+              disabled={selectedHolidayId === null}
+              onPress={addSelectedHolidayRule}
+            />
           </>
         )}
       </SheetSection>
@@ -483,24 +482,6 @@ function removeConflictingSimpleWeekdayRules(
   return draftRules.filter(
     (rule) => !isSimpleWeekdayRule(rule) || rule.rule.weekday !== SCHEDULE_EVERY,
   );
-}
-
-function resolveHolidayIdFromSearchText(
-  holidayOptions: readonly SheetNarrowBeltOption<string>[],
-  searchText: string,
-  fallbackHolidayId: string,
-): string {
-  const normalizedSearchText = searchText.trim().toLocaleLowerCase();
-  if (normalizedSearchText === "") return fallbackHolidayId;
-
-  const matchingHolidays = holidayOptions
-    .filter((holiday) => holiday.label.toLocaleLowerCase().includes(normalizedSearchText))
-    .sort((left, right) => left.label.localeCompare(right.label));
-  const exactHoliday = matchingHolidays.find(
-    (holiday) => holiday.label.toLocaleLowerCase() === normalizedSearchText,
-  );
-
-  return exactHoliday?.value ?? matchingHolidays[0]?.value ?? "";
 }
 
 function canDateRuleEverMatch(year: number, month: number, day: number): boolean {

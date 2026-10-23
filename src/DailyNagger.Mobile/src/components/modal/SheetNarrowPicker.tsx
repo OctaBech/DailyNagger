@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Ref } from "react";
 import type { TextInput, TextInputProps } from "react-native";
 import {
   SheetNarrowBelt,
+  getSheetNarrowOptions,
   type SheetNarrowBeltOption,
   type SheetNarrowBeltSortMode,
 } from "./SheetNarrowBelt";
@@ -20,6 +21,7 @@ type SheetNarrowPickerProps<TValue> = Omit<TextInputProps, "style"> & {
   readonly loadingText?: string;
   readonly onPick: (option: SheetNarrowBeltOption<TValue>) => void;
   readonly options: readonly SheetNarrowBeltOption<TValue>[];
+  readonly onHighlightedValueChange?: (value: TValue | null) => void;
   readonly sortOptions?: readonly SheetNarrowPickerSortOption[];
 };
 
@@ -42,6 +44,7 @@ export function SheetNarrowPicker<TValue>({
   loadErrorText,
   loadingText,
   onPick,
+  onHighlightedValueChange,
   options,
   sortOptions = defaultSortOptions,
   value,
@@ -54,6 +57,25 @@ export function SheetNarrowPicker<TValue>({
     ? sortMode
     : (sortOptions[0]?.value ?? "date");
   const inputText = `${value ?? ""}`;
+
+  const visibleOptions = useMemo(
+    () => getSheetNarrowOptions(options, inputText, activeSortMode),
+    [options, inputText, activeSortMode],
+  );
+  const highlightedOption =
+    isLoading || loadErrorText != null
+      ? null
+      : highlightMode === "closest-match"
+        ? visibleOptions[0]
+        : visibleOptions.find(
+            (option) =>
+              inputText.trim() !== "" &&
+              option.label.toLocaleLowerCase() === inputText.trim().toLocaleLowerCase(),
+          );
+  const highlightedValue = highlightedOption?.value ?? null;
+  useEffect(() => {
+    onHighlightedValueChange?.(highlightedValue);
+  }, [highlightedValue, onHighlightedValueChange, visibleOptions]);
 
   const hasExactMatch = useMemo(() => {
     const normalizedInput = inputText.trim().toLocaleLowerCase();
@@ -73,8 +95,7 @@ export function SheetNarrowPicker<TValue>({
         loadErrorText={loadErrorText}
         highlightMode={highlightMode}
         onPick={onPick}
-        options={options}
-        sortMode={activeSortMode}
+        options={visibleOptions}
       />
 
       <SheetNarrowControls

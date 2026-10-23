@@ -5,7 +5,7 @@ import { NagList } from "./list";
 import { usePlanScreenData } from "@/services";
 
 export const NagPlanScreen = () => {
-  const { moodIsSelected, nags, scroll, startup } = usePlanScreenData();
+  const { nags, scroll, startup } = usePlanScreenData();
 
   return (
     <View style={styles.screen}>
@@ -17,7 +17,7 @@ export const NagPlanScreen = () => {
           message="DailyNagger is getting ready."
           showSpinner
         />
-      ) : !moodIsSelected ? null : (
+      ) : (
         <NagList
           nags={nags}
           getScrollOffset={scroll.getOffset}
