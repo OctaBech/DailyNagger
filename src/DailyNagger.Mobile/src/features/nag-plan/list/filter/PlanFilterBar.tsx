@@ -39,14 +39,14 @@ export function PlanFilterBar({
     (duration: number = appMotion.sheetModal.keyboardSheetLiftDurationMs) => {
       const version = ++measurementVersion.current;
       translateY.stopAnimation((currentLift) => {
-        frame.current?.measureInWindow((_x, top, _width, height) => {
+        frame.current?.measure((_x, _y, _width, height, _pageX, pageY) => {
           if (version !== measurementVersion.current || frame.current === null || height <= 0)
             return;
-          const unliftedBottom = top + height - currentLift;
+          const unliftedBottom = pageY + height - currentLift;
           const overlap =
             keyboardTop.current === null
               ? 0
-              : Math.max(0, unliftedBottom + 8 - keyboardTop.current);
+              : Math.max(0, unliftedBottom + bottomOffset - keyboardTop.current);
           Animated.timing(translateY, {
             toValue: -overlap,
             duration,
@@ -55,7 +55,7 @@ export function PlanFilterBar({
         });
       });
     },
-    [translateY],
+    [bottomOffset, translateY],
   );
 
   useEffect(() => {

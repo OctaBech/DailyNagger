@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
   screen: {
     backgroundColor: stateScreenColors.background,
     flexGrow: 1,
+    justifyContent: "center",
   },
   content: {
     alignItems: "flex-start",
