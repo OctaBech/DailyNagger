@@ -20,7 +20,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
         {
             entity.ToTable("nag");
 
-            entity.HasKey(nag => nag.Id);
+            entity.HasKey(nag => new { nag.UserId, nag.Id });
 
             entity.Property(nag => nag.Id)
                 .HasColumnName("id");
@@ -76,7 +76,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.HasMany(nag => nag.ScheduleRules)
                 .WithOne()
-                .HasForeignKey(rule => rule.NagId)
+                .HasForeignKey(rule => new { rule.UserId, rule.NagId })
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(nag => new
@@ -100,7 +100,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
         {
             entity.ToTable("schedule_rule");
 
-            entity.HasKey(rule => rule.Id);
+            entity.HasKey(rule => new { rule.UserId, rule.Id });
 
             entity.Property(rule => rule.Id)
                 .HasColumnName("id");
@@ -139,7 +139,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
                     "updated_at > '0001-01-01T00:00:00+00:00'");
             });
 
-            entity.HasKey(taskLog => taskLog.Id);
+            entity.HasKey(taskLog => new { taskLog.UserId, taskLog.Id });
 
             entity.Property(taskLog => taskLog.Id)
                 .HasColumnName("id");
@@ -193,12 +193,12 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.HasOne<Nagger>()
                 .WithMany()
-                .HasForeignKey(taskLog => taskLog.NagId)
+                .HasForeignKey(taskLog => new { taskLog.UserId, taskLog.NagId })
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasMany(taskLog => taskLog.TaskItems)
                 .WithOne()
-                .HasForeignKey(taskItem => taskItem.TaskLogId)
+                .HasForeignKey(taskItem => new { taskItem.UserId, taskItem.TaskLogId })
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(taskLog => taskLog.NagId);
@@ -230,7 +230,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
         {
             entity.ToTable("task_item");
 
-            entity.HasKey(taskItem => taskItem.Id);
+            entity.HasKey(taskItem => new { taskItem.UserId, taskItem.Id });
 
             entity.Property(taskItem => taskItem.Id)
                 .HasColumnName("id");
@@ -299,12 +299,12 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.HasOne<TaskItem>()
                 .WithMany()
-                .HasForeignKey(taskItem => taskItem.ParentTaskItemId)
+                .HasForeignKey(taskItem => new { taskItem.UserId, taskItem.ParentTaskItemId })
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasMany(taskItem => taskItem.TaskEntries)
                 .WithOne()
-                .HasForeignKey(taskEntry => taskEntry.ParentTaskItemId)
+                .HasForeignKey(taskEntry => new { taskEntry.UserId, taskEntry.ParentTaskItemId })
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(taskItem => taskItem.TaskLogId);
@@ -321,7 +321,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
         {
             entity.ToTable("task_entry");
 
-            entity.HasKey(taskEntry => taskEntry.Id);
+            entity.HasKey(taskEntry => new { taskEntry.UserId, taskEntry.Id });
 
             entity.Property(taskEntry => taskEntry.Id)
                 .HasColumnName("id");
@@ -393,7 +393,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
 
             entity.HasOne<TaskLog>()
                 .WithMany()
-                .HasForeignKey(taskEntry => taskEntry.TaskLogId)
+                .HasForeignKey(taskEntry => new { taskEntry.UserId, taskEntry.TaskLogId })
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(taskEntry => taskEntry.TaskLogId);
@@ -443,7 +443,7 @@ public sealed class DailyNaggerDbContext(DbContextOptions<DailyNaggerDbContext> 
         {
             entity.ToTable("user_mood");
 
-            entity.HasKey(mood => mood.Id);
+            entity.HasKey(mood => new { mood.UserId, mood.Id });
 
             entity.Property(mood => mood.Id)
                 .HasColumnName("id");
