@@ -115,6 +115,7 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
         data={listItems}
         onContentSizeChange={(_width, height) => setContentHeight(height)}
         initialNumToRender={editorPlacement === null ? 10 : Math.max(10, selectedItemIndex + 1)}
+        ListHeaderComponent={<View style={styles.listGap} />}
         ListFooterComponent={<View style={{ height: bottomComfortSpace }} />}
         ListEmptyComponent={
           filter.query.trim().length > 0 ? (
