@@ -2458,19 +2458,19 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.Equal(HttpStatusCode.OK, firstMoodResponse.StatusCode);
             Assert.Equal(HttpStatusCode.OK, secondMoodResponse.StatusCode);
 
-            var crossUserMoodResponse = await client.PostAsJsonAsync(
+            var secondUserSharedIdMoodResponse = await client.PostAsJsonAsync(
                 "/api/user-moods",
                 new SaveUserMoodRequest(
                     testData.CommunityId,
                     secondUserId,
                     firstMoodId,
-                    "overwritten",
+                    "calm",
                     new DateTimeOffset(2026, 9, 1, 10, 0, 0, TimeSpan.Zero),
                     "Europe/Copenhagen",
                     "da-DK"),
                 JsonOptions);
 
-            Assert.Equal(HttpStatusCode.BadRequest, crossUserMoodResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, secondUserSharedIdMoodResponse.StatusCode);
 
             var firstMoodsResponse = await client.GetAsync(
                 $"/api/user-moods?communityId={testData.CommunityId}&userId={firstUserId}&take=10");
@@ -2483,12 +2483,17 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             Assert.NotNull(firstMoods);
             Assert.NotNull(secondMoods);
             var firstMood = Assert.Single(firstMoods);
-            var secondMood = Assert.Single(secondMoods);
+            Assert.Equal(2, secondMoods.Length);
+            var secondMood = Assert.Single(secondMoods, mood => mood.Id == secondMoodId);
+            var sharedIdMood = Assert.Single(secondMoods, mood => mood.Id == firstMoodId);
 
             Assert.Equal(firstMoodId, firstMood.Id);
             Assert.Equal("focused", firstMood.Mood);
+            Assert.Equal(firstUserId, firstMood.UserId);
             Assert.Equal(secondMoodId, secondMood.Id);
             Assert.Equal("tired", secondMood.Mood);
+            Assert.Equal(secondUserId, sharedIdMood.UserId);
+            Assert.Equal("calm", sharedIdMood.Mood);
         }
         finally
         {

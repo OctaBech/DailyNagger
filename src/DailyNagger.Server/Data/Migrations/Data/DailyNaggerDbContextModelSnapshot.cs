@@ -24,8 +24,11 @@ namespace DailyNagger.Server.Data.Migrations.Data
 
             modelBuilder.Entity("DailyNagger.Server.Domain.Nagger", b =>
                 {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
@@ -76,17 +79,13 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("updated_by_device_name");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
                     b.Property<int>("Version")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0)
                         .HasColumnName("version");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "Id");
 
                     b.HasIndex("IsDeactivated", "ActiveLogDueOn")
                         .HasDatabaseName("IX_nag_is_deactivated_active_log_due_on");
@@ -99,8 +98,11 @@ namespace DailyNagger.Server.Data.Migrations.Data
 
             modelBuilder.Entity("DailyNagger.Server.Domain.ScheduleRule", b =>
                 {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
@@ -119,11 +121,7 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("rule_type");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "Id");
 
                     b.HasIndex("NagId");
 
@@ -135,8 +133,11 @@ namespace DailyNagger.Server.Data.Migrations.Data
 
             modelBuilder.Entity("DailyNagger.Server.Domain.TaskEntry", b =>
                 {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
@@ -204,10 +205,6 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("task_log_id");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
                     b.Property<string>("Value")
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)")
@@ -219,11 +216,13 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("value_type");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "Id");
 
                     b.HasIndex("ParentTaskItemId");
 
                     b.HasIndex("TaskLogId");
+
+                    b.HasIndex("UserId", "ParentTaskItemId");
 
                     b.HasIndex("UserId", "TaskLogId")
                         .HasDatabaseName("IX_task_entry_user_id_task_log_id");
@@ -233,8 +232,11 @@ namespace DailyNagger.Server.Data.Migrations.Data
 
             modelBuilder.Entity("DailyNagger.Server.Domain.TaskItem", b =>
                 {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
@@ -310,15 +312,13 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("task_log_id");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "Id");
 
                     b.HasIndex("ParentTaskItemId");
 
                     b.HasIndex("TaskLogId");
+
+                    b.HasIndex("UserId", "ParentTaskItemId");
 
                     b.HasIndex("UserId", "TaskLogId")
                         .HasDatabaseName("IX_task_item_user_id_task_log_id");
@@ -328,8 +328,11 @@ namespace DailyNagger.Server.Data.Migrations.Data
 
             modelBuilder.Entity("DailyNagger.Server.Domain.TaskLog", b =>
                 {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
@@ -381,17 +384,13 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("updated_by_device_name");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
                     b.Property<int>("Version")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0)
                         .HasColumnName("version");
 
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "Id");
 
                     b.HasIndex("CopiedFromTaskLogId");
 
@@ -414,8 +413,11 @@ namespace DailyNagger.Server.Data.Migrations.Data
 
             modelBuilder.Entity("DailyNagger.Server.Domain.UserMood", b =>
                 {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
+
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
@@ -458,11 +460,7 @@ namespace DailyNagger.Server.Data.Migrations.Data
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("time_zone");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id");
+                    b.HasKey("UserId", "Id");
 
                     b.HasIndex("UserId", "RecordedAt")
                         .HasDatabaseName("IX_user_mood_user_id_recorded_at");
@@ -505,7 +503,7 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 {
                     b.HasOne("DailyNagger.Server.Domain.Nagger", null)
                         .WithMany("ScheduleRules")
-                        .HasForeignKey("NagId")
+                        .HasForeignKey("UserId", "NagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -514,13 +512,13 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 {
                     b.HasOne("DailyNagger.Server.Domain.TaskItem", null)
                         .WithMany("TaskEntries")
-                        .HasForeignKey("ParentTaskItemId")
+                        .HasForeignKey("UserId", "ParentTaskItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("DailyNagger.Server.Domain.TaskLog", null)
                         .WithMany()
-                        .HasForeignKey("TaskLogId")
+                        .HasForeignKey("UserId", "TaskLogId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -529,12 +527,12 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 {
                     b.HasOne("DailyNagger.Server.Domain.TaskItem", null)
                         .WithMany()
-                        .HasForeignKey("ParentTaskItemId")
+                        .HasForeignKey("UserId", "ParentTaskItemId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("DailyNagger.Server.Domain.TaskLog", null)
                         .WithMany("TaskItems")
-                        .HasForeignKey("TaskLogId")
+                        .HasForeignKey("UserId", "TaskLogId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -543,7 +541,7 @@ namespace DailyNagger.Server.Data.Migrations.Data
                 {
                     b.HasOne("DailyNagger.Server.Domain.Nagger", null)
                         .WithMany()
-                        .HasForeignKey("NagId")
+                        .HasForeignKey("UserId", "NagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

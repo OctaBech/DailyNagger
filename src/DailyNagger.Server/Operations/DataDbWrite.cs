@@ -124,6 +124,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                 select 1
                 from user_mood
                 where id = @id
+                    and user_id = @userId
             )
             begin
                 insert into user_mood (
@@ -1118,6 +1119,7 @@ public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
                         select 1
                         from task_item child
                         where child.parent_task_item_id = task_item.id
+                            and child.user_id = task_item.user_id
                     )
                 """,
                 connection,

@@ -41,4 +41,4 @@ jobs:
       - name: Build server project and test project
         run: dotnet build DailyNagger.sln --configuration Release --no-restore
       - name: Run server tests
-        run: dotnet test DailyNagger.sln --configuration Release --no-build
+        run: dotnet test DailyNagger.sln --configuration Release --no-build --logger "console;verbosity=normal"
