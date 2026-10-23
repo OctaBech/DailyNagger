@@ -78,7 +78,7 @@ export function useCreateAppShellState({
     [editorSelectedPath],
   );
   const selectedMoodEmoji = getUserMoodEmoji(userMood.state.selectedMood);
-  const planActionsAreAvailable = startup.isReady && userMood.state.selectedMood !== null;
+  const planActionsAreAvailable = startup.isReady;
   const planSpeedDialMenu = useCreatePlanScreenDialMenu({
     planDialProxyActions,
     actionsAreAvailable: planActionsAreAvailable,

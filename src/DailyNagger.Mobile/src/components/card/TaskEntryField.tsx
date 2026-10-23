@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   booleanValueInput: {
-    minWidth: 104,
+    minWidth: 0,
   },
   carryOverValueInput: {
     backgroundColor: "#fff2bf",

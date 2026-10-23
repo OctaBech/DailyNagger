@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { modalTheme } from "./theme";
 
@@ -22,7 +22,6 @@ type SheetNarrowBeltProps<TValue> = {
   readonly highlightMode?: SheetNarrowHighlightMode;
   readonly onPick: (option: SheetNarrowBeltOption<TValue>) => void;
   readonly options: readonly SheetNarrowBeltOption<TValue>[];
-  readonly sortMode?: SheetNarrowBeltSortMode;
 };
 
 export function SheetNarrowBelt<TValue>({
@@ -35,48 +34,15 @@ export function SheetNarrowBelt<TValue>({
   highlightMode = "exact-match",
   onPick,
   options,
-  sortMode = "alphabetical",
 }: SheetNarrowBeltProps<TValue>) {
   const listRef = useRef<FlatList<SheetNarrowBeltOption<TValue>>>(null);
-
-  const visibleOptions = useMemo(() => {
-    const trimmedInput = inputText.trim();
-    const normalizedInput = trimmedInput.toLocaleLowerCase();
-
-    const matchingOptions =
-      normalizedInput === ""
-        ? options
-        : options.filter((option) =>
-            `${option.label} ${option.description ?? ""}`
-              .toLocaleLowerCase()
-              .includes(normalizedInput),
-          );
-
-    const sortedOptions = [...matchingOptions].sort((left, right) => {
-      if (sortMode === "date") {
-        return compareNullableDate(left.date, right.date) || compareLabel(left.label, right.label);
-      }
-
-      return compareLabel(left.label, right.label);
-    });
-
-    const exactCaseMatchIndex = sortedOptions.findIndex((option) => option.label === trimmedInput);
-    if (exactCaseMatchIndex > 0) return moveIndexToFront(sortedOptions, exactCaseMatchIndex);
-
-    const exactTextMatchIndex = sortedOptions.findIndex(
-      (option) => option.label.toLocaleLowerCase() === normalizedInput,
-    );
-    if (exactTextMatchIndex > 0) return moveIndexToFront(sortedOptions, exactTextMatchIndex);
-
-    return sortedOptions;
-  }, [inputText, options, sortMode]);
 
   const trimmedInput = inputText.trim();
   const normalizedInput = trimmedInput.toLocaleLowerCase();
 
   useEffect(() => {
     listRef.current?.scrollToOffset({ animated: false, offset: 0 });
-  }, [inputText, sortMode, visibleOptions]);
+  }, [inputText, options]);
 
   return (
     <View style={styles.container}>
@@ -87,7 +53,7 @@ export function SheetNarrowBelt<TValue>({
       {!isLoading && loadErrorText === null && (
         <FlatList
           ref={listRef}
-          data={visibleOptions}
+          data={options}
           horizontal
           keyExtractor={(option) => `${option.value}`}
           keyboardShouldPersistTaps="handled"
@@ -95,9 +61,7 @@ export function SheetNarrowBelt<TValue>({
           style={[styles.list, edgeToEdge && styles.edgeToEdgeList]}
           contentContainerStyle={[styles.belt, edgeToEdge && styles.edgeToEdgeBelt]}
           ListEmptyComponent={<Text style={styles.status}>{emptyText}</Text>}
-          ListFooterComponent={
-            visibleOptions.length > 0 ? <Text style={styles.divider}>|</Text> : null
-          }
+          ListFooterComponent={options.length > 0 ? <Text style={styles.divider}>|</Text> : null}
           renderItem={({ item, index }) => {
             const isExactCaseMatch = trimmedInput !== "" && item.label === trimmedInput;
             const isExactTextMatch =
@@ -135,6 +99,42 @@ export function SheetNarrowBelt<TValue>({
       )}
     </View>
   );
+}
+
+export function getSheetNarrowOptions<TValue>(
+  options: readonly SheetNarrowBeltOption<TValue>[],
+  inputText: string,
+  sortMode: SheetNarrowBeltSortMode,
+): readonly SheetNarrowBeltOption<TValue>[] {
+  const trimmedInput = inputText.trim();
+  const normalizedInput = trimmedInput.toLocaleLowerCase();
+
+  const matchingOptions =
+    normalizedInput === ""
+      ? options
+      : options.filter((option) =>
+          `${option.label} ${option.description ?? ""}`
+            .toLocaleLowerCase()
+            .includes(normalizedInput),
+        );
+
+  const sortedOptions = [...matchingOptions].sort((left, right) => {
+    if (sortMode === "date") {
+      return compareNullableDate(left.date, right.date) || compareLabel(left.label, right.label);
+    }
+
+    return compareLabel(left.label, right.label);
+  });
+
+  const exactCaseMatchIndex = sortedOptions.findIndex((option) => option.label === trimmedInput);
+  if (exactCaseMatchIndex > 0) return moveIndexToFront(sortedOptions, exactCaseMatchIndex);
+
+  const exactTextMatchIndex = sortedOptions.findIndex(
+    (option) => option.label.toLocaleLowerCase() === normalizedInput,
+  );
+  if (exactTextMatchIndex > 0) return moveIndexToFront(sortedOptions, exactTextMatchIndex);
+
+  return sortedOptions;
 }
 
 function moveIndexToFront<TValue>(values: readonly TValue[], index: number) {

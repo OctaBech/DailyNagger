@@ -19,6 +19,7 @@ export const SpeedDial = ({ menu, onItemSelected }: SpeedDialProps) => {
   const { bottom } = useSafeAreaInsets();
   const [state, setState] = useState<{ open: boolean }>({ open: false });
   const [showLabels, setShowLabels] = useState(false);
+  const [hintResetSequence, setHintResetSequence] = useState(0);
 
   const { open } = state;
   const bottomOffset = Math.max(appLayout.speedDial.bottom, bottom + 12);
@@ -30,6 +31,8 @@ export const SpeedDial = ({ menu, onItemSelected }: SpeedDialProps) => {
         ...item,
         onPress: () => {
           if (item.isDisabled === true) return;
+          setShowLabels(false);
+          setHintResetSequence((sequence) => sequence + 1);
           item.onSelect?.();
           onItemSelected?.(item);
           if (item.keepOpenAfterPress !== true) close();
@@ -56,7 +59,7 @@ export const SpeedDial = ({ menu, onItemSelected }: SpeedDialProps) => {
       appTiming.speedDial.hesitationAssistDelayMs,
     );
     return () => clearTimeout(timeoutId);
-  }, [open]);
+  }, [open, hintResetSequence]);
 
   return (
     <Portal>

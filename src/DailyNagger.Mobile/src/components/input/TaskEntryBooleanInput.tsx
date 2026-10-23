@@ -28,9 +28,23 @@ export const TaskEntryBooleanInput = ({
       style={[inactiveEditableFrame, styles.container, style, showEditFrame && editableFrame]}
     >
       {label !== undefined && (
-        <Text selectable={false} style={[styles.label, referenceChecked && styles.referenceLabel]}>
-          {label}
-        </Text>
+        <View>
+          {/* Reserve label space using the same font, without a fixed pixel width. */}
+          <Text
+            selectable={false}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={[styles.label, styles.labelSizer]}
+          >
+            Yes
+          </Text>
+          <Text
+            selectable={false}
+            style={[styles.label, styles.visibleLabel, referenceChecked && styles.referenceLabel]}
+          >
+            {label}
+          </Text>
+        </View>
       )}
       <View
         style={[
@@ -54,6 +68,14 @@ const styles = StyleSheet.create({
     color: nagPlanTheme.taskEntry.inputText,
     fontSize: 15,
     fontWeight: "700",
+  },
+  labelSizer: {
+    opacity: 0,
+  },
+  visibleLabel: {
+    position: "absolute",
+    right: 0,
+    top: 0,
   },
   referenceLabel: {
     color: nagPlanTheme.taskEntry.referenceText,

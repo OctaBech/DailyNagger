@@ -21,6 +21,6 @@ export const appTiming = {
     remoteListStaleTimeMs: 5 * 60 * 1000,
   },
   speedDial: {
-    hesitationAssistDelayMs: 1100,
+    hesitationAssistDelayMs: 4000,
   },
 } as const;
