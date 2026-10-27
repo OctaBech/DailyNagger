@@ -25,7 +25,7 @@ type AppShellProps = {
 
 export const AppShell = ({ children }: AppShellProps) => {
   const { bottom, top } = useSafeAreaInsets();
-  const [showMoodBar, setShowMoodBar] = useState(true);
+  const [showMoodBar, setShowMoodBar] = useState(false);
   const appShellState = useAppShellState();
   const planFilterRequests = useEventEmitter<"open", void>();
   const path = usePathname();

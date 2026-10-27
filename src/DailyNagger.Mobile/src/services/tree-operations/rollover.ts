@@ -25,6 +25,7 @@ function createTaskLog(sourceTaskLog: TaskLog): TaskLog {
 
       return {
         ...taskLogModel,
+        clientProps: { ...taskLogModel.clientProps, isExpanded: false },
         id: newTaskLogId,
         copiedFromTaskLogId: sourceTaskLog.id,
         closedOn: null,
@@ -40,6 +41,7 @@ function createTaskLog(sourceTaskLog: TaskLog): TaskLog {
 
       return {
         ...taskItemModel,
+        clientProps: { ...taskItemModel.clientProps, isExpanded: false },
         id: getNewTaskItemId(taskItemModel.id),
         taskLogId: newTaskLogId,
         parentTaskItemId:
