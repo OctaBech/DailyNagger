@@ -22,13 +22,15 @@ Action-funktionerne blev oprindeligt dannet i hooks, så de fik adgang til servi
 
 Ved re-renders i backstage blev action-funktionerne oprettet på ny med nye referencer. Når de blev leveret gennem context, udløste det cascading re-renders. Stabilisering af action-funktionerne krævede også stabile serviceafhængigheder. Dermed opstod en dependency-domino, der spredte React-hooks og dependency arrays langt ind i backstages enkelte services og modarbejdede målet om enkel, let vedligeholdelig kode.
 
+Hooken `useStableCallback` (se “Stabil reference trods ændrede dependencies”) blev udviklet, så services kunne levere stabile funktioner uden også at stabilisere deres interne funktioner. Hooken skulle dog tilføjes i hver berørt service, hvor React-stabilisering stadig blev blandet med servicens egentlige ansvar og dermed svækkede cohesion. Men ved at flytte brugen af hooken til en action-boundary kunne frontstage i stedet afkobles fra backstages skiftende referencer.
+
 Fejl i stabiliseringen medførte desuden tidskrævende debugging, blandt andet med *Why Did You Render* (WDYR).
 
 ### Krav
 
 DX skal bevares. Derfor er det obligatorisk, at:
 
-- Actions kan tilføjes uden ekstra stabilisering med `useMemo`, `useCallback` eller dependency arrays.
+- Actions og deres serviceafhængigheder kan tilføjes uden manuel referencestabilisering i de enkelte actions eller services.
 - Actions bevarer typesikkerhed og IntelliSense gennem hele forløbet.
 - Udvikleren ikke skal kende til skjulte side effects eller timingproblemer for at bruge løsningen korrekt.
 
