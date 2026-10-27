@@ -19,7 +19,10 @@ export function rolloverNagger(
 
   const taskLogV1 = rollover.createTaskLog(freshTaskLog);
   const activeLogDueOnV1 = scheduleCalculator.getNextDueOn(freshNagger, cultureSettings);
-  const naggerV1 = node.attachTaskLog(freshNagger, taskLogV1, activeLogDueOnV1);
+  const naggerV1 = node.setNaggerExpanded(
+    node.attachTaskLog(freshNagger, taskLogV1, activeLogDueOnV1),
+    false,
+  );
 
   const treeV1 = tree.replaceNagger(freshTree, naggerV1);
 
