@@ -321,11 +321,6 @@ public sealed class NagRequestValidator
             throw new NagValidationException("TaskItem Id values must be unique.");
         }
 
-        if (string.IsNullOrWhiteSpace(node.Name))
-        {
-            throw new NagValidationException("TaskItem Name is required.");
-        }
-
         foreach (var input in node.TaskEntries)
         {
             ValidateTaskEntry(taskLogId, node.Id, input, inputIds);
@@ -363,7 +358,6 @@ public sealed class NagRequestValidator
             throw new NagValidationException("TaskEntry Id values must be unique.");
         }
 
-        TaskEntryValueValidator.Validate(input.ValueType, input.Value);
     }
 
     private static void Require(bool condition, string message)
