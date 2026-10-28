@@ -8,7 +8,7 @@ export function moveSelectedNode(
   args: {
     readonly moveContext: SelectedMoveContext;
   },
-  { memory, undoHistory }: EditorRuntimeDependencies,
+  { memory, undoHistory, haptics }: EditorRuntimeDependencies,
   direction: MoveDirection,
 ): void {
   if (direction === "up" && args.moveContext.selectedIndex === 0) return;
@@ -26,4 +26,5 @@ export function moveSelectedNode(
     args.moveContext.selectedNode,
     ...result.newPath,
   ]);
+  haptics.play("selection");
 }

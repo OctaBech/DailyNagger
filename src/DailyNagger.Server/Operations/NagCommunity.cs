@@ -11,4 +11,6 @@ public sealed class NagCommunity
     public string? PasswordSecretName { get; set; }
 
     public bool IsDeactivated { get; set; }
+
+    public bool IsDemo { get; set; }
 }

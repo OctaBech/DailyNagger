@@ -4,6 +4,7 @@ using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
+using DailyNagger.Server.Operations.Demo;
 using DailyNagger.Server.Validation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -64,6 +65,7 @@ builder.Services.AddScoped<ControlDbRead>();
 builder.Services.AddScoped<GetDataDbConnection>();
 builder.Services.AddScoped<DataDbRead>();
 builder.Services.AddScoped<DataDbWrite>();
+builder.Services.AddScoped<DemoDataOperations>();
 builder.Services.AddScoped<NagRequestValidator>();
 builder.Services.AddCors(options =>
 {
@@ -121,6 +123,7 @@ app.MapTaskLogApi();
 app.MapTagApi();
 app.MapTaskStepSuggestionApi();
 app.MapUserMoodApi();
+app.MapDemoApi();
 
 app.Run();
 

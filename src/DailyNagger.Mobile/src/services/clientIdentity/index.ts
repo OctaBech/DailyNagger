@@ -1,1 +1,1 @@
-export { useClientIdentity } from "./useClientIdentity";
+export { getOrCreateClientId, useClientIdentity } from "./useClientIdentity";

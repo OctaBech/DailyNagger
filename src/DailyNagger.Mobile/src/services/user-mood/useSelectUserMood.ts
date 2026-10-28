@@ -8,8 +8,10 @@ import type { UserMoodLabel } from "@/models";
 import type { CultureSettings } from "../culture";
 import type { Sending } from "../sending";
 import type { UserMoodState } from "./useUserMoodState";
+import type { Haptics } from "../contracts";
 
 type UseSelectUserMoodProps = {
+  readonly haptics: Haptics;
   readonly cultureSettings: CultureSettings;
   readonly middlewareWrapperFunction?: MiddlewareWrapperFunction<MiddlewareExecutionContext>;
   readonly sending: Sending;
@@ -18,6 +20,7 @@ type UseSelectUserMoodProps = {
 };
 
 export function useSelectUserMood({
+  haptics,
   cultureSettings,
   middlewareWrapperFunction,
   sending,
@@ -37,6 +40,7 @@ export function useSelectUserMood({
           setCurrentMood(selection.mood);
           userMood.select(selection);
           sending.queue(selection);
+          haptics.play("success");
         },
         middlewareWrapperFunction,
         {
@@ -45,6 +49,6 @@ export function useSelectUserMood({
         },
       );
     },
-    [cultureSettings, middlewareWrapperFunction, sending, setCurrentMood, userMood],
+    [cultureSettings, haptics, middlewareWrapperFunction, sending, setCurrentMood, userMood],
   );
 }

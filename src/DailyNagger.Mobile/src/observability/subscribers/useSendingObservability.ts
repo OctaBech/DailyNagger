@@ -105,6 +105,8 @@ function isPackedSpan(
 
 function recordParcelFlowEvent(eventType: ParcelFlowEventType, event: ParcelFlowEvent): void {
   switch (eventType) {
+    case "parcel.batch.send.completed":
+      return; // The successful send was already recorded by parcel.batch.sent.
     case "parcel.coalesced":
       recordCoalescedParcel(event);
       return;

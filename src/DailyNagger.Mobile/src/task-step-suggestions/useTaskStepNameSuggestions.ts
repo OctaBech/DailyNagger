@@ -1,4 +1,5 @@
 import { fetchTaskStepNameSuggestions } from "@/api";
+import { getActiveUserId } from "@/config/activeUserId";
 import { useRemoteListQuery } from "@/api/react-query";
 import type { Guid, Prettify } from "@/shared";
 
@@ -10,7 +11,7 @@ export type TaskStepNameSuggestions = Prettify<ReturnType<typeof useTaskStepName
 
 export function useTaskStepNameSuggestions(naggerId: Guid) {
   const suggestionsQuery = useRemoteListQuery({
-    queryKey: ["task-step-name-suggestions", naggerId],
+    queryKey: ["task-step-name-suggestions", getActiveUserId(), naggerId],
     queryFn: () => fetchTaskStepNameSuggestions(naggerId),
   });
 

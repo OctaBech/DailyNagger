@@ -1,4 +1,5 @@
 import { fetchTags, saveTag } from "@/api";
+import { getActiveUserId } from "@/config/activeUserId";
 import type { TagDto } from "@api-contracts";
 import { useRemoteListQuery, useRemoteListUpsertMutation } from "@/api/react-query";
 import type { Prettify } from "@/shared";
@@ -13,7 +14,7 @@ type Tag = {
 export type Tags = Prettify<ReturnType<typeof useTags>>;
 
 export function useTags(tagType: TagType) {
-  const queryKey = ["tags", tagType] as const;
+  const queryKey = ["tags", getActiveUserId(), tagType] as const;
 
   const tagsQuery = useRemoteListQuery({
     queryKey,

@@ -7,7 +7,7 @@ export function editorSaveEdit(
   args: {
     readonly nagger: Nagger;
   },
-  { editorMemory, planMemory, sending, undoHistory }: EditorSessionRuntimeDependencies,
+  { editorMemory, planMemory, sending, undoHistory, haptics }: EditorSessionRuntimeDependencies,
 ): void {
   undoHistory.clear();
 
@@ -37,4 +37,5 @@ export function editorSaveEdit(
 
   sending.queue(naggerV2);
   sending.queue(taskLogV1);
+  haptics.play("success");
 }

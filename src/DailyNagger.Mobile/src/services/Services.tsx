@@ -43,6 +43,9 @@ import {
   useCreateAppShellState,
 } from "./app-shell-state";
 import { useUndoHistory } from "./undo-history";
+import { useNodeClipboard } from "./node-clipboard";
+import { useHaptics } from "./haptics";
+import { useDemoDataSync } from "./demo/useDemoDataSync";
 
 type ServiceProviderProps = {
   children: ReactNode;
@@ -96,6 +99,8 @@ function useCreateServices(): {
     editorMemoryEvents,
   );
   const editorUndoHistory = useUndoHistory<TreeWithSelection>();
+  const nodeClipboard = useNodeClipboard();
+  const haptics = useHaptics();
 
   const userMood = useUserMoodState();
   const interactionStamp = useInteractionStamp(cultureSettings, userMood);
@@ -123,6 +128,7 @@ function useCreateServices(): {
   const assistantBubble = useAssistantBubble(parcelFlowEvents);
 
   const selectMood = useSelectUserMood({
+    haptics,
     cultureSettings,
     middlewareWrapperFunction: observabilityWithStartup.userMoodMiddlewareWrapperFunction,
     sending,
@@ -147,6 +153,8 @@ function useCreateServices(): {
     startupEvents,
   );
 
+  useDemoDataSync(parcelFlowEvents, startup.restart);
+
   const planScreenData = useCreatePlanScreenData({
     cultureSettings,
     planMemory,
@@ -156,12 +164,14 @@ function useCreateServices(): {
   const editorScreenData = useCreateEditorScreenData({ editorMemory, cultureSettings });
   // ** Create service packages
   const servicePackages = createActionRuntimeDependencies({
+    haptics,
     cultureSettings,
     editorMemory,
     planInteractionStamp: interactionStamp,
     planMemory,
     sending,
     editorUndoHistory,
+    nodeClipboard,
   });
   const actionBoundaryOptions = {
     actionSequenceRef,
@@ -203,6 +213,7 @@ function useCreateServices(): {
     assistantBubble,
     editorCanUndo: editorUndoHistory.canUndo(),
     editorCanRedo: editorUndoHistory.canRedo(),
+    clipboardNodeType: nodeClipboard.nodeType,
     editorDialProxyActions,
     editorMemory,
     editorScreenCommands,

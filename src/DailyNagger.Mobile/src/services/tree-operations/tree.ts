@@ -1,4 +1,4 @@
-import { isNagPlan, nagPlanClientModelExtensionDefaults } from "@/models";
+import { isNagPlan, isTaskEntry, nagPlanClientModelExtensionDefaults } from "@/models";
 import type { Nagger, TaskEntry, TaskItem, TaskLog, Tree, TreeNode, TreePath } from "@/models";
 import type { Guid } from "@/shared";
 import type { TreeReader } from "./contracts";
@@ -117,20 +117,22 @@ function tryReadNagger(
   return freshNaggerResult;
 }
 
-function readTaskItem(memory: TreeReader, staleTaskItem: TaskItem): ReadTaskItemResult {
+function readTaskItem(memory: TreeReader, staleTaskItem: TaskItem | TaskEntry): ReadTaskItemResult {
   const freshTree = memory.read.getTree();
   let freshTaskItem: TaskItem | null = null;
 
   const result = targets.visitNode(freshTree, staleTaskItem, {
     visitTaskItem: (taskItem, context) => {
-      if (context.isTargetNode) freshTaskItem = taskItem as TaskItem;
+      if (isTaskEntry(staleTaskItem) ? context.isTargetParent : context.isTargetNode) {
+        freshTaskItem = taskItem as TaskItem;
+      }
 
       return taskItem;
     },
   });
 
   if (result.kind === "not-found" || freshTaskItem === null) {
-    throw new Error(`TaskItem '${staleTaskItem.id}' was not found in the current tree.`);
+    throw new Error(`TaskItem for '${staleTaskItem.id}' was not found in the current tree.`);
   }
 
   return { freshTree, freshTaskItem };

@@ -4,8 +4,9 @@ import { z } from "zod";
 import { formulaSchema, stampSchema, type Formula, type Stamp } from "../contracts";
 import type { MergedParcelVersioning } from "../parcelVersioning";
 import type { ParcelQueueMiddlewareContext } from "./parcelQueueMiddleware";
+import type { DemoDataCommand } from "../queueDemoData";
 
-export type SendableContent = Nagger | TaskLog | TaskEntry | UserMood;
+export type SendableContent = Nagger | TaskLog | TaskEntry | UserMood | DemoDataCommand;
 
 export type Parcel = {
   readonly formula: Formula;
@@ -28,6 +29,7 @@ export type ParcelBatch = {
 export type ParcelBatchScheduleDelay = "debounced" | "lostConnectionBackoff" | "immediate";
 
 export type ParcelQueueInstruction =
+  | "remove-sent-batch-and-drain-next"
   | "remove-active-batch-and-drain-next"
   | "remove-active-batch-and-stop"
   | "keep-active-batch-and-backoff"

@@ -1,3 +1,4 @@
+import { getActiveUserId } from "@/config/activeUserId";
 import { environment } from "@/config";
 import type { TagDto } from "@api-contracts";
 import { apiJsonRequest } from "./apiRequest";
@@ -9,7 +10,7 @@ export async function saveTag(
 ): Promise<TagDto> {
   const body = {
     communityId: environment.communityId,
-    userId: environment.userId,
+    userId: getActiveUserId(),
     tagType,
     name,
     description,

@@ -120,7 +120,7 @@ export function useParcelQueue(
     );
 
     // 3. The queue applies the instruction and decides whether to schedule more work.
-    await applyParcelBatchInstruction(instruction, options);
+    await applyParcelBatchInstruction(instruction, options, batch);
 
     return instruction !== "keep-active-batch-and-backoff";
   }
@@ -148,11 +148,19 @@ export function useParcelQueue(
   async function applyParcelBatchInstruction(
     instruction: ParcelQueueInstruction,
     options: ProcessNextParcelBatchOptions,
+    batch: ParcelBatch,
   ): Promise<void> {
     switch (instruction) {
+      case "remove-sent-batch-and-drain-next":
       case "remove-active-batch-and-drain-next":
         removeActiveBatch();
         parcelBatchTimer.resetBackoff();
+        if (instruction === "remove-sent-batch-and-drain-next") {
+          // Successful sends are complete only after removal, release and persistence.
+          emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.send.completed", batch, {
+            kind: "sent",
+          });
+        }
         if (options.drain === true) {
           await processNextParcelBatch(options);
           return;

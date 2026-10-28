@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useRouter } from "expo-router";
-import type { Memory, Startup } from "../contracts";
+import type { Memory, NodeClipboard, Startup } from "../contracts";
 import type { AssistantBubble } from "../assistant-bubble";
 import type { ParcelFlowEvents, Sending } from "../sending";
 import type { EditorScreenActions, PlanScreenActions } from "../screen-actions";
@@ -21,6 +21,7 @@ type UseCreateAppShellStateProps = {
   readonly assistantBubble: AssistantBubble;
   readonly editorCanUndo: boolean;
   readonly editorCanRedo: boolean;
+  readonly clipboardNodeType: NodeClipboard["nodeType"];
   readonly editorDialProxyActions: ProxyActions<typeof editorDialActionRegistry>["dial"];
   readonly editorMemory: Memory;
   readonly editorScreenCommands: EditorScreenActions;
@@ -38,6 +39,7 @@ export function useCreateAppShellState({
   assistantBubble,
   editorCanUndo,
   editorCanRedo,
+  clipboardNodeType,
   editorDialProxyActions,
   editorMemory,
   editorScreenCommands,
@@ -91,6 +93,7 @@ export function useCreateAppShellState({
     editorDialProxyActions,
     canUndo: editorCanUndo,
     canRedo: editorCanRedo,
+    clipboardNodeType,
     selectedNodes: editorSelectedNodes,
     selectedPath: editorSelectedPath,
     onCloseEditor: closeEditor,

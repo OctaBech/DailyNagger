@@ -8,8 +8,10 @@ import {
 } from "@/models";
 import { newGuid, type Guid } from "@/shared";
 import { nodeTemplates } from "./node-templates";
+import { cloneNodeStructure } from "./cloneNodeStructure";
 
 export const node = {
+  cloneNodeStructure,
   attachTaskLog,
   closeTaskLogForNaggerHistory,
   copyNaggerVersionFrom,

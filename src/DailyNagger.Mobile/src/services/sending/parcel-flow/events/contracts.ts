@@ -8,6 +8,7 @@ export type ParcelFlowEventType =
   | "parcel.coalesced"
   | "parcel.batch.waiting"
   | "parcel.batch.sent"
+  | "parcel.batch.send.completed"
   | "parcel.batch.failed_to_connect"
   | "parcel.batch.blocked_by_version_conflict"
   | "parcel.batch.blocked_by_unrepairable_update"

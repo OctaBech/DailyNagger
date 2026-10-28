@@ -1,3 +1,4 @@
+import { getActiveUserId } from "@/config/activeUserId";
 import { ApiRequestError, apiRequest } from "@/api/client/apiRequest";
 import { SendApiRequestError } from "@/api/client";
 import type { VersionedMutationResponse } from "@/api/dto";
@@ -27,7 +28,7 @@ export function useSendParcelBatch(
       // 2. A sent batch can be removed from the queue.
       if (sendResult.kind === "sent") {
         emitParcelBatchEvent(parcelFlowEvents, "parcel.batch.sent", currentBatch);
-        return "remove-active-batch-and-drain-next";
+        return "remove-sent-batch-and-drain-next";
       }
 
       // 3. Lost connection keeps the batch in the queue and uses backoff.
@@ -123,7 +124,7 @@ export function useSendParcelBatch(
     }
   }
 
-  async function sendBatchRequest(batch: ParcelBatch): Promise<VersionedMutationResponse> {
+  async function sendBatchRequest(batch: ParcelBatch): Promise<void> {
     const firstParcel = batch.parcels[0];
     const payload = firstParcel.formula.canBatch
       ? batch.parcels.map((parcel) => parcel.formula.payload)
@@ -134,7 +135,7 @@ export function useSendParcelBatch(
       path: firstParcel.formula.endpointPath,
       body: {
         communityId: environment.communityId,
-        userId: environment.userId,
+        userId: getActiveUserId(),
         updatedAt: firstParcel.stamp.queuedAt,
         baseVersion: batch.versioning.existingVersion,
         nextVersion: batch.versioning.newVersion,
@@ -147,8 +148,6 @@ export function useSendParcelBatch(
     if (result.kind !== "ok") {
       throw new Error("Send parcel batch response had no JSON body.");
     }
-
-    return result.body;
   }
 
   function hasSkipPayloadVersionValidation(batch: ParcelBatch): boolean {
@@ -174,7 +173,7 @@ function serverRejectedCurrentVersion(error: unknown): error is SendApiRequestEr
 
 function serverRejectedUnrepairableUpdate(error: unknown): error is SendApiRequestError {
   if (!(error instanceof SendApiRequestError)) return false;
-  return error.status === 400 || error.status === 404;
+  return error.status === 400 || error.status === 403 || error.status === 404;
 }
 
 function toSendApiRequestError(error: unknown): unknown {

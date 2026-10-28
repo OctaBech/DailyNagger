@@ -83,6 +83,7 @@ export function handleSendingEvent(
       };
 
     case "parcel.created":
+    case "parcel.batch.send.completed":
     case "sending.queue.restore_failed":
       return state;
   }

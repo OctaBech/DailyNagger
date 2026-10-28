@@ -3,6 +3,9 @@ import { registerAction } from "./actionRegistrationModel";
 
 export const editorDialActionRegistry = {
   dial: {
+    copySelectedNode: registerAction(editorActions.editorCopySelectedNode, "editor/action"),
+    pasteNodeIntoTaskItem: registerAction(editorActions.pasteNodeIntoTaskItem, "editor/action"),
+    pasteNodeIntoTaskLog: registerAction(editorActions.pasteNodeIntoTaskLog, "editor/action"),
     undoEdit: registerAction(editorActions.editorUndoEdit, "editor/action"),
     redoEdit: registerAction(editorActions.editorRedoEdit, "editor/action"),
     cancelEdit: registerAction(editorSessionActions.editorCancelEdit, "editor/session"),
