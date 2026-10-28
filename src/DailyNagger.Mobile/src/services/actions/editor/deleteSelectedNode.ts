@@ -6,7 +6,7 @@ export function editorDeleteSelectedNode(
   args: {
     readonly deleteContext: SelectedDeleteContext;
   },
-  { memory, undoHistory }: EditorRuntimeDependencies,
+  { memory, undoHistory, haptics }: EditorRuntimeDependencies,
 ): void {
   undoHistory.record(memory.read.getTreeAndSelectedPath());
 
@@ -17,4 +17,5 @@ export function editorDeleteSelectedNode(
     : branch.deleteTaskItemSubtree(freshTree, freshNode);
 
   memory.write.setTreeAndSelectedPath(result.newTree, result.newPath);
+  haptics.play("warning");
 }

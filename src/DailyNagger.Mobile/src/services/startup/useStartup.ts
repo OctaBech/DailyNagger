@@ -138,5 +138,6 @@ export function useStartup(
     stateScreenProps,
     startupEvents,
     retry,
+    restart: bootstrapStartup,
   };
 }

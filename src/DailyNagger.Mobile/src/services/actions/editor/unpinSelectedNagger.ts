@@ -6,7 +6,7 @@ export function naggerUnpinSelected(
   args: {
     readonly nagger: Nagger;
   },
-  { memory, undoHistory }: EditorRuntimeDependencies,
+  { memory, undoHistory, haptics }: EditorRuntimeDependencies,
 ): void {
   if (args.nagger.pinnedBy === "None") return;
 
@@ -18,4 +18,5 @@ export function naggerUnpinSelected(
   const result = tree.replaceNode(freshTree, naggerV1);
 
   memory.write.setTree(result.newTree);
+  haptics.play("selection");
 }

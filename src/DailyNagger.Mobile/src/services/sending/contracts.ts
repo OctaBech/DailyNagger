@@ -31,7 +31,7 @@ export const formulaSchema = z.object({
   ownerId: z.union([z.string() as z.ZodType<Guid>, z.null()]),
   coalesceKey: z.string(),
   canBatch: z.boolean(),
-  sendMethod: z.enum(["PATCH", "PUT", "POST"]),
+  sendMethod: z.enum(["PATCH", "PUT", "POST", "DELETE"]),
   endpointPath: z.string(),
   recipientExpectsVersioning: z.boolean(),
   payload: jsonValueSchema,

@@ -1,7 +1,13 @@
 import { navigationActions, taskInputActions } from "@/services/actions";
+import { addDemoData, deleteAllDemoData, switchDemoUser } from "@/services/actions/demoData";
 import { registerAction } from "./actionRegistrationModel";
 
 export const planScreenActionRegistry = {
+  demo: {
+    switchUser: registerAction(switchDemoUser, "plan/demo"),
+    addData: registerAction(addDemoData, "plan/demo"),
+    deleteAllData: registerAction(deleteAllDemoData, "plan/demo"),
+  },
   nagger: {
     setExpanded: registerAction(navigationActions.naggerSetExpanded, "plan/navigation"),
     setFocused: registerAction(navigationActions.naggerSetFocused, "plan/navigation"),

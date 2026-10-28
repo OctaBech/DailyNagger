@@ -9,6 +9,7 @@ import { createNaggerFormula } from "../queueNagger";
 import { createTaskEntryFormula } from "../queueTaskEntry";
 import { createTaskLogFormula } from "../queueTaskLog";
 import { createUserMoodFormula } from "../queueUserMood";
+import { createDemoDataFormula } from "../queueDemoData";
 import type { Parcel, SendableContent } from "./contracts";
 import type { ParcelFlowEvents } from "./events";
 
@@ -49,6 +50,8 @@ export function useCreateParcel(
   }
 
   function createFormula(content: SendableContent): Formula {
+    if ("type" in content && content.type === "demo-data") return createDemoDataFormula(content);
+
     if ("nodeType" in content) {
       if (isNagger(content)) return createNaggerFormula(naggerToDto(content));
       if (isTaskLog(content)) return createTaskLogFormula(taskLogToDto(content));

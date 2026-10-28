@@ -1,3 +1,4 @@
+import { getActiveUserId } from "@/config/activeUserId";
 import { environment } from "@/config";
 import type { Guid } from "@/shared";
 import { apiJsonRequest } from "./apiRequest";
@@ -8,7 +9,7 @@ export async function fetchTaskStepNameSuggestions(
 ): Promise<readonly TaskStepNameSuggestionDto[]> {
   const query = new URLSearchParams({
     communityId: environment.communityId,
-    userId: environment.userId,
+    userId: getActiveUserId(),
   });
 
   return apiJsonRequest<readonly TaskStepNameSuggestionDto[]>({

@@ -76,6 +76,8 @@ function addTaskItemToTaskLog(
   parentTaskLog: TaskLog,
   newTaskItem: TaskItem,
 ): BranchUpdateResult {
+  const addedCount = 1 + newTaskItem.descendantTaskItemCount;
+
   if (newTaskItem.taskLogId !== parentTaskLog.id) {
     throw new Error(
       `TaskItem '${newTaskItem.id}' belongs to TaskLog '${newTaskItem.taskLogId}', not '${parentTaskLog.id}'.`,
@@ -94,7 +96,7 @@ function addTaskItemToTaskLog(
 
       return {
         ...taskLog,
-        descendantTaskItemCount: taskLog.descendantTaskItemCount + 1,
+        descendantTaskItemCount: taskLog.descendantTaskItemCount + addedCount,
         taskItems: [...taskLog.taskItems, newTaskItem],
       };
     },
@@ -115,6 +117,8 @@ function addTaskItemToTaskItem(
   parentTaskItem: TaskItem,
   newTaskItem: TaskItem,
 ): BranchUpdateResult {
+  const addedCount = 1 + newTaskItem.descendantTaskItemCount;
+
   if (newTaskItem.taskLogId !== parentTaskItem.taskLogId) {
     throw new Error(
       `TaskItem '${newTaskItem.id}' belongs to TaskLog '${newTaskItem.taskLogId}', not '${parentTaskItem.taskLogId}'.`,
@@ -136,20 +140,20 @@ function addTaskItemToTaskItem(
             ...taskItem.clientProps,
             isExpanded: true,
           },
-          descendantTaskItemCount: taskItem.descendantTaskItemCount + 1,
+          descendantTaskItemCount: taskItem.descendantTaskItemCount + addedCount,
           taskItems: [...taskItem.taskItems, newTaskItem],
         };
       }
 
       return {
         ...taskItem,
-        descendantTaskItemCount: taskItem.descendantTaskItemCount + 1,
+        descendantTaskItemCount: taskItem.descendantTaskItemCount + addedCount,
       };
     },
     visitTaskLog: (taskLog) => {
       return {
         ...taskLog,
-        descendantTaskItemCount: taskLog.descendantTaskItemCount + 1,
+        descendantTaskItemCount: taskLog.descendantTaskItemCount + addedCount,
       };
     },
   });

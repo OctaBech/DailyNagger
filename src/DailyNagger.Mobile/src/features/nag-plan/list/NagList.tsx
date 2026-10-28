@@ -11,6 +11,10 @@ import type { NagPlanListItem } from "./buildNagPlanListItems";
 import { useNagPlanListItems } from "./useNagPlanListItems";
 import { usePlanTitleFilter } from "./filter/usePlanTitleFilter";
 import { PlanFilterBar } from "./filter/PlanFilterBar";
+import { appVariant } from "@/config/appVariant";
+import { DemoDataControls } from "@/features/demo/DemoDataControls";
+
+const isDemo = appVariant === "demo";
 
 type NagListProps = {
   readonly nags: readonly Nagger[];
@@ -29,6 +33,7 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
   const { height: screenHeight } = useWindowDimensions();
   const bottomComfortSpace = screenHeight;
   const filter = usePlanTitleFilter();
+  const previousFilterQueryRef = useRef(filter.query);
   const listItems = useNagPlanListItems(nags, filter.query);
   const selectedNaggerId = useMemo(
     () => nags.find((nagger) => nagger.clientProps.isSelected)?.id ?? null,
@@ -84,6 +89,18 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
     screenPositionHandoff.markPlanPlacementApplied(placement);
     listRef.current?.scrollToOffset({ animated: false, offset: placement.nextScrollY });
   }, [cardContentTopY, contentHeight, editorPlacement, screenPositionHandoff, setScrollOffset]);
+
+  useEffect(() => {
+    if (previousFilterQueryRef.current === filter.query) return;
+    previousFilterQueryRef.current = filter.query;
+
+    hasRestoredScrollOffsetRef.current = true;
+    actualScrollOffsetRef.current = 0;
+    setScrollOffset(0);
+    screenPositionHandoff.plan.setScrollY(0);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [filter.query, screenPositionHandoff.plan, setScrollOffset]);
+
   const rememberScrollOffset = useCallback(
     (event: { nativeEvent: { contentOffset: { y: number } } }) => {
       rememberKeyboardScrollOffset(event);
@@ -116,7 +133,17 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
         onContentSizeChange={(_width, height) => setContentHeight(height)}
         initialNumToRender={editorPlacement === null ? 10 : Math.max(10, selectedItemIndex + 1)}
         ListHeaderComponent={<View style={styles.listGap} />}
-        ListFooterComponent={<View style={{ height: bottomComfortSpace }} />}
+        ListFooterComponent={
+          <View>
+            {isDemo && (
+              <View>
+                <View style={styles.listGap} />
+                <DemoDataControls />
+              </View>
+            )}
+            <View style={{ height: bottomComfortSpace }} />
+          </View>
+        }
         ListEmptyComponent={
           filter.query.trim().length > 0 ? (
             <Text style={styles.emptyText}>No matching tasks</Text>

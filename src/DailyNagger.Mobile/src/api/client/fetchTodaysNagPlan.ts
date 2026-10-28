@@ -1,3 +1,4 @@
+import { getActiveUserId } from "@/config/activeUserId";
 import type { NagPlanDto } from "@/api/dto";
 import { environment } from "@/config";
 import { apiRequest } from "./apiRequest";
@@ -13,7 +14,7 @@ export async function fetchTodaysNagPlan(): Promise<NagPlanDto> {
 
   const query = new URLSearchParams({
     communityId: environment.communityId,
-    userId: environment.userId,
+    userId: getActiveUserId(),
     date: today,
   });
 

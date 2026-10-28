@@ -59,6 +59,10 @@ public sealed class DailyNaggerControlDbContext(DbContextOptions<DailyNaggerCont
                 .HasColumnName("is_deactivated")
                 .HasDefaultValue(false)
                 .IsRequired();
+            entity.Property(community => community.IsDemo)
+                .HasColumnName("is_demo")
+                .HasDefaultValue(false)
+                .IsRequired();
         });
 
         modelBuilder.Entity<NagCommunityMember>(entity =>

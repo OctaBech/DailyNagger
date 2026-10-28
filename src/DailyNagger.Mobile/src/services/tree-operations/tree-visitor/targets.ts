@@ -20,11 +20,14 @@ import type {
 } from "./contracts";
 import { visitNodeFromNagPlan } from "./visitNodeFromNagPlan";
 import { visitNodeFromTaskLog } from "./visitNodeFromTaskLog";
+import { visitNodeFromTaskItem } from "./visitNodeFromTaskItem";
 import type { VisitResult } from "./visitResult";
 
 export type TargetVisitContext = VisitContext;
 
-type WholeTreeVisitResult<TNode extends NagPlanTraversedNode | TaskLogTraversedNode> =
+type WholeTreeVisitResult<
+  TNode extends NagPlanTraversedNode | TaskLogTraversedNode | TaskItemTraversedNode,
+> =
   | {
       readonly kind: "not-found";
       readonly node: TNode;
@@ -56,6 +59,7 @@ type TargetVisitor = {
 export const targets = {
   fromTaskItem,
   visitWholeTaskLog,
+  visitWholeTaskItem,
   visitWholeTree,
   visitNode,
 } as const;
@@ -84,6 +88,15 @@ function visitWholeTaskLog(
   );
 
   return toWholeTreeResult(result);
+}
+
+function visitWholeTaskItem(
+  taskItem: TaskItemTraversedNode,
+  visitor: TreeVisitor,
+): WholeTreeVisitResult<TaskItemTraversedNode> {
+  return toWholeTreeResult(
+    visitNodeFromTaskItem(taskItem, { kind: "whole-tree", allowIdentityChange: true }, visitor),
+  );
 }
 
 function visitNode(
@@ -213,9 +226,9 @@ function toTreeVisitor(visitor: TargetVisitor): TreeVisitor {
   };
 }
 
-function toWholeTreeResult<TNode extends NagPlanTraversedNode | TaskLogTraversedNode>(
-  result: VisitResult<TNode>,
-): WholeTreeVisitResult<TNode> {
+function toWholeTreeResult<
+  TNode extends NagPlanTraversedNode | TaskLogTraversedNode | TaskItemTraversedNode,
+>(result: VisitResult<TNode>): WholeTreeVisitResult<TNode> {
   if (result.kind === "not-found") return result;
 
   return {

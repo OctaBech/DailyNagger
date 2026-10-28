@@ -1,5 +1,13 @@
 import { useMemo } from "react";
-import { treeSelection, type SelectedNodes, type TreePath } from "@/models";
+import {
+  isTaskEntry,
+  isTaskItem,
+  isTaskLog,
+  treeSelection,
+  type SelectedNodes,
+  type TreePath,
+} from "@/models";
+import type { NodeClipboard } from "@/services/contracts";
 import type { ProxyActions, editorDialActionRegistry } from "@/services/action-boundary";
 import { createDialMenuBuilder, type SpeedDialMenu } from "@/components/speed-dial";
 
@@ -9,6 +17,7 @@ type UseCreateEditorScreenDialMenuProps = {
   readonly editorDialProxyActions: EditorDialProxyActions;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
+  readonly clipboardNodeType: NodeClipboard["nodeType"];
   readonly selectedNodes: SelectedNodes;
   readonly selectedPath: TreePath;
   readonly onCloseEditor: () => void;
@@ -18,6 +27,7 @@ export function useCreateEditorScreenDialMenu({
   editorDialProxyActions,
   canUndo,
   canRedo,
+  clipboardNodeType,
   selectedNodes,
   selectedPath,
   onCloseEditor,
@@ -25,6 +35,9 @@ export function useCreateEditorScreenDialMenu({
   const { nagger } = selectedNodes;
   const {
     cancelEdit,
+    copySelectedNode,
+    pasteNodeIntoTaskItem,
+    pasteNodeIntoTaskLog,
     deleteSelectedNode,
     moveSelectedNodeDown,
     moveSelectedNodeUp,
@@ -38,6 +51,15 @@ export function useCreateEditorScreenDialMenu({
   return useMemo(() => {
     const moveContext = treeSelection.tryReadMoveContext(selectedPath);
     const deleteContext = treeSelection.tryReadDeleteContext(selectedPath);
+    const selectedNode = treeSelection.tryGetSelectedNode(selectedPath);
+    const itemTarget =
+      selectedNode !== null && (isTaskItem(selectedNode) || isTaskEntry(selectedNode))
+        ? selectedNode
+        : null;
+    const logTarget = selectedNode !== null && isTaskLog(selectedNode) ? selectedNode : null;
+    const canPaste =
+      clipboardNodeType !== null &&
+      (itemTarget !== null || (logTarget !== null && clipboardNodeType === "TaskItem"));
 
     const builder = createDialMenuBuilder();
     builder.addOption({
@@ -157,13 +179,47 @@ export function useCreateEditorScreenDialMenu({
         redoEdit({});
       },
     });
+    builder.addOption({
+      key: "editor.copy-selected-node",
+      iconType: "vector",
+      iconValue: "content-copy",
+      label: "Copy/paste",
+      showLabel: true,
+      row: "new",
+      keepOpenAfterPress: true,
+      isDisabled: itemTarget === null,
+      onSelect: () => {
+        if (itemTarget !== null) copySelectedNode({ node: itemTarget });
+      },
+    });
+    builder.addOption({
+      key: "editor.paste-selected-node",
+      iconType: "vector",
+      iconValue: "content-paste",
+      label: "Paste",
+      row: "current",
+      keepOpenAfterPress: true,
+      isDisabled: !canPaste,
+      onSelect: () => {
+        if (!canPaste) return;
+        if (itemTarget !== null) {
+          pasteNodeIntoTaskItem({ target: itemTarget });
+        } else if (logTarget !== null) {
+          pasteNodeIntoTaskLog({ target: logTarget });
+        }
+      },
+    });
     return { items: builder.getMenuArray() };
   }, [
     canUndo,
     canRedo,
+    clipboardNodeType,
     undoEdit,
     redoEdit,
     cancelEdit,
+    copySelectedNode,
+    pasteNodeIntoTaskItem,
+    pasteNodeIntoTaskLog,
     deleteSelectedNode,
     moveSelectedNodeDown,
     moveSelectedNodeUp,

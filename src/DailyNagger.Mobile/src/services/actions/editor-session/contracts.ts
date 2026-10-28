@@ -1,7 +1,8 @@
 import type { TreeWithSelection } from "@/models";
-import type { Memory, UndoHistory, Sending } from "@/services/contracts";
+import type { Haptics, Memory, UndoHistory, Sending } from "@/services/contracts";
 
 export type EditorSessionRuntimeDependencies = {
+  readonly haptics: Haptics;
   readonly editorMemory: Memory;
   readonly planMemory: Memory;
   readonly sending: Sending;

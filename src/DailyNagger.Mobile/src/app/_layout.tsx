@@ -1,3 +1,4 @@
+import { getActiveUserId } from "@/config/activeUserId";
 import "react-native-get-random-values";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PaperProvider } from "react-native-paper";
@@ -17,11 +18,11 @@ if (environment.sentryDsn !== undefined) {
     tracesSampleRate: 1.0,
   });
 
-  Sentry.setUser({ id: environment.userId });
+  Sentry.setUser({ id: getActiveUserId() });
   Sentry.setTag("communityId", environment.communityId);
   Sentry.setContext("dailyNagger", {
     communityId: environment.communityId,
-    userId: environment.userId,
+    userId: getActiveUserId(),
   });
 }
 

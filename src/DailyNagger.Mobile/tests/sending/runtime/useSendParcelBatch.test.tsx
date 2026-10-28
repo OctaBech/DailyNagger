@@ -6,6 +6,9 @@ import { useSendParcelBatch } from "@/services/sending/parcel-flow/useSendParcel
 import { useSendingPromptController } from "@/services/sending/sending-prompt/useSendingPromptController";
 
 jest.mock("uuid", () => ({ v7: () => "00000000-0000-0000-0000-000000000001" }));
+jest.mock("@/config/activeUserId", () => ({
+  getActiveUserId: () => "00000000-0000-0000-0000-000000000002",
+}));
 jest.mock("@/config", () => ({
   environment: {
     communityId: "00000000-0000-0000-0000-000000000001",

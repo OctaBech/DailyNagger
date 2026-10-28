@@ -20,7 +20,7 @@ function getClientIdentity(): ClientIdentity {
   };
 }
 
-function getOrCreateClientId(): string {
+export function getOrCreateClientId(): string {
   const storedClientId = storage.getString(clientIdStorageKey);
   if (storedClientId !== undefined && storedClientId.trim().length > 0) {
     return storedClientId;

@@ -6,7 +6,7 @@ export function naggerUnpinSelected(
   args: {
     readonly nagger: Nagger;
   },
-  { memory, sending }: TaskInputRuntimeDependencies,
+  { memory, sending, haptics }: TaskInputRuntimeDependencies,
 ): void {
   if (args.nagger.pinnedBy === "None") return;
 
@@ -17,4 +17,5 @@ export function naggerUnpinSelected(
 
   memory.write.setTree(result.newTree);
   sending.queue(naggerV1);
+  haptics.play("selection");
 }
