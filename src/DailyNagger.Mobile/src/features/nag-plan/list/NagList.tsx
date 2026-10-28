@@ -132,18 +132,13 @@ const NagListComponent = ({ getScrollOffset, nags, setScrollOffset, topPadding }
         data={listItems}
         onContentSizeChange={(_width, height) => setContentHeight(height)}
         initialNumToRender={editorPlacement === null ? 10 : Math.max(10, selectedItemIndex + 1)}
-        ListHeaderComponent={<View style={styles.listGap} />}
-        ListFooterComponent={
+        ListHeaderComponent={
           <View>
-            {isDemo && (
-              <View>
-                <View style={styles.listGap} />
-                <DemoDataControls />
-              </View>
-            )}
-            <View style={{ height: bottomComfortSpace }} />
+            {isDemo && <DemoDataControls />}
+            <View style={styles.listGap} />
           </View>
         }
+        ListFooterComponent={<View style={{ height: bottomComfortSpace }} />}
         ListEmptyComponent={
           filter.query.trim().length > 0 ? (
             <Text style={styles.emptyText}>No matching tasks</Text>
