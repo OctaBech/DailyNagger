@@ -1923,8 +1923,12 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         }
     }
 
-    [Fact]
-    public async Task Put_task_logs_preserves_text_values_and_allows_unnamed_nodes()
+    // Content rules belong to the client. The server must preserve unfinished nodes.
+    [Theory]
+    [InlineData("", "")]
+    [InlineData("", "Input")]
+    [InlineData("Task", "")]
+    public async Task Put_task_logs_accepts_empty_names_and_labels(string name, string label)
     {
         var testData = await CreateRoutedNagAsync();
         var userId = TestUserId;
@@ -1946,13 +1950,13 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                         setNodeId,
                         taskLogId,
                         null,
-                        "",
+                        name,
                         [
                             new TaskEntryDto(
                                 Guid.NewGuid(),
                                 taskLogId,
                                 setNodeId,
-                                "",
+                                label,
                                 null,
                                 TaskEntryValueTypeDto.Integer,
                                 null,
@@ -1976,8 +1980,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             var storedItem = await dataDb.TaskItems.SingleAsync(item => item.Id == setNodeId && item.UserId == userId);
             var storedEntry = await dataDb.TaskEntries.SingleAsync(entry => entry.TaskLogId == taskLogId && entry.UserId == userId);
 
-            Assert.Equal("", storedItem.Name);
-            Assert.Equal("", storedEntry.Label);
+            Assert.Equal(name, storedItem.Name);
+            Assert.Equal(label, storedEntry.Label);
             Assert.Equal("not an integer", storedEntry.Value);
             Assert.Equal(TaskEntryValueType.Integer, storedEntry.ValueType);
         }
@@ -1994,9 +1998,19 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
     [InlineData(TaskEntryValueTypeDto.Boolean, "false")]
     [InlineData(TaskEntryValueTypeDto.Text, "any text")]
     [InlineData(TaskEntryValueTypeDto.Text, "")]
-    public async Task Put_task_logs_accepts_values_that_match_value_type(
+    [InlineData(TaskEntryValueTypeDto.Integer, "not an integer")]
+    [InlineData(TaskEntryValueTypeDto.Decimal, "not a decimal")]
+    [InlineData(TaskEntryValueTypeDto.Boolean, "not a boolean")]
+    [InlineData(TaskEntryValueTypeDto.Integer, "")]
+    [InlineData(TaskEntryValueTypeDto.Decimal, "")]
+    [InlineData(TaskEntryValueTypeDto.Boolean, "")]
+    [InlineData(TaskEntryValueTypeDto.Integer, null)]
+    [InlineData(TaskEntryValueTypeDto.Decimal, null)]
+    [InlineData(TaskEntryValueTypeDto.Boolean, null)]
+    [InlineData(TaskEntryValueTypeDto.Text, null)]
+    public async Task Put_task_logs_preserves_values_independently_of_value_type(
         TaskEntryValueTypeDto valueType,
-        string value)
+        string? value)
     {
         var testData = await CreateRoutedNagAsync();
         var userId = TestUserId;
@@ -2043,6 +2057,11 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.True(response.StatusCode == HttpStatusCode.OK, responseBody);
+
+            await using var dataDb = CreateDataDbContext();
+            var storedEntry = await dataDb.TaskEntries.SingleAsync(entry => entry.TaskLogId == taskLogId && entry.UserId == userId);
+            Assert.Equal(value, storedEntry.Value);
+            Assert.Equal(valueType.ToString(), storedEntry.ValueType.ToString());
         }
         finally
         {
@@ -2050,8 +2069,21 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
         }
     }
 
-    [Fact]
-    public async Task Patch_task_log_inputs_preserves_text_independently_of_value_type()
+    [Theory]
+    [InlineData(TaskEntryValueTypeDto.Integer, "not an integer")]
+    [InlineData(TaskEntryValueTypeDto.Decimal, "not a decimal")]
+    [InlineData(TaskEntryValueTypeDto.Boolean, "not a boolean")]
+    [InlineData(TaskEntryValueTypeDto.Integer, "")]
+    [InlineData(TaskEntryValueTypeDto.Decimal, "")]
+    [InlineData(TaskEntryValueTypeDto.Boolean, "")]
+    [InlineData(TaskEntryValueTypeDto.Integer, null)]
+    [InlineData(TaskEntryValueTypeDto.Decimal, null)]
+    [InlineData(TaskEntryValueTypeDto.Boolean, null)]
+    [InlineData(TaskEntryValueTypeDto.Text, "")]
+    [InlineData(TaskEntryValueTypeDto.Text, null)]
+    public async Task Patch_task_log_inputs_preserves_values_independently_of_value_type(
+        TaskEntryValueTypeDto valueType,
+        string? value)
     {
         var testData = await CreateRoutedNagAsync();
         var userId = TestUserId;
@@ -2082,9 +2114,9 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                                 setNodeId,
                                 "Reps",
                                 null,
-                                TaskEntryValueTypeDto.Integer,
+                                valueType,
                                 null,
-                                null)
+                                "original value")
                         ],
                         [])
                 ],
@@ -2104,7 +2136,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
                 testData.CommunityId,
                 userId,
                 [
-                    new TaskEntryValueUpdateDto(repsInputId, "not an integer")
+                    new TaskEntryValueUpdateDto(repsInputId, value)
                 ],
                 UpdatedAt: DateTimeOffset.UtcNow,
                 BaseVersion: 1,
@@ -2121,8 +2153,8 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             await using var dataDb = CreateDataDbContext();
             var storedInput = await dataDb.TaskEntries.SingleAsync(input => input.Id == repsInputId);
 
-            Assert.Equal("not an integer", storedInput.Value);
-            Assert.Equal(TaskEntryValueType.Integer, storedInput.ValueType);
+            Assert.Equal(value, storedInput.Value);
+            Assert.Equal(valueType.ToString(), storedInput.ValueType.ToString());
         }
         finally
         {

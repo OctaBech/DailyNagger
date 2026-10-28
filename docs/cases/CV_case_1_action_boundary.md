@@ -166,6 +166,7 @@ Servicepakkerne defineres i boundaryens object literal. Hver pakke kontrolleres 
 
 ```ts
 "plan/task-input": {
+  haptics: inputs.haptics,
   memory: inputs.planMemory,
   sending: inputs.sending,
   interactionStamp: inputs.planInteractionStamp,
