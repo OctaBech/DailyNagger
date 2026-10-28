@@ -94,7 +94,7 @@ const toneStyles = StyleSheet.create({
   },
   selected: {
     backgroundColor: nagPlanTheme.nagger.selectedBackground,
-    borderColor: nagPlanTheme.nagger.border,
+    borderColor: nagPlanTheme.selection.border,
   },
   completed: {
     backgroundColor: nagPlanTheme.nagger.completedBackground,
@@ -102,6 +102,6 @@ const toneStyles = StyleSheet.create({
   },
   completedSelected: {
     backgroundColor: nagPlanTheme.nagger.completedSelectedBackground,
-    borderColor: nagPlanTheme.nagger.completedBorder,
+    borderColor: nagPlanTheme.selection.border,
   },
 } satisfies Record<NaggerFrameTone, ViewStyle>);

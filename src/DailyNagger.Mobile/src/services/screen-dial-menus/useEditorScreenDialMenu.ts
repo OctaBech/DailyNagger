@@ -156,30 +156,6 @@ export function useCreateEditorScreenDialMenu({
       });
     }
     builder.addOption({
-      key: "editor.undo",
-      iconType: "vector",
-      iconValue: "undo",
-      label: "Undo",
-      row: "new",
-      keepOpenAfterPress: true,
-      isDisabled: !canUndo,
-      onSelect: () => {
-        undoEdit({});
-      },
-    });
-    builder.addOption({
-      key: "editor.redo",
-      iconType: "vector",
-      iconValue: "redo",
-      label: "Redo",
-      row: "current",
-      keepOpenAfterPress: true,
-      isDisabled: !canRedo,
-      onSelect: () => {
-        redoEdit({});
-      },
-    });
-    builder.addOption({
       key: "editor.copy-selected-node",
       iconType: "vector",
       iconValue: "content-copy",
@@ -207,6 +183,30 @@ export function useCreateEditorScreenDialMenu({
         } else if (logTarget !== null) {
           pasteNodeIntoTaskLog({ target: logTarget });
         }
+      },
+    });
+    builder.addOption({
+      key: "editor.undo",
+      iconType: "vector",
+      iconValue: "undo",
+      label: "Undo",
+      row: "new",
+      keepOpenAfterPress: true,
+      isDisabled: !canUndo,
+      onSelect: () => {
+        undoEdit({});
+      },
+    });
+    builder.addOption({
+      key: "editor.redo",
+      iconType: "vector",
+      iconValue: "redo",
+      label: "Redo",
+      row: "current",
+      keepOpenAfterPress: true,
+      isDisabled: !canRedo,
+      onSelect: () => {
+        redoEdit({});
       },
     });
     return { items: builder.getMenuArray() };
