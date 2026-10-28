@@ -46,6 +46,7 @@ public sealed class DemoApiTests : SqlServerTestBase
             Id = log,
             UserId = template,
             NagId = nag,
+            UpdatedAt = DateTimeOffset.UtcNow,
             TaskItems = [new TaskItem { Id = root, UserId = template, TaskLogId = log, Name = "Root" },
                 new TaskItem { Id = Guid.NewGuid(), UserId = template, TaskLogId = log,
                     ParentTaskItemId = root, Name = "Child", TaskEntries = [new TaskEntry {
