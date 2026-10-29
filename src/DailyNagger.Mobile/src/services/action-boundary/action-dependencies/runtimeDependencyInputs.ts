@@ -6,6 +6,7 @@ import type {
   Memory,
   NodeClipboard,
   Sending,
+  Startup,
   UndoHistory,
 } from "@/services/contracts";
 
@@ -17,5 +18,6 @@ export type RuntimeDependencyInputs = {
   readonly planInteractionStamp: InteractionStamp;
   readonly planMemory: Memory;
   readonly sending: Sending;
+  readonly startup: Startup;
   readonly editorUndoHistory: UndoHistory<TreeWithSelection>;
 };

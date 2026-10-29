@@ -172,6 +172,7 @@ function useCreateServices(): {
     sending,
     editorUndoHistory,
     nodeClipboard,
+    startup,
   });
   const actionBoundaryOptions = {
     actionSequenceRef,

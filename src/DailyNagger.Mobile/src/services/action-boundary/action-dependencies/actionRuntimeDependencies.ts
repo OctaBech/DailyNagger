@@ -19,6 +19,7 @@ export function createActionRuntimeDependencies(inputs: RuntimeDependencyInputs)
     "plan/demo": {
       memory: inputs.planMemory,
       sending: inputs.sending,
+      startup: inputs.startup,
     } satisfies DemoRuntimeDependencies,
     "plan/navigation": {
       memory: inputs.planMemory,
