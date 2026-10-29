@@ -1,3 +1,5 @@
+import { StyleSheet, View } from "react-native";
+import { nagPlanTheme } from "../theme";
 import { memo, useState } from "react";
 import { Card, Modal } from "@/components";
 import { type TaskLog } from "@/models";
@@ -34,15 +36,17 @@ const TaskLogCardComponent = ({
             railTone={railTone}
           />
         ))}
-        <Card.TaskLogTail
-          taskLog={taskLog}
-          allowEditTag
-          isTagPickerOpen={isTagModalVisible}
-          showComponentOutlines
-          onAddTaskItem={() => taskLogActions.addTaskItem({ taskLog })}
-          onFocus={() => taskLogActions.setFocused({ taskLog })}
-          onPressTag={() => setIsTagModalVisible(true)}
-        />
+        <View style={taskLog.clientProps.hasFocus && styles.focusedRow}>
+          <Card.TaskLogTail
+            taskLog={taskLog}
+            allowEditTag
+            isTagPickerOpen={isTagModalVisible}
+            showComponentOutlines
+            onAddTaskItem={() => taskLogActions.addTaskItem({ taskLog })}
+            onFocus={() => taskLogActions.setFocused({ taskLog })}
+            onPressTag={() => setIsTagModalVisible(true)}
+          />
+        </View>
       </Card.TaskLogFrame>
 
       <Modal.TaggingModal
@@ -60,3 +64,9 @@ const TaskLogCardComponent = ({
 };
 
 export const TaskLogCard = memo(TaskLogCardComponent);
+
+const styles = StyleSheet.create({
+  focusedRow: {
+    backgroundColor: nagPlanTheme.selection.background,
+  },
+});

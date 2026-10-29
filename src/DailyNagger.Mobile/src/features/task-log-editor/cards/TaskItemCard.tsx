@@ -30,7 +30,6 @@ const TaskItemCardComponent = ({
   const hasChildren = taskItem.taskItems.length + taskItem.taskEntries.length > 0;
   const canDeleteOnce = isOnceTaskItem && !taskItem.isDone && !hasChildren;
   const isExpanded = taskItem.clientProps.isExpanded;
-  const isSelected = taskItem.clientProps.isSelected;
   const hasFocus = taskItem.clientProps.hasFocus;
   const hasActiveRail = hasFocus || taskItem.clientProps.isFocusParent;
   const railSelectionTone = getRailSelectionTone(railTone, hasActiveRail, isInsideFocusedTree);
@@ -39,33 +38,37 @@ const TaskItemCardComponent = ({
   };
 
   return (
-    <View style={[styles.card, isSelected && styles.selectedCard]}>
+    <View style={styles.card}>
       <SelectionLane.SelectionLane
         accessibilityLabel="Select task item"
         onPress={() => taskItemActions.setFocused({ taskItem })}
         tone={railSelectionTone}
       />
       <Card.TaskItemFrame>
-        <Card.TaskItemField
-          taskItem={taskItem}
-          hasChildren={hasChildren}
-          isExpanded={isExpanded}
-          allowEditName
-          isTagPickerOpen={isTagModalVisible}
-          showTag={false}
-          showComponentOutlines
-          forceExpandableIndicator={!isOnceTaskItem}
-          muteCheckmark
-          checkmarkShape={isOnceTaskItem ? "circle" : "square"}
-          onFocus={() => taskItemActions.setFocused({ taskItem })}
-          onNameFocus={() => taskItemActions.setFocused({ taskItem })}
-          onDeletePress={canDeleteOnce ? () => taskItemActions.deleteOnce({ taskItem }) : undefined}
-          onNameCommit={(newName) => taskItemActions.setName({ taskItem, name: newName })}
-          onExpandPress={
-            canDeleteOnce ? () => taskItemActions.setFocused({ taskItem }) : toggleExpanded
-          }
-          onPressTag={() => setIsTagModalVisible(true)}
-        />
+        <View style={hasFocus && styles.focusedRow}>
+          <Card.TaskItemField
+            taskItem={taskItem}
+            hasChildren={hasChildren}
+            isExpanded={isExpanded}
+            allowEditName
+            isTagPickerOpen={isTagModalVisible}
+            showTag={false}
+            showComponentOutlines
+            forceExpandableIndicator={!isOnceTaskItem}
+            muteCheckmark
+            checkmarkShape={isOnceTaskItem ? "circle" : "square"}
+            onFocus={() => taskItemActions.setFocused({ taskItem })}
+            onNameFocus={() => taskItemActions.setFocused({ taskItem })}
+            onDeletePress={
+              canDeleteOnce ? () => taskItemActions.deleteOnce({ taskItem }) : undefined
+            }
+            onNameCommit={(newName) => taskItemActions.setName({ taskItem, name: newName })}
+            onExpandPress={
+              canDeleteOnce ? () => taskItemActions.setFocused({ taskItem }) : toggleExpanded
+            }
+            onPressTag={() => setIsTagModalVisible(true)}
+          />
+        </View>
 
         {isExpanded ? (
           <View style={styles.children}>
@@ -124,6 +127,9 @@ function getRailSelectionTone(
 }
 
 const styles = StyleSheet.create({
+  focusedRow: {
+    backgroundColor: nagPlanTheme.selection.background,
+  },
   card: {
     flexDirection: "row",
     overflow: "hidden",
@@ -132,8 +138,5 @@ const styles = StyleSheet.create({
   children: {
     gap: nagPlanTheme.cardDensity.fieldGap,
     paddingTop: nagPlanTheme.cardDensity.childTopPadding,
-  },
-  selectedCard: {
-    backgroundColor: nagPlanTheme.taskItem.selectedBackground,
   },
 });

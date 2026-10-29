@@ -1,3 +1,5 @@
+import { StyleSheet, View } from "react-native";
+import { nagPlanTheme } from "../theme";
 import { Card, Modal } from "@/components";
 import type { TaskEntry } from "@/models";
 import { useEditorScreenActions } from "@/services";
@@ -24,19 +26,21 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
         onMarkerPress={() => taskEntryActions.setFocused({ taskEntry })}
         railTone={railTone}
       >
-        <Card.TaskEntryField
-          taskEntry={taskEntry}
-          allowEditLabel
-          allowEditTag={false}
-          allowEditValue={false}
-          isValueTypePickerOpen={isValueTypeModalVisible}
-          showTag={false}
-          showComponentOutlines
-          onFocus={() => taskEntryActions.setFocused({ taskEntry })}
-          onLabelCommit={(newLabel) => taskEntryActions.setLabel({ taskEntry, label: newLabel })}
-          onValueCommit={(newValue) => taskEntryActions.setValue({ taskEntry, newValue })}
-          onPressValueType={() => setIsValueTypeModalVisible(true)}
-        />
+        <View style={taskEntry.clientProps.hasFocus && styles.focusedRow}>
+          <Card.TaskEntryField
+            taskEntry={taskEntry}
+            allowEditLabel
+            allowEditTag={false}
+            allowEditValue={false}
+            isValueTypePickerOpen={isValueTypeModalVisible}
+            showTag={false}
+            showComponentOutlines
+            onFocus={() => taskEntryActions.setFocused({ taskEntry })}
+            onLabelCommit={(newLabel) => taskEntryActions.setLabel({ taskEntry, label: newLabel })}
+            onValueCommit={(newValue) => taskEntryActions.setValue({ taskEntry, newValue })}
+            onPressValueType={() => setIsValueTypeModalVisible(true)}
+          />
+        </View>
       </Card.TaskEntryFrame>
 
       {isValueTypeModalVisible && (
@@ -56,3 +60,9 @@ const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => 
 };
 
 export const TaskEntryCard = memo(TaskEntryCardComponent);
+
+const styles = StyleSheet.create({
+  focusedRow: {
+    backgroundColor: nagPlanTheme.selection.background,
+  },
+});

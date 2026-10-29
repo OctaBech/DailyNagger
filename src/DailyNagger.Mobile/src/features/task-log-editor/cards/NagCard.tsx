@@ -38,27 +38,29 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
           onRailPress={() => naggerActions.setFocused({ nagger })}
           tone={tone}
         >
-          <Card.NaggerField
-            nagger={nagger}
-            isExpanded={isExpanded}
-            isCompleted={isTaskLogCompleted}
-            allowEditSchedule
-            allowEditTargetTime
-            allowEditTitle
-            isSchedulePickerOpen={isScheduleModalVisible}
-            isTargetTimePickerOpen={isTargetTimeModalVisible}
-            showComponentOutlines
-            onFocus={() => naggerActions.setFocused({ nagger })}
-            onTitleCommit={(title) => naggerActions.setTitle({ nagger, title })}
-            onSchedulePress={() => setIsScheduleModalVisible(true)}
-            onTargetTimePress={() => setIsTargetTimeModalVisible(true)}
-            onHeaderPress={() => {
-              naggerActions.setExpanded({ nagger, isExpanded: !isExpanded });
-            }}
-            onExpandPress={() => {
-              naggerActions.setExpanded({ nagger, isExpanded: !isExpanded });
-            }}
-          />
+          <View style={nagger.clientProps.hasFocus && styles.focusedRow}>
+            <Card.NaggerField
+              nagger={nagger}
+              isExpanded={isExpanded}
+              isCompleted={isTaskLogCompleted}
+              allowEditSchedule
+              allowEditTargetTime
+              allowEditTitle
+              isSchedulePickerOpen={isScheduleModalVisible}
+              isTargetTimePickerOpen={isTargetTimeModalVisible}
+              showComponentOutlines
+              onFocus={() => naggerActions.setFocused({ nagger })}
+              onTitleCommit={(title) => naggerActions.setTitle({ nagger, title })}
+              onSchedulePress={() => setIsScheduleModalVisible(true)}
+              onTargetTimePress={() => setIsTargetTimeModalVisible(true)}
+              onHeaderPress={() => {
+                naggerActions.setExpanded({ nagger, isExpanded: !isExpanded });
+              }}
+              onExpandPress={() => {
+                naggerActions.setExpanded({ nagger, isExpanded: !isExpanded });
+              }}
+            />
+          </View>
         </Card.NaggerFrame>
 
         {isExpanded ? (
@@ -120,6 +122,9 @@ function getRailTone(isCompleted: boolean): RailTone {
 }
 
 const styles = StyleSheet.create({
+  focusedRow: {
+    backgroundColor: nagPlanTheme.selection.background,
+  },
   naggerGroup: {
     backgroundColor: "transparent",
   },
