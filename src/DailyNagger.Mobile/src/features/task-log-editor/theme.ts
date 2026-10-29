@@ -10,6 +10,7 @@ export const nagPlanTheme = {
     horizontalPadding: 8,
   },
   selection: {
+    background: "#e8ecec",
     border: "#2f3b3f",
   },
   rail: {
