@@ -26,10 +26,11 @@ export function DemoDataControls() {
         onPress={() => runOnce(() => demo.addData(undefined))}
         onLongPress={
           modelName === "SM-G770F"
-            ? () => {
-                demo.switchUser(undefined);
-                setIsEditingDemo(getActiveUserId() === demoEditorUserId);
-              }
+            ? () =>
+                runOnce(() => {
+                  demo.switchUser(undefined);
+                  setIsEditingDemo(getActiveUserId() === demoEditorUserId);
+                })
             : undefined
         }
         style={[styles.button, isEditingDemo && styles.editorButton]}
