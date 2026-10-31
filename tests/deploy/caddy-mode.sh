@@ -33,10 +33,15 @@ cmp "$test_root/deploy/Caddyfile.maintenance" "$test_root/caddy-state/Caddyfile"
 bash "$repo_root/deploy/set-caddy-mode.sh" normal "$test_root"
 cmp "$test_root/deploy/Caddyfile" "$test_root/caddy-state/Caddyfile"
 
+# A generated normal configuration takes precedence over the legacy fallback.
+printf 'generated normal\n' > "$test_root/caddy-state/normal.Caddyfile"
+bash "$repo_root/deploy/set-caddy-mode.sh" normal "$test_root"
+cmp "$test_root/caddy-state/normal.Caddyfile" "$test_root/caddy-state/Caddyfile"
+
 if FAIL_RELOAD=1 bash "$repo_root/deploy/set-caddy-mode.sh" maintenance "$test_root"; then
   echo "A failed Caddy reload unexpectedly succeeded." >&2
   exit 1
 fi
-cmp "$test_root/deploy/Caddyfile" "$test_root/caddy-state/Caddyfile"
+cmp "$test_root/caddy-state/normal.Caddyfile" "$test_root/caddy-state/Caddyfile"
 
 echo "Caddy mode state tests passed."

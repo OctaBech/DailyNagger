@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using DailyNagger.Server.Api;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data;
+using DailyNagger.Server.Deployment;
 using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Operations.Demo;
@@ -124,6 +125,11 @@ app.MapTagApi();
 app.MapTaskStepSuggestionApi();
 app.MapUserMoodApi();
 app.MapDemoApi();
+
+if (CaddyAllowedRoutesExporter.TryExport(app, args))
+{
+    return;
+}
 
 app.Run();
 

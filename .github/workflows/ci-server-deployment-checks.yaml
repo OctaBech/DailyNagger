@@ -81,3 +81,5 @@ jobs:
             -f "$RUNNER_TEMP/dailynagger-unpacked/src/DailyNagger.Server/Dockerfile" \
             -t dailynagger-server:ci \
             "$RUNNER_TEMP/dailynagger-unpacked"
+      - name: Verify generated Caddy routing against the server image
+        run: bash tests/deploy/caddy-routes.integration.sh dailynagger-server:ci

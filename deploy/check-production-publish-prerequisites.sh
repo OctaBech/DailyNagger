@@ -19,7 +19,11 @@ for path in \
 done
 
 # Do not automatically resume a release left in maintenance by an earlier failure.
-cmp -s caddy-state/Caddyfile deploy/Caddyfile || {
+normal_config=deploy/Caddyfile
+if [[ -s caddy-state/normal.Caddyfile ]]; then
+  normal_config=caddy-state/normal.Caddyfile
+fi
+cmp -s caddy-state/Caddyfile "$normal_config" || {
   echo "Caddy is not in normal mode; inspect the VPS before publishing." >&2
   exit 1
 }
