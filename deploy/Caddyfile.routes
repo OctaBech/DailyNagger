@@ -1,0 +1,6 @@
+{$DAILY_NAGGER_PUBLIC_HOST} {
+    import api_routes server:8080
+    handle {
+        respond "Not Found" 404
+    }
+}

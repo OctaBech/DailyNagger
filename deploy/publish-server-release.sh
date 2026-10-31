@@ -82,12 +82,27 @@ case "$phase" in
     printf '%s\n' "$old_tag" > "$state_dir/previous-image-tag"
     printf '%s\n' "$sha" > "$state_dir/candidate-image-tag"
     printf '%s\n' "$digest" > "$state_dir/candidate-image-digest"
+    normal_config=caddy-state/normal.Caddyfile
+    test -s "$normal_config" || normal_config=deploy/Caddyfile
+    cp "$normal_config" "$state_dir/previous-Caddyfile"
+    bash "$release_dir/deploy/build-caddy-routes.sh" \
+      "dailynagger-server:$sha" "$state_dir/candidate-Caddyfile"
+    # The proxy already mounts caddy-state read-only. Validate through that
+    # mount without replacing either the active or the saved normal config.
+    validation_file="caddy-state/candidate-$run_id.Caddyfile"
+    install -m 644 "$state_dir/candidate-Caddyfile" "$validation_file"
+    if ! "${compose[@]}" exec -T reverse-proxy caddy validate \
+      --config "/etc/caddy/candidate-$run_id.Caddyfile" --adapter caddyfile; then
+      rm -f "$validation_file"
+      exit 1
+    fi
+    rm -f "$validation_file"
     echo "Candidate source, image, and previous image verified."
     ;;
 
   maintenance)
     require_state
-    bash deploy/set-caddy-mode.sh maintenance "$deploy_dir"
+    bash "$release_dir/deploy/set-caddy-mode.sh" maintenance "$deploy_dir"
     require_maintenance
     wait_for_public_status 503
     touch "$state_dir/maintenance-active"
@@ -148,10 +163,14 @@ case "$phase" in
     require_state
     require_maintenance
     test -f "$state_dir/candidate-smoke-passed"
+    test -s "$state_dir/candidate-Caddyfile"
+    candidate_config="$(mktemp caddy-state/normal.Caddyfile.XXXXXX)"
+    install -m 644 "$state_dir/candidate-Caddyfile" "$candidate_config"
+    mv -f "$candidate_config" caddy-state/normal.Caddyfile
     # From this point onward, a client may write to the new databases.
     # A failed public check must NOT trigger automatic database restoration.
     touch "$state_dir/traffic-opening"
-    bash deploy/set-caddy-mode.sh normal "$deploy_dir"
+    bash "$release_dir/deploy/set-caddy-mode.sh" normal "$deploy_dir"
     wait_for_public_status 200
     touch "$state_dir/traffic-opened"
     echo "Server publication complete; public traffic reopened."
@@ -159,7 +178,7 @@ case "$phase" in
 
   rollback)
     if [[ -f "$state_dir/traffic-opening" ]]; then
-      bash deploy/set-caddy-mode.sh maintenance "$deploy_dir" || true
+      bash "$release_dir/deploy/set-caddy-mode.sh" maintenance "$deploy_dir" || true
       echo "Traffic may already have reopened. Refusing automatic database restore." >&2
       exit 1
     fi
@@ -179,9 +198,13 @@ case "$phase" in
     [[ "$old_tag" =~ ^[A-Za-z0-9_.-]+$ ]]
     cp -p "$state_dir/env.before-release" .env
     grep -qx "DAILY_NAGGER_IMAGE_TAG=$old_tag" .env
+    test -s "$state_dir/previous-Caddyfile"
+    previous_config="$(mktemp caddy-state/normal.Caddyfile.XXXXXX)"
+    install -m 644 "$state_dir/previous-Caddyfile" "$previous_config"
+    mv -f "$previous_config" caddy-state/normal.Caddyfile
     "${compose[@]}" up -d --no-deps server
     bash "$release_dir/deploy/smoke-internal-api.sh" "$@" "$deploy_dir"
-    bash deploy/set-caddy-mode.sh normal "$deploy_dir"
+    bash "$release_dir/deploy/set-caddy-mode.sh" normal "$deploy_dir"
     touch "$state_dir/rolled-back"
     echo "Previous image and database state restored; public traffic reopened."
     ;;

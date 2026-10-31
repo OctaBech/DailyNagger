@@ -3,19 +3,27 @@ set -euo pipefail
 
 mode="${1:?Usage: set-caddy-mode.sh <normal|maintenance> [remote-path]}"
 remote_path="${2:-/opt/dailynagger}"
+cd "$remote_path"
 
 case "$mode" in
-  normal) template="deploy/Caddyfile" ;;
+  normal)
+    template="deploy/Caddyfile"
+    if [[ -s caddy-state/normal.Caddyfile ]]; then
+      template="caddy-state/normal.Caddyfile"
+    fi
+    ;;
   maintenance) template="deploy/Caddyfile.maintenance" ;;
   *) echo "Unsupported Caddy mode: $mode" >&2; exit 2 ;;
 esac
 
-cd "$remote_path"
 test -s "$template"
 test -s caddy-state/Caddyfile
 
 compose=(docker compose -f compose.prod.yaml)
 container_template="/etc/caddy-templates/${template#deploy/}"
+if [[ "$template" == caddy-state/* ]]; then
+  container_template="/etc/caddy/${template#caddy-state/}"
+fi
 
 # Validate the candidate before changing the persistent active config.
 "${compose[@]}" exec -T reverse-proxy caddy validate \
