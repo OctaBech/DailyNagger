@@ -54,7 +54,9 @@ check() {
   if [[ "$forwarded" == true ]]; then
     grep -q "$id" <<< "$logs" || { echo "Allowed request did not reach ASP.NET: $path" >&2; exit 1; }
   else
-    if grep -q "$id" <<< "$logs"; then
+    # Non-/api requests are not enriched with dn.api.request_id, so also
+    # inspect the exact request-log path (each rejected pair is used once).
+    if grep -q "$id" <<< "$logs" || grep -Fq "HTTP $method $path responded " <<< "$logs"; then
       echo "Rejected request reached ASP.NET: $method $path" >&2; exit 1
     fi
   fi
