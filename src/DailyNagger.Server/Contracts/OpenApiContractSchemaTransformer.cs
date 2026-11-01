@@ -1,3 +1,4 @@
+using DailyNagger.Server.Contracts.TaskLogs;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 

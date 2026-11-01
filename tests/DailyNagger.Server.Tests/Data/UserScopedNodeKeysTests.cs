@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Domain;

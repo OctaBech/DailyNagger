@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.Tags;
+using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Contracts.UserMoods;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Domain;
