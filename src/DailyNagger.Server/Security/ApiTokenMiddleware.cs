@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 
-namespace DailyNagger.Server.Api;
+namespace DailyNagger.Server.Security;
 
 public sealed class ApiTokenMiddleware(RequestDelegate next, IConfiguration configuration)
 {

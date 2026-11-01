@@ -1,4 +1,4 @@
-using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Contracts.Nags;
 using DailyNagger.Server.Operations;
 
 namespace DailyNagger.Server.Api.Nags;

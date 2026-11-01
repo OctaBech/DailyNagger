@@ -1,4 +1,4 @@
-using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Contracts.Nags;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Database.NagPlans;
 using DailyNagger.Server.Database.Nags;

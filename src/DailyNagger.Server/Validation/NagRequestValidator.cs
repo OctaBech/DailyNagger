@@ -1,5 +1,6 @@
 using System.Text.Json;
 using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Contracts.Nags;
 using DailyNagger.Server.Contracts.Tags;
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Contracts.UserMoods;
