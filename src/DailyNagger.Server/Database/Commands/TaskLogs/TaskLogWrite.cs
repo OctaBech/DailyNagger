@@ -3,7 +3,6 @@ using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Domain.Exceptions;
 using DailyNagger.Server.Domain.Tenant;
-using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
 namespace DailyNagger.Server.Database.Commands.TaskLogs;

@@ -1,7 +1,7 @@
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.UserMoods;
 using DailyNagger.Server.Database.Connections;
-using DailyNagger.Server.Validation;
+using DailyNagger.Server.Domain.Exceptions;
 using Microsoft.Data.SqlClient;
 
 namespace DailyNagger.Server.Database.Commands.UserMoods;

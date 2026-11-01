@@ -2,7 +2,6 @@ using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Domain.Exceptions;
 using DailyNagger.Server.Domain.Tenant;
-using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
 namespace DailyNagger.Server.Database.Commands.Nags;

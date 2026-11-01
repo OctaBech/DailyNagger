@@ -1,5 +1,6 @@
 using DailyNagger.Server.Contracts.UserMoods;
 using DailyNagger.Server.Database.Connections;
+using DailyNagger.Server.Domain.Exceptions;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 

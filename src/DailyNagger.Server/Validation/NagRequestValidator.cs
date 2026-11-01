@@ -4,6 +4,7 @@ using DailyNagger.Server.Contracts.Nags;
 using DailyNagger.Server.Contracts.Tags;
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Contracts.UserMoods;
+using DailyNagger.Server.Domain.Exceptions;
 
 namespace DailyNagger.Server.Validation;
 
@@ -379,5 +380,3 @@ public sealed class NagRequestValidator
         Require(nextVersion > baseVersion, "NextVersion must be greater than BaseVersion.");
     }
 }
-
-public sealed class NagValidationException(string message) : Exception(message);
