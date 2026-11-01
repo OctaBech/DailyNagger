@@ -6,16 +6,17 @@ using DailyNagger.Server.Database.Queries.Control;
 using DailyNagger.Server.Database.Queries.Nags;
 using DailyNagger.Server.Domain.Control;
 using DailyNagger.Server.Domain.Tenant;
-using DailyNagger.Server.Tests;
+using DailyNagger.Server.Tests.TestUtilities;
+using DailyNagger.Server.Tests.TestUtilities.SqlServer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
-namespace DailyNagger.Server.Tests.Operations;
+namespace DailyNagger.Server.Tests.Database.Integration;
 
 [Collection(SqlServerTestCollection.Name)]
-public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
+public sealed class TenantDataTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
     private static readonly Guid TestUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 

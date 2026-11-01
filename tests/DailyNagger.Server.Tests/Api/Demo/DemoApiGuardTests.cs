@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 
-namespace DailyNagger.Server.Tests.Api;
+namespace DailyNagger.Server.Tests.Api.Demo;
 
 // These tests intentionally require no database or Docker fixture.
 public sealed class DemoApiGuardTests

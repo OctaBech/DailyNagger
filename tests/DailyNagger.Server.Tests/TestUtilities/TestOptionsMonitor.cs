@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace DailyNagger.Server.Tests.Operations;
+namespace DailyNagger.Server.Tests.TestUtilities;
 
 internal sealed class TestOptionsMonitor<T>(T currentValue) : IOptionsMonitor<T>
 {

@@ -3,10 +3,10 @@ using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Database.Contexts.Control;
 using DailyNagger.Server.Database.Queries.Control;
 using DailyNagger.Server.Domain.Control;
-using DailyNagger.Server.Tests;
+using DailyNagger.Server.Tests.TestUtilities.SqlServer;
 using Microsoft.EntityFrameworkCore;
 
-namespace DailyNagger.Server.Tests.Operations;
+namespace DailyNagger.Server.Tests.Database.Queries.Control;
 
 [Collection(SqlServerTestCollection.Name)]
 public sealed class ControlDbReadTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)

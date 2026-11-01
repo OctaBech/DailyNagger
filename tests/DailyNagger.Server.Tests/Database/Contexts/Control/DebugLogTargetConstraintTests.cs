@@ -1,11 +1,11 @@
 using System.Text.Json;
 using DailyNagger.Server.Database.Contexts.Control;
 using DailyNagger.Server.Domain.Control;
-using DailyNagger.Server.Tests;
+using DailyNagger.Server.Tests.TestUtilities.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace DailyNagger.Server.Tests.Data;
+namespace DailyNagger.Server.Tests.Database.Contexts.Control;
 
 [Collection(SqlServerTestCollection.Name)]
 public sealed class DebugLogTargetConstraintTests(SqlServerTestFixture fixture)

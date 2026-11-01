@@ -13,7 +13,8 @@ using DailyNagger.Server.Database.Queries.Nags;
 using DailyNagger.Server.Database.Queries.UserMoods;
 using DailyNagger.Server.Domain.Control;
 using DailyNagger.Server.Domain.Tenant;
-using DailyNagger.Server.Tests.Operations;
+using DailyNagger.Server.Tests.TestUtilities;
+using DailyNagger.Server.Tests.TestUtilities.SqlServer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -21,7 +22,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 
-namespace DailyNagger.Server.Tests.Data;
+namespace DailyNagger.Server.Tests.Database.Integration;
 
 [Collection(SqlServerTestCollection.Name)]
 public sealed class UserScopedNodeKeysTests : SqlServerTestBase

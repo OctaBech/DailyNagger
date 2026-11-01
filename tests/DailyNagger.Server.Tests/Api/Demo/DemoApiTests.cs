@@ -4,13 +4,14 @@ using DailyNagger.Server.Database.Contexts.Tenant;
 using DailyNagger.Server.Domain.Control;
 using DailyNagger.Server.Domain.Tenant;
 using DailyNagger.Server.Observability;
+using DailyNagger.Server.Tests.TestUtilities.SqlServer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-namespace DailyNagger.Server.Tests.Api;
+namespace DailyNagger.Server.Tests.Api.Demo;
 
 [Collection(SqlServerTestCollection.Name)]
 public sealed class DemoApiTests : SqlServerTestBase

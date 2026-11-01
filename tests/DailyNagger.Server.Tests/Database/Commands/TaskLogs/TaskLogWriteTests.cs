@@ -7,17 +7,18 @@ using DailyNagger.Server.Database.Queries.Control;
 using DailyNagger.Server.Database.Queries.Nags;
 using DailyNagger.Server.Domain.Control;
 using DailyNagger.Server.Domain.Tenant;
-using DailyNagger.Server.Tests;
+using DailyNagger.Server.Tests.TestUtilities;
+using DailyNagger.Server.Tests.TestUtilities.SqlServer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace DailyNagger.Server.Tests.Operations;
+namespace DailyNagger.Server.Tests.Database.Commands.TaskLogs;
 
 [Collection(SqlServerTestCollection.Name)]
-public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
+public sealed class TaskLogWriteTests(SqlServerTestFixture fixture) : SqlServerTestBase(fixture)
 {
     [Fact]
     public async Task TaskLog_updated_at_must_not_be_default_value()

@@ -1,4 +1,4 @@
-namespace DailyNagger.Server.Tests;
+namespace DailyNagger.Server.Tests.TestUtilities.SqlServer;
 
 public abstract class SqlServerTestBase(SqlServerTestFixture fixture) : IAsyncLifetime
 {

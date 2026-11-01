@@ -4,7 +4,7 @@ using DailyNagger.Server.Database.Contexts.Tenant;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace DailyNagger.Server.Tests;
+namespace DailyNagger.Server.Tests.TestUtilities.SqlServer;
 
 public sealed class SqlServerTestFixture : IAsyncLifetime
 {

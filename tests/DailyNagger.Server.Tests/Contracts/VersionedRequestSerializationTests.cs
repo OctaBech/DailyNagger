@@ -6,7 +6,7 @@ using DailyNagger.Server.Contracts.TaskLogs;
 
 namespace DailyNagger.Server.Tests.Contracts;
 
-public sealed class NagContractSerializationTests
+public sealed class VersionedRequestSerializationTests
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
