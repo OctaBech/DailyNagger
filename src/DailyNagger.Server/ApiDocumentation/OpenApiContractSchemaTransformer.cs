@@ -2,7 +2,7 @@ using DailyNagger.Server.Contracts.TaskLogs;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
-namespace DailyNagger.Server.ClientContracts;
+namespace DailyNagger.Server.ApiDocumentation;
 
 public sealed class OpenApiContractSchemaTransformer : IOpenApiSchemaTransformer
 {

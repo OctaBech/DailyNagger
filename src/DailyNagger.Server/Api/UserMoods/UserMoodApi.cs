@@ -48,7 +48,7 @@ public static class UserMoodApi
 
         app.MapPost("/api/user-moods", async (
             SaveUserMoodRequest request,
-            NagRequestValidator validator,
+            RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>

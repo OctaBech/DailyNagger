@@ -53,7 +53,7 @@ public static class NagApi
         app.MapPut("/api/nags/{id:guid}", async (
             Guid id,
             JsonElement requestJson,
-            NagRequestValidator validator,
+            RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
@@ -137,7 +137,7 @@ public static class NagApi
 
         if (!versionedRequest.SkipPayloadVersionValidation)
         {
-            NagRequestValidator.ValidatePayloadVersion(
+            RequestValidator.ValidatePayloadVersion(
                 versionedRequest.Payload.Version,
                 versionedRequest.BaseVersion,
                 versionedRequest.NextVersion);

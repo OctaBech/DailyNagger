@@ -9,7 +9,7 @@ using DailyNagger.Server.Validation.UserMoods;
 
 namespace DailyNagger.Server.Validation;
 
-public sealed class NagRequestValidator
+public sealed class RequestValidator
 {
     public void Validate(SaveNagRequest request) => NagRequestValidation.Validate(request);
 

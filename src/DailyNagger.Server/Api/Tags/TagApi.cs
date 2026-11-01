@@ -46,7 +46,7 @@ public static class TagApi
 
         app.MapPut("/api/tags", async (
             SaveTagRequest request,
-            NagRequestValidator validator,
+            RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>

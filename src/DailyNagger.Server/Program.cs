@@ -6,7 +6,7 @@ using DailyNagger.Server.Api.Nags;
 using DailyNagger.Server.Api.Tags;
 using DailyNagger.Server.Api.TaskLogs;
 using DailyNagger.Server.Api.UserMoods;
-using DailyNagger.Server.ClientContracts;
+using DailyNagger.Server.ApiDocumentation;
 using DailyNagger.Server.Database;
 using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Database.Contexts.Control;
@@ -73,7 +73,7 @@ builder.Services.AddDbContext<DailyNaggerControlDbContext>(options =>
         sqlServer => sqlServer.EnableRetryOnFailure()));
 builder.Services.AddDatabaseOperations();
 builder.Services.AddOperations();
-builder.Services.AddScoped<NagRequestValidator>();
+builder.Services.AddScoped<RequestValidator>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("client", policy =>

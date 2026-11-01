@@ -21,7 +21,7 @@ public static class TaskLogApi
         app.MapPut("/api/task-logs/{id:guid}", async (
             Guid id,
             JsonElement requestJson,
-            NagRequestValidator validator,
+            RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
@@ -86,7 +86,7 @@ public static class TaskLogApi
         app.MapPatch("/api/task-logs/{id:guid}/task-entries", async (
             Guid id,
             UpdateTaskEntryValuesRequest request,
-            NagRequestValidator validator,
+            RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
@@ -152,7 +152,7 @@ public static class TaskLogApi
 
         if (!versionedRequest.SkipPayloadVersionValidation)
         {
-            NagRequestValidator.ValidatePayloadVersion(
+            RequestValidator.ValidatePayloadVersion(
                 versionedRequest.Payload.Version,
                 versionedRequest.BaseVersion,
                 versionedRequest.NextVersion);
