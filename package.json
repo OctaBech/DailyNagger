@@ -15,8 +15,6 @@
     "contracts:typecheck": "npm run typecheck --prefix src/api-contracts",
     "server:format": "dotnet format DailyNagger.sln --no-restore",
     "server:format:check": "dotnet format DailyNagger.sln --verify-no-changes --no-restore",
-    "client:dev": "npm run dev --prefix src/DailyNagger.Client",
-    "client:build": "npm run build --prefix src/DailyNagger.Client",
     "test": "dotnet test DailyNagger.sln --no-restore"
   }
 }
