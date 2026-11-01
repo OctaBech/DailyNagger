@@ -34,18 +34,28 @@ public sealed class GetDataDbConnection(
 
         try
         {
-            await connection.OpenAsync(cancellationToken);
-
-            return connection;
+            return await OpenOwnedConnectionAsync(connection, cancellationToken);
         }
         catch (SqlException)
         {
-            await connection.DisposeAsync();
-
             var refreshedConnection = await RefreshAsync(communityId, cancellationToken);
-            await refreshedConnection.OpenAsync(cancellationToken);
+            return await OpenOwnedConnectionAsync(refreshedConnection, cancellationToken);
+        }
+    }
 
-            return refreshedConnection;
+    private static async Task<SqlConnection> OpenOwnedConnectionAsync(
+        SqlConnection connection,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await connection.OpenAsync(cancellationToken);
+            return connection;
+        }
+        catch
+        {
+            await connection.DisposeAsync();
+            throw;
         }
     }
 

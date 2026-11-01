@@ -78,7 +78,11 @@ internal static class ScheduleRuleValidation
         try
         {
             var document = JsonDocument.Parse(ruleJson);
-            ValidationGuard.Require(document.RootElement.ValueKind == JsonValueKind.Object, "ScheduleRule RuleJson must be a JSON object.");
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                document.Dispose();
+                throw new NagValidationException("ScheduleRule RuleJson must be a JSON object.");
+            }
 
             return document;
         }

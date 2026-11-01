@@ -7,7 +7,7 @@ public sealed class DatabaseHealthRead(DailyNaggerDbContext db)
 {
     public async Task CheckConnectionAsync(CancellationToken cancellationToken = default)
     {
-        await using var connection = db.Database.GetDbConnection();
-        await connection.OpenAsync(cancellationToken);
+        await db.Database.OpenConnectionAsync(cancellationToken);
+        await db.Database.CloseConnectionAsync();
     }
 }
