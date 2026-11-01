@@ -1,6 +1,6 @@
 using System.Text.Json;
-using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Data;
+using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Tests;
