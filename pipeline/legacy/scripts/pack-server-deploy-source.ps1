@@ -19,7 +19,6 @@ try {
         --exclude='**/*.csproj.user' `
         --exclude='**/appsettings.Local.json' `
         --exclude=src/DailyNagger.Mobile/node_modules `
-        --exclude=src/DailyNagger.Client/node_modules `
         -czf $OutputPath `
         compose.prod.yaml `
         compose.staging.yaml `

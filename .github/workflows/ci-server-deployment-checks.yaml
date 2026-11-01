@@ -62,7 +62,6 @@ jobs:
             --exclude='**/*.csproj.user' \
             --exclude='**/appsettings.Local.json' \
             --exclude=src/DailyNagger.Mobile/node_modules \
-            --exclude=src/DailyNagger.Client/node_modules \
             -czf "$RUNNER_TEMP/dailynagger-source.tar.gz" \
             compose.prod.yaml \
             compose.staging.yaml \
