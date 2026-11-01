@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.Tags;
+using DailyNagger.Server.Contracts.UserMoods;
 
 namespace DailyNagger.Server.Validation;
 
