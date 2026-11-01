@@ -1,7 +1,7 @@
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Domain;
 
-namespace DailyNagger.Server.Operations.TaskLogs;
+namespace DailyNagger.Server.Mapping;
 
 internal static class TaskLogMapping
 {

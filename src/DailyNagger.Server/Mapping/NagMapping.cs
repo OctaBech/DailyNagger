@@ -1,7 +1,7 @@
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Domain;
 
-namespace DailyNagger.Server.Operations.Nags;
+namespace DailyNagger.Server.Mapping;
 
 internal static class NagMapping
 {
@@ -20,7 +20,7 @@ internal static class NagMapping
             nag.ScheduleRules.Select(ToDto).ToArray(),
             nag.Version);
 
-    private static NaggerPinnedByDto ToDto(NaggerPinnedBy pinnedBy) =>
+    public static NaggerPinnedByDto ToDto(NaggerPinnedBy pinnedBy) =>
         pinnedBy switch
         {
             NaggerPinnedBy.None => NaggerPinnedByDto.None,
@@ -40,7 +40,7 @@ internal static class NagMapping
             _ => throw new ArgumentOutOfRangeException(nameof(pinnedBy), pinnedBy, null)
         };
 
-    private static ScheduleRuleDto ToDto(ScheduleRule rule) =>
+    public static ScheduleRuleDto ToDto(ScheduleRule rule) =>
         new(
             rule.Id,
             ToDto(rule.RuleType),

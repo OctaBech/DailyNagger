@@ -1,5 +1,6 @@
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Database;
+using DailyNagger.Server.Mapping;
 
 namespace DailyNagger.Server.Operations.TaskLogs;
 
