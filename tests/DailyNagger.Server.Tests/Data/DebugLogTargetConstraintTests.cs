@@ -1,6 +1,6 @@
 using System.Text.Json;
 using DailyNagger.Server.Data;
-using DailyNagger.Server.Operations;
+using DailyNagger.Server.Data.Control.Models;
 using DailyNagger.Server.Tests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

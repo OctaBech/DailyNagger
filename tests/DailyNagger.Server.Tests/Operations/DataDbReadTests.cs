@@ -1,10 +1,10 @@
 using System.Text.Json;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Data.Control.Models;
 using DailyNagger.Server.Database.Control;
 using DailyNagger.Server.Database.Nags;
 using DailyNagger.Server.Domain;
-using DailyNagger.Server.Operations;
 using DailyNagger.Server.Tests;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
