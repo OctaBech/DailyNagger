@@ -4,6 +4,7 @@ using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
+using DailyNagger.Server.Operations.UserMoods;
 using DailyNagger.Server.Tests.Operations;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -96,7 +97,13 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
         new DbContextOptionsBuilder<DailyNaggerControlDbContext>()
             .UseSqlServer(fixture.ControlConnectionString).Options);
 
-    private async Task<(Guid Community, DataDbRead Read, DataDbWrite Write, MemoryCache Cache)> CreateOperationsAsync(
+    private async Task<(
+        Guid Community,
+        DataDbRead Read,
+        DataDbWrite Write,
+        UserMoodRead MoodRead,
+        UserMoodWrite MoodWrite,
+        MemoryCache Cache)> CreateOperationsAsync(
         DailyNaggerControlDbContext db)
     {
         var community = Guid.NewGuid();
@@ -115,7 +122,8 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
         }).Build();
         var connection = new GetDataDbConnection(new ControlDbRead(db), configuration,
             new TestOptionsMonitor<DataDbConnectionOptions>(new() { CacheMinutes = 60 }), cache);
-        return (community, new DataDbRead(connection), new DataDbWrite(connection), cache);
+        return (community, new DataDbRead(connection), new DataDbWrite(connection),
+            new UserMoodRead(connection), new UserMoodWrite(connection), cache);
     }
 
     [Fact]
@@ -195,12 +203,12 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
         var id = Guid.NewGuid();
         var a = Guid.NewGuid();
         var b = Guid.NewGuid();
-        await ops.Write.SaveUserMoodAsync(ops.Community, a, id, "A", Stamp, null, null, null);
-        await ops.Write.SaveUserMoodAsync(ops.Community, b, id, "B", Stamp, null, null, null);
-        var retry = await ops.Write.SaveUserMoodAsync(ops.Community, a, id, "ignored", Stamp, null, null, null);
+        await ops.MoodWrite.SaveUserMoodAsync(ops.Community, a, id, "A", Stamp, null, null, null);
+        await ops.MoodWrite.SaveUserMoodAsync(ops.Community, b, id, "B", Stamp, null, null, null);
+        var retry = await ops.MoodWrite.SaveUserMoodAsync(ops.Community, a, id, "ignored", Stamp, null, null, null);
         Assert.Equal("A", retry.Mood);
-        Assert.Equal("A", Assert.Single(await ops.Read.GetUserMoodsAsync(ops.Community, a, null, null, 10)).Mood);
-        Assert.Equal("B", Assert.Single(await ops.Read.GetUserMoodsAsync(ops.Community, b, null, null, 10)).Mood);
+        Assert.Equal("A", Assert.Single(await ops.MoodRead.GetUserMoodsAsync(ops.Community, a, null, null, 10)).Mood);
+        Assert.Equal("B", Assert.Single(await ops.MoodRead.GetUserMoodsAsync(ops.Community, b, null, null, 10)).Mood);
     }
 
     public static TheoryData<string, string, string> Relations => new()

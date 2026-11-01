@@ -1,9 +1,9 @@
-using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Contracts.UserMoods;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 
-namespace DailyNagger.Server.Api;
+namespace DailyNagger.Server.Api.UserMoods;
 
 public static class UserMoodApi
 {
@@ -15,13 +15,13 @@ public static class UserMoodApi
             DateTimeOffset? from,
             DateTimeOffset? to,
             int? take,
-            DataDbRead dataDbRead,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
             try
             {
-                var moods = await dataDbRead.GetUserMoodsAsync(
+                var moods = await operations.UserMoods.GetAsync(
                     communityId,
                     userId,
                     from,
@@ -48,7 +48,7 @@ public static class UserMoodApi
         app.MapPost("/api/user-moods", async (
             SaveUserMoodRequest request,
             NagRequestValidator validator,
-            DataDbWrite dataDbWrite,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
@@ -56,16 +56,7 @@ public static class UserMoodApi
             {
                 validator.Validate(request);
 
-                var saved = await dataDbWrite.SaveUserMoodAsync(
-                    request.CommunityId,
-                    request.UserId,
-                    request.Payload.Id,
-                    request.Payload.Mood,
-                    request.Payload.RecordedAt,
-                    request.Payload.TimeZone,
-                    request.Payload.Locale,
-                    request.ClientIdentity,
-                    cancellationToken);
+                var saved = await operations.UserMoods.SaveAsync(request, cancellationToken);
 
                 return Results.Ok(saved);
             }
