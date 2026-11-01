@@ -36,15 +36,11 @@ public static class NagApi
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         })
             .WithTags("Nags")
@@ -64,10 +60,7 @@ public static class NagApi
 
                 if (request.Id != id)
                 {
-                    return Results.BadRequest(new
-                    {
-                        error = "Route id must match request id."
-                    });
+                    return ApiErrorResults.BadRequest("Route id must match request id.");
                 }
 
                 validator.Validate(request);
@@ -78,37 +71,23 @@ public static class NagApi
             }
             catch (NagValidationException exception)
             {
-                return Results.BadRequest(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.BadRequest(exception.Message);
             }
             catch (JsonException exception)
             {
-                return Results.BadRequest(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.BadRequest(exception.Message);
             }
             catch (WriteConflictException exception)
             {
-                return Results.Conflict(new
-                {
-                    error = exception.Message,
-                    currentVersion = exception.CurrentVersion
-                });
+                return ApiErrorResults.Conflict(exception);
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         })
             .WithTags("Nags")

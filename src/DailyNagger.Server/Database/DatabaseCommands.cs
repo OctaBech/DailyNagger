@@ -6,6 +6,8 @@ using DailyNagger.Server.Database.Commands.UserMoods;
 
 namespace DailyNagger.Server.Database;
 
+// Groups database writes for discoverability through IntelliSense.
+// Intentionally trades narrower dependencies for a single entry point.
 public sealed class DatabaseCommands(
     DemoDataWrite demo,
     NagWrite nags,

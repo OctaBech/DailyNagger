@@ -8,6 +8,8 @@ using DailyNagger.Server.Operations.UserMoods;
 
 namespace DailyNagger.Server.Operations;
 
+// Groups operations for discoverability through IntelliSense.
+// Intentionally trades narrower dependencies for a single entry point.
 public sealed class OperationsFacade(
     DemoDataOperations demo,
     NagOperations nags,

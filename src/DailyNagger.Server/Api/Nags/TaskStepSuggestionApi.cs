@@ -27,8 +27,7 @@ public static class TaskStepSuggestionApi
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         })
             .WithTags("TaskStepSuggestions")

@@ -39,15 +39,11 @@ public static class NagPlanApi
         }
         catch (NagCommunityNotFoundException exception)
         {
-            return Results.NotFound(new
-            {
-                error = exception.Message
-            });
+            return ApiErrorResults.NotFound(exception.Message);
         }
         catch (Exception exception)
         {
-            return Results.Problem(
-                environment.IsDevelopment() ? exception.ToString() : exception.Message);
+            return ApiErrorResults.Problem(exception, environment);
         }
     }
 }

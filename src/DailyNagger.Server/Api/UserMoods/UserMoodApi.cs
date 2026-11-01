@@ -34,15 +34,11 @@ public static class UserMoodApi
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         }).WithTags("UserMoods");
 
@@ -63,22 +59,15 @@ public static class UserMoodApi
             }
             catch (NagValidationException exception)
             {
-                return Results.BadRequest(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.BadRequest(exception.Message);
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         }).WithTags("UserMoods");
 

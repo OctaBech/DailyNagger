@@ -86,46 +86,28 @@ internal static class TaskLogCommands
         bool allowClosedUpdate,
         CancellationToken cancellationToken)
     {
+        const string updateSql = """
+            update task_log
+            set
+                nag_id = @nagId,
+                copied_from_task_log_id = @copiedFromTaskLogId,
+                closed_on = @closedOn,
+                tag = @tag,
+                updated_at = @updatedAt,
+                updated_by_client_id = @updatedByClientId,
+                updated_by_device_name = @updatedByDeviceName,
+                updated_by_device_model = @updatedByDeviceModel,
+                version = @version,
+                descendant_task_item_count = @descendantTaskItemCount,
+                done_descendant_task_item_count = @doneDescendantTaskItemCount
+            where id = @id
+                and user_id = @userId
+                and version = @baseVersion
+            """;
+
         await using var command = new SqlCommand(
             exists
-                ? allowClosedUpdate
-                    ? """
-                      update task_log
-                      set
-                          nag_id = @nagId,
-                          copied_from_task_log_id = @copiedFromTaskLogId,
-                          closed_on = @closedOn,
-                          tag = @tag,
-                          updated_at = @updatedAt,
-                          updated_by_client_id = @updatedByClientId,
-                          updated_by_device_name = @updatedByDeviceName,
-                          updated_by_device_model = @updatedByDeviceModel,
-                          version = @version,
-                          descendant_task_item_count = @descendantTaskItemCount,
-                          done_descendant_task_item_count = @doneDescendantTaskItemCount
-                      where id = @id
-                          and user_id = @userId
-                          and version = @baseVersion
-                      """
-                    : """
-                      update task_log
-                      set
-                          nag_id = @nagId,
-                          copied_from_task_log_id = @copiedFromTaskLogId,
-                          closed_on = @closedOn,
-                          tag = @tag,
-                          updated_at = @updatedAt,
-                          updated_by_client_id = @updatedByClientId,
-                          updated_by_device_name = @updatedByDeviceName,
-                          updated_by_device_model = @updatedByDeviceModel,
-                          version = @version,
-                          descendant_task_item_count = @descendantTaskItemCount,
-                          done_descendant_task_item_count = @doneDescendantTaskItemCount
-                      where id = @id
-                          and user_id = @userId
-                          and version = @baseVersion
-                          and closed_on is null
-                      """
+                ? updateSql + (allowClosedUpdate ? string.Empty : " and closed_on is null")
                 : """
                   insert into task_log (
                       id,

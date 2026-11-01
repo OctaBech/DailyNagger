@@ -21,8 +21,7 @@ public static class SystemApi
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         }).WithTags("System");
 

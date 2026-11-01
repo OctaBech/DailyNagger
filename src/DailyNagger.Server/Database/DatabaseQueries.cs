@@ -7,6 +7,8 @@ using DailyNagger.Server.Database.Queries.UserMoods;
 
 namespace DailyNagger.Server.Database;
 
+// Groups database reads for discoverability through IntelliSense.
+// Intentionally trades narrower dependencies for a single entry point.
 public sealed class DatabaseQueries(
     ControlDbRead control,
     NagRead nags,

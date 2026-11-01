@@ -16,6 +16,13 @@ For example, a task-log write enters through `Api/TaskLogs`, is validated by
 request and invokes `DatabaseCommands.TaskLogs`; the database write owns its
 connection and transaction. Mapping converts the result back to the response DTO.
 
+### Why facades?
+
+`OperationsFacade`, `DatabaseQueries`, and `DatabaseCommands` provide a single,
+discoverable entry point through IntelliSense at each boundary. This intentionally
+broadens dependencies and causes DI to construct services that a particular call
+may not use. Child services do not depend on their own facade.
+
 ## Folder responsibilities
 
 | Folder | Responsibility |

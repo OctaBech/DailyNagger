@@ -74,35 +74,18 @@ public sealed class TaskLogWrite(GetDataDbConnection getDataDbConnection)
             })
             .ToList();
 
-        var taskLog = new TaskLog
-        {
-            Id = taskLogId,
-            UserId = userId,
-            NagId = nagId,
-            CopiedFromTaskLogId = copiedFromTaskLogId,
-            ClosedOn = closedOn,
-            Tag = tag,
-            UpdatedAt = updatedAt,
-            UpdatedByClientId = clientIdentity?.ClientId,
-            UpdatedByDeviceName = clientIdentity?.DeviceName,
-            UpdatedByDeviceModel = clientIdentity?.DeviceModel,
-            DescendantTaskItemCount = descendantTaskItemCount,
-            DoneDescendantTaskItemCount = doneDescendantTaskItemCount,
-            TaskItems = copiedTaskItems
-        };
-
         await using var connection = await getDataDbConnection.OpenAsync(
             communityId,
             cancellationToken);
 
         await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(cancellationToken);
 
-        if (!await TaskLogCommands.NagExistsAsync(connection, transaction, userId, taskLog.NagId, cancellationToken))
+        if (!await TaskLogCommands.NagExistsAsync(connection, transaction, userId, nagId, cancellationToken))
         {
             throw new NagValidationException("Nagger does not exist.");
         }
 
-        if (taskLog.CopiedFromTaskLogId is { } copiedFromId
+        if (copiedFromTaskLogId is { } copiedFromId
             && !await TaskLogCommands.TaskLogExistsAsync(connection, transaction, userId, copiedFromId, cancellationToken))
         {
             throw new NagValidationException("CopiedFromTaskLog does not exist.");
@@ -111,7 +94,7 @@ public sealed class TaskLogWrite(GetDataDbConnection getDataDbConnection)
         var currentTaskLogHeader = await TaskLogCommands.GetTaskLogHeaderAsync(
             connection,
             transaction,
-            taskLog.Id,
+            taskLogId,
             userId,
             cancellationToken);
 
@@ -128,22 +111,22 @@ public sealed class TaskLogWrite(GetDataDbConnection getDataDbConnection)
             throw new NagValidationException("BaseVersion must be 0 when creating a new TaskLog.");
         }
 
-        taskLog = new TaskLog
+        var taskLog = new TaskLog
         {
-            Id = taskLog.Id,
-            UserId = taskLog.UserId,
-            NagId = taskLog.NagId,
-            CopiedFromTaskLogId = taskLog.CopiedFromTaskLogId,
-            ClosedOn = currentTaskLogHeader?.ClosedOn ?? taskLog.ClosedOn,
-            Tag = taskLog.Tag,
+            Id = taskLogId,
+            UserId = userId,
+            NagId = nagId,
+            CopiedFromTaskLogId = copiedFromTaskLogId,
+            ClosedOn = currentTaskLogHeader?.ClosedOn ?? closedOn,
+            Tag = tag,
             UpdatedAt = updatedAt,
             UpdatedByClientId = clientIdentity?.ClientId,
             UpdatedByDeviceName = clientIdentity?.DeviceName,
             UpdatedByDeviceModel = clientIdentity?.DeviceModel,
             Version = nextVersion,
-            DescendantTaskItemCount = taskLog.DescendantTaskItemCount,
-            DoneDescendantTaskItemCount = taskLog.DoneDescendantTaskItemCount,
-            TaskItems = taskLog.TaskItems
+            DescendantTaskItemCount = descendantTaskItemCount,
+            DoneDescendantTaskItemCount = doneDescendantTaskItemCount,
+            TaskItems = copiedTaskItems
         };
 
         await TaskLogCommands.UpsertTaskLogAsync(
