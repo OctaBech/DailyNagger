@@ -1,4 +1,4 @@
-using DailyNagger.Server.Operations;
+using DailyNagger.Server.Database.Control;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;

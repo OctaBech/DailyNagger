@@ -2,7 +2,7 @@ using System.Text;
 using DailyNagger.Server.Domain;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.TaskLogs;
+namespace DailyNagger.Server.Database.TaskLogs;
 
 internal static class TaskLogTreeWrite
 {

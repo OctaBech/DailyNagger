@@ -4,7 +4,7 @@ using DailyNagger.Server.Domain;
 using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.TaskLogs;
+namespace DailyNagger.Server.Database.TaskLogs;
 
 internal static class TaskLogCommands
 {

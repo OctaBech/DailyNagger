@@ -2,7 +2,7 @@ using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Domain;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.Nags;
+namespace DailyNagger.Server.Database.Nags;
 
 internal static class NagQueries
 {

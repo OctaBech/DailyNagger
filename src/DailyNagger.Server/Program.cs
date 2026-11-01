@@ -6,10 +6,13 @@ using DailyNagger.Server.Api.UserMoods;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database;
 using DailyNagger.Server.Deployment;
 using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Operations.Demo;
+using DailyNagger.Server.Operations.NagPlans;
+using DailyNagger.Server.Operations.Nags;
 using DailyNagger.Server.Operations.Tags;
 using DailyNagger.Server.Operations.TaskLogs;
 using DailyNagger.Server.Operations.UserMoods;
@@ -69,17 +72,11 @@ builder.Services.AddDbContext<DailyNaggerControlDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DailyNaggerControl"),
         sqlServer => sqlServer.EnableRetryOnFailure()));
-builder.Services.AddScoped<ControlDbRead>();
-builder.Services.AddScoped<GetDataDbConnection>();
-builder.Services.AddScoped<DataDbRead>();
-builder.Services.AddScoped<DataDbWrite>();
-builder.Services.AddScoped<TagRead>();
-builder.Services.AddScoped<TagWrite>();
+builder.Services.AddDatabaseOperations();
+builder.Services.AddScoped<NagOperations>();
+builder.Services.AddScoped<NagPlanOperations>();
 builder.Services.AddScoped<TagOperations>();
-builder.Services.AddScoped<UserMoodRead>();
-builder.Services.AddScoped<UserMoodWrite>();
 builder.Services.AddScoped<UserMoodOperations>();
-builder.Services.AddScoped<TaskLogWrite>();
 builder.Services.AddScoped<TaskLogOperations>();
 builder.Services.AddScoped<OperationsFacade>();
 builder.Services.AddScoped<DemoDataOperations>();

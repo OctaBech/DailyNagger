@@ -1,13 +1,13 @@
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Nags;
 using DailyNagger.Server.Domain;
-using DailyNagger.Server.Operations.Nags;
 using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations;
+namespace DailyNagger.Server.Database.Nags;
 
-public sealed class DataDbWrite(GetDataDbConnection getDataDbConnection)
+public sealed class NagWrite(GetDataDbConnection getDataDbConnection)
 {
     public async Task<Nagger> SaveNagAsync(
         Guid communityId,

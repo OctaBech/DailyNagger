@@ -3,10 +3,13 @@ using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Control;
+using DailyNagger.Server.Database.NagPlans;
+using DailyNagger.Server.Database.Nags;
+using DailyNagger.Server.Database.TaskLogs;
+using DailyNagger.Server.Database.UserMoods;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
-using DailyNagger.Server.Operations.TaskLogs;
-using DailyNagger.Server.Operations.UserMoods;
 using DailyNagger.Server.Tests.Operations;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -101,8 +104,9 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
 
     private async Task<(
         Guid Community,
-        DataDbRead Read,
-        DataDbWrite Write,
+        NagRead Read,
+        NagPlanRead PlanRead,
+        NagWrite Write,
         TaskLogWrite LogWrite,
         UserMoodRead MoodRead,
         UserMoodWrite MoodWrite,
@@ -125,7 +129,7 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
         }).Build();
         var connection = new GetDataDbConnection(new ControlDbRead(db), configuration,
             new TestOptionsMonitor<DataDbConnectionOptions>(new() { CacheMinutes = 60 }), cache);
-        return (community, new DataDbRead(connection), new DataDbWrite(connection), new TaskLogWrite(connection),
+        return (community, new NagRead(connection), new NagPlanRead(connection), new NagWrite(connection), new TaskLogWrite(connection),
             new UserMoodRead(connection), new UserMoodWrite(connection), cache);
     }
 
@@ -155,7 +159,7 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
             var nag = Assert.Single(await ops.Read.GetNagAsync(ops.Community, user));
             Assert.Equal(label, nag.Title);
             Assert.Equal(user, Assert.Single(nag.ScheduleRules).UserId);
-            var plan = await ops.Read.GetNagPlanAsync(ops.Community, user, new DateOnly(2026, 10, 23));
+            var plan = await ops.PlanRead.GetNagPlanAsync(ops.Community, user, new DateOnly(2026, 10, 23));
             var log = Assert.Single(plan.Nags).TaskLog;
             Assert.All(log.TaskItems, item => Assert.Equal(user, item.UserId));
             Assert.Equal(label, Assert.Single(log.TaskItems.Single(x => x.Id == ids.Root).TaskEntries).Value);

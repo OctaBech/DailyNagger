@@ -1,4 +1,4 @@
-namespace DailyNagger.Server.Operations;
+namespace DailyNagger.Server.Domain;
 
 public sealed class ConcurrencyConflictException(
     string message,

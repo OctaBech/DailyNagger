@@ -1,14 +1,15 @@
 using DailyNagger.Server.Contracts.TaskLogs;
+using DailyNagger.Server.Database;
 
 namespace DailyNagger.Server.Operations.TaskLogs;
 
-public sealed class TaskLogOperations(TaskLogWrite write)
+public sealed class TaskLogOperations(DatabaseCommands commands)
 {
     public async Task<TaskLogDto> SaveAsync(
         SaveTaskLogRequest request,
         CancellationToken cancellationToken = default)
     {
-        var taskLog = await write.SaveTaskLogAsync(
+        var taskLog = await commands.TaskLogs.SaveTaskLogAsync(
             request.CommunityId,
             request.UserId,
             request.Id,
@@ -35,7 +36,7 @@ public sealed class TaskLogOperations(TaskLogWrite write)
         UpdateTaskEntryValuesRequest request,
         CancellationToken cancellationToken = default)
     {
-        var result = await write.UpdateTaskEntryValuesAsync(
+        var result = await commands.TaskLogs.UpdateTaskEntryValuesAsync(
             request.CommunityId,
             request.UserId,
             id,

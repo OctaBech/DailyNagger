@@ -1,6 +1,8 @@
 using System.Text.Json;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Control;
+using DailyNagger.Server.Database.Nags;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Tests;
@@ -391,7 +393,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
         return new DailyNaggerDbContext(options);
     }
 
-    private static DataDbRead CreateDataDbRead(DailyNaggerControlDbContext controlDb)
+    private static NagRead CreateDataDbRead(DailyNaggerControlDbContext controlDb)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -401,7 +403,7 @@ public sealed class DataDbReadTests(SqlServerTestFixture fixture) : SqlServerTes
             })
             .Build();
 
-        return new DataDbRead(new GetDataDbConnection(
+        return new NagRead(new GetDataDbConnection(
             new ControlDbRead(controlDb),
             configuration,
             new TestOptionsMonitor<DataDbConnectionOptions>(new DataDbConnectionOptions

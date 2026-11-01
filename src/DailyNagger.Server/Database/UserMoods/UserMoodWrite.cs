@@ -4,7 +4,7 @@ using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.UserMoods;
+namespace DailyNagger.Server.Database.UserMoods;
 
 public sealed class UserMoodWrite(GetDataDbConnection getDataDbConnection)
 {

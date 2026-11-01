@@ -1,6 +1,5 @@
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Operations;
-using DailyNagger.Server.Operations.Demo;
 
 namespace DailyNagger.Server.Api;
 
@@ -17,32 +16,29 @@ public static class DemoApi
         return app;
     }
 
-    private static Task<IResult> Copy(Guid communityId, Guid userId, ControlDbRead controlDbRead,
-        DemoDataOperations operations, CancellationToken cancellationToken) =>
-        Execute(communityId, userId, controlDbRead, operations, copy: true, cancellationToken);
+    private static Task<IResult> Copy(Guid communityId, Guid userId, OperationsFacade operations, CancellationToken cancellationToken) =>
+        Execute(communityId, userId, operations, copy: true, cancellationToken);
 
-    private static Task<IResult> Delete(Guid communityId, Guid userId, ControlDbRead controlDbRead,
-        DemoDataOperations operations, CancellationToken cancellationToken) =>
-        Execute(communityId, userId, controlDbRead, operations, copy: false, cancellationToken);
+    private static Task<IResult> Delete(Guid communityId, Guid userId, OperationsFacade operations, CancellationToken cancellationToken) =>
+        Execute(communityId, userId, operations, copy: false, cancellationToken);
 
-    private static async Task<IResult> Execute(Guid communityId, Guid userId, ControlDbRead controlDbRead,
-        DemoDataOperations operations, bool copy, CancellationToken cancellationToken)
+    private static async Task<IResult> Execute(Guid communityId, Guid userId, OperationsFacade operations, bool copy, CancellationToken cancellationToken)
     {
         if (userId == Guid.Empty) return Results.BadRequest(new { error = "UserId is required." });
         if (communityId == Guid.Empty
-            || !await controlDbRead.IsDemoCommunityAsync(communityId, cancellationToken))
+            || !await operations.Demo.IsDemoCommunityAsync(communityId, cancellationToken))
             return Results.NotFound();
 
         try
         {
             if (copy)
             {
-                if (!await operations.CopyAsync(communityId, TemplateUserId, userId, cancellationToken))
+                if (!await operations.Demo.CopyAsync(communityId, TemplateUserId, userId, cancellationToken))
                     return Results.Conflict(new { error = "The demo template has no tasks." });
             }
             else
             {
-                await operations.DeleteAsync(communityId, userId, cancellationToken);
+                await operations.Demo.DeleteAsync(communityId, userId, cancellationToken);
             }
             return Results.Ok(new { });
         }

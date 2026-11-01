@@ -2,7 +2,7 @@ using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
 using Microsoft.EntityFrameworkCore;
 
-namespace DailyNagger.Server.Operations;
+namespace DailyNagger.Server.Database.Control;
 
 public sealed class ControlDbRead(DailyNaggerControlDbContext db)
 {

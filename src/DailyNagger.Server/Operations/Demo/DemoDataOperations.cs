@@ -1,44 +1,16 @@
-using System.Data;
-using DailyNagger.Server.Data.Connections;
-using Microsoft.Data.SqlClient;
+using DailyNagger.Server.Database;
 
 namespace DailyNagger.Server.Operations.Demo;
 
-public sealed class DemoDataOperations(GetDataDbConnection connections)
+public sealed class DemoDataOperations(DatabaseQueries queries, DatabaseCommands commands)
 {
-    // Parents before children. Never discover additional tables implicitly.
-    private static readonly string[] Tables =
-        ["nag", "schedule_rule", "task_log", "task_item", "task_entry", "user_tag", "user_mood"];
+    public Task<bool> IsDemoCommunityAsync(Guid communityId, CancellationToken cancellationToken = default) =>
+        queries.Control.IsDemoCommunityAsync(communityId, cancellationToken);
 
-    public async Task<bool> CopyAsync(Guid communityId, Guid templateUserId, Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        await using var connection = await connections.OpenAsync(communityId, cancellationToken);
-        await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(
-            IsolationLevel.Serializable, cancellationToken);
-        if (!await DemoDataCommands.SourceExistsAsync(
-            connection, transaction, userId, templateUserId, cancellationToken)) return false;
+    public Task<bool> CopyAsync(Guid communityId, Guid templateUserId, Guid userId,
+        CancellationToken cancellationToken = default) =>
+        commands.Demo.CopyAsync(communityId, templateUserId, userId, cancellationToken);
 
-        foreach (var table in Tables)
-        {
-            await DemoDataCommands.CopyTableAsync(
-                connection, transaction, table, userId, templateUserId, cancellationToken);
-        }
-        await transaction.CommitAsync(cancellationToken);
-        return true;
-    }
-
-    public async Task DeleteAsync(Guid communityId, Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        await using var connection = await connections.OpenAsync(communityId, cancellationToken);
-        await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(
-            IsolationLevel.Serializable, cancellationToken);
-        foreach (var table in Tables.Reverse())
-        {
-            await DemoDataCommands.DeleteTableAsync(
-                connection, transaction, table, userId, cancellationToken);
-        }
-        await transaction.CommitAsync(cancellationToken);
-    }
+    public Task DeleteAsync(Guid communityId, Guid userId, CancellationToken cancellationToken = default) =>
+        commands.Demo.DeleteAsync(communityId, userId, cancellationToken);
 }

@@ -1,7 +1,7 @@
 using DailyNagger.Server.Domain;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.NagPlans;
+namespace DailyNagger.Server.Database.NagPlans;
 
 internal static class NagPlanQueries
 {

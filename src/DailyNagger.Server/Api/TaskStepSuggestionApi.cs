@@ -11,13 +11,13 @@ public static class TaskStepSuggestionApi
             Guid communityId,
             Guid userId,
             Guid naggerId,
-            DataDbRead dataDbRead,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
             try
             {
-                var suggestions = await dataDbRead.GetTaskStepNameSuggestionsAsync(
+                var suggestions = await operations.Nags.GetTaskStepNameSuggestionsAsync(
                     communityId,
                     userId,
                     naggerId,

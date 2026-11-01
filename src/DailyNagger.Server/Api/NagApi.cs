@@ -20,20 +20,18 @@ public static class NagApi
         app.MapGet("/api/nags", async (
             Guid communityId,
             Guid userId,
-            DataDbRead dataDbRead,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
             try
             {
-                var nag = await dataDbRead.GetNagAsync(
+                var nag = await operations.Nags.GetAsync(
                     communityId,
                     userId,
                     cancellationToken);
 
-                return Results.Ok(nag
-                    .Select(ToDto)
-                    .ToArray());
+                return Results.Ok(nag);
             }
             catch (NagCommunityNotFoundException exception)
             {
@@ -55,7 +53,7 @@ public static class NagApi
             Guid id,
             JsonElement requestJson,
             NagRequestValidator validator,
-            DataDbWrite dataDbWrite,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
@@ -73,23 +71,9 @@ public static class NagApi
 
                 validator.Validate(request);
 
-                var nag = await dataDbWrite.SaveNagAsync(
-                    request.CommunityId,
-                    request.UserId,
-                    request.Id,
-                    request.Title.Trim(),
-                    request.ActiveLogDueOn,
-                    request.TargetTime,
-                    request.IsDeactivated,
-                    ToDomain(request.PinnedBy),
-                    request.UpdatedAt,
-                    request.ClientIdentity,
-                    request.ScheduleRules.Select(rule => ToDomain(request.Id, rule)).ToArray(),
-                    request.BaseVersion,
-                    request.NextVersion,
-                    cancellationToken);
+                var nag = await operations.Nags.SaveAsync(request, cancellationToken);
 
-                return Results.Ok(ToDto(nag));
+                return Results.Ok(nag);
             }
             catch (NagValidationException exception)
             {
@@ -173,72 +157,4 @@ public static class NagApi
             versionedRequest.NextVersion,
             versionedRequest.ClientIdentity);
     }
-
-    private static NaggerDto ToDto(Nagger nag) =>
-        new(
-            nag.Id,
-            nag.Title,
-            nag.ActiveLogDueOn,
-            nag.TargetTime,
-            nag.IsDeactivated,
-            ToDto(nag.PinnedBy),
-            nag.UpdatedAt,
-            nag.UpdatedByClientId,
-            nag.UpdatedByDeviceName,
-            nag.UpdatedByDeviceModel,
-            nag.ScheduleRules.Select(ToDto).ToArray(),
-            nag.Version);
-
-    private static NaggerPinnedByDto ToDto(NaggerPinnedBy pinnedBy) =>
-        pinnedBy switch
-        {
-            NaggerPinnedBy.None => NaggerPinnedByDto.None,
-            NaggerPinnedBy.User => NaggerPinnedByDto.User,
-            NaggerPinnedBy.Llm => NaggerPinnedByDto.Llm,
-            NaggerPinnedBy.Community => NaggerPinnedByDto.Community,
-            _ => throw new ArgumentOutOfRangeException(nameof(pinnedBy), pinnedBy, null)
-        };
-
-    private static NaggerPinnedBy ToDomain(NaggerPinnedByDto pinnedBy) =>
-        pinnedBy switch
-        {
-            NaggerPinnedByDto.None => NaggerPinnedBy.None,
-            NaggerPinnedByDto.User => NaggerPinnedBy.User,
-            NaggerPinnedByDto.Llm => NaggerPinnedBy.Llm,
-            NaggerPinnedByDto.Community => NaggerPinnedBy.Community,
-            _ => throw new ArgumentOutOfRangeException(nameof(pinnedBy), pinnedBy, null)
-        };
-
-    private static ScheduleRuleDto ToDto(ScheduleRule rule) =>
-        new(
-            rule.Id,
-            ToDto(rule.RuleType),
-            rule.RuleJson);
-
-    private static ScheduleRule ToDomain(Guid nagId, ScheduleRuleDto rule) =>
-        new()
-        {
-            Id = rule.Id,
-            NagId = nagId,
-            RuleType = ToDomain(rule.RuleType),
-            RuleJson = rule.RuleJson
-        };
-
-    private static ScheduleRuleTypeDto ToDto(ScheduleRuleType ruleType) =>
-        ruleType switch
-        {
-            ScheduleRuleType.Weekday => ScheduleRuleTypeDto.Weekday,
-            ScheduleRuleType.Date => ScheduleRuleTypeDto.Date,
-            ScheduleRuleType.Holiday => ScheduleRuleTypeDto.Holiday,
-            _ => throw new ArgumentOutOfRangeException(nameof(ruleType), ruleType, null)
-        };
-
-    private static ScheduleRuleType ToDomain(ScheduleRuleTypeDto ruleType) =>
-        ruleType switch
-        {
-            ScheduleRuleTypeDto.Weekday => ScheduleRuleType.Weekday,
-            ScheduleRuleTypeDto.Date => ScheduleRuleType.Date,
-            ScheduleRuleTypeDto.Holiday => ScheduleRuleType.Holiday,
-            _ => throw new ArgumentOutOfRangeException(nameof(ruleType), ruleType, null)
-        };
 }

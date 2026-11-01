@@ -1,7 +1,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.Demo;
+namespace DailyNagger.Server.Database.Demo;
 
 internal static class DemoDataCommands
 {

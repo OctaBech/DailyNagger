@@ -2,7 +2,7 @@ using DailyNagger.Server.Contracts.Tags;
 using DailyNagger.Server.Data.Connections;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.Tags;
+namespace DailyNagger.Server.Database.Tags;
 
 public sealed class TagWrite(GetDataDbConnection getDataDbConnection)
 {

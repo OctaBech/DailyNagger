@@ -2,7 +2,7 @@ using DailyNagger.Server.Contracts.UserMoods;
 using DailyNagger.Server.Data.Connections;
 using Microsoft.Data.SqlClient;
 
-namespace DailyNagger.Server.Operations.UserMoods;
+namespace DailyNagger.Server.Database.UserMoods;
 
 public sealed class UserMoodRead(GetDataDbConnection getDataDbConnection)
 {
