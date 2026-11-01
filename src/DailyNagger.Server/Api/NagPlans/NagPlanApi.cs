@@ -1,5 +1,5 @@
 using DailyNagger.Server.Contracts.NagPlans;
-using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Operations;
 
 namespace DailyNagger.Server.Api.NagPlans;

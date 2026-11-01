@@ -1,8 +1,8 @@
 using System.Text.Json;
-using DailyNagger.Server.Data;
-using DailyNagger.Server.Data.Connections;
-using DailyNagger.Server.Data.Control.Models;
-using DailyNagger.Server.Database.Control;
+using DailyNagger.Server.Database.Connections;
+using DailyNagger.Server.Database.Contexts.Control;
+using DailyNagger.Server.Database.Models.Control;
+using DailyNagger.Server.Database.Queries.Control;
 using DailyNagger.Server.Tests;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;

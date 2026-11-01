@@ -1,6 +1,7 @@
 using System.Net;
-using DailyNagger.Server.Data;
-using DailyNagger.Server.Data.Control.Models;
+using DailyNagger.Server.Database.Contexts.Control;
+using DailyNagger.Server.Database.Contexts.Tenant;
+using DailyNagger.Server.Database.Models.Control;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Observability;
 using Microsoft.AspNetCore.Hosting;

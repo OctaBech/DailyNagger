@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.Nags;
-using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;

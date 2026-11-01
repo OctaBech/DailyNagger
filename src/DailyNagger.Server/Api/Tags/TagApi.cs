@@ -1,5 +1,5 @@
 using DailyNagger.Server.Contracts.Tags;
-using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 

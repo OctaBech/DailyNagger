@@ -1,5 +1,6 @@
 using System.Text.Json;
-using DailyNagger.Server.Data;
+using DailyNagger.Server.Database.Contexts.Control;
+using DailyNagger.Server.Database.Contexts.Tenant;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,9 +1,9 @@
-using DailyNagger.Server.Database.Control;
-using DailyNagger.Server.Database.NagPlans;
-using DailyNagger.Server.Database.Nags;
-using DailyNagger.Server.Database.System;
-using DailyNagger.Server.Database.Tags;
-using DailyNagger.Server.Database.UserMoods;
+using DailyNagger.Server.Database.Queries.Control;
+using DailyNagger.Server.Database.Queries.NagPlans;
+using DailyNagger.Server.Database.Queries.Nags;
+using DailyNagger.Server.Database.Queries.System;
+using DailyNagger.Server.Database.Queries.Tags;
+using DailyNagger.Server.Database.Queries.UserMoods;
 
 namespace DailyNagger.Server.Database;
 
