@@ -1,9 +1,9 @@
-using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Contracts.Tags;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 
-namespace DailyNagger.Server.Api;
+namespace DailyNagger.Server.Api.Tags;
 
 public static class TagApi
 {
@@ -13,13 +13,13 @@ public static class TagApi
             Guid communityId,
             Guid userId,
             string tagType,
-            DataDbRead dataDbRead,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
             try
             {
-                var tags = await dataDbRead.GetTagsAsync(
+                var tags = await operations.Tags.GetAsync(
                     communityId,
                     userId,
                     tagType,
@@ -46,7 +46,7 @@ public static class TagApi
         app.MapPut("/api/tags", async (
             SaveTagRequest request,
             NagRequestValidator validator,
-            DataDbWrite dataDbWrite,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
@@ -54,13 +54,7 @@ public static class TagApi
             {
                 validator.Validate(request);
 
-                var saved = await dataDbWrite.SaveTagAsync(
-                    request.CommunityId,
-                    request.UserId,
-                    request.TagType,
-                    request.Name,
-                    request.Description,
-                    cancellationToken);
+                var saved = await operations.Tags.SaveAsync(request, cancellationToken);
 
                 return Results.Ok(saved);
             }

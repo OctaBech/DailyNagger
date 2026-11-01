@@ -1,12 +1,14 @@
 using System.Text.Json.Serialization;
 using DailyNagger.Server.Api;
+using DailyNagger.Server.Api.Tags;
 using DailyNagger.Server.Contracts;
-using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Data;
+using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Deployment;
 using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Operations.Demo;
+using DailyNagger.Server.Operations.Tags;
 using DailyNagger.Server.Validation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -67,6 +69,10 @@ builder.Services.AddScoped<ControlDbRead>();
 builder.Services.AddScoped<GetDataDbConnection>();
 builder.Services.AddScoped<DataDbRead>();
 builder.Services.AddScoped<DataDbWrite>();
+builder.Services.AddScoped<TagRead>();
+builder.Services.AddScoped<TagWrite>();
+builder.Services.AddScoped<TagOperations>();
+builder.Services.AddScoped<OperationsFacade>();
 builder.Services.AddScoped<DemoDataOperations>();
 builder.Services.AddScoped<NagRequestValidator>();
 builder.Services.AddCors(options =>
