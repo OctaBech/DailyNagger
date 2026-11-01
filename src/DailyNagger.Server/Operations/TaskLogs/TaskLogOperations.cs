@@ -2,7 +2,7 @@ using DailyNagger.Server.Contracts.TaskLogs;
 
 namespace DailyNagger.Server.Operations.TaskLogs;
 
-public sealed class TaskLogOperations(DataDbWrite write)
+public sealed class TaskLogOperations(TaskLogWrite write)
 {
     public async Task<TaskLogDto> SaveAsync(
         SaveTaskLogRequest request,

@@ -5,6 +5,7 @@ using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
+using DailyNagger.Server.Operations.TaskLogs;
 using DailyNagger.Server.Operations.UserMoods;
 using DailyNagger.Server.Tests.Operations;
 using Microsoft.Data.SqlClient;
@@ -102,6 +103,7 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
         Guid Community,
         DataDbRead Read,
         DataDbWrite Write,
+        TaskLogWrite LogWrite,
         UserMoodRead MoodRead,
         UserMoodWrite MoodWrite,
         MemoryCache Cache)> CreateOperationsAsync(
@@ -123,7 +125,7 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
         }).Build();
         var connection = new GetDataDbConnection(new ControlDbRead(db), configuration,
             new TestOptionsMonitor<DataDbConnectionOptions>(new() { CacheMinutes = 60 }), cache);
-        return (community, new DataDbRead(connection), new DataDbWrite(connection),
+        return (community, new DataDbRead(connection), new DataDbWrite(connection), new TaskLogWrite(connection),
             new UserMoodRead(connection), new UserMoodWrite(connection), cache);
     }
 
@@ -144,7 +146,7 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
             await ops.Write.SaveNagAsync(ops.Community, user, ids.Nag, label, null, null, false,
                 NaggerPinnedBy.None, Stamp, null,
                 [new ScheduleRule { Id = ids.Rule, RuleType = ScheduleRuleType.Weekday, RuleJson = "{\"weekday\":1}" }], 0, 1);
-            await ops.Write.SaveTaskLogAsync(ops.Community, user, ids.Log, ids.Nag, null, null, null,
+            await ops.LogWrite.SaveTaskLogAsync(ops.Community, user, ids.Log, ids.Nag, null, null, null,
                 Stamp, null, 2, 0, 0, 1, Tree(ids, label));
         }
 
@@ -163,14 +165,14 @@ public sealed class UserScopedNodeKeysTests : SqlServerTestBase
 
         await ops.Write.SaveNagAsync(ops.Community, a, ids.Nag, "A changed", null, null, false,
             NaggerPinnedBy.None, Stamp.AddMinutes(1), null, [], 1, 2);
-        await ops.Write.UpdateTaskEntryValuesAsync(ops.Community, a, ids.Log, Stamp.AddMinutes(1), null,
+        await ops.LogWrite.UpdateTaskEntryValuesAsync(ops.Community, a, ids.Log, Stamp.AddMinutes(1), null,
             1, 2, [new TaskEntryValueUpdateDto(ids.Entry, "A changed")]);
         Assert.Equal("A changed", await db.TaskEntries.Where(x => x.UserId == a).Select(x => x.Value).SingleAsync());
 
         // B still has a child pointing at the identical root id. This catches the old NOT EXISTS bug.
-        await ops.Write.SaveTaskLogAsync(ops.Community, a, ids.Log, ids.Nag, null, null, null,
+        await ops.LogWrite.SaveTaskLogAsync(ops.Community, a, ids.Log, ids.Nag, null, null, null,
             Stamp.AddMinutes(2), null, 2, 0, 2, 3, Tree(ids, "A replacement"));
-        await ops.Write.SaveTaskLogAsync(ops.Community, a, ids.Log, ids.Nag, null, null, null,
+        await ops.LogWrite.SaveTaskLogAsync(ops.Community, a, ids.Log, ids.Nag, null, null, null,
             Stamp.AddMinutes(3), null, 0, 0, 3, 4, []);
 
         Assert.Empty(await db.TaskItems.Where(x => x.UserId == a).ToListAsync());

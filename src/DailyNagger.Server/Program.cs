@@ -79,6 +79,7 @@ builder.Services.AddScoped<TagOperations>();
 builder.Services.AddScoped<UserMoodRead>();
 builder.Services.AddScoped<UserMoodWrite>();
 builder.Services.AddScoped<UserMoodOperations>();
+builder.Services.AddScoped<TaskLogWrite>();
 builder.Services.AddScoped<TaskLogOperations>();
 builder.Services.AddScoped<OperationsFacade>();
 builder.Services.AddScoped<DemoDataOperations>();

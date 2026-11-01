@@ -3,6 +3,7 @@ using DailyNagger.Server.Data;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
+using DailyNagger.Server.Operations.TaskLogs;
 using DailyNagger.Server.Tests;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -106,7 +107,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         await controlDb.SaveChangesAsync();
         await dataDb.SaveChangesAsync();
 
-        var dataDbWrite = CreateDataDbWrite(controlDb);
+        var dataDbWrite = CreateTaskLogWrite(controlDb);
         var clientUpdatedAt = closedOn.AddMinutes(5);
         var updatedTaskItem = new TaskItem
         {
@@ -228,7 +229,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         await controlDb.SaveChangesAsync();
         await dataDb.SaveChangesAsync();
 
-        var dataDbWrite = CreateDataDbWrite(controlDb);
+        var dataDbWrite = CreateTaskLogWrite(controlDb);
         var clientUpdatedAt = closedOn.AddMinutes(5);
 
         await dataDbWrite.SaveTaskLogAsync(
@@ -292,7 +293,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
         return new DailyNaggerDbContext(options);
     }
 
-    private static DataDbWrite CreateDataDbWrite(DailyNaggerControlDbContext controlDb)
+    private static TaskLogWrite CreateTaskLogWrite(DailyNaggerControlDbContext controlDb)
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -302,7 +303,7 @@ public sealed class DataDbWriteTests(SqlServerTestFixture fixture) : SqlServerTe
             })
             .Build();
 
-        return new DataDbWrite(
+        return new TaskLogWrite(
             new GetDataDbConnection(
                 new ControlDbRead(controlDb),
                 configuration,
