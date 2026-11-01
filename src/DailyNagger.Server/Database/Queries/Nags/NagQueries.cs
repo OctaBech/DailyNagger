@@ -1,5 +1,5 @@
 using DailyNagger.Server.Contracts.Nags;
-using DailyNagger.Server.Domain;
+using DailyNagger.Server.Domain.Tenant;
 using Microsoft.Data.SqlClient;
 
 namespace DailyNagger.Server.Database.Queries.Nags;

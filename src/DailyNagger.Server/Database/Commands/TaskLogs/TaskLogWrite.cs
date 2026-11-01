@@ -1,7 +1,8 @@
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Database.Connections;
-using DailyNagger.Server.Domain;
+using DailyNagger.Server.Domain.Exceptions;
+using DailyNagger.Server.Domain.Tenant;
 using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
@@ -212,7 +213,7 @@ public sealed class TaskLogWrite(GetDataDbConnection getDataDbConnection)
                 taskLogId,
                 cancellationToken);
 
-            throw new ConcurrencyConflictException(
+            throw new WriteConflictException(
                 "TaskLog is closed and cannot accept input updates.",
                 currentVersion);
         }

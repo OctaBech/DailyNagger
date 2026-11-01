@@ -1,5 +1,5 @@
 using System.Text;
-using DailyNagger.Server.Domain;
+using DailyNagger.Server.Domain.Tenant;
 using Microsoft.Data.SqlClient;
 
 namespace DailyNagger.Server.Database.Commands.TaskLogs;

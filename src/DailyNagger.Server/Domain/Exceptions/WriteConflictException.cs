@@ -1,6 +1,6 @@
-namespace DailyNagger.Server.Domain;
+namespace DailyNagger.Server.Domain.Exceptions;
 
-public sealed class ConcurrencyConflictException(
+public sealed class WriteConflictException(
     string message,
     int? currentVersion = null) : Exception(message)
 {

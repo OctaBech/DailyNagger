@@ -2,7 +2,7 @@ using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Database.Connections;
 using DailyNagger.Server.Database.Queries.Nags;
 using DailyNagger.Server.Database.Queries.TaskLogs;
-using DailyNagger.Server.Domain;
+using DailyNagger.Server.Domain.Tenant;
 using Microsoft.Data.SqlClient;
 
 namespace DailyNagger.Server.Database.Queries.NagPlans;

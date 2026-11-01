@@ -1,4 +1,3 @@
-using DailyNagger.Server.Database.Models.Control;
 namespace DailyNagger.Server.Database.Connections;
 
 public sealed class NagCommunityNotFoundException(Guid communityId)

@@ -1,5 +1,5 @@
 using DailyNagger.Server.Contracts.TaskLogs;
-using DailyNagger.Server.Domain;
+using DailyNagger.Server.Domain.Tenant;
 
 namespace DailyNagger.Server.Mapping;
 

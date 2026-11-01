@@ -1,4 +1,4 @@
-namespace DailyNagger.Server.Domain;
+namespace DailyNagger.Server.Domain.Tenant;
 
 public enum NaggerPinnedBy
 {

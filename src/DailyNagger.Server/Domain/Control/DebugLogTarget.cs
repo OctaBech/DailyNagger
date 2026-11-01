@@ -1,4 +1,4 @@
-namespace DailyNagger.Server.Database.Models.Control;
+namespace DailyNagger.Server.Domain.Control;
 
 public sealed class DebugLogTarget
 {

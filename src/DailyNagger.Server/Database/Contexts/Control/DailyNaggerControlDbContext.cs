@@ -1,4 +1,4 @@
-using DailyNagger.Server.Database.Models.Control;
+using DailyNagger.Server.Domain.Control;
 using Microsoft.EntityFrameworkCore;
 
 namespace DailyNagger.Server.Database.Contexts.Control;

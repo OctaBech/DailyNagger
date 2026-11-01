@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Database.Connections;
-using DailyNagger.Server.Domain;
+using DailyNagger.Server.Domain.Exceptions;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 
@@ -65,7 +65,7 @@ public static class TaskLogApi
                     error = exception.Message
                 });
             }
-            catch (ConcurrencyConflictException exception)
+            catch (WriteConflictException exception)
             {
                 return Results.Conflict(new
                 {
@@ -113,7 +113,7 @@ public static class TaskLogApi
                     error = exception.Message
                 });
             }
-            catch (ConcurrencyConflictException exception)
+            catch (WriteConflictException exception)
             {
                 return Results.Conflict(new
                 {

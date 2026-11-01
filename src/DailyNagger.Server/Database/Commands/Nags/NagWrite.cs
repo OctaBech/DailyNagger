@@ -1,6 +1,7 @@
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Database.Connections;
-using DailyNagger.Server.Domain;
+using DailyNagger.Server.Domain.Exceptions;
+using DailyNagger.Server.Domain.Tenant;
 using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;
 
@@ -72,7 +73,7 @@ public sealed class NagWrite(GetDataDbConnection getDataDbConnection)
 
         if (currentVersion is null && baseVersion != 0)
         {
-            throw new ConcurrencyConflictException("New Nagger requires baseVersion 0.");
+            throw new WriteConflictException("New Nagger requires baseVersion 0.");
         }
 
         var changedRows = await NagWriteCommands.UpsertAsync(
@@ -85,7 +86,7 @@ public sealed class NagWrite(GetDataDbConnection getDataDbConnection)
 
         if (changedRows == 0)
         {
-            throw new ConcurrencyConflictException(
+            throw new WriteConflictException(
                 "Nagger version conflict.",
                 currentVersion);
         }
