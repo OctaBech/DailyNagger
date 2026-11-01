@@ -1,5 +1,6 @@
 using System.Text;
 using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Domain;
 using DailyNagger.Server.Validation;
 using Microsoft.Data.SqlClient;

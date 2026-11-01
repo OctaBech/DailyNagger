@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using DailyNagger.Server.Api;
 using DailyNagger.Server.Contracts;
+using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Data;
 using DailyNagger.Server.Deployment;
 using DailyNagger.Server.Observability;
