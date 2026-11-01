@@ -1,9 +1,10 @@
+using DailyNagger.Server.Operations;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
-namespace DailyNagger.Server.Operations;
+namespace DailyNagger.Server.Data.Connections;
 
 public sealed class GetDataDbConnection(
     ControlDbRead controlDbRead,

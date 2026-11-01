@@ -201,18 +201,6 @@ public sealed record TaskEntryValueUpdateDto(
     string? InteractionMood = null,
     DateTimeOffset? InteractionMoodAt = null);
 
-public sealed record TagDto(
-    string Name,
-    string? Description,
-    DateTimeOffset? LastUsedAt);
-
-public sealed record SaveTagRequest(
-    Guid CommunityId,
-    Guid UserId,
-    string TagType,
-    string Name,
-    string? Description);
-
 public sealed record UserMoodDto(
     Guid Id,
     Guid UserId,

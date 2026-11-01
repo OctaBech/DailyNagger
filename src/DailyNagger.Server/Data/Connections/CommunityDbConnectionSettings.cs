@@ -1,4 +1,4 @@
-namespace DailyNagger.Server.Operations;
+namespace DailyNagger.Server.Data.Connections;
 
 public sealed record CommunityDbConnectionSettings(
     Guid NagCommunityId,

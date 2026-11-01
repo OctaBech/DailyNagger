@@ -1,4 +1,4 @@
-namespace DailyNagger.Server.Operations;
+namespace DailyNagger.Server.Data.Connections;
 
 public sealed class DataDbConnectionOptions
 {
