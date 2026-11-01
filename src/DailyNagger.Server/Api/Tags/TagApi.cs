@@ -1,5 +1,6 @@
 using DailyNagger.Server.Contracts.Tags;
-using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Connections;
+using DailyNagger.Server.Domain.Exceptions;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 
@@ -29,15 +30,11 @@ public static class TagApi
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         })
             .WithTags("Tags")
@@ -45,7 +42,7 @@ public static class TagApi
 
         app.MapPut("/api/tags", async (
             SaveTagRequest request,
-            NagRequestValidator validator,
+            RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
@@ -60,22 +57,15 @@ public static class TagApi
             }
             catch (NagValidationException exception)
             {
-                return Results.BadRequest(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.BadRequest(exception.Message);
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         })
             .WithTags("Tags")

@@ -1,5 +1,6 @@
 using DailyNagger.Server.Contracts.UserMoods;
-using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.Database.Connections;
+using DailyNagger.Server.Domain.Exceptions;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 
@@ -33,21 +34,17 @@ public static class UserMoodApi
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         }).WithTags("UserMoods");
 
         app.MapPost("/api/user-moods", async (
             SaveUserMoodRequest request,
-            NagRequestValidator validator,
+            RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
@@ -62,22 +59,15 @@ public static class UserMoodApi
             }
             catch (NagValidationException exception)
             {
-                return Results.BadRequest(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.BadRequest(exception.Message);
             }
             catch (NagCommunityNotFoundException exception)
             {
-                return Results.NotFound(new
-                {
-                    error = exception.Message
-                });
+                return ApiErrorResults.NotFound(exception.Message);
             }
             catch (Exception exception)
             {
-                return Results.Problem(
-                    environment.IsDevelopment() ? exception.ToString() : exception.Message);
+                return ApiErrorResults.Problem(exception, environment);
             }
         }).WithTags("UserMoods");
 

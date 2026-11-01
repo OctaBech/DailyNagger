@@ -1,8 +1,9 @@
 using DailyNagger.Server.Contracts.UserMoods;
+using DailyNagger.Server.Database;
 
 namespace DailyNagger.Server.Operations.UserMoods;
 
-public sealed class UserMoodOperations(UserMoodRead read, UserMoodWrite write)
+public sealed class UserMoodOperations(DatabaseQueries queries, DatabaseCommands commands)
 {
     public Task<IReadOnlyList<UserMoodDto>> GetAsync(
         Guid communityId,
@@ -12,14 +13,14 @@ public sealed class UserMoodOperations(UserMoodRead read, UserMoodWrite write)
         int take,
         CancellationToken cancellationToken = default)
     {
-        return read.GetUserMoodsAsync(communityId, userId, from, to, take, cancellationToken);
+        return queries.UserMoods.GetUserMoodsAsync(communityId, userId, from, to, take, cancellationToken);
     }
 
     public Task<UserMoodDto> SaveAsync(
         SaveUserMoodRequest request,
         CancellationToken cancellationToken = default)
     {
-        return write.SaveUserMoodAsync(
+        return commands.UserMoods.SaveUserMoodAsync(
             request.CommunityId,
             request.UserId,
             request.Payload.Id,

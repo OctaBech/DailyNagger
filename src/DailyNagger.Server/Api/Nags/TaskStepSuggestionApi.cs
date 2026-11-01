@@ -1,0 +1,38 @@
+using DailyNagger.Server.Contracts.Nags;
+using DailyNagger.Server.Operations;
+
+namespace DailyNagger.Server.Api.Nags;
+
+public static class TaskStepSuggestionApi
+{
+    public static IEndpointRouteBuilder MapTaskStepSuggestionApi(this IEndpointRouteBuilder app)
+    {
+        app.MapGet("/api/naggers/{naggerId:guid}/task-step-name-suggestions", async (
+            Guid communityId,
+            Guid userId,
+            Guid naggerId,
+            OperationsFacade operations,
+            IHostEnvironment environment,
+            CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                var suggestions = await operations.Nags.GetTaskStepNameSuggestionsAsync(
+                    communityId,
+                    userId,
+                    naggerId,
+                    cancellationToken);
+
+                return Results.Ok(suggestions);
+            }
+            catch (Exception exception)
+            {
+                return ApiErrorResults.Problem(exception, environment);
+            }
+        })
+            .WithTags("TaskStepSuggestions")
+            .Produces<TaskStepNameSuggestionDto[]>(StatusCodes.Status200OK);
+
+        return app;
+    }
+}

@@ -1,16 +1,20 @@
 using System.Text.Json.Serialization;
 using DailyNagger.Server.Api;
+using DailyNagger.Server.Api.Demo;
+using DailyNagger.Server.Api.NagPlans;
+using DailyNagger.Server.Api.Nags;
 using DailyNagger.Server.Api.Tags;
+using DailyNagger.Server.Api.TaskLogs;
 using DailyNagger.Server.Api.UserMoods;
-using DailyNagger.Server.Contracts;
-using DailyNagger.Server.Data;
-using DailyNagger.Server.Data.Connections;
+using DailyNagger.Server.ApiDocumentation;
+using DailyNagger.Server.Database;
+using DailyNagger.Server.Database.Connections;
+using DailyNagger.Server.Database.Contexts.Control;
+using DailyNagger.Server.Database.Contexts.Tenant;
 using DailyNagger.Server.Deployment;
 using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
-using DailyNagger.Server.Operations.Demo;
-using DailyNagger.Server.Operations.Tags;
-using DailyNagger.Server.Operations.UserMoods;
+using DailyNagger.Server.Security;
 using DailyNagger.Server.Validation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -67,19 +71,9 @@ builder.Services.AddDbContext<DailyNaggerControlDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DailyNaggerControl"),
         sqlServer => sqlServer.EnableRetryOnFailure()));
-builder.Services.AddScoped<ControlDbRead>();
-builder.Services.AddScoped<GetDataDbConnection>();
-builder.Services.AddScoped<DataDbRead>();
-builder.Services.AddScoped<DataDbWrite>();
-builder.Services.AddScoped<TagRead>();
-builder.Services.AddScoped<TagWrite>();
-builder.Services.AddScoped<TagOperations>();
-builder.Services.AddScoped<UserMoodRead>();
-builder.Services.AddScoped<UserMoodWrite>();
-builder.Services.AddScoped<UserMoodOperations>();
-builder.Services.AddScoped<OperationsFacade>();
-builder.Services.AddScoped<DemoDataOperations>();
-builder.Services.AddScoped<NagRequestValidator>();
+builder.Services.AddDatabaseOperations();
+builder.Services.AddOperations();
+builder.Services.AddScoped<RequestValidator>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("client", policy =>
