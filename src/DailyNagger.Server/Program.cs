@@ -1,5 +1,8 @@
 using System.Text.Json.Serialization;
 using DailyNagger.Server.Api;
+using DailyNagger.Server.Api.Demo;
+using DailyNagger.Server.Api.NagPlans;
+using DailyNagger.Server.Api.Nags;
 using DailyNagger.Server.Api.Tags;
 using DailyNagger.Server.Api.TaskLogs;
 using DailyNagger.Server.Api.UserMoods;
@@ -10,12 +13,6 @@ using DailyNagger.Server.Database;
 using DailyNagger.Server.Deployment;
 using DailyNagger.Server.Observability;
 using DailyNagger.Server.Operations;
-using DailyNagger.Server.Operations.Demo;
-using DailyNagger.Server.Operations.NagPlans;
-using DailyNagger.Server.Operations.Nags;
-using DailyNagger.Server.Operations.Tags;
-using DailyNagger.Server.Operations.TaskLogs;
-using DailyNagger.Server.Operations.UserMoods;
 using DailyNagger.Server.Validation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -73,13 +70,7 @@ builder.Services.AddDbContext<DailyNaggerControlDbContext>(options =>
         builder.Configuration.GetConnectionString("DailyNaggerControl"),
         sqlServer => sqlServer.EnableRetryOnFailure()));
 builder.Services.AddDatabaseOperations();
-builder.Services.AddScoped<NagOperations>();
-builder.Services.AddScoped<NagPlanOperations>();
-builder.Services.AddScoped<TagOperations>();
-builder.Services.AddScoped<UserMoodOperations>();
-builder.Services.AddScoped<TaskLogOperations>();
-builder.Services.AddScoped<OperationsFacade>();
-builder.Services.AddScoped<DemoDataOperations>();
+builder.Services.AddOperations();
 builder.Services.AddScoped<NagRequestValidator>();
 builder.Services.AddCors(options =>
 {

@@ -2,7 +2,7 @@ using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Operations;
 
-namespace DailyNagger.Server.Api;
+namespace DailyNagger.Server.Api.NagPlans;
 
 public static class NagPlanApi
 {

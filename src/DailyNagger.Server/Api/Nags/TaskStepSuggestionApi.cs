@@ -1,7 +1,7 @@
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Operations;
 
-namespace DailyNagger.Server.Api;
+namespace DailyNagger.Server.Api.Nags;
 
 public static class TaskStepSuggestionApi
 {

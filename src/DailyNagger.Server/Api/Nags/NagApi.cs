@@ -6,7 +6,7 @@ using DailyNagger.Server.Domain;
 using DailyNagger.Server.Operations;
 using DailyNagger.Server.Validation;
 
-namespace DailyNagger.Server.Api;
+namespace DailyNagger.Server.Api.Nags;
 
 public static class NagApi
 {

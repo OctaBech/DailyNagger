@@ -22,7 +22,7 @@ public sealed class DemoApiTests : SqlServerTestBase
     }
 
     private readonly Guid community = Guid.NewGuid();
-    private readonly Guid template = DailyNagger.Server.Api.DemoApi.TemplateUserId;
+    private readonly Guid template = DailyNagger.Server.Api.Demo.DemoApi.TemplateUserId;
     private readonly Guid user = Guid.NewGuid();
 
     [Fact]

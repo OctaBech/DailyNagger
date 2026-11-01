@@ -1,7 +1,7 @@
 using DailyNagger.Server.Data.Connections;
 using DailyNagger.Server.Operations;
 
-namespace DailyNagger.Server.Api;
+namespace DailyNagger.Server.Api.Demo;
 
 public static class DemoApi
 {

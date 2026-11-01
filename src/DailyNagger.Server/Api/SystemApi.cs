@@ -1,5 +1,4 @@
-using DailyNagger.Server.Data;
-using Microsoft.EntityFrameworkCore;
+using DailyNagger.Server.Operations;
 
 namespace DailyNagger.Server.Api;
 
@@ -10,14 +9,13 @@ public static class SystemApi
         app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).WithTags("System");
 
         app.MapGet("/api/health/database", async (
-            DailyNaggerDbContext db,
+            OperationsFacade operations,
             IHostEnvironment environment,
             CancellationToken cancellationToken) =>
         {
             try
             {
-                await using var connection = db.Database.GetDbConnection();
-                await connection.OpenAsync(cancellationToken);
+                await operations.System.CheckDatabaseAsync(cancellationToken);
 
                 return Results.Ok(new { database = "ok" });
             }
