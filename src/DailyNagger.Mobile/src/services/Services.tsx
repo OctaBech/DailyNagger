@@ -1,5 +1,6 @@
 import { useCallback, useRef, type ReactNode } from "react";
 import { useCultureSettings } from "./culture";
+import { AppDataProvider, type AppData, useCreateAppData } from "./app-data";
 import { type MemoryEventType, useMemory, useMemoryWithAutomatedSelectedPath } from "./memory";
 import { useLoading } from "./loading";
 import { useParcelFlowEvents, useSending } from "./sending";
@@ -53,6 +54,7 @@ type ServiceProviderProps = {
 
 export const ServiceProvider = ({ children }: ServiceProviderProps) => {
   const {
+    appData,
     appShellState,
     editorScreenCommands,
     planScreenCommands,
@@ -61,19 +63,24 @@ export const ServiceProvider = ({ children }: ServiceProviderProps) => {
   } = useCreateServices();
 
   return (
-    <AppShellStateProvider value={appShellState}>
-      <PlanScreenActionsProvider value={planScreenCommands}>
-        <EditorScreenActionsProvider value={editorScreenCommands}>
-          <PlanScreenDataProvider value={planScreenData}>
-            <EditorScreenDataProvider value={editorScreenData}>{children}</EditorScreenDataProvider>
-          </PlanScreenDataProvider>
-        </EditorScreenActionsProvider>
-      </PlanScreenActionsProvider>
-    </AppShellStateProvider>
+    <AppDataProvider value={appData}>
+      <AppShellStateProvider value={appShellState}>
+        <PlanScreenActionsProvider value={planScreenCommands}>
+          <EditorScreenActionsProvider value={editorScreenCommands}>
+            <PlanScreenDataProvider value={planScreenData}>
+              <EditorScreenDataProvider value={editorScreenData}>
+                {children}
+              </EditorScreenDataProvider>
+            </PlanScreenDataProvider>
+          </EditorScreenActionsProvider>
+        </PlanScreenActionsProvider>
+      </AppShellStateProvider>
+    </AppDataProvider>
   );
 };
 
 function useCreateServices(): {
+  readonly appData: AppData;
   readonly appShellState: AppShellState;
   readonly editorScreenCommands: EditorScreenActions;
   readonly planScreenCommands: PlanScreenActions;
@@ -82,6 +89,7 @@ function useCreateServices(): {
 } {
   // ** Wire services
   const cultureSettings = useCultureSettings();
+  const appData = useCreateAppData(cultureSettings);
   const actionSequenceRef = useRef(0);
   const planMemoryEvents = useEventEmitter<MemoryEventType, void>();
   const editorMemoryEvents = useEventEmitter<MemoryEventType, void>();
@@ -156,12 +164,11 @@ function useCreateServices(): {
   useDemoDataSync(parcelFlowEvents, startup.restart);
 
   const planScreenData = useCreatePlanScreenData({
-    cultureSettings,
     planMemory,
     startup,
     userMood,
   });
-  const editorScreenData = useCreateEditorScreenData({ editorMemory, cultureSettings });
+  const editorScreenData = useCreateEditorScreenData({ editorMemory });
   // ** Create service packages
   const servicePackages = createActionRuntimeDependencies({
     haptics,
@@ -229,6 +236,7 @@ function useCreateServices(): {
   });
 
   return {
+    appData,
     appShellState,
     editorScreenCommands,
     planScreenCommands,

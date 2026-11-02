@@ -1,4 +1,5 @@
 export { ServiceProvider } from "./Services";
+export { useAppData, type AppData } from "./app-data";
 export { useAppShellState } from "./app-shell-state";
 export { useEditorScreenActions, usePlanScreenActions } from "./screen-actions";
 export { useEditorScreenData, usePlanScreenData } from "./screen-data";

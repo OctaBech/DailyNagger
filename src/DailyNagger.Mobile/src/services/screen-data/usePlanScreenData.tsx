@@ -1,9 +1,8 @@
 import { createContext, useCallback, useContext, useMemo, useRef, type ReactNode } from "react";
-import type { CultureSettings, Memory, Startup, UserMoodState } from "../contracts";
+import type { Memory, Startup, UserMoodState } from "../contracts";
 import type { Prettify } from "@/shared";
 
 type UseCreatePlanScreenDataProps = {
-  readonly cultureSettings: CultureSettings;
   readonly planMemory: Memory;
   readonly startup: Startup;
   readonly userMood: UserMoodState;
@@ -33,7 +32,6 @@ export function usePlanScreenData(): PlanScreenData {
 }
 
 export function useCreatePlanScreenData({
-  cultureSettings,
   planMemory,
   startup,
   userMood,
@@ -48,7 +46,6 @@ export function useCreatePlanScreenData({
 
   return useMemo(
     () => ({
-      decimalSeparator: (cultureSettings.isUsingCommaForDecimals ? "," : ".") as "." | ",",
       moodIsSelected: userMood.state.selectedMood !== null,
       nags: tree?.nags ?? [],
       startup,
@@ -57,13 +54,6 @@ export function useCreatePlanScreenData({
         setOffset: setScrollOffset,
       },
     }),
-    [
-      cultureSettings.isUsingCommaForDecimals,
-      getScrollOffset,
-      setScrollOffset,
-      startup,
-      tree,
-      userMood.state.selectedMood,
-    ],
+    [getScrollOffset, setScrollOffset, startup, tree, userMood.state.selectedMood],
   );
 }

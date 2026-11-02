@@ -1,13 +1,9 @@
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { Memory } from "../contracts";
 import type { Prettify } from "@/shared";
-import type { CultureSettings } from "../culture";
-import { scheduleCalculator } from "../schedule-calculator";
-import type { Nagger, ScheduleRule } from "@/models";
 
 type UseCreateEditorScreenDataProps = {
   readonly editorMemory: Memory;
-  readonly cultureSettings: CultureSettings;
 };
 
 export type EditorScreenData = Prettify<ReturnType<typeof useCreateEditorScreenData>>;
@@ -35,20 +31,13 @@ export function useEditorScreenData(): EditorScreenData {
   return editorScreenData;
 }
 
-export function useCreateEditorScreenData({
-  editorMemory,
-  cultureSettings,
-}: UseCreateEditorScreenDataProps) {
+export function useCreateEditorScreenData({ editorMemory }: UseCreateEditorScreenDataProps) {
   const { tree } = editorMemory.state;
 
   return useMemo(
     () => ({
       tree,
-      schedule: {
-        getNextDueOn: (nagger: Nagger, scheduleRules: readonly ScheduleRule[]) =>
-          scheduleCalculator.getNextDueOn({ ...nagger, scheduleRules }, cultureSettings),
-      },
     }),
-    [cultureSettings, tree],
+    [tree],
   );
 }

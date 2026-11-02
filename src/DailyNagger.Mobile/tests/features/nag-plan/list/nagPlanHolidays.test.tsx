@@ -9,6 +9,7 @@ import { useNagPlanListItems } from "@/features/nag-plan/list/useNagPlanListItem
 
 jest.mock("uuid", () => ({ v7: () => "unused-test-id" }));
 jest.mock("@/holidays", () => ({ getHolidays: jest.fn() }));
+jest.mock("@/services", () => ({ useAppData: () => ({ appDate: "2026-10-20" }) }));
 
 afterEach(() => {
   jest.useRealTimers();

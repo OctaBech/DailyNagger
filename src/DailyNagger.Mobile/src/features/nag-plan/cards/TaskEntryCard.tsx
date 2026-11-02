@@ -1,6 +1,6 @@
 import { Card } from "@/components";
 import { type TaskEntry } from "@/models";
-import { usePlanScreenActions, usePlanScreenData } from "@/services";
+import { useAppData, usePlanScreenActions } from "@/services";
 import { memo } from "react";
 import { useDebugRenderFrameCounter } from "@/debug/render-frame";
 
@@ -10,7 +10,7 @@ type TaskEntryCardProps = {
 };
 
 const TaskEntryCardComponent = ({ taskEntry, railTone }: TaskEntryCardProps) => {
-  const { decimalSeparator } = usePlanScreenData();
+  const { decimalSeparator } = useAppData();
   const { setFocused, setValue } = usePlanScreenActions().taskEntry;
   useDebugRenderFrameCounter("PlanTaskEntryCard", taskEntry.id);
 

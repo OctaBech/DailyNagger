@@ -2,12 +2,14 @@ import { useMemo, useState } from "react";
 import type { Nagger } from "@/models/clientModel";
 import { getHolidays } from "@/holidays";
 import { getCurrentAppDate } from "@/app-day";
+import { useAppData } from "@/services";
 import { zipNaggersAndHolidays } from "./zipNaggersAndHolidays";
 import { cutAfterLastNagger } from "./cutAfterLastNagger";
 import { buildNagPlanListItems } from "./buildNagPlanListItems";
 import { filterNaggersByTitle } from "./filter/filterNaggersByTitle";
 
 export function useNagPlanListItems(naggers: readonly Nagger[], query = "") {
+  const { appDate } = useAppData();
   const [holidays] = useState(() => {
     const today = getCurrentAppDate();
     const endDate = `${Number(today.slice(0, 4)) + 1}${today.slice(4)}`;
@@ -21,7 +23,7 @@ export function useNagPlanListItems(naggers: readonly Nagger[], query = "") {
   );
 
   return useMemo(
-    () => buildNagPlanListItems(filterIsActive ? cutAfterLastNagger(entries) : entries),
-    [entries, filterIsActive],
+    () => buildNagPlanListItems(filterIsActive ? cutAfterLastNagger(entries) : entries, appDate),
+    [entries, filterIsActive, appDate],
   );
 }
