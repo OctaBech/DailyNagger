@@ -1,4 +1,7 @@
 export const appTiming = {
+  culture: {
+    appDateCheckIntervalMs: 2 * 60 * 1000,
+  },
   input: {
     autoCommitDelayMs: 5000,
   },

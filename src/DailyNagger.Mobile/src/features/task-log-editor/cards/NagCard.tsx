@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { memo, useState } from "react";
 import { type Nagger } from "@/models";
-import { useEditorScreenActions, useEditorScreenData } from "@/services";
+import { useAppData, useEditorScreenActions } from "@/services";
 import { TaskLogCard } from "./TaskLogCard";
 import { nagPlanTheme } from "../theme";
 import { Card, Modal } from "@/components";
@@ -16,7 +16,7 @@ type RailTone = "active" | "completed";
 
 const NagCardComponent = ({ nagger }: NagCardProps) => {
   const { nagger: naggerActions } = useEditorScreenActions();
-  const { schedule } = useEditorScreenData();
+  const { getNextDueOn } = useAppData();
   useDebugRenderFrameCounter("EditorNaggerCard", nagger.id);
 
   const isExpanded = nagger.clientProps?.isExpanded ?? false;
@@ -78,7 +78,7 @@ const NagCardComponent = ({ nagger }: NagCardProps) => {
       <Modal.NaggerScheduleModal
         visible={isScheduleModalVisible}
         nagger={nagger}
-        getPreviewDueOn={(scheduleRules) => schedule.getNextDueOn(nagger, scheduleRules)}
+        getPreviewDueOn={(scheduleRules) => getNextDueOn(nagger, scheduleRules)}
         onDismiss={() => setIsScheduleModalVisible(false)}
         onDone={(scheduleRules) => {
           naggerActions.setScheduleRules({ nagger, scheduleRules });

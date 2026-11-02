@@ -1,9 +1,21 @@
 import { getLocales } from "expo-localization";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getCurrentAppDate } from "@/app-day";
+import { appTiming } from "@/config/appTiming";
 
 export type CultureSettings = ReturnType<typeof useCultureSettings>;
 
 export function useCultureSettings() {
+  const [appDate, setAppDate] = useState(getCurrentAppDate);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setAppDate(getCurrentAppDate());
+    }, appTiming.culture.appDateCheckIntervalMs);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const isUsingCommaForDecimals = useMemo(() => {
     const locales = getLocales();
     return locales.length > 0 && locales[0].decimalSeparator === ",";
@@ -11,6 +23,7 @@ export function useCultureSettings() {
 
   return useMemo(
     () => ({
+      appDate,
       isUsingCommaForDecimals,
       getNow,
       getTodayLocalIsoDate,
@@ -19,7 +32,7 @@ export function useCultureSettings() {
       getUserTimeZone,
       getUserLocale,
     }),
-    [isUsingCommaForDecimals],
+    [appDate, isUsingCommaForDecimals],
   );
 }
 

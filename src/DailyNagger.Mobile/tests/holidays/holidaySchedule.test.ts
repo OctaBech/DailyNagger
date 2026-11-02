@@ -9,6 +9,7 @@ function toLocalIsoDate(date: Date): string {
 }
 
 const culture: CultureSettings = {
+  appDate: "2026-10-22",
   isUsingCommaForDecimals: false,
   getNow: () => new Date(),
   getTodayLocalIsoDate: () => toLocalIsoDate(new Date()),
