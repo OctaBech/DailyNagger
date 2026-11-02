@@ -1,4 +1,5 @@
 import { formatDueDate } from "@/app-day";
+import { useAppData } from "@/services";
 import { nagPlanTheme } from "@/features/nag-plan/theme";
 import type { Nagger } from "@/models";
 import * as Input from "@/components/input";
@@ -27,6 +28,7 @@ type NaggerFieldProps = {
 };
 
 export const NaggerField = (props: NaggerFieldProps) => {
+  const { appDate } = useAppData();
   const {
     nagger,
     isExpanded,
@@ -128,7 +130,7 @@ export const NaggerField = (props: NaggerFieldProps) => {
               isCompleted && styles.completedScheduleText,
             ]}
           >
-            {formatDueDate(nagger.activeLogDueOn, "card")}
+            {formatDueDate(nagger.activeLogDueOn, "card", appDate)}
           </Text>
         </Pressable>
 
