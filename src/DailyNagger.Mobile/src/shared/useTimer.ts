@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 type TimerDelay =
   | {
@@ -17,6 +17,23 @@ export function useTimer<TDelayName extends string>(delays: Record<TDelayName, T
   const backoffMsRef = useRef<number>(0);
   const isDisabledRef = useRef(false);
 
+  const stop = useCallback((): void => {
+    if (timerRef.current === null) return;
+
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }, []);
+
+  const disable = useCallback((): void => {
+    isDisabledRef.current = true;
+    stop();
+  }, [stop]);
+
+  useEffect(() => {
+    enable();
+    return () => disable();
+  }, [disable]);
+
   function set(delayName: TDelayName, callback: () => Promise<boolean>): void {
     if (isDisabledRef.current) return;
 
@@ -27,18 +44,6 @@ export function useTimer<TDelayName extends string>(delays: Record<TDelayName, T
     timerRef.current = setTimeout(() => {
       void callback();
     }, getDelayMs(delay));
-  }
-
-  function stop(): void {
-    if (timerRef.current === null) return;
-
-    clearTimeout(timerRef.current);
-    timerRef.current = null;
-  }
-
-  function disable(): void {
-    isDisabledRef.current = true;
-    stop();
   }
 
   function enable(): void {
