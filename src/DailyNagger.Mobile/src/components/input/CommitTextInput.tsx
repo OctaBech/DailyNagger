@@ -78,11 +78,13 @@ export function CommitTextInput<TCommitValue extends string | null = string>({
         fieldValue: value,
         commitValue: value,
       } as DraftParseResult<TCommitValue> & { readonly accepted: true });
+  const { fieldValue: incomingFieldValue, commitValue: incomingCommitValue } = initialAcceptedDraft;
 
   const [draftValue, setDraftValue] = useState(initialAcceptedDraft.fieldValue);
   const draftValueRef = useRef(initialAcceptedDraft.fieldValue);
   const draftRef = useRef(initialAcceptedDraft);
   const committedValueRef = useRef(initialAcceptedDraft.commitValue);
+  const previousValueRef = useRef(value);
   const shouldReplaceInvalidInitialValueRef = useRef(!initialDraft.accepted);
   const [hasInvalidInitialValue, setHasInvalidInitialValue] = useState(!initialDraft.accepted);
   const [contentHeight, setContentHeight] = useState<number | null>(null);
@@ -96,6 +98,26 @@ export function CommitTextInput<TCommitValue extends string | null = string>({
     onFocusRef.current = onFocus;
     onTouchStartRef.current = onTouchStart;
   }, [onCommit, onFocus, onTouchStart]);
+
+  useLayoutEffect(() => {
+    if (value === previousValueRef.current) return;
+    previousValueRef.current = value;
+
+    // An echo of our own commit must not replace a newer, uncommitted draft.
+    if (incomingCommitValue === committedValueRef.current) return;
+
+    stopCommitTimer(timerRef);
+    draftRef.current = {
+      accepted: true,
+      fieldValue: incomingFieldValue,
+      commitValue: incomingCommitValue,
+    };
+    draftValueRef.current = incomingFieldValue;
+    committedValueRef.current = incomingCommitValue;
+    shouldReplaceInvalidInitialValueRef.current = !initialDraft.accepted;
+    setHasInvalidInitialValue(!initialDraft.accepted);
+    setDraftValue(incomingFieldValue);
+  }, [value, incomingFieldValue, incomingCommitValue, initialDraft.accepted]);
 
   const commitDraft = useCallback(() => {
     stopCommitTimer(timerRef);
