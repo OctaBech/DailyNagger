@@ -31,15 +31,10 @@ export function useParcelSending(
     parcelQueue.insertParcel(parcel);
   }
 
-  function drainQueue(): Promise<boolean> {
-    // Drain means: keep processing batches without waiting for the debounce timer.
-    return parcelQueue.processNextParcelBatch({ drain: true });
-  }
-
   async function flushQueue(): Promise<FlushQueueResult> {
-    const serverWasReachable = await drainQueue();
+    const flushed = await parcelQueue.flushQueue();
 
-    return serverWasReachable ? { kind: "flushed" } : { kind: "server-unreachable" };
+    return flushed ? { kind: "flushed" } : { kind: "server-unreachable" };
   }
 
   function hasUpdateBelongingToRootNode(
@@ -50,10 +45,10 @@ export function useParcelSending(
   }
 
   return {
-    drainQueue,
     flushQueue,
     hasUpdateBelongingToRootNode,
     queue,
+    setAutoSend: parcelQueue.setAutoSend,
     parcelFlowEvents,
     pendingSendingPrompt: {
       state: sendingPromptController.state,

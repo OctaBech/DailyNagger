@@ -78,6 +78,7 @@ export function useStartup(
       }
 
       // 6. Startup is complete; screens and actions may now run normally.
+      sendingRef.current.setAutoSend(true);
       dispatch({ type: "startup-succeeded" });
       startupEvents.emit("startup.ready", context);
     },
@@ -88,6 +89,7 @@ export function useStartup(
     if (isRunningRef.current) return;
 
     isRunningRef.current = true;
+    sendingRef.current.setAutoSend(false);
     dispatch({ type: "startup-started" });
 
     const causalityKey = `startup/run:${new Date().toISOString()}`;
@@ -100,7 +102,7 @@ export function useStartup(
     } finally {
       isRunningRef.current = false;
     }
-  }, [middlewareWrapperFunction, runStartupRunbook, startupEvents]);
+  }, [middlewareWrapperFunction, runStartupRunbook, sendingRef, startupEvents]);
 
   const start = useCallback((): void => {
     if (state.status !== "not-started") return;

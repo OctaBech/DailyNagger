@@ -10,7 +10,6 @@ import type {
   ParcelBatch,
   ParcelBatchScheduleDelay,
   ParcelQueueInstruction,
-  ProcessNextParcelBatchOptions,
   SendParcelBatch,
 } from "./contracts";
 import { emitParcelBatchEvent } from "./events/emitParcelBatchEvent";
@@ -26,6 +25,8 @@ export function useParcelQueue(
   const [loadedQueue] = useState(() => persistentStorage.load());
   const queueEntriesRef = useRef<QueuedParcel[]>(loadedQueue.queueEntries);
   const activeBatchLengthRef = useRef(0);
+  const autoSendRef = useRef(false);
+  const isFlushingRef = useRef(false);
   const parcelBatchTimer = useTimer(sendTimerConfig);
 
   const announceQueueContent = useCallback((): void => {
@@ -79,7 +80,14 @@ export function useParcelQueue(
     scheduleNextParcelBatch("debounced");
   }
 
+  function setAutoSend(enabled: boolean): void {
+    autoSendRef.current = enabled;
+    if (!enabled) parcelBatchTimer.stop();
+  }
+
   function scheduleNextParcelBatch(delay: ParcelBatchScheduleDelay): void {
+    if (!autoSendRef.current || isFlushingRef.current) return;
+
     // The queue owns when the next batch is attempted.
     // Callers only choose the delay policy from config language.
     if (delay === "immediate") {
@@ -101,9 +109,25 @@ export function useParcelQueue(
     return oldQueueEntry;
   }
 
-  async function processNextParcelBatch(
-    options: ProcessNextParcelBatchOptions = {},
-  ): Promise<boolean> {
+  async function flushQueue(): Promise<boolean> {
+    if (isFlushingRef.current || activeBatchLengthRef.current !== 0) return false;
+
+    isFlushingRef.current = true;
+    parcelBatchTimer.stop();
+
+    try {
+      while (hasElements()) {
+        const canContinue = await processNextParcelBatch();
+        if (!canContinue) return false;
+      }
+
+      return true;
+    } finally {
+      isFlushingRef.current = false;
+    }
+  }
+
+  async function processNextParcelBatch(): Promise<boolean> {
     parcelBatchTimer.stop();
 
     if (activeBatchLengthRef.current !== 0) return false;
@@ -120,9 +144,7 @@ export function useParcelQueue(
     );
 
     // 3. The queue applies the instruction and decides whether to schedule more work.
-    await applyParcelBatchInstruction(instruction, options, batch);
-
-    return instruction !== "keep-active-batch-and-backoff";
+    return applyParcelBatchInstruction(instruction, batch);
   }
 
   function createNextParcelBatch(): ParcelBatch {
@@ -145,11 +167,10 @@ export function useParcelQueue(
     return batch;
   }
 
-  async function applyParcelBatchInstruction(
+  function applyParcelBatchInstruction(
     instruction: ParcelQueueInstruction,
-    options: ProcessNextParcelBatchOptions,
     batch: ParcelBatch,
-  ): Promise<void> {
+  ): boolean {
     switch (instruction) {
       case "remove-sent-batch-and-drain-next":
       case "remove-active-batch-and-drain-next":
@@ -161,24 +182,19 @@ export function useParcelQueue(
             kind: "sent",
           });
         }
-        if (options.drain === true) {
-          await processNextParcelBatch(options);
-          return;
-        }
-
         scheduleNextParcelBatch("debounced");
-        return;
+        return true;
       case "remove-active-batch-and-stop":
         removeActiveBatch();
         parcelBatchTimer.resetBackoff();
-        return;
+        return !hasElements();
       case "keep-active-batch-and-backoff":
         releaseActiveBatch();
         scheduleNextParcelBatch("lostConnectionBackoff");
-        return;
+        return false;
       case "keep-active-batch-and-stop":
         releaseActiveBatch();
-        return;
+        return false;
     }
   }
 
@@ -303,10 +319,12 @@ export function useParcelQueue(
   }
 
   return {
+    flushQueue,
     hasElements,
     hasUpdateBelongingToRootNode,
     insertParcel,
     processNextParcelBatch,
+    setAutoSend,
   };
 }
 
