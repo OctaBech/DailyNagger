@@ -48,6 +48,7 @@ export function useParcelSending(
     flushQueue,
     hasUpdateBelongingToRootNode,
     queue,
+    setAutoSend: parcelQueue.setAutoSend,
     parcelFlowEvents,
     pendingSendingPrompt: {
       state: sendingPromptController.state,

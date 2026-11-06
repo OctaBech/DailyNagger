@@ -25,6 +25,7 @@ export function useParcelQueue(
   const [loadedQueue] = useState(() => persistentStorage.load());
   const queueEntriesRef = useRef<QueuedParcel[]>(loadedQueue.queueEntries);
   const activeBatchLengthRef = useRef(0);
+  const autoSendRef = useRef(false);
   const isFlushingRef = useRef(false);
   const parcelBatchTimer = useTimer(sendTimerConfig);
 
@@ -79,8 +80,13 @@ export function useParcelQueue(
     scheduleNextParcelBatch("debounced");
   }
 
+  function setAutoSend(enabled: boolean): void {
+    autoSendRef.current = enabled;
+    if (!enabled) parcelBatchTimer.stop();
+  }
+
   function scheduleNextParcelBatch(delay: ParcelBatchScheduleDelay): void {
-    if (isFlushingRef.current) return;
+    if (!autoSendRef.current || isFlushingRef.current) return;
 
     // The queue owns when the next batch is attempted.
     // Callers only choose the delay policy from config language.
@@ -318,6 +324,7 @@ export function useParcelQueue(
     hasUpdateBelongingToRootNode,
     insertParcel,
     processNextParcelBatch,
+    setAutoSend,
   };
 }
 

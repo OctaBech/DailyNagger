@@ -204,6 +204,7 @@ describe("useParcelQueue", () => {
 
     // Start the simulated clock after React has mounted the hook.
     jest.useFakeTimers();
+    renderedQueue.result.current.setAutoSend(true);
     renderedQueue.result.current.insertParcel(parcel("first", 1, 2));
 
     expect(sendCount).toBe(0);
@@ -225,6 +226,7 @@ describe("useParcelQueue", () => {
     const renderedQueue = await renderHook(() => useParcelQueue(sendParcelBatch));
 
     jest.useFakeTimers();
+    renderedQueue.result.current.setAutoSend(true);
     renderedQueue.result.current.insertParcel(parcel("first", 1, 2));
 
     await jest.advanceTimersByTimeAsync(1000);
@@ -256,6 +258,7 @@ describe("useParcelQueue", () => {
     );
 
     jest.useFakeTimers();
+    result.current.setAutoSend(true);
     const first = parcel("first", 1, 2);
     result.current.insertParcel({ ...first, formula: { ...first.formula, canBatch: false } });
     const second = parcel("second", 1, 2);
@@ -268,5 +271,22 @@ describe("useParcelQueue", () => {
     expect(sentParcelIds).toEqual(["first", "second"]);
     expect(savedQueues.at(-1)?.map((entry) => entry.parcel.stamp.parcelId)).toEqual(["second"]);
     expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it("sends only through flush until startup enables auto-send", async () => {
+    const sendParcelBatch = jest.fn(async () => "remove-active-batch-and-stop" as const);
+    const { result } = await renderHook(() => useParcelQueue(sendParcelBatch));
+
+    jest.useFakeTimers();
+    result.current.insertParcel(parcel("startup", 1, 2));
+    expect(jest.getTimerCount()).toBe(0);
+    expect(await result.current.flushQueue()).toBe(true);
+    expect(sendParcelBatch).toHaveBeenCalledTimes(1);
+
+    result.current.setAutoSend(true);
+    expect(jest.getTimerCount()).toBe(0);
+    result.current.insertParcel(parcel("after-startup", 2, 3));
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(sendParcelBatch).toHaveBeenCalledTimes(2);
   });
 });
