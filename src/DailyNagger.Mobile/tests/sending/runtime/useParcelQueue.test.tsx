@@ -238,4 +238,35 @@ describe("useParcelQueue", () => {
     expect(sendCount).toBe(2);
     expect(renderedQueue.result.current.hasElements()).toBe(true);
   });
+
+  it("fails flush when a later batch loses connection and keeps that batch queued", async () => {
+    const savedQueues: QueuedParcel[][] = [];
+    jest.mocked(persistentStorage.save).mockImplementation((entries) => {
+      savedQueues.push([...entries]);
+    });
+    const sentParcelIds: string[] = [];
+    const { result } = await renderHook(() =>
+      useParcelQueue(async (batch) => {
+        const id = batch.parcels[0].stamp.parcelId;
+        sentParcelIds.push(id);
+        return id === "first"
+          ? "remove-sent-batch-and-drain-next"
+          : "keep-active-batch-and-backoff";
+      }),
+    );
+
+    jest.useFakeTimers();
+    const first = parcel("first", 1, 2);
+    result.current.insertParcel({ ...first, formula: { ...first.formula, canBatch: false } });
+    const second = parcel("second", 1, 2);
+    result.current.insertParcel({
+      ...second,
+      formula: { ...second.formula, ownerId: "other-root" },
+    });
+
+    expect(await result.current.flushQueue()).toBe(false);
+    expect(sentParcelIds).toEqual(["first", "second"]);
+    expect(savedQueues.at(-1)?.map((entry) => entry.parcel.stamp.parcelId)).toEqual(["second"]);
+    expect(jest.getTimerCount()).toBe(0);
+  });
 });

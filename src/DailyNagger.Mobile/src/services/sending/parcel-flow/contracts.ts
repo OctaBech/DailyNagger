@@ -35,10 +35,6 @@ export type ParcelQueueInstruction =
   | "keep-active-batch-and-backoff"
   | "keep-active-batch-and-stop";
 
-export type ProcessNextParcelBatchOptions = {
-  readonly drain?: boolean;
-};
-
 export type SendParcelBatch = (batch: ParcelBatch) => Promise<ParcelQueueInstruction>;
 
 export type SendBatchResult =
