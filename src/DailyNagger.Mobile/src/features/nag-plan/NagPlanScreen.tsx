@@ -1,8 +1,11 @@
 import { StyleSheet, View } from "react-native";
 import { Primitives } from "@/components";
+import { appVariant } from "@/config/appVariant";
 import { nagPlanTheme } from "./theme";
 import { NagList } from "./list";
 import { usePlanScreenData } from "@/services";
+
+const isDemo = appVariant === "demo";
 
 export const NagPlanScreen = () => {
   const { nags, scroll, startup } = usePlanScreenData();
@@ -14,7 +17,8 @@ export const NagPlanScreen = () => {
       ) : !startup.isReady ? (
         <Primitives.StateScreen
           title="Starting DailyNagger"
-          message="DailyNagger is getting ready."
+          message={isDemo ? "Demo mode" : undefined}
+          highlightMessage={isDemo}
           showSpinner
         />
       ) : (
