@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.Nags;
 using DailyNagger.Server.Database.Connections;
@@ -11,11 +10,6 @@ namespace DailyNagger.Server.Api.Nags;
 
 public static class NagApi
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new JsonStringEnumConverter() }
-    };
-
     public static IEndpointRouteBuilder MapNagApi(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/nags", async (
@@ -48,7 +42,7 @@ public static class NagApi
 
         app.MapPut("/api/nags/{id:guid}", async (
             Guid id,
-            JsonElement requestJson,
+            VersionedRequest<NaggerDto> versionedRequest,
             RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
@@ -56,7 +50,7 @@ public static class NagApi
         {
             try
             {
-                var request = ToSaveNagRequest(requestJson);
+                var request = ToSaveNagRequest(versionedRequest);
 
                 if (request.Id != id)
                 {
@@ -97,18 +91,8 @@ public static class NagApi
         return app;
     }
 
-    private static SaveNagRequest ToSaveNagRequest(JsonElement requestJson)
+    private static SaveNagRequest ToSaveNagRequest(VersionedRequest<NaggerDto> versionedRequest)
     {
-        if (!requestJson.TryGetProperty("payload", out _))
-        {
-            return requestJson.Deserialize<SaveNagRequest>(JsonOptions)
-                ?? throw new JsonException("Nag request body is required.");
-        }
-
-        var versionedRequest = requestJson.Deserialize<VersionedRequest<NaggerDto>>(
-            JsonOptions)
-            ?? throw new JsonException("Nag request body is required.");
-
         if (versionedRequest.Payload is null)
         {
             throw new JsonException("Nag request payload is required.");

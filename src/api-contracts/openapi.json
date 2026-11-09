@@ -96,7 +96,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JsonElement"
+                "$ref": "#/components/schemas/VersionedRequestOfNaggerDto"
               }
             }
           },
@@ -232,7 +232,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JsonElement"
+                "$ref": "#/components/schemas/VersionedRequestOfTaskLogDto"
               }
             }
           },
@@ -590,7 +590,6 @@
           }
         }
       },
-      "JsonElement": { },
       "NaggerDto": {
         "required": [
           "id",
@@ -1360,6 +1359,110 @@
           "nextVersion": {
             "type": "integer",
             "format": "int32"
+          },
+          "clientIdentity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ClientIdentityDto"
+              }
+            ]
+          }
+        }
+      },
+      "VersionedRequestOfNaggerDto": {
+        "required": [
+          "communityId",
+          "userId",
+          "payload",
+          "baseVersion",
+          "nextVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "communityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payload": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/NaggerDto"
+              }
+            ]
+          },
+          "baseVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipPayloadVersionValidation": {
+            "type": "boolean",
+            "default": false
+          },
+          "clientIdentity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ClientIdentityDto"
+              }
+            ]
+          }
+        }
+      },
+      "VersionedRequestOfTaskLogDto": {
+        "required": [
+          "communityId",
+          "userId",
+          "payload",
+          "baseVersion",
+          "nextVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "communityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "payload": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TaskLogDto"
+              }
+            ]
+          },
+          "baseVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipPayloadVersionValidation": {
+            "type": "boolean",
+            "default": false
           },
           "clientIdentity": {
             "oneOf": [

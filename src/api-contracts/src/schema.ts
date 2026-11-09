@@ -127,7 +127,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["JsonElement"];
+                    "application/json": components["schemas"]["VersionedRequestOfNaggerDto"];
                 };
             };
             responses: {
@@ -246,7 +246,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["JsonElement"];
+                    "application/json": components["schemas"]["VersionedRequestOfTaskLogDto"];
                 };
             };
             responses: {
@@ -540,7 +540,6 @@ export interface components {
             deviceName: string;
             deviceModel: string;
         };
-        JsonElement: unknown;
         NaggerDto: {
             /** Format: uuid */
             id: string;
@@ -736,6 +735,34 @@ export interface components {
             baseVersion: number;
             /** Format: int32 */
             nextVersion: number;
+            clientIdentity?: null | components["schemas"]["ClientIdentityDto"];
+        };
+        VersionedRequestOfNaggerDto: {
+            /** Format: uuid */
+            communityId: string;
+            /** Format: uuid */
+            userId: string;
+            payload: null | components["schemas"]["NaggerDto"];
+            /** Format: int32 */
+            baseVersion: number;
+            /** Format: int32 */
+            nextVersion: number;
+            /** @default false */
+            skipPayloadVersionValidation: boolean;
+            clientIdentity?: null | components["schemas"]["ClientIdentityDto"];
+        };
+        VersionedRequestOfTaskLogDto: {
+            /** Format: uuid */
+            communityId: string;
+            /** Format: uuid */
+            userId: string;
+            payload: null | components["schemas"]["TaskLogDto"];
+            /** Format: int32 */
+            baseVersion: number;
+            /** Format: int32 */
+            nextVersion: number;
+            /** @default false */
+            skipPayloadVersionValidation: boolean;
             clientIdentity?: null | components["schemas"]["ClientIdentityDto"];
         };
     };
