@@ -10,7 +10,8 @@ export type StateScreenAction = {
 
 export type StateScreenProps = {
   readonly title: string;
-  readonly message: string;
+  readonly message?: string;
+  readonly highlightMessage?: boolean;
   readonly detail?: string;
   readonly warning?: string | null;
   readonly showSpinner?: boolean;
@@ -21,6 +22,7 @@ export type StateScreenProps = {
 export function StateScreen({
   title,
   message,
+  highlightMessage = false,
   detail,
   warning,
   showSpinner = false,
@@ -40,9 +42,14 @@ export function StateScreen({
         <Text selectable={false} style={styles.title}>
           {title}
         </Text>
-        <Text selectable={false} style={styles.message}>
-          {message}
-        </Text>
+        {message !== undefined && (
+          <Text
+            selectable={false}
+            style={[styles.message, highlightMessage && styles.highlightedMessage]}
+          >
+            {message}
+          </Text>
+        )}
         {showSpinner && <ActivityIndicator color={stateScreenColors.accent} size="large" />}
         {detail !== undefined && (
           <Text selectable style={styles.detail}>
@@ -87,6 +94,7 @@ const stateScreenColors = {
   surface: "#26292c",
   text: "#f4f1ed",
   mutedText: "#eef2f3",
+  highlightedText: "#f2d66f",
   accent: appTheme.accent,
   accentText: appTheme.accentText,
 } as const;
@@ -112,6 +120,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "800",
     lineHeight: 24,
+  },
+  highlightedMessage: {
+    color: stateScreenColors.highlightedText,
   },
   detail: {
     backgroundColor: stateScreenColors.surface,
