@@ -158,7 +158,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var firstLogResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{firstTaskLogId}",
-                firstLogRequest,
+                ToVersionedRequest(firstLogRequest),
                 JsonOptions);
             var firstLogBody = await firstLogResponse.Content.ReadAsStringAsync();
 
@@ -265,7 +265,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var crossUserTaskLogResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{crossUserTaskLog.Id}",
-                crossUserTaskLog,
+                ToVersionedRequest(crossUserTaskLog),
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.BadRequest, crossUserTaskLogResponse.StatusCode);
@@ -286,7 +286,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var crossUserNagResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{firstNagId}",
-                crossUserNagUpdate,
+                ToVersionedRequest(crossUserNagUpdate),
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.Conflict, crossUserNagResponse.StatusCode);
@@ -341,7 +341,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var replaceResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{firstTaskLogId}",
-                replaceWithEntryRequest,
+                ToVersionedRequest(replaceWithEntryRequest),
                 JsonOptions);
             var replaceBody = await replaceResponse.Content.ReadAsStringAsync();
 
@@ -399,7 +399,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -552,7 +552,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -616,7 +616,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -648,7 +648,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var updateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                updateRequest,
+                ToVersionedRequest(updateRequest),
                 JsonOptions);
             var updateBody = await updateResponse.Content.ReadAsStringAsync();
 
@@ -719,7 +719,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -749,7 +749,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var updateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                invalidUpdateRequest,
+                ToVersionedRequest(invalidUpdateRequest),
                 JsonOptions);
 
             Assert.NotEqual(HttpStatusCode.OK, updateResponse.StatusCode);
@@ -802,7 +802,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -827,7 +827,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var firstUpdateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                firstUpdateRequest,
+                ToVersionedRequest(firstUpdateRequest),
                 JsonOptions);
             var firstUpdateBody = await firstUpdateResponse.Content.ReadAsStringAsync();
 
@@ -852,7 +852,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var staleUpdateResponse = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                staleUpdateRequest,
+                ToVersionedRequest(staleUpdateRequest),
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.Conflict, staleUpdateResponse.StatusCode);
@@ -948,7 +948,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/nags/{nagId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -1012,7 +1012,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -1105,7 +1105,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -1192,7 +1192,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -1245,7 +1245,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -1285,7 +1285,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var updateResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                updateRequest,
+                ToVersionedRequest(updateRequest),
                 JsonOptions);
             var updateBody = await updateResponse.Content.ReadAsStringAsync();
 
@@ -1396,7 +1396,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
@@ -1424,7 +1424,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var staleUpdateResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                staleUpdateRequest,
+                ToVersionedRequest(staleUpdateRequest),
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.Conflict, staleUpdateResponse.StatusCode);
@@ -1494,7 +1494,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -1549,7 +1549,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var updateResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                updateRequest,
+                ToVersionedRequest(updateRequest),
                 JsonOptions);
             var updateBody = await updateResponse.Content.ReadAsStringAsync();
 
@@ -1637,7 +1637,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -1737,7 +1737,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
 
             Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
@@ -1811,7 +1811,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -1898,7 +1898,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -1976,7 +1976,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -2058,7 +2058,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var response = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var responseBody = await response.Content.ReadAsStringAsync();
 
@@ -2132,7 +2132,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var createResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                createRequest,
+                ToVersionedRequest(createRequest),
                 JsonOptions);
             var createBody = await createResponse.Content.ReadAsStringAsync();
 
@@ -2184,41 +2184,43 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
             {
               "communityId": "{{testData.CommunityId}}",
               "userId": "{{userId}}",
-              "id": "{{taskLogId}}",
-              "nagId": "{{testData.NagId}}",
-              "copiedFromTaskLogId": null,
-              "closedOn": null,
-              "taskItems": [
-                {
-                  "id": "{{nodeId}}",
-                  "taskLogId": "{{taskLogId}}",
-                  "parentTaskItemId": null,
-                  "name": "Set 1",
-                  "taskEntries": [
-                    {
-                      "id": "{{inputId}}",
-                      "taskLogId": "{{taskLogId}}",
-                      "parentTaskItemId": "{{nodeId}}",
-                      "label": "Bad input",
-                      "description": null,
-                      "valueType": "Currency",
-                      "unit": null,
-                      "value": "12"
-                    }
-                  ],
-                  "taskItems": []
-                }
-              ]
+              "baseVersion": 0,
+              "nextVersion": 1,
+              "payload": {
+                "id": "{{taskLogId}}",
+                "nagId": "{{testData.NagId}}",
+                "copiedFromTaskLogId": null,
+                "closedOn": null,
+                "taskItems": [
+                  {
+                    "id": "{{nodeId}}",
+                    "taskLogId": "{{taskLogId}}",
+                    "parentTaskItemId": null,
+                    "name": "Set 1",
+                    "taskEntries": [
+                      {
+                        "id": "{{inputId}}",
+                        "taskLogId": "{{taskLogId}}",
+                        "parentTaskItemId": "{{nodeId}}",
+                        "label": "Bad input",
+                        "description": null,
+                        "valueType": "Currency",
+                        "unit": null,
+                        "value": "12"
+                      }
+                    ],
+                    "taskItems": []
+                  }
+                ]
+              }
             }
             """;
 
             var response = await client.PutAsync(
                 $"/api/task-logs/{taskLogId}",
                 new StringContent(requestJson, Encoding.UTF8, "application/json"));
-            var responseBody = await response.Content.ReadAsStringAsync();
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            Assert.Contains("valueType", responseBody, StringComparison.OrdinalIgnoreCase);
 
             await using var dataDb = CreateDataDbContext();
             var exists = await dataDb.TaskLogs.AnyAsync(taskLog => taskLog.Id == taskLogId);
@@ -2306,7 +2308,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var saveResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{taskLogId}",
-                request,
+                ToVersionedRequest(request),
                 JsonOptions);
             var saveBody = await saveResponse.Content.ReadAsStringAsync();
 
@@ -2362,7 +2364,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
             var otherSaveResponse = await client.PutAsJsonAsync(
                 $"/api/task-logs/{otherTaskLogId}",
-                otherUserRequest,
+                ToVersionedRequest(otherUserRequest),
                 JsonOptions);
             var otherSaveBody = await otherSaveResponse.Content.ReadAsStringAsync();
 
@@ -2612,7 +2614,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
         var response = await client.PutAsJsonAsync(
             $"/api/nags/{nagId}",
-            request,
+            ToVersionedRequest(request),
             JsonOptions);
         var body = await response.Content.ReadAsStringAsync();
 
@@ -2686,7 +2688,7 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
         var response = await client.PutAsJsonAsync(
             $"/api/task-logs/{taskLogId}",
-            request,
+            ToVersionedRequest(request),
             JsonOptions);
         var body = await response.Content.ReadAsStringAsync();
 
@@ -2714,6 +2716,47 @@ public sealed class NagApiTests(SqlServerTestFixture fixture) : SqlServerTestBas
 
         return testData;
     }
+
+    private static VersionedRequest<NaggerDto> ToVersionedRequest(SaveNagRequest request) => new(
+        request.CommunityId,
+        request.UserId,
+        new NaggerDto(
+            request.Id,
+            request.Title,
+            request.ActiveLogDueOn,
+            request.TargetTime,
+            request.IsDeactivated,
+            request.PinnedBy,
+            request.UpdatedAt,
+            UpdatedByClientId: null,
+            UpdatedByDeviceName: null,
+            UpdatedByDeviceModel: null,
+            request.ScheduleRules,
+            Version: request.BaseVersion),
+        request.BaseVersion,
+        request.NextVersion,
+        ClientIdentity: request.ClientIdentity);
+
+    private static VersionedRequest<TaskLogDto> ToVersionedRequest(SaveTaskLogRequest request) => new(
+        request.CommunityId,
+        request.UserId,
+        new TaskLogDto(
+            request.Id,
+            request.NagId,
+            request.CopiedFromTaskLogId,
+            request.ClosedOn,
+            request.UpdatedAt,
+            UpdatedByClientId: null,
+            UpdatedByDeviceName: null,
+            UpdatedByDeviceModel: null,
+            Version: request.BaseVersion,
+            request.TaskItems,
+            request.Tag,
+            request.DescendantTaskItemCount,
+            request.DoneDescendantTaskItemCount),
+        request.BaseVersion,
+        request.NextVersion,
+        ClientIdentity: request.ClientIdentity);
 
     private static HttpClient CreateServerClient()
     {

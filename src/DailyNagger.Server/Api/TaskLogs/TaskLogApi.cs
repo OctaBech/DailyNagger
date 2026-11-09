@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using DailyNagger.Server.Contracts;
 using DailyNagger.Server.Contracts.TaskLogs;
 using DailyNagger.Server.Database.Connections;
@@ -11,16 +10,11 @@ namespace DailyNagger.Server.Api.TaskLogs;
 
 public static class TaskLogApi
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        Converters = { new JsonStringEnumConverter() }
-    };
-
     public static IEndpointRouteBuilder MapTaskLogApi(this IEndpointRouteBuilder app)
     {
         app.MapPut("/api/task-logs/{id:guid}", async (
             Guid id,
-            JsonElement requestJson,
+            VersionedRequest<TaskLogDto> versionedRequest,
             RequestValidator validator,
             OperationsFacade operations,
             IHostEnvironment environment,
@@ -28,7 +22,7 @@ public static class TaskLogApi
         {
             try
             {
-                var saveRequest = ToSaveTaskLogRequest(requestJson);
+                var saveRequest = ToSaveTaskLogRequest(versionedRequest);
 
                 if (saveRequest.Id != id)
                 {
@@ -105,18 +99,8 @@ public static class TaskLogApi
         return app;
     }
 
-    private static SaveTaskLogRequest ToSaveTaskLogRequest(JsonElement requestJson)
+    private static SaveTaskLogRequest ToSaveTaskLogRequest(VersionedRequest<TaskLogDto> versionedRequest)
     {
-        if (!requestJson.TryGetProperty("payload", out _))
-        {
-            return requestJson.Deserialize<SaveTaskLogRequest>(JsonOptions)
-                ?? throw new JsonException("TaskLog request body is required.");
-        }
-
-        var versionedRequest = requestJson.Deserialize<VersionedRequest<TaskLogDto>>(
-            JsonOptions)
-            ?? throw new JsonException("TaskLog request body is required.");
-
         if (versionedRequest.Payload is null)
         {
             throw new JsonException("TaskLog request payload is required.");
